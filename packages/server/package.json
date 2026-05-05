@@ -1,0 +1,17 @@
+{
+  "name": "@recipe-book/server",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.0"
+  }
+}

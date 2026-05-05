@@ -1,0 +1,17 @@
+{
+  "name": "@recipe-book/web",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.0"
+  }
+}
