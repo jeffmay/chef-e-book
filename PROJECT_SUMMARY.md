@@ -220,18 +220,19 @@ npm run lint
 
 ## Completed Features
 
-_(none yet — project scaffold in progress)_
+- [x] Monorepo scaffold (npm workspaces: shared, web, server)
+- [x] Yjs data models in `shared` (Kitchenware, Recipe, Session, RecipeGroup, Measurement types with kind discriminators)
+- [x] Measurement fraction arithmetic (simplify, add, subtract, multiply, divide) with exact rational representation
+- [x] Unit conversion tables (US customary volume/weight and metric, exact within each system)
+- [x] Default kitchenware CSV fixture and parser (11 ingredients, 5 containers, 3 equipment)
+- [x] Vite + React 19 web app scaffold with e-ink CSS design system
+- [x] Node.js + Express 5 sync server with Yjs document store endpoint
 
 ---
 
 ## In Progress
 
-- [ ] Monorepo scaffold (npm workspaces: shared, web, server)
-- [ ] Yjs data models in `shared`
-- [ ] Vite + React app scaffold in `web`
-- [ ] Node.js sync server scaffold in `server`
-- [ ] Default kitchenware fixture loader
-- [ ] Measurement fraction utilities
+_(none — basic scaffold is complete)_
 
 ---
 
