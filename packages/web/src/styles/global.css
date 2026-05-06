@@ -1,0 +1,115 @@
+/* E-ink / handwritten wireframe design system */
+:root {
+  --color-bg: #ffffff;
+  --color-fg: #1a1a1a;
+  --color-border: #333333;
+  --color-muted: #666666;
+  --color-accent: #222222;
+  --color-checked: #888888;
+
+  --font-body: "Courier New", Courier, monospace;
+  --font-display: Georgia, serif;
+
+  --border-width: 2px;
+  --radius: 0px;
+  --spacing-xs: 0.25em;
+  --spacing-sm: 0.5em;
+  --spacing-md: 1em;
+  --spacing-lg: 2em;
+
+  --nav-height: 3em;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: clamp(14px, 2vw, 18px);
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+body {
+  font-family: var(--font-body);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 1em;
+}
+
+button:active {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: 1em;
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  width: 100%;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  height: var(--nav-height);
+  padding: 0 var(--spacing-md);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  width: 100vw;
+}
+
+.app-title {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.2em;
+}
+
+.nav-menu-btn,
+.undo-btn {
+  border: none;
+  font-size: 1.1em;
+  padding: var(--spacing-xs);
+}
+
+.page-content {
+  flex: 1;
+  padding: var(--spacing-md);
+  max-width: 100vw;
+}
+
+.placeholder {
+  color: var(--color-muted);
+  font-style: italic;
+  text-align: center;
+  margin-top: var(--spacing-lg);
+}
