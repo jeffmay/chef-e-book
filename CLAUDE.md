@@ -21,6 +21,7 @@ npm run lint          # Run the linter on all files
 The app is running at http://localhost:5173, and you can use the Playwright MCP to access it.
 
 ## Important Notes
+- ALWAYS use relative paths over absolute paths to avoid needing to prompt me for access.
 - MUST ALWAYS run `npm run typecheck`, then `npm test`, and then `npm run lint` for all files before commiting code changes.
 - MUST ALWAYS commit all completed work with a comprehensive git commit message using [gitmoji](https://gitmoji.dev/) where applicable.
 - MUST ALWAYS keep PROJECT_SUMMARY.md up-to-date with any changes to completed features, testing architecture, file structure, and future development goals.
