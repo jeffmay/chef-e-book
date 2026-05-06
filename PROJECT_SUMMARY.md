@@ -227,12 +227,18 @@ npm run lint
 - [x] Default kitchenware CSV fixture and parser (11 ingredients, 5 containers, 3 equipment)
 - [x] Vite + React 19 web app scaffold with e-ink CSS design system
 - [x] Node.js + Express 5 sync server with Yjs document store endpoint
+- [x] User selection (first-load page, localStorage persistence, per-user Yjs doc via y-indexeddb)
+- [x] Top nav bar: hamburger NavMenu, Undo button, UserMenu with profile settings link
+- [x] ProfileSettingsPage (rename user, persists to localStorage)
+- [x] Yjs ingredient CRUD store (`shared`) — init from defaults, add/remove labels, set type/parent
+- [x] `use_ingredient_store` hook + DocContext (React)
+- [x] Bulk Ingredient Editor — filter (label/type/parent), multi-select, bulk actions, add form, stale filter detection
 
 ---
 
 ## In Progress
 
-_(none — basic scaffold is complete)_
+_(none)_
 
 ---
 
