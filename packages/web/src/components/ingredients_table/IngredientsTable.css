@@ -206,6 +206,106 @@
   font-weight: normal;
 }
 
+/* Select column */
+.it-td--select {
+  padding: 0;
+  width: 2em;
+  min-width: 2em;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.it-td--select input[type="checkbox"] {
+  cursor: pointer;
+  width: 1em;
+  height: 1em;
+}
+
+/* Selected rows */
+.it-row--selected > .it-td {
+  background: #f0f0f0;
+}
+
+/* Bulk action bar */
+.it-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: var(--border-width) solid var(--color-border);
+  border-bottom: none;
+  background: #f8f8f8;
+  font-size: 0.9em;
+}
+
+.it-bulk-count {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.it-bulk-clear {
+  background: none;
+  border: var(--border-width) solid var(--color-border);
+  padding: 1px 6px;
+  font-size: 0.85em;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+}
+
+.it-bulk-clear:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.it-bulk-action {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.it-bulk-input {
+  font-size: 0.85em;
+  padding: 1px 4px;
+  border: var(--border-width) solid var(--color-border);
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  width: 12vw;
+  min-width: 8em;
+}
+
+.it-bulk-select {
+  font-size: 0.85em;
+  padding: 1px 4px;
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+}
+
+.it-bulk-apply {
+  background: none;
+  border: var(--border-width) solid var(--color-border);
+  padding: 1px 6px;
+  font-size: 0.85em;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  white-space: nowrap;
+}
+
+.it-bulk-apply:hover:not(:disabled) {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.it-bulk-apply:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* Misc */
 .it-muted {
   color: var(--color-muted);

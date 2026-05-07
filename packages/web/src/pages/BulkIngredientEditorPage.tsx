@@ -27,8 +27,16 @@ const EMPTY_ADD_FORM: AddFormState = {
 // ---------------------------------------------------------------------------
 
 export function BulkIngredientEditorPage() {
-  const { ingredients, create_ingredient, rename_ingredient, set_labels, set_measurement_type, set_parent } =
-    use_ingredient_store();
+  const {
+    ingredients,
+    create_ingredient,
+    rename_ingredient,
+    add_labels,
+    remove_labels,
+    set_labels,
+    set_measurement_type,
+    set_parent,
+  } = use_ingredient_store();
 
   // --- add-ingredient form ---
   const [show_add_form, set_show_add_form] = useState(false);
@@ -151,6 +159,10 @@ export function BulkIngredientEditorPage() {
         on_set_type={(id, type) => set_measurement_type([id], type)}
         on_set_labels={set_labels}
         on_set_parent={(id, parent_id) => set_parent([id], parent_id)}
+        on_add_labels={add_labels}
+        on_remove_labels={remove_labels}
+        on_bulk_set_type={set_measurement_type}
+        on_bulk_set_parent={set_parent}
       />
     </main>
   );

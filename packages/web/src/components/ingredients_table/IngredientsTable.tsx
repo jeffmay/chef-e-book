@@ -1,4 +1,4 @@
-import { useState, useMemo, type KeyboardEvent } from "react";
+import { useState, useMemo, useEffect, useRef, type KeyboardEvent } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -16,6 +16,7 @@ import {
   type RowData,
   type CellContext,
   type Header,
+  type Table,
 } from "@tanstack/react-table";
 import type { Ingredient, MeasurementType } from "@recipe-book/shared";
 import { MultiSelectFilter } from "./MultiSelectFilter.js";
@@ -35,10 +36,14 @@ declare module "@tanstack/react-table" {
     on_commit_edit: (ingredient_id: string, col_id: string) => void;
     on_cancel_edit: (ingredient_id: string, col_id: string) => void;
     all_ingredients: readonly Ingredient[];
+    selected_ids: ReadonlySet<string>;
+    on_toggle_select: (id: string) => void;
+    on_toggle_select_all: (ids: readonly string[]) => void;
   }
   interface FilterFns {
     fuzzy_text: FilterFn<IngredientRow>;
     multi_select: FilterFn<IngredientRow>;
+    name_recursive_fuzzy: FilterFn<IngredientRow>;
   }
 }
 
@@ -64,6 +69,17 @@ const multi_select: FilterFn<IngredientRow> = (row, col_id, value) => {
 };
 multi_select.autoRemove = (v) => !Array.isArray(v) || v.length === 0;
 
+function row_name_matches(row_data: IngredientRow, query: string): boolean {
+  if (row_data.name.toLowerCase().includes(query)) return true;
+  return row_data.subRows.some((child) => row_name_matches(child, query));
+}
+
+const name_recursive_fuzzy: FilterFn<IngredientRow> = (row, _col_id, value) => {
+  if (typeof value !== "string" || value === "") return true;
+  return row_name_matches(row.original, value.toLowerCase());
+};
+name_recursive_fuzzy.autoRemove = (v) => typeof v !== "string" || v === "";
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -77,6 +93,13 @@ const MEASUREMENT_TYPES: readonly MeasurementType[] = ["count", "volume", "weigh
 function validate_type(v: string): MeasurementType | undefined {
   if (v === "volume" || v === "weight" || v === "count") return v;
   return undefined;
+}
+
+function parse_labels(raw: string): string[] {
+  return raw
+    .split(",")
+    .map((l) => l.trim())
+    .filter((l) => l !== "");
 }
 
 // ---------------------------------------------------------------------------
@@ -330,6 +353,37 @@ function ParentCell({ row, column, table }: CellContext<IngredientRow, string>) 
 }
 
 // ---------------------------------------------------------------------------
+// Select-all checkbox (needs useRef for indeterminate state)
+// ---------------------------------------------------------------------------
+
+function SelectAllCheckbox({ table }: { table: Table<IngredientRow> }) {
+  const meta = table.options.meta!;
+  const all_ids = table
+    .getFilteredRowModel()
+    .flatRows.filter((r) => !r.getIsGrouped())
+    .map((r) => r.original.id);
+  const ref = useRef<HTMLInputElement>(null);
+  const all_selected = all_ids.length > 0 && all_ids.every((id) => meta.selected_ids.has(id));
+  const some_selected = all_ids.some((id) => meta.selected_ids.has(id));
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.indeterminate = some_selected && !all_selected;
+    }
+  }, [some_selected, all_selected]);
+
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={all_selected}
+      onChange={() => meta.on_toggle_select_all(all_ids)}
+      aria-label="Select all ingredients"
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Column header
 // ---------------------------------------------------------------------------
 
@@ -342,6 +396,8 @@ function ColumnHeader({ header, all_labels }: ColumnHeaderProps) {
   const col = header.column;
   const sorted = col.getIsSorted();
   const is_grouped = col.getIsGrouped();
+  const filter_value = col.getFilterValue();
+  const filter_str = typeof filter_value === "string" ? filter_value : "";
 
   return (
     <div className="it-col-header">
@@ -391,16 +447,10 @@ function ColumnHeader({ header, all_labels }: ColumnHeaderProps) {
             <input
               type="text"
               className="it-text-filter"
-              value={typeof col.getFilterValue() === "string" ? (col.getFilterValue() as string) : ""}
+              value={filter_str}
               onChange={(e) => col.setFilterValue(e.target.value || undefined)}
               placeholder="Filter…"
-              aria-label={
-                col.id === "name"
-                  ? "Filter by name"
-                  : col.id === "parent_name"
-                    ? "Filter by parent"
-                    : `Filter by ${col.id}`
-              }
+              aria-label={col.id === "name" ? "Filter by name" : `Filter by ${col.id}`}
             />
           )}
         </div>
@@ -416,6 +466,25 @@ function ColumnHeader({ header, all_labels }: ColumnHeaderProps) {
 const col = createColumnHelper<IngredientRow>();
 
 const COLUMNS = [
+  col.display({
+    id: "select",
+    enableSorting: false,
+    enableGrouping: false,
+    enableColumnFilter: false,
+    header: ({ table }) => <SelectAllCheckbox table={table} />,
+    cell: ({ row, table }) => {
+      if (row.getIsGrouped()) return null;
+      const meta = table.options.meta!;
+      return (
+        <input
+          type="checkbox"
+          checked={meta.selected_ids.has(row.original.id)}
+          onChange={() => meta.on_toggle_select(row.original.id)}
+          aria-label={`Select ${row.original.name}`}
+        />
+      );
+    },
+  }),
   col.display({
     id: "expand",
     enableSorting: false,
@@ -449,7 +518,7 @@ const COLUMNS = [
   }),
   col.accessor("name", {
     header: "Name",
-    filterFn: "fuzzy_text",
+    filterFn: "name_recursive_fuzzy",
     enableGrouping: true,
     cell: NameCell,
   }),
@@ -469,7 +538,7 @@ const COLUMNS = [
   }),
   col.accessor("parent_name", {
     header: "Parent",
-    filterFn: "fuzzy_text",
+    enableColumnFilter: false,
     enableGrouping: true,
     cell: ParentCell,
   }),
@@ -485,6 +554,10 @@ export interface IngredientsTableProps {
   readonly on_set_type: (id: string, type: MeasurementType) => void;
   readonly on_set_labels: (id: string, labels: readonly string[]) => void;
   readonly on_set_parent: (id: string, parent_id: string | undefined) => void;
+  readonly on_add_labels: (ids: readonly string[], labels: readonly string[]) => void;
+  readonly on_remove_labels: (ids: readonly string[], labels: readonly string[]) => void;
+  readonly on_bulk_set_type: (ids: readonly string[], type: MeasurementType) => void;
+  readonly on_bulk_set_parent: (ids: readonly string[], parent_id: string | undefined) => void;
 }
 
 export function IngredientsTable({
@@ -493,12 +566,21 @@ export function IngredientsTable({
   on_set_type,
   on_set_labels,
   on_set_parent,
+  on_add_labels,
+  on_remove_labels,
+  on_bulk_set_type,
+  on_bulk_set_parent,
 }: IngredientsTableProps) {
   const [column_filters, set_column_filters] = useState<ColumnFiltersState>([]);
   const [sorting, set_sorting] = useState<SortingState>([]);
   const [grouping, set_grouping] = useState<GroupingState>([]);
   const [expanded, set_expanded] = useState<ExpandedState>({});
   const [pending_edits, set_pending_edits] = useState<Map<string, string>>(new Map());
+  const [selected_ids, set_selected_ids] = useState<Set<string>>(new Set());
+  const [bulk_add_labels, set_bulk_add_labels] = useState("");
+  const [bulk_remove_labels, set_bulk_remove_labels] = useState("");
+  const [bulk_type, set_bulk_type] = useState("");
+  const [bulk_parent_id, set_bulk_parent_id] = useState("");
 
   const data = useMemo(() => build_ingredient_tree(ingredients), [ingredients]);
 
@@ -507,6 +589,16 @@ export function IngredientsTable({
     for (const i of ingredients) for (const l of i.labels) s.add(l);
     return [...s].sort();
   }, [ingredients]);
+
+  // Auto-expand rows when a name filter is active so matching children are visible
+  useEffect(() => {
+    const name_filter = column_filters.find((f) => f.id === "name")?.value;
+    if (typeof name_filter === "string" && name_filter !== "") {
+      set_expanded(true);
+    } else {
+      set_expanded({});
+    }
+  }, [column_filters]);
 
   function on_begin_edit(ingredient_id: string, col_id: string, initial: string): void {
     set_pending_edits((prev) => new Map(prev).set(pkey(ingredient_id, col_id), initial));
@@ -532,11 +624,7 @@ export function IngredientsTable({
       const type = validate_type(value);
       if (type !== undefined) on_set_type(ingredient_id, type);
     } else if (col_id === "labels") {
-      const labels = value
-        .split(",")
-        .map((l) => l.trim())
-        .filter((l) => l !== "");
-      on_set_labels(ingredient_id, labels);
+      on_set_labels(ingredient_id, parse_labels(value));
     } else if (col_id === "parent_name") {
       on_set_parent(ingredient_id, value !== "" ? value : undefined);
     }
@@ -557,6 +645,28 @@ export function IngredientsTable({
     });
   }
 
+  function toggle_select(id: string): void {
+    set_selected_ids((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggle_select_all(ids: readonly string[]): void {
+    set_selected_ids((prev) => {
+      const all_selected = ids.length > 0 && ids.every((id) => prev.has(id));
+      const next = new Set(prev);
+      if (all_selected) {
+        for (const id of ids) next.delete(id);
+      } else {
+        for (const id of ids) next.add(id);
+      }
+      return next;
+    });
+  }
+
   const table = useReactTable({
     data,
     columns: COLUMNS,
@@ -567,7 +677,7 @@ export function IngredientsTable({
     onExpandedChange: set_expanded,
     getSubRows: (row) => row.subRows,
     autoResetExpanded: false,
-    filterFns: { fuzzy_text, multi_select },
+    filterFns: { fuzzy_text, multi_select, name_recursive_fuzzy },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -580,20 +690,171 @@ export function IngredientsTable({
       on_commit_edit,
       on_cancel_edit,
       all_ingredients: ingredients,
+      selected_ids,
+      on_toggle_select: toggle_select,
+      on_toggle_select_all: toggle_select_all,
     },
   });
 
   const rows = table.getRowModel().rows;
+  const selected_array = [...selected_ids];
+
+  function apply_add_labels(): void {
+    const labels = parse_labels(bulk_add_labels);
+    if (labels.length > 0) {
+      on_add_labels(selected_array, labels);
+      set_bulk_add_labels("");
+    }
+  }
+
+  function apply_remove_labels(): void {
+    const labels = parse_labels(bulk_remove_labels);
+    if (labels.length > 0) {
+      on_remove_labels(selected_array, labels);
+      set_bulk_remove_labels("");
+    }
+  }
+
+  function apply_bulk_type(): void {
+    const type = validate_type(bulk_type);
+    if (type !== undefined) {
+      on_bulk_set_type(selected_array, type);
+      set_bulk_type("");
+    }
+  }
+
+  function apply_bulk_parent(): void {
+    if (bulk_parent_id === "__none__") {
+      on_bulk_set_parent(selected_array, undefined);
+    } else if (bulk_parent_id !== "") {
+      on_bulk_set_parent(selected_array, bulk_parent_id);
+    }
+    set_bulk_parent_id("");
+  }
 
   return (
     <div className="it-wrapper" role="region" aria-label="Ingredient list">
+      {selected_ids.size > 0 && (
+        <div className="it-bulk-bar" role="region" aria-label="Bulk actions">
+          <span className="it-bulk-count">{selected_ids.size} selected</span>
+          <button
+            type="button"
+            className="it-bulk-clear"
+            onClick={() => set_selected_ids(new Set())}
+          >
+            Clear
+          </button>
+
+          <span className="it-bulk-action">
+            <input
+              type="text"
+              className="it-bulk-input"
+              value={bulk_add_labels}
+              onChange={(e) => set_bulk_add_labels(e.target.value)}
+              placeholder="Labels to add…"
+              aria-label="Labels to add"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") apply_add_labels();
+              }}
+            />
+            <button
+              type="button"
+              className="it-bulk-apply"
+              disabled={bulk_add_labels.trim() === ""}
+              onClick={apply_add_labels}
+              aria-label="Apply add labels"
+            >
+              Add labels
+            </button>
+          </span>
+
+          <span className="it-bulk-action">
+            <input
+              type="text"
+              className="it-bulk-input"
+              value={bulk_remove_labels}
+              onChange={(e) => set_bulk_remove_labels(e.target.value)}
+              placeholder="Labels to remove…"
+              aria-label="Labels to remove"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") apply_remove_labels();
+              }}
+            />
+            <button
+              type="button"
+              className="it-bulk-apply"
+              disabled={bulk_remove_labels.trim() === ""}
+              onClick={apply_remove_labels}
+              aria-label="Apply remove labels"
+            >
+              Remove labels
+            </button>
+          </span>
+
+          <span className="it-bulk-action">
+            <select
+              className="it-bulk-select"
+              value={bulk_type}
+              onChange={(e) => set_bulk_type(e.target.value)}
+              aria-label="Bulk measurement type"
+            >
+              <option value="">— Type —</option>
+              {MEASUREMENT_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="it-bulk-apply"
+              disabled={bulk_type === ""}
+              onClick={apply_bulk_type}
+              aria-label="Apply type change"
+            >
+              Change type
+            </button>
+          </span>
+
+          <span className="it-bulk-action">
+            <select
+              className="it-bulk-select"
+              value={bulk_parent_id}
+              onChange={(e) => set_bulk_parent_id(e.target.value)}
+              aria-label="Bulk parent"
+            >
+              <option value="">— Parent —</option>
+              <option value="__none__">Clear parent</option>
+              {ingredients.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="it-bulk-apply"
+              disabled={bulk_parent_id === ""}
+              onClick={apply_bulk_parent}
+              aria-label="Apply parent change"
+            >
+              Change parent
+            </button>
+          </span>
+        </div>
+      )}
+
       <table className="it-table">
         <thead>
           {table.getHeaderGroups().map((hg) => (
             <tr key={hg.id}>
               {hg.headers.map((h) => (
                 <th key={h.id} className="it-th">
-                  {h.isPlaceholder || h.column.id === "expand" ? null : (
+                  {h.isPlaceholder ||
+                  h.column.id === "expand" ||
+                  h.column.id === "select" ? (
+                    flexRender(h.column.columnDef.header, h.getContext())
+                  ) : (
                     <ColumnHeader header={h} all_labels={all_labels} />
                   )}
                 </th>
@@ -609,43 +870,62 @@ export function IngredientsTable({
               </td>
             </tr>
           ) : (
-            rows.map((row) => (
-              <tr key={row.id} className={row.getIsGrouped() ? "it-row--group" : ""}>
-                {row.getVisibleCells().map((cell) => {
-                  // Expand column: always render
-                  if (cell.column.id === "expand") {
-                    return (
-                      <td key={cell.id} className="it-td it-td--expand">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    );
-                  }
-                  // Group rows: show group value + count in the grouped column, blank elsewhere
-                  if (row.getIsGrouped()) {
-                    if (cell.getIsGrouped()) {
+            rows.map((row) => {
+              const is_selected = !row.getIsGrouped() && selected_ids.has(row.original.id);
+              return (
+                <tr
+                  key={row.id}
+                  className={[
+                    row.getIsGrouped() ? "it-row--group" : "",
+                    is_selected ? "it-row--selected" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  {row.getVisibleCells().map((cell) => {
+                    // Select column: always render (handles group rows internally)
+                    if (cell.column.id === "select") {
                       return (
-                        <td key={cell.id} className="it-td it-td--group-value">
+                        <td key={cell.id} className="it-td it-td--select">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          <span className="it-group-count"> ({row.subRows.length})</span>
                         </td>
                       );
                     }
-                    return <td key={cell.id} className="it-td" />;
-                  }
-                  // Placeholders / aggregations — only meaningful when column grouping is active;
-                  // tree parent rows also satisfy getIsAggregated() but should render normally
-                  if (grouping.length > 0 && (cell.getIsPlaceholder() || cell.getIsAggregated())) {
-                    return <td key={cell.id} className="it-td" />;
-                  }
-                  // Normal leaf cell
-                  return (
-                    <td key={cell.id} className="it-td">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))
+                    // Expand column: always render
+                    if (cell.column.id === "expand") {
+                      return (
+                        <td key={cell.id} className="it-td it-td--expand">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      );
+                    }
+                    // Group rows: show group value + count in the grouped column, blank elsewhere
+                    if (row.getIsGrouped()) {
+                      if (cell.getIsGrouped()) {
+                        return (
+                          <td key={cell.id} className="it-td it-td--group-value">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            <span className="it-group-count"> ({row.subRows.length})</span>
+                          </td>
+                        );
+                      }
+                      return <td key={cell.id} className="it-td" />;
+                    }
+                    // Placeholders / aggregations — only meaningful when column grouping is active;
+                    // tree parent rows also satisfy getIsAggregated() but should render normally
+                    if (grouping.length > 0 && (cell.getIsPlaceholder() || cell.getIsAggregated())) {
+                      return <td key={cell.id} className="it-td" />;
+                    }
+                    // Normal leaf cell
+                    return (
+                      <td key={cell.id} className="it-td">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>

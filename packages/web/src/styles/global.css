@@ -119,3 +119,7 @@ select {
   text-align: center;
   margin-top: var(--spacing-lg);
 }
+
+.msf-option {
+  color: var(--color-fg);
+}

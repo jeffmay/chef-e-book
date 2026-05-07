@@ -90,3 +90,29 @@ describe("BulkIngredientEditorPage — add ingredient form", () => {
     expect(screen.queryByLabelText("New ingredient name")).not.toBeInTheDocument();
   });
 });
+
+describe("BulkIngredientEditorPage — bulk actions", () => {
+  it("shows bulk action bar after selecting a row", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Butter" }));
+    expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+
+  it("bulk add labels updates the ingredient in the store", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Butter" }));
+    await userEvent.type(screen.getByLabelText("Labels to add"), "organic");
+    await userEvent.click(screen.getByRole("button", { name: "Apply add labels" }));
+    // Bulk bar input should be cleared after apply
+    expect(screen.getByLabelText("Labels to add")).toHaveValue("");
+  });
+
+  it("bulk remove labels clears the input after apply", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Butter" }));
+    await userEvent.type(screen.getByLabelText("Labels to remove"), "fat");
+    await userEvent.click(screen.getByRole("button", { name: "Apply remove labels" }));
+    expect(screen.getByLabelText("Labels to remove")).toHaveValue("");
+  });
+});

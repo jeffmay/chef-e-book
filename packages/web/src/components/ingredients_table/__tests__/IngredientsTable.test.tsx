@@ -38,6 +38,10 @@ const on_rename = vi.fn();
 const on_set_type = vi.fn();
 const on_set_labels = vi.fn();
 const on_set_parent = vi.fn();
+const on_add_labels = vi.fn();
+const on_remove_labels = vi.fn();
+const on_bulk_set_type = vi.fn();
+const on_bulk_set_parent = vi.fn();
 
 function setup(ingredients: Ingredient[] = [DAIRY, BUTTER, FLOUR, CHEESE]) {
   return render(
@@ -47,6 +51,10 @@ function setup(ingredients: Ingredient[] = [DAIRY, BUTTER, FLOUR, CHEESE]) {
       on_set_type={on_set_type}
       on_set_labels={on_set_labels}
       on_set_parent={on_set_parent}
+      on_add_labels={on_add_labels}
+      on_remove_labels={on_remove_labels}
+      on_bulk_set_type={on_bulk_set_type}
+      on_bulk_set_parent={on_bulk_set_parent}
     />,
   );
 }
@@ -67,7 +75,6 @@ describe("IngredientsTable — rendering", () => {
 
   it("renders root-level ingredients", async () => {
     setup();
-    // Use findByText to handle any deferred row model computation
     expect(await screen.findByText("Dairy")).toBeInTheDocument();
     expect(await screen.findByText("Flour")).toBeInTheDocument();
     expect(await screen.findByText("Cheese")).toBeInTheDocument();
@@ -96,7 +103,6 @@ describe("IngredientsTable — tree expand/collapse", () => {
 
   it("shows expand button on rows with children", async () => {
     setup();
-    // Wait for Dairy (a parent row) to appear in the DOM
     await screen.findByText("Dairy");
     const dairy_row = screen.getByText("Dairy").closest("tr")!;
     expect(within(dairy_row).getByRole("button", { name: /Expand Dairy/ })).toBeInTheDocument();
@@ -134,6 +140,25 @@ describe("IngredientsTable — text filters", () => {
     await screen.findByText("Flour");
     await userEvent.type(screen.getByLabelText("Filter by name"), "zzz");
     expect(screen.getByText("No ingredients match the current filter.")).toBeInTheDocument();
+  });
+
+  it("name filter matches child names and shows parent", async () => {
+    setup();
+    await screen.findByText("Dairy");
+    await userEvent.type(screen.getByLabelText("Filter by name"), "Butter");
+    // Dairy should appear because it has a child named Butter.
+    // "Dairy" text also appears in Butter's Parent column, so use getAllByText.
+    expect(screen.getAllByText("Dairy").length).toBeGreaterThan(0);
+    // Butter should be visible (auto-expanded)
+    expect(screen.getByText("Butter")).toBeInTheDocument();
+    // Unrelated rows should be hidden
+    expect(screen.queryByText("Flour")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cheese")).not.toBeInTheDocument();
+  });
+
+  it("parent column has no filter input", () => {
+    setup();
+    expect(screen.queryByLabelText("Filter by parent")).not.toBeInTheDocument();
   });
 });
 
@@ -251,7 +276,6 @@ describe("IngredientsTable — grouping", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Group by default_measurement_type" }),
     );
-    // Group rows show the grouped value
     expect(screen.getByText(/volume/)).toBeInTheDocument();
     expect(screen.getByText(/weight/)).toBeInTheDocument();
   });
@@ -265,7 +289,114 @@ describe("IngredientsTable — grouping", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Ungroup by default_measurement_type" }),
     );
-    // Normal editable buttons return after ungrouping
     expect(await screen.findByRole("button", { name: "Edit name for Flour" })).toBeInTheDocument();
+  });
+});
+
+describe("IngredientsTable — row selection", () => {
+  it("renders a select-all checkbox in the header", () => {
+    setup([FLOUR, CHEESE]);
+    expect(screen.getByRole("checkbox", { name: "Select all ingredients" })).toBeInTheDocument();
+  });
+
+  it("renders per-row checkboxes", async () => {
+    setup([FLOUR, CHEESE]);
+    await screen.findByText("Flour");
+    expect(screen.getByRole("checkbox", { name: "Select Flour" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Select Cheese" })).toBeInTheDocument();
+  });
+
+  it("selecting a row shows the bulk action bar", async () => {
+    setup([FLOUR]);
+    await screen.findByText("Flour");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Flour" }));
+    expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+
+  it("deselecting all rows hides the bulk action bar", async () => {
+    setup([FLOUR]);
+    await screen.findByText("Flour");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Flour" }));
+    expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Flour" }));
+    expect(screen.queryByRole("region", { name: "Bulk actions" })).not.toBeInTheDocument();
+  });
+
+  it("select-all selects all visible rows", async () => {
+    setup([FLOUR, CHEESE]);
+    await screen.findByText("Flour");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all ingredients" }));
+    expect(screen.getByText("2 selected")).toBeInTheDocument();
+  });
+
+  it("select-all deselects when all are already selected", async () => {
+    setup([FLOUR, CHEESE]);
+    await screen.findByText("Flour");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all ingredients" }));
+    expect(screen.getByText("2 selected")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all ingredients" }));
+    expect(screen.queryByRole("region", { name: "Bulk actions" })).not.toBeInTheDocument();
+  });
+
+  it("Clear button deselects all", async () => {
+    setup([FLOUR, CHEESE]);
+    await screen.findByText("Flour");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all ingredients" }));
+    await userEvent.click(screen.getByRole("button", { name: "Clear" }));
+    expect(screen.queryByRole("region", { name: "Bulk actions" })).not.toBeInTheDocument();
+  });
+});
+
+describe("IngredientsTable — bulk actions", () => {
+  async function select_flour() {
+    setup([FLOUR, CHEESE]);
+    await screen.findByText("Flour");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Flour" }));
+  }
+
+  it("calls on_add_labels with selected ids and parsed labels", async () => {
+    await select_flour();
+    await userEvent.type(screen.getByLabelText("Labels to add"), "organic, fresh");
+    await userEvent.click(screen.getByRole("button", { name: "Apply add labels" }));
+    expect(on_add_labels).toHaveBeenCalledWith(["flour"], ["organic", "fresh"]);
+  });
+
+  it("calls on_remove_labels with selected ids and parsed labels", async () => {
+    await select_flour();
+    await userEvent.type(screen.getByLabelText("Labels to remove"), "baking");
+    await userEvent.click(screen.getByRole("button", { name: "Apply remove labels" }));
+    expect(on_remove_labels).toHaveBeenCalledWith(["flour"], ["baking"]);
+  });
+
+  it("calls on_bulk_set_type when type is selected and applied", async () => {
+    await select_flour();
+    await userEvent.selectOptions(screen.getByLabelText("Bulk measurement type"), "weight");
+    await userEvent.click(screen.getByRole("button", { name: "Apply type change" }));
+    expect(on_bulk_set_type).toHaveBeenCalledWith(["flour"], "weight");
+  });
+
+  it("calls on_bulk_set_parent when parent is selected and applied", async () => {
+    await select_flour();
+    await userEvent.selectOptions(screen.getByLabelText("Bulk parent"), "Cheese");
+    await userEvent.click(screen.getByRole("button", { name: "Apply parent change" }));
+    expect(on_bulk_set_parent).toHaveBeenCalledWith(["flour"], "cheese");
+  });
+
+  it("calls on_bulk_set_parent with undefined when Clear parent is selected", async () => {
+    await select_flour();
+    await userEvent.selectOptions(screen.getByLabelText("Bulk parent"), "Clear parent");
+    await userEvent.click(screen.getByRole("button", { name: "Apply parent change" }));
+    expect(on_bulk_set_parent).toHaveBeenCalledWith(["flour"], undefined);
+  });
+
+  it("Add labels Apply button is disabled when input is empty", async () => {
+    await select_flour();
+    expect(screen.getByRole("button", { name: "Apply add labels" })).toBeDisabled();
+  });
+
+  it("Change type Apply button is disabled when no type selected", async () => {
+    await select_flour();
+    expect(screen.getByRole("button", { name: "Apply type change" })).toBeDisabled();
   });
 });

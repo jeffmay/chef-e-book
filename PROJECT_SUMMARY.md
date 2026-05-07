@@ -166,13 +166,12 @@ An "active session" is a started recipe run:
 4. "<" — resets to value before editor opened
 - Unit selector: radio/select for all units of the same measurement type
 
-### Ingredients Page (BulkIngredientEditorPage)
-- TanStack Table v8 tree view — ingredients grouped by parent into expandable rows (▶/▼)
-- Column filters: fuzzy text search for Name and Parent; multi-select checkbox dropdown for Type and Labels (dropdown stays open while selecting, has search-within, ✔︎ accept / ✗ revert-to-snapshot buttons, and auto-accepts on outside click)
-- Sortable columns: click header to cycle ASC → DESC → unsorted; sort indicator (↑↓↕)
-- Groupable columns: toggle ⊞/⊟ button per column to group rows by that column's values
-- Inline editable cells: click any cell to edit in-place (text input for name/labels, select for type/parent); ✔︎ confirm / ✗ cancel buttons; Enter/Escape hotkeys
-- "Add new ingredient" form (name, measurement type, labels, optional parent)
+### Bulk Ingredient Editor
+- Search/filter by label, default measurement type, or parent type
+- Multi-select checkboxes
+- Bulk actions: add label, remove label, change measurement type, change parent ingredient
+- "Add new ingredient" form
+- "Refresh filter" link when changes invalidate the current filter
 
 ### Recipe Group Editor (Directory View)
 - Breadcrumb navigation back to root
@@ -233,7 +232,7 @@ npm run lint
 - [x] ProfileSettingsPage (rename user, persists to localStorage)
 - [x] Yjs ingredient CRUD store (`shared`) — init from defaults, add/remove labels, set type/parent, rename, set labels
 - [x] `use_ingredient_store` hook + DocContext (React)
-- [x] Ingredients Page — TanStack Table v8 tree view (expandable parent→child), column filters (fuzzy text for name/parent; multi-select checkbox dropdown for type/labels), sortable columns, groupable columns, inline editable cells (click to edit, Enter/Escape hotkeys, ✔︎/✗ confirm/cancel), `+ New ingredient` form
+- [x] Ingredients Page — TanStack Table v8 tree view (expandable parent→child), column filters (recursive fuzzy name filter with auto-expand; multi-select checkbox dropdown for type/labels), sortable columns, groupable columns, inline editable cells (click to edit, Enter/Escape hotkeys, ✔︎/✗ confirm/cancel), row checkboxes with select-all, bulk action bar (add/remove labels, change type, change parent), `+ New ingredient` form
 
 ---
 
