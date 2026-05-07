@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { parse_kitchenware_csv } from "../parse_kitchenware_csv.js";
-import { is_ingredient, is_container, is_equipment } from "../../types/kitchenware.js";
 
 const SAMPLE_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 butter,ingredient,Butter,volume,baking+fat+solid
@@ -14,11 +13,11 @@ describe("parse_kitchenware_csv", () => {
     const ingredient = result.find((k) => k.id === "butter");
     expect(ingredient).toBeDefined();
     if (ingredient === undefined) return;
-    expect(is_ingredient(ingredient)).toBe(true);
-    if (!is_ingredient(ingredient)) return;
+    expect(ingredient.kind).toBe("ingredient");
+    if (ingredient.kind !== "ingredient") return;
     expect(ingredient.name).toBe("Butter");
     expect(ingredient.default_measurement_type).toBe("volume");
-    expect(ingredient.labels).toEqual(["baking", "fat", "solid"]);
+    expect(ingredient.label_names).toEqual(["baking", "fat", "solid"]);
   });
 
   it("parses container rows", () => {
@@ -26,10 +25,10 @@ describe("parse_kitchenware_csv", () => {
     const container = result.find((k) => k.id === "bowl");
     expect(container).toBeDefined();
     if (container === undefined) return;
-    expect(is_container(container)).toBe(true);
-    if (!is_container(container)) return;
+    expect(container.kind).toBe("container");
+    if (container.kind !== "container") return;
     expect(container.name).toBe("Bowl");
-    expect(container.labels).toEqual(["vessel"]);
+    expect(container.label_names).toEqual(["vessel"]);
   });
 
   it("parses equipment rows", () => {
@@ -37,10 +36,10 @@ describe("parse_kitchenware_csv", () => {
     const equipment = result.find((k) => k.id === "oven");
     expect(equipment).toBeDefined();
     if (equipment === undefined) return;
-    expect(is_equipment(equipment)).toBe(true);
-    if (!is_equipment(equipment)) return;
+    expect(equipment.kind).toBe("equipment");
+    if (equipment.kind !== "equipment") return;
     expect(equipment.name).toBe("Oven");
-    expect(equipment.labels).toEqual(["heat"]);
+    expect(equipment.label_names).toEqual(["heat"]);
   });
 
   it("returns empty array for header-only CSV", () => {
@@ -69,8 +68,8 @@ water,ingredient,Water,volume,
     const water = result.find((k) => k.id === "water");
     expect(water).toBeDefined();
     if (water === undefined) return;
-    if (!is_ingredient(water)) return;
-    expect(water.labels).toEqual([]);
+    if (water.kind !== "ingredient") return;
+    expect(water.label_names).toEqual([]);
   });
 });
 

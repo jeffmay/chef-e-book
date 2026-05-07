@@ -1,0 +1,222 @@
+.lt-section {
+  margin-bottom: var(--spacing-md);
+}
+
+.lt-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: none;
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 1em;
+  font-family: var(--font-display);
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--color-fg);
+  width: 100%;
+  text-align: left;
+}
+
+.lt-toggle:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.lt-toggle-icon {
+  font-size: 0.7em;
+}
+
+.lt-count {
+  font-size: 0.8em;
+  font-weight: normal;
+  color: var(--color-muted);
+  margin-left: auto;
+}
+
+.lt-panel {
+  border: var(--border-width) solid var(--color-border);
+  border-top: none;
+}
+
+/* Bulk action bar */
+.lt-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: #f8f8f8;
+  border-bottom: var(--border-width) solid var(--color-border);
+  font-size: 0.9em;
+}
+
+.lt-bulk-count {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.lt-bulk-btn {
+  background: none;
+  border: var(--border-width) solid var(--color-border);
+  padding: 1px 8px;
+  font-size: 0.85em;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  white-space: nowrap;
+}
+
+.lt-bulk-btn:hover:not(:disabled) {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.lt-bulk-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.lt-bulk-btn--danger {
+  border-color: #c00;
+  color: #c00;
+}
+
+.lt-bulk-btn--danger:hover {
+  background: #c00;
+  color: #fff;
+  border-color: #c00;
+}
+
+.lt-bulk-clear {
+  background: none;
+  border: var(--border-width) solid var(--color-border);
+  padding: 1px 6px;
+  font-size: 0.85em;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  margin-left: auto;
+}
+
+.lt-bulk-clear:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.lt-merge-form {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.lt-merge-input {
+  font-size: 0.85em;
+  padding: 1px 4px;
+  border: var(--border-width) solid var(--color-border);
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  width: 14vw;
+  min-width: 8em;
+}
+
+/* Table */
+.lt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.lt-th {
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  text-align: left;
+  background: var(--color-fg);
+  color: var(--color-bg);
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.lt-th--select {
+  width: 2em;
+  text-align: center;
+}
+
+.lt-td {
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  vertical-align: middle;
+}
+
+.lt-td--select {
+  width: 2em;
+  text-align: center;
+  padding: 0;
+}
+
+.lt-td--select input[type="checkbox"] {
+  cursor: pointer;
+  width: 1em;
+  height: 1em;
+}
+
+.lt-td--kinds {
+  color: var(--color-muted);
+  font-size: 0.85em;
+}
+
+.lt-row--selected > .lt-td {
+  background: #f0f0f0;
+}
+
+/* Inline name editing */
+.lt-name {
+  cursor: pointer;
+  display: block;
+  min-width: 4em;
+}
+
+.lt-name:focus {
+  outline: 2px solid var(--color-fg);
+  outline-offset: 1px;
+}
+
+.lt-editing {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.lt-edit-input {
+  font-size: 0.9em;
+  padding: 1px 4px;
+  border: var(--border-width) solid var(--color-border);
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  width: 12vw;
+  min-width: 5em;
+}
+
+.lt-edit-btn {
+  font-size: 0.75em;
+  padding: 1px 4px;
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.lt-edit-btn:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.lt-empty {
+  padding: var(--spacing-md);
+  text-align: center;
+  color: var(--color-muted);
+  font-style: italic;
+}

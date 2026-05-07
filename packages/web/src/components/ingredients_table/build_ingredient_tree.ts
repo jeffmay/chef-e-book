@@ -1,28 +1,35 @@
-import type { Ingredient, MeasurementType } from "@recipe-book/shared";
+import type { Ingredient, ItemLabel, MeasurementType } from "@recipe-book/shared";
 
 export interface IngredientRow {
   readonly kind: "ingredient";
-  readonly id: string;
+  readonly id: Ingredient.Id;
   readonly name: string;
   readonly default_measurement_type: MeasurementType;
   readonly labels: readonly string[];
-  readonly parent_id?: string;
+  readonly parent_id?: Ingredient.Id;
   readonly parent_name: string;
   readonly subRows: IngredientRow[]; // readonly ref, mutable contents — safe to push during build
 }
 
-export function build_ingredient_tree(ingredients: readonly Ingredient[]): IngredientRow[] {
+export function build_ingredient_tree(
+  ingredients: readonly Ingredient[],
+  item_labels: readonly ItemLabel[],
+): IngredientRow[] {
+  const label_name_by_id = new Map<string, string>(item_labels.map((l) => [l.id, l.name]));
   const id_to_name = new Map<string, string>(ingredients.map((i) => [i.id, i.name]));
 
   const row_map = new Map<string, IngredientRow>();
 
   for (const i of ingredients) {
+    const label_names = [...i.labels]
+      .map((id) => label_name_by_id.get(id) ?? id)
+      .sort((a, b) => a.localeCompare(b));
     const row: IngredientRow = {
       kind: "ingredient",
       id: i.id,
       name: i.name,
       default_measurement_type: i.default_measurement_type,
-      labels: i.labels,
+      labels: label_names,
       parent_name:
         i.parent_id !== undefined ? (id_to_name.get(i.parent_id) ?? i.parent_id) : "",
       subRows: [],

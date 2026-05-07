@@ -1,5 +1,29 @@
-import type { Kitchenware, Ingredient, Container, Equipment } from "../types/kitchenware.js";
 import type { MeasurementType } from "../types/measurement.js";
+
+export interface IngredientTemplate {
+  readonly kind: "ingredient";
+  readonly id: string;
+  readonly name: string;
+  readonly default_measurement_type: MeasurementType;
+  readonly label_names: readonly string[];
+  readonly parent_id?: string;
+}
+
+export interface ContainerTemplate {
+  readonly kind: "container";
+  readonly id: string;
+  readonly name: string;
+  readonly label_names: readonly string[];
+}
+
+export interface EquipmentTemplate {
+  readonly kind: "equipment";
+  readonly id: string;
+  readonly name: string;
+  readonly label_names: readonly string[];
+}
+
+export type KitchenwareTemplate = IngredientTemplate | ContainerTemplate | EquipmentTemplate;
 
 interface RawRow {
   readonly id: string;
@@ -43,45 +67,48 @@ function parse_measurement_type(raw: string, row_id: string): MeasurementType {
   throw new Error(`Unknown measurement type "${raw}" for kitchenware "${row_id}"`);
 }
 
-function parse_labels(raw: string): string[] {
+function parse_label_names(raw: string): string[] {
   if (raw === "") return [];
-  return raw.split("+").map((l) => l.trim()).filter((l) => l !== "");
+  return raw
+    .split("+")
+    .map((l) => l.trim())
+    .filter((l) => l !== "");
 }
 
-function parse_ingredient(row: RawRow): Ingredient {
+function parse_ingredient_template(row: RawRow): IngredientTemplate {
   return {
     kind: "ingredient",
     id: row.id,
     name: row.name,
     default_measurement_type: parse_measurement_type(row.default_measurement_type, row.id),
-    labels: parse_labels(row.labels),
+    label_names: parse_label_names(row.labels),
   };
 }
 
-function parse_container(row: RawRow): Container {
+function parse_container_template(row: RawRow): ContainerTemplate {
   return {
     kind: "container",
     id: row.id,
     name: row.name,
-    labels: parse_labels(row.labels),
+    label_names: parse_label_names(row.labels),
   };
 }
 
-function parse_equipment(row: RawRow): Equipment {
+function parse_equipment_template(row: RawRow): EquipmentTemplate {
   return {
     kind: "equipment",
     id: row.id,
     name: row.name,
-    labels: parse_labels(row.labels),
+    label_names: parse_label_names(row.labels),
   };
 }
 
-export function parse_kitchenware_csv(csv: string): Kitchenware[] {
+export function parse_kitchenware_csv(csv: string): KitchenwareTemplate[] {
   const rows = parse_csv_rows(csv);
   return rows.map((row) => {
-    if (row.type === "ingredient") return parse_ingredient(row);
-    if (row.type === "container") return parse_container(row);
-    if (row.type === "equipment") return parse_equipment(row);
+    if (row.type === "ingredient") return parse_ingredient_template(row);
+    if (row.type === "container") return parse_container_template(row);
+    if (row.type === "equipment") return parse_equipment_template(row);
     throw new Error(`Unknown kitchenware type "${row.type}" for id "${row.id}"`);
   });
 }

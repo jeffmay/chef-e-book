@@ -1,8 +1,14 @@
-import { useState, type FormEvent } from "react";
-import type { MeasurementType } from "@recipe-book/shared";
+import { useState } from "react";
+import type { MeasurementType, Ingredient, ItemLabel, ItemKind } from "@recipe-book/shared";
+import { find_or_create_label } from "@recipe-book/shared";
 import { use_ingredient_store } from "../hooks/use_ingredient_store.js";
-import { IngredientsTable } from "../components/ingredients_table/IngredientsTable.js";
+import { use_label_store } from "../hooks/use_label_store.js";
+import { use_doc } from "../contexts/doc_context.js";
+import { IngredientsTable, type ExternalLabelFilter } from "../components/ingredients_table/IngredientsTable.js";
+import { LabelTable } from "../components/ingredients_table/LabelTable.js";
 import "./BulkIngredientEditorPage.css";
+
+const INGREDIENT_KINDS: ReadonlySet<ItemKind> = new Set(["ingredient"]);
 
 // ---------------------------------------------------------------------------
 // Add-ingredient form state
@@ -27,6 +33,8 @@ const EMPTY_ADD_FORM: AddFormState = {
 // ---------------------------------------------------------------------------
 
 export function BulkIngredientEditorPage() {
+  const doc = use_doc();
+
   const {
     ingredients,
     create_ingredient,
@@ -38,25 +46,81 @@ export function BulkIngredientEditorPage() {
     set_parent,
   } = use_ingredient_store();
 
-  // --- add-ingredient form ---
+  const { labels, rename_label, delete_labels, merge_labels } = use_label_store();
+
   const [show_add_form, set_show_add_form] = useState(false);
   const [add_form, set_add_form] = useState<AddFormState>(EMPTY_ADD_FORM);
+  const [external_label_filter, set_external_label_filter] = useState<
+    ExternalLabelFilter | undefined
+  >(undefined);
 
-  function handle_add_submit(e: FormEvent) {
+  function resolve_label_names(label_names: readonly string[]): readonly ItemLabel.Id[] {
+    return label_names.map((name) => find_or_create_label(doc, name, INGREDIENT_KINDS));
+  }
+
+  function handle_add_submit(e: { preventDefault(): void }): void {
     e.preventDefault();
     if (add_form.name.trim() === "") return;
-    const labels = add_form.labels_raw
+    const label_names = add_form.labels_raw
       .split(",")
       .map((l) => l.trim())
       .filter((l) => l !== "");
     create_ingredient({
       name: add_form.name.trim(),
       default_measurement_type: add_form.measurement_type,
-      labels,
-      ...(add_form.parent_id !== "" && { parent_id: add_form.parent_id }),
+      label_names,
+      ...(add_form.parent_id !== "" && {
+        parent_id: add_form.parent_id as Ingredient.Id,
+      }),
     });
     set_add_form(EMPTY_ADD_FORM);
     set_show_add_form(false);
+  }
+
+  function handle_set_labels(id: Ingredient.Id, label_names: readonly string[]): void {
+    set_labels(id, resolve_label_names(label_names));
+  }
+
+  function handle_add_labels(
+    ids: readonly Ingredient.Id[],
+    label_names: readonly string[],
+  ): void {
+    add_labels(ids, resolve_label_names(label_names));
+  }
+
+  function handle_remove_labels(
+    ids: readonly Ingredient.Id[],
+    label_names: readonly string[],
+  ): void {
+    const remove_ids = label_names
+      .map((name) => labels.find((l) => l.name === name)?.id)
+      .filter((id): id is ItemLabel.Id => id !== undefined);
+    if (remove_ids.length > 0) {
+      remove_labels(ids, remove_ids);
+    }
+  }
+
+  function handle_set_parent(
+    id: Ingredient.Id,
+    parent_id: Ingredient.Id | undefined,
+  ): void {
+    set_parent([id], parent_id);
+  }
+
+  function handle_filter_all(label_ids: readonly ItemLabel.Id[]): void {
+    if (label_ids.length === 0) {
+      set_external_label_filter(undefined);
+    } else {
+      set_external_label_filter({ label_ids, mode: "all" });
+    }
+  }
+
+  function handle_filter_any(label_ids: readonly ItemLabel.Id[]): void {
+    if (label_ids.length === 0) {
+      set_external_label_filter(undefined);
+    } else {
+      set_external_label_filter({ label_ids, mode: "any" });
+    }
   }
 
   return (
@@ -152,15 +216,27 @@ export function BulkIngredientEditorPage() {
         </button>
       </div>
 
+      {/* Label table (expandable) */}
+      <LabelTable
+        labels={labels}
+        on_filter_all={handle_filter_all}
+        on_filter_any={handle_filter_any}
+        on_delete={(ids) => delete_labels([...ids])}
+        on_merge={merge_labels}
+        on_rename={rename_label}
+      />
+
       {/* Ingredient table */}
       <IngredientsTable
         ingredients={ingredients}
+        labels={labels}
+        {...(external_label_filter !== undefined && { external_label_filter })}
         on_rename={rename_ingredient}
         on_set_type={(id, type) => set_measurement_type([id], type)}
-        on_set_labels={set_labels}
-        on_set_parent={(id, parent_id) => set_parent([id], parent_id)}
-        on_add_labels={add_labels}
-        on_remove_labels={remove_labels}
+        on_set_labels={handle_set_labels}
+        on_set_parent={handle_set_parent}
+        on_add_labels={handle_add_labels}
+        on_remove_labels={handle_remove_labels}
         on_bulk_set_type={set_measurement_type}
         on_bulk_set_parent={set_parent}
       />

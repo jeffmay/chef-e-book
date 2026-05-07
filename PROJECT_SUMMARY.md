@@ -39,22 +39,31 @@ Kitchenware (ingredients, containers, equipment) lives in a global shared list w
 
 **CSV columns:** `Unique ID`, `Type`, `Description`, `Default Measurement Type`, `Labels` ("+"-separated)
 
-#### Ingredient
-- `id`: string (unique)
+#### ItemLabel
+- `id`: `ItemLabel.Id` (branded nanoid, 7 chars)
 - `name`: string
-- `default_measurement_type`: `"volume" | "weight"`
-- `labels`: string[] (inherited from parent chain)
-- `parent_id?`: string (supports subtypes; e.g. "Shredded Cheddar" → "Shredded Cheese" → "Cheese")
+- `kinds`: `ReadonlySet<ItemKind>` — which item types this label applies to
+
+Labels are stored in the `"labels"` Yjs map on the document root. Deleting a label cascades to remove it from all ingredient label sets (via Yjs observer in `use_label_store`). Merging replaces multiple old IDs with a single new ID transactionally.
+
+#### Ingredient
+- `id`: `Ingredient.Id` (branded nanoid, 12 chars)
+- `name`: string
+- `default_measurement_type`: `"volume" | "weight" | "count"`
+- `labels`: `ReadonlySet<ItemLabel.Id>` (stored as `string[]` in Yjs, reconstructed as Set on read)
+- `parent_id?`: `Ingredient.Id` (supports subtypes; e.g. "Shredded Cheddar" → "Shredded Cheese" → "Cheese")
 
 #### Container
-- `id`: string
+- `id`: `Container.Id` (branded nanoid, 12 chars)
 - `name`: string (bowl, steamer, pot, aluminium foil, etc.)
-- `labels`: string[]
+- `labels`: `ReadonlySet<ItemLabel.Id>`
 
 #### Equipment
-- `id`: string
+- `id`: `Equipment.Id` (branded nanoid, 12 chars)
 - `name`: string (oven, stove, etc.)
-- `labels`: string[]
+- `labels`: `ReadonlySet<ItemLabel.Id>`
+
+**Branded IDs** use `ts-brand` phantom types (`Brand<string, "Ingredient.Id">`) for compile-time type safety. Namespace+interface merging enables the `Ingredient.Id` dot notation.
 
 ### Recipe
 
@@ -233,6 +242,11 @@ npm run lint
 - [x] Yjs ingredient CRUD store (`shared`) — init from defaults, add/remove labels, set type/parent, rename, set labels
 - [x] `use_ingredient_store` hook + DocContext (React)
 - [x] Ingredients Page — TanStack Table v8 tree view (expandable parent→child), column filters (recursive fuzzy name filter with auto-expand; multi-select checkbox dropdown for type/labels), sortable columns, groupable columns, inline editable cells (click to edit, Enter/Escape hotkeys, ✔︎/✗ confirm/cancel), row checkboxes with select-all, bulk action bar (add/remove labels, change type, change parent), `+ New ingredient` form
+- [x] `ItemLabel` type with branded `ItemLabel.Id` (7-char nanoid); `ItemKind`-scoped labels stored in `"labels"` Yjs map
+- [x] Branded IDs for all item types via `ts-brand` + TypeScript declaration merging (`Ingredient.Id`, `Container.Id`, `Equipment.Id`, `ItemLabel.Id`)
+- [x] `label_store.ts` — Yjs CRUD (add, find, rename, delete, find-or-create); `use_label_store` React hook with cascade-delete observer and transactional merge
+- [x] `LabelTable` expandable panel — multi-select checkboxes, bulk actions (Filter All, Filter Any, Delete, Merge with name prompt), inline rename; shown above `IngredientsTable` on the Bulk Ingredient Editor page
+- [x] External label filter: selecting labels in `LabelTable` and clicking Filter All/Any updates a filter passed to `IngredientsTable` that pre-filters ingredients before tree-building
 
 ---
 

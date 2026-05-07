@@ -1,5 +1,6 @@
 export * from "./types/measurement.js";
-export * from "./types/kitchenware.js";
+export * from "./types/item_label.js";
+export * from "./types/item.js";
 export * from "./types/recipe.js";
 export * from "./types/session.js";
 export * from "./types/recipe_group.js";
@@ -8,3 +9,4 @@ export * from "./math/units.js";
 export * from "./fixtures/parse_kitchenware_csv.js";
 export * from "./fixtures/default_kitchenware.js";
 export * from "./yjs/ingredient_store.js";
+export * from "./yjs/label_store.js";

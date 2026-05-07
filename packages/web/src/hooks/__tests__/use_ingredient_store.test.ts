@@ -2,8 +2,12 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import * as Y from "yjs";
+import { find_or_create_label, type ItemLabel, type ItemKind } from "@recipe-book/shared";
+import type { Ingredient } from "@recipe-book/shared";
 import { DocContext } from "../../contexts/doc_context.js";
 import { use_ingredient_store } from "../use_ingredient_store.js";
+
+const INGREDIENT_KINDS: ReadonlySet<ItemKind> = new Set(["ingredient"]);
 
 function make_wrapper(doc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -34,7 +38,7 @@ describe("use_ingredient_store", () => {
       result.current.create_ingredient({
         name: "Almond Milk",
         default_measurement_type: "volume",
-        labels: ["liquid", "dairy-free"],
+        label_names: ["liquid", "dairy-free"],
       }),
     );
     expect(result.current.ingredients.length).toBe(before + 1);
@@ -49,15 +53,17 @@ describe("use_ingredient_store", () => {
       result.current.create_ingredient({
         name: "Test Ing",
         default_measurement_type: "volume",
-        labels: ["a"],
+        label_names: ["a"],
       }),
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing")?.id;
     if (id === undefined) throw new Error("ingredient not found");
-    act(() => result.current.add_labels([id], ["b", "c"]));
+    const b_id = find_or_create_label(doc, "b", INGREDIENT_KINDS);
+    const c_id = find_or_create_label(doc, "c", INGREDIENT_KINDS);
+    act(() => result.current.add_labels([id], [b_id, c_id]));
     const updated = result.current.ingredients.find((i) => i.id === id);
-    expect(updated?.labels).toContain("b");
-    expect(updated?.labels).toContain("c");
+    expect(updated?.labels.has(b_id)).toBe(true);
+    expect(updated?.labels.has(c_id)).toBe(true);
   });
 
   it("remove_labels removes labels from selected ingredients", () => {
@@ -68,15 +74,18 @@ describe("use_ingredient_store", () => {
       result.current.create_ingredient({
         name: "Test Ing 2",
         default_measurement_type: "volume",
-        labels: ["x", "y"],
+        label_names: ["x", "y"],
       }),
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing 2")?.id;
     if (id === undefined) throw new Error("ingredient not found");
-    act(() => result.current.remove_labels([id], ["x"]));
+    // Labels were created by create_ingredient; look them up by name
+    const x_id = find_or_create_label(doc, "x", INGREDIENT_KINDS);
+    const y_id = find_or_create_label(doc, "y", INGREDIENT_KINDS);
+    act(() => result.current.remove_labels([id], [x_id]));
     const updated = result.current.ingredients.find((i) => i.id === id);
-    expect(updated?.labels).not.toContain("x");
-    expect(updated?.labels).toContain("y");
+    expect(updated?.labels.has(x_id)).toBe(false);
+    expect(updated?.labels.has(y_id)).toBe(true);
   });
 
   it("set_measurement_type changes the type", () => {
@@ -108,14 +117,17 @@ describe("use_ingredient_store", () => {
       result.current.create_ingredient({
         name: "Test Ing Labels",
         default_measurement_type: "volume",
-        labels: ["a", "b"],
+        label_names: ["a", "b"],
       }),
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing Labels")?.id;
     if (id === undefined) throw new Error("ingredient not found");
-    act(() => result.current.set_labels(id, ["x", "y", "z"]));
+    const x_id = find_or_create_label(doc, "x", INGREDIENT_KINDS);
+    const y_id = find_or_create_label(doc, "y", INGREDIENT_KINDS);
+    const z_id = find_or_create_label(doc, "z", INGREDIENT_KINDS);
+    act(() => result.current.set_labels(id, [x_id, y_id, z_id]));
     const updated = result.current.ingredients.find((i) => i.id === id);
-    expect(updated?.labels).toEqual(["x", "y", "z"]);
+    expect(updated?.labels).toEqual(new Set<ItemLabel.Id>([x_id, y_id, z_id]));
   });
 
   it("set_parent sets and clears parent_id", () => {
@@ -124,7 +136,7 @@ describe("use_ingredient_store", () => {
     });
     const butter = result.current.ingredients.find((i) => i.id === "butter");
     if (butter === undefined) throw new Error("butter not found in defaults");
-    act(() => result.current.set_parent([butter.id], "dairy"));
+    act(() => result.current.set_parent([butter.id], "dairy" as Ingredient.Id));
     expect(result.current.ingredients.find((i) => i.id === "butter")?.parent_id).toBe("dairy");
     act(() => result.current.set_parent([butter.id], undefined));
     expect(result.current.ingredients.find((i) => i.id === "butter")?.parent_id).toBeUndefined();

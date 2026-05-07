@@ -1,5 +1,5 @@
 import { parse_kitchenware_csv } from "./parse_kitchenware_csv.js";
-import type { Kitchenware } from "../types/kitchenware.js";
+import type { KitchenwareTemplate } from "./parse_kitchenware_csv.js";
 
 const DEFAULT_KITCHENWARE_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 butter,ingredient,Butter,volume,baking+fat+solid
@@ -23,4 +23,5 @@ stove,equipment,Stove,count,heat
 mixer,equipment,Mixer,count,electric
 `;
 
-export const DEFAULT_KITCHENWARE: readonly Kitchenware[] = parse_kitchenware_csv(DEFAULT_KITCHENWARE_CSV);
+export const DEFAULT_KITCHENWARE: readonly KitchenwareTemplate[] =
+  parse_kitchenware_csv(DEFAULT_KITCHENWARE_CSV);

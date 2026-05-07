@@ -3,30 +3,34 @@ import {
   is_ingredient,
   is_container,
   is_equipment,
-  type Kitchenware,
-} from "../kitchenware.js";
+  type Item,
+  type Ingredient,
+  type Container,
+  type Equipment,
+} from "../item.js";
+import type { ItemLabel } from "../item_label.js";
 
 describe("kitchenware type guards", () => {
-  const ingredient: Kitchenware = {
+  const ingredient: Item = {
     kind: "ingredient",
-    id: "butter",
+    id: "butter" as Ingredient.Id,
     name: "Butter",
     default_measurement_type: "volume",
-    labels: ["fat", "solid"],
+    labels: new Set<ItemLabel.Id>(),
   };
 
-  const container: Kitchenware = {
+  const container: Item = {
     kind: "container",
-    id: "bowl",
+    id: "bowl" as Container.Id,
     name: "Bowl",
-    labels: ["vessel"],
+    labels: new Set<ItemLabel.Id>(),
   };
 
-  const equipment: Kitchenware = {
+  const equipment: Item = {
     kind: "equipment",
-    id: "oven",
+    id: "oven" as Equipment.Id,
     name: "Oven",
-    labels: ["heat"],
+    labels: new Set<ItemLabel.Id>(),
   };
 
   it("is_ingredient returns true only for ingredient", () => {

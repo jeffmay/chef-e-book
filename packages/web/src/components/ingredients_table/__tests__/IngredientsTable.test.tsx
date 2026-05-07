@@ -1,37 +1,37 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Ingredient } from "@recipe-book/shared";
+import type { Ingredient, ItemLabel } from "@recipe-book/shared";
 import { IngredientsTable } from "../IngredientsTable.js";
 
 const DAIRY: Ingredient = {
   kind: "ingredient",
-  id: "dairy",
+  id: "dairy" as Ingredient.Id,
   name: "Dairy",
   default_measurement_type: "volume",
-  labels: [],
+  labels: new Set<ItemLabel.Id>(),
 };
 const BUTTER: Ingredient = {
   kind: "ingredient",
-  id: "butter",
+  id: "butter" as Ingredient.Id,
   name: "Butter",
   default_measurement_type: "volume",
-  labels: ["fat", "solid"],
-  parent_id: "dairy",
+  labels: new Set(["fat0000" as ItemLabel.Id, "sol0000" as ItemLabel.Id]),
+  parent_id: "dairy" as Ingredient.Id,
 };
 const FLOUR: Ingredient = {
   kind: "ingredient",
-  id: "flour",
+  id: "flour" as Ingredient.Id,
   name: "Flour",
   default_measurement_type: "volume",
-  labels: ["baking"],
+  labels: new Set(["bak0000" as ItemLabel.Id]),
 };
 const CHEESE: Ingredient = {
   kind: "ingredient",
-  id: "cheese",
+  id: "cheese" as Ingredient.Id,
   name: "Cheese",
   default_measurement_type: "weight",
-  labels: ["solid"],
+  labels: new Set(["sol0000" as ItemLabel.Id]),
 };
 
 const on_rename = vi.fn();
@@ -47,6 +47,7 @@ function setup(ingredients: Ingredient[] = [DAIRY, BUTTER, FLOUR, CHEESE]) {
   return render(
     <IngredientsTable
       ingredients={ingredients}
+      labels={[]}
       on_rename={on_rename}
       on_set_type={on_set_type}
       on_set_labels={on_set_labels}
