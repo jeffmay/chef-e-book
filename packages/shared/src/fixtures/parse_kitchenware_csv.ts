@@ -1,4 +1,6 @@
-import type { MeasurementType } from "../types/measurement.js";
+import Papa from "papaparse";
+import { type } from "arktype";
+import { MeasurementType } from "../types/measurement.js";
 
 export interface IngredientTemplate {
   readonly kind: "ingredient";
@@ -25,90 +27,91 @@ export interface EquipmentTemplate {
 
 export type KitchenwareTemplate = IngredientTemplate | ContainerTemplate | EquipmentTemplate;
 
-interface RawRow {
-  readonly id: string;
-  readonly type: string;
-  readonly name: string;
-  readonly default_measurement_type: string;
-  readonly labels: string;
-}
-
-function parse_csv_rows(csv: string): RawRow[] {
-  const lines = csv.trim().split("\n");
-  if (lines.length < 2) return [];
-  const rows: RawRow[] = [];
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i];
-    if (line === undefined || line.trim() === "") continue;
-    const cols = line.split(",");
-    if (cols.length < 5) throw new Error(`Malformed kitchenware CSV row ${i + 1}: ${line}`);
-    const [id, type, name, default_measurement_type, ...label_parts] = cols;
-    if (
-      id === undefined ||
-      type === undefined ||
-      name === undefined ||
-      default_measurement_type === undefined
-    ) {
-      throw new Error(`Missing required fields in kitchenware CSV row ${i + 1}: ${line}`);
-    }
-    rows.push({
-      id: id.trim(),
-      type: type.trim(),
-      name: name.trim(),
-      default_measurement_type: default_measurement_type.trim(),
-      labels: label_parts.join(",").trim(),
-    });
-  }
-  return rows;
-}
-
-function parse_measurement_type(raw: string, row_id: string): MeasurementType {
-  if (raw === "volume" || raw === "weight" || raw === "count") return raw;
-  throw new Error(`Unknown measurement type "${raw}" for kitchenware "${row_id}"`);
-}
-
-function parse_label_names(raw: string): string[] {
-  if (raw === "") return [];
-  return raw
+const LabelNames = type("string").pipe((s) =>
+  s
     .split("+")
     .map((l) => l.trim())
-    .filter((l) => l !== "");
-}
+    .filter((l) => l !== ""),
+);
 
-function parse_ingredient_template(row: RawRow): IngredientTemplate {
-  return {
+const IngredientRow = type({
+  "Unique ID": "string",
+  "Description": "string",
+  "Default Measurement Type": MeasurementType,
+  "Labels": LabelNames,
+}).pipe(
+  (row): IngredientTemplate => ({
     kind: "ingredient",
-    id: row.id,
-    name: row.name,
-    default_measurement_type: parse_measurement_type(row.default_measurement_type, row.id),
-    label_names: parse_label_names(row.labels),
-  };
-}
+    id: row["Unique ID"],
+    name: row["Description"],
+    default_measurement_type: row["Default Measurement Type"],
+    label_names: row["Labels"],
+  }),
+);
 
-function parse_container_template(row: RawRow): ContainerTemplate {
-  return {
+const ContainerRow = type({
+  "Unique ID": "string",
+  "Description": "string",
+  "Labels": LabelNames,
+}).pipe(
+  (row): ContainerTemplate => ({
     kind: "container",
-    id: row.id,
-    name: row.name,
-    label_names: parse_label_names(row.labels),
-  };
-}
+    id: row["Unique ID"],
+    name: row["Description"],
+    label_names: row["Labels"],
+  }),
+);
 
-function parse_equipment_template(row: RawRow): EquipmentTemplate {
-  return {
+const EquipmentRow = type({
+  "Unique ID": "string",
+  "Description": "string",
+  "Labels": LabelNames,
+}).pipe(
+  (row): EquipmentTemplate => ({
     kind: "equipment",
-    id: row.id,
-    name: row.name,
-    label_names: parse_label_names(row.labels),
-  };
-}
+    id: row["Unique ID"],
+    name: row["Description"],
+    label_names: row["Labels"],
+  }),
+);
 
 export function parse_kitchenware_csv(csv: string): KitchenwareTemplate[] {
-  const rows = parse_csv_rows(csv);
-  return rows.map((row) => {
-    if (row.type === "ingredient") return parse_ingredient_template(row);
-    if (row.type === "container") return parse_container_template(row);
-    if (row.type === "equipment") return parse_equipment_template(row);
-    throw new Error(`Unknown kitchenware type "${row.type}" for id "${row.id}"`);
+  const { data, errors } = Papa.parse<Record<string, string>>(csv, {
+    header: true,
+    skipEmptyLines: true,
   });
+  if (errors.length > 0) throw new Error(`CSV parse error: ${errors[0]!.message}`);
+
+  const results: KitchenwareTemplate[] = [];
+  for (const raw_row of data) {
+    const type_val = (raw_row["Type"] ?? "").trim();
+    const row_id = (raw_row["Unique ID"] ?? "unknown").trim();
+
+    if (type_val === "ingredient") {
+      const mtype = (raw_row["Default Measurement Type"] ?? "").trim();
+      if (mtype !== "volume" && mtype !== "weight" && mtype !== "count") {
+        throw new Error(`Unknown measurement type "${mtype}" for kitchenware "${row_id}"`);
+      }
+      const result = IngredientRow(raw_row);
+      if (result instanceof type.errors) {
+        throw new Error(`Malformed ingredient CSV row for "${row_id}": ${result.summary}`);
+      }
+      results.push(result);
+    } else if (type_val === "container") {
+      const result = ContainerRow(raw_row);
+      if (result instanceof type.errors) {
+        throw new Error(`Malformed container CSV row for "${row_id}": ${result.summary}`);
+      }
+      results.push(result);
+    } else if (type_val === "equipment") {
+      const result = EquipmentRow(raw_row);
+      if (result instanceof type.errors) {
+        throw new Error(`Malformed equipment CSV row for "${row_id}": ${result.summary}`);
+      }
+      results.push(result);
+    } else {
+      throw new Error(`Unknown kitchenware type "${type_val}" for id "${row_id}"`);
+    }
+  }
+  return results;
 }

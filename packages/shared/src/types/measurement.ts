@@ -1,4 +1,7 @@
-export type MeasurementType = "volume" | "weight" | "count";
+import { type } from "arktype";
+
+export const MeasurementType = type("'volume' | 'weight' | 'count'");
+export type MeasurementType = typeof MeasurementType.infer;
 
 export const VolumeUnit = [
   "tsp",

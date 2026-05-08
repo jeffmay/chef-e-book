@@ -1,40 +1,29 @@
 import * as Y from "yjs";
 import { nanoid } from "nanoid";
+import { type } from "arktype";
 import type { ItemLabel } from "../types/item_label.js";
 import type { ItemKind } from "../types/item.js";
 
 const LABELS_MAP_KEY = "labels";
 
-interface StoredLabel {
-  readonly name: string;
-  readonly kinds: readonly string[];
-}
+const StoredLabel = type({
+  name: "string",
+  kinds: type("('ingredient' | 'container' | 'equipment')[]").pipe(
+    (arr) => new Set(arr) as ReadonlySet<ItemKind>,
+  ),
+});
 
 export function get_labels_ymap(doc: Y.Doc): Y.Map<unknown> {
   return doc.getMap(LABELS_MAP_KEY);
 }
 
 function validate_label(id: string, raw: unknown): ItemLabel | null {
-  if (typeof raw !== "object" || raw === null) return null;
-  const obj = raw as Record<string, unknown>;
-  const name = obj["name"];
-  const kinds_raw = obj["kinds"];
-  if (typeof name !== "string") return null;
-  if (!Array.isArray(kinds_raw)) return null;
-  const valid_kinds = new Set<ItemKind>();
-  for (const k of kinds_raw) {
-    if (k === "ingredient" || k === "container" || k === "equipment") {
-      valid_kinds.add(k);
-    }
-  }
-  return {
-    id: id as ItemLabel.Id,
-    name,
-    kinds: valid_kinds,
-  };
+  const result = StoredLabel(raw);
+  if (result instanceof type.errors) return null;
+  return { id: id as ItemLabel.Id, name: result.name, kinds: result.kinds };
 }
 
-function to_stored(label: ItemLabel): StoredLabel {
+function to_stored(label: ItemLabel) {
   return {
     name: label.name,
     kinds: [...label.kinds],

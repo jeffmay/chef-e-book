@@ -1,7 +1,8 @@
 import * as Y from "yjs";
 import { nanoid } from "nanoid";
+import { type } from "arktype";
 import type { Ingredient, ItemKind } from "../types/item.js";
-import type { MeasurementType } from "../types/measurement.js";
+import { MeasurementType } from "../types/measurement.js";
 import type { ItemLabel } from "../types/item_label.js";
 import { DEFAULT_KITCHENWARE } from "../fixtures/default_kitchenware.js";
 import { find_or_create_label, get_labels_ymap } from "./label_store.js";
@@ -14,14 +15,14 @@ export function get_ingredient_ymap(doc: Y.Doc): Y.Map<unknown> {
   return doc.getMap(MAP_KEY);
 }
 
-interface StoredIngredient {
-  readonly name: string;
-  readonly default_measurement_type: MeasurementType;
-  readonly labels: string[];
-  readonly parent_id?: string;
-}
+const StoredIngredient = type({
+  name: "string",
+  default_measurement_type: MeasurementType,
+  labels: type("string[]").pipe((arr): ReadonlySet<ItemLabel.Id> => new Set(arr as ItemLabel.Id[])),
+  "parent_id?": type("string").pipe((s) => s as Ingredient.Id),
+});
 
-function to_stored(i: Ingredient): StoredIngredient {
+function to_stored(i: Ingredient) {
   return {
     name: i.name,
     default_measurement_type: i.default_measurement_type,
@@ -31,25 +32,16 @@ function to_stored(i: Ingredient): StoredIngredient {
 }
 
 function validate_stored(id: Ingredient.Id, raw: unknown): Ingredient | null {
-  if (typeof raw !== "object" || raw === null) return null;
-  const obj = raw as Record<string, unknown>;
-  const name = obj["name"];
-  const mtype = obj["default_measurement_type"];
-  const labels_raw = obj["labels"];
-  const parent_id = obj["parent_id"];
-  if (typeof name !== "string") return null;
-  if (mtype !== "volume" && mtype !== "weight" && mtype !== "count") return null;
-  if (!Array.isArray(labels_raw) || !labels_raw.every((l) => typeof l === "string")) return null;
-  const labels = new Set(labels_raw as ItemLabel.Id[]);
-  const base: Ingredient = {
+  const result = StoredIngredient(raw);
+  if (result instanceof type.errors) return null;
+  return {
     kind: "ingredient",
     id,
-    name,
-    default_measurement_type: mtype,
-    labels,
+    name: result.name,
+    default_measurement_type: result.default_measurement_type,
+    labels: result.labels,
+    ...(result.parent_id !== undefined && { parent_id: result.parent_id }),
   };
-  if (typeof parent_id === "string") return { ...base, parent_id: parent_id as Ingredient.Id };
-  return base;
 }
 
 export function get_ingredients(doc: Y.Doc): Ingredient[] {

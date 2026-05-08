@@ -247,6 +247,8 @@ npm run lint
 - [x] `label_store.ts` — Yjs CRUD (add, find, rename, delete, find-or-create); `use_label_store` React hook with cascade-delete observer and transactional merge
 - [x] `LabelTable` expandable panel — multi-select checkboxes, bulk actions (Filter All, Filter Any, Delete, Merge with name prompt), inline rename; shown above `IngredientsTable` on the Bulk Ingredient Editor page
 - [x] External label filter: selecting labels in `LabelTable` and clicking Filter All/Any updates a filter passed to `IngredientsTable` that pre-filters ingredients before tree-building
+- [x] ArkType v2 schemas replace manual validation in `ingredient_store.ts` and `label_store.ts`; `MeasurementType` exported as both ArkType schema value and TypeScript type alias from `measurement.ts`
+- [x] PapaParse replaces hand-written CSV parser in `parse_kitchenware_csv.ts`; per-kind ArkType schemas (`IngredientRow`, `ContainerRow`, `EquipmentRow`) with pipe morphs for "+" delimited label fields
 
 ---
 
