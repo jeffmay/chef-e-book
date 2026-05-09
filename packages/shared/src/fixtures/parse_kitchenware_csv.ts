@@ -1,6 +1,9 @@
 import Papa from "papaparse";
 import { type } from "arktype";
 import { MeasurementType } from "../types/measurement.js";
+import { pad_left } from "../types/ids.js";
+import { KitchenwareId } from "../types/kitchenware.js";
+import { valid_or_throw } from "../assertions/index.js";
 
 export interface IngredientTemplate {
   readonly kind: "ingredient";
@@ -42,7 +45,7 @@ const IngredientRow = type({
 }).pipe(
   (row): IngredientTemplate => ({
     kind: "ingredient",
-    id: row["Unique ID"],
+    id: pad_left(row["Unique ID"].trim(), KitchenwareId.length),
     name: row["Description"],
     default_measurement_type: row["Default Measurement Type"],
     label_names: row["Labels"],
@@ -56,7 +59,7 @@ const ContainerRow = type({
 }).pipe(
   (row): ContainerTemplate => ({
     kind: "container",
-    id: row["Unique ID"],
+    id: pad_left(row["Unique ID"].trim(), KitchenwareId.length),
     name: row["Description"],
     label_names: row["Labels"],
   }),
@@ -69,7 +72,7 @@ const EquipmentRow = type({
 }).pipe(
   (row): EquipmentTemplate => ({
     kind: "equipment",
-    id: row["Unique ID"],
+    id: pad_left(row["Unique ID"].trim(), KitchenwareId.length),
     name: row["Description"],
     label_names: row["Labels"],
   }),
@@ -85,7 +88,8 @@ export function parse_kitchenware_csv(csv: string): KitchenwareTemplate[] {
   const results: KitchenwareTemplate[] = [];
   for (const raw_row of data) {
     const type_val = (raw_row["Type"] ?? "").trim();
-    const row_id = (raw_row["Unique ID"] ?? "unknown").trim();
+    const raw_id = (raw_row["Unique ID"] ?? "unknown").trim();
+    const row_id = valid_or_throw(KitchenwareId.type(pad_left(raw_id, KitchenwareId.length)));
 
     if (type_val === "ingredient") {
       const mtype = (raw_row["Default Measurement Type"] ?? "").trim();

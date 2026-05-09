@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
 import { padded_id } from "../../types/ids.js";
+import type { IngredientTemplate } from "../../fixtures/parse_kitchenware_csv.js";
 import { KitchenwareLabelId, type Ingredient, type IngredientId } from "../../types/kitchenware.js";
 import {
   add_ingredient,
   add_labels_to_ingredients,
   get_ingredients,
-  init_ingredients_from_defaults,
+  init_from_kitchenware_templates,
   remove_labels_from_ingredients,
   rename_ingredient,
   set_labels_for_ingredient,
@@ -193,19 +194,26 @@ describe("set_labels_for_ingredient", () => {
   });
 });
 
-describe("init_ingredients_from_defaults", () => {
+const BUTTER_TEMPLATE: IngredientTemplate = {
+  kind: "ingredient",
+  id: "------butter",
+  name: "Butter",
+  default_measurement_type: "volume",
+  label_names: ["fat", "solid"],
+};
+
+describe("init_from_kitchenware_templates", () => {
   it("populates the doc when empty", () => {
-    init_ingredients_from_defaults(doc);
+    init_from_kitchenware_templates(doc, [BUTTER_TEMPLATE]);
     expect(get_ingredients(doc).length).toBeGreaterThan(0);
   });
 
-  it("does not overwrite existing ingredients", () => {
+  it("does not overwrite existing ingredients when store is non-empty", () => {
     add_ingredient(doc, BUTTER);
-    const original_name = BUTTER.name;
     const modified: Ingredient = { ...BUTTER, name: "My Custom Butter" };
     add_ingredient(doc, modified);
-    init_ingredients_from_defaults(doc);
+    init_from_kitchenware_templates(doc, [BUTTER_TEMPLATE]);
     const result = get_ingredients(doc).find((i) => i.id === "butter");
-    expect(result?.name).not.toBe(original_name);
+    expect(result?.name).toBe("My Custom Butter");
   });
 });

@@ -29,20 +29,21 @@ export function IdCompanion<N extends string, L extends number, R extends IdComp
 }
 
 /**
- * Pads the given string on the right with the specified padding string until it reaches the desired length.
- * 
+ * Pads the given string on the left with the specified padding string until it reaches the desired length.
+ * Defaults to "-" so that padded IDs sort before random IDs in ascending order.
+ *
  * @param id the string to pad
  * @param length the desired length
- * @param padding the padding string
- * @returns the id padded on the right to the desired length
+ * @param padding the padding string (default: "-")
+ * @returns the id padded on the left to the desired length
  * @throws an error if the input string is already longer than the desired length
  */
-export function pad_left<S extends string, L extends number, P extends string = "0">(id: S, length: L, padding?: P): PadLeftToMax<S, P, L> {
+export function pad_left<S extends string, L extends number, P extends string = "-">(id: S, length: L, padding?: P): PadLeftToMax<S, P, L> {
   if (id.length > length) {
     throw new Error(`ID is too long: ${id}`);
   }
   // TODO: Handle padding with multiple characters
-  const str = (padding ?? "0").repeat(length - id.length) + id;
+  const str = (padding ?? "-").repeat(length - id.length) + id;
   return str as PadLeftToMax<S, P, L>;
 }
 
@@ -65,27 +66,17 @@ export function pad_right<S extends string, L extends number, P extends string =
 }
 
 /**
- * Generates a padded and branded identifier based on the provided identifier type and value.
- * 
- * @param idType the Arktype type that the ID should conform to (must be a string with an exact length restriction)
- * @param id the string to pad and convert to the branded identifier type
- * @param name a name to use for debugging purposes in case the idType is invalid
- * @returns the padded and branded identifier
- * @throws an error if the idType is not a string with an exact length restriction
- * 
- * @note this function should be used for generating custom IDs (typically for testing), while load_id_as should be used for loading existing IDs.
+ * Generates a left-padded branded identifier from a short human-readable string.
+ * Uses "-" as the padding character so that named IDs sort before random nanoid IDs.
+ *
+ * @param companion the IdCompanion object containing the length and type information
+ * @param id the short string to pad (must not exceed companion.length)
+ * @returns the left-padded and branded identifier
+ *
+ * @note use this for deterministic IDs (typically for fixtures/testing); use random_id for new production IDs.
  */
-export function padded_id<S extends string, N extends string, L extends number>(companion: IdCompanion<N, L>, id: S): type.brand<PadRightToMax<S, "0", L>, N> {
-  const expr = companion.type.expression;
-  function fail(): never {
-    throw new Error(`Invalid ${companion.name}: "${expr}". The type must be a string with an exact length restriction (and no other restrictions).`);
-  }
-  if (!expr.startsWith("string == ")) fail();
-  const rest = expr.substring("string == ".length);
-  const nextWhitespace = rest.indexOf(" ");
-  if (nextWhitespace > -1) fail();
-  const length = parseInt(rest, 10);
-  return pad_right(id, length, "0") as type.brand<PadRightToMax<S, "0", L>, N>;
+export function padded_id<S extends string, N extends string, L extends number>(companion: IdCompanion<N, L>, id: S): type.brand<PadLeftToMax<S, "-", L>, N> {
+  return pad_left(id, companion.length, "-") as type.brand<PadLeftToMax<S, "-", L>, N>;
 }
 
 /**

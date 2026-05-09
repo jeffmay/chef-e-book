@@ -1,16 +1,21 @@
 import { describe, it, expect } from "vitest";
 import { parse_kitchenware_csv } from "../parse_kitchenware_csv.js";
 
+// IDs are left-padded to 12 characters with "-" by the parser
 const SAMPLE_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 butter,ingredient,Butter,volume,baking+fat+solid
 bowl,container,Bowl,count,vessel
 oven,equipment,Oven,count,heat
 `;
 
+const BUTTER_ID = "------butter";
+const BOWL_ID   = "--------bowl";
+const OVEN_ID   = "--------oven";
+
 describe("parse_kitchenware_csv", () => {
   it("parses ingredient rows", () => {
     const result = parse_kitchenware_csv(SAMPLE_CSV);
-    const ingredient = result.find((k) => k.id === "butter");
+    const ingredient = result.find((k) => k.id === BUTTER_ID);
     expect(ingredient).toBeDefined();
     if (ingredient === undefined) return;
     expect(ingredient.kind).toBe("ingredient");
@@ -22,7 +27,7 @@ describe("parse_kitchenware_csv", () => {
 
   it("parses container rows", () => {
     const result = parse_kitchenware_csv(SAMPLE_CSV);
-    const container = result.find((k) => k.id === "bowl");
+    const container = result.find((k) => k.id === BOWL_ID);
     expect(container).toBeDefined();
     if (container === undefined) return;
     expect(container.kind).toBe("container");
@@ -33,13 +38,29 @@ describe("parse_kitchenware_csv", () => {
 
   it("parses equipment rows", () => {
     const result = parse_kitchenware_csv(SAMPLE_CSV);
-    const equipment = result.find((k) => k.id === "oven");
+    const equipment = result.find((k) => k.id === OVEN_ID);
     expect(equipment).toBeDefined();
     if (equipment === undefined) return;
     expect(equipment.kind).toBe("equipment");
     if (equipment.kind !== "equipment") return;
     expect(equipment.name).toBe("Oven");
     expect(equipment.label_names).toEqual(["heat"]);
+  });
+
+  it("left-pads short IDs to 12 characters with '-'", () => {
+    const result = parse_kitchenware_csv(SAMPLE_CSV);
+    for (const item of result) {
+      expect(item.id).toHaveLength(12);
+      expect(item.id.endsWith("butter") || item.id.endsWith("bowl") || item.id.endsWith("oven")).toBe(true);
+    }
+  });
+
+  it("passes through IDs that are already 12 characters", () => {
+    const csv = `Unique ID,Type,Description,Default Measurement Type,Labels
+------butter,ingredient,Butter,volume,
+`;
+    const result = parse_kitchenware_csv(csv);
+    expect(result[0]?.id).toBe("------butter");
   });
 
   it("returns empty array for header-only CSV", () => {
@@ -65,20 +86,10 @@ x,ingredient,X,units,
 water,ingredient,Water,volume,
 `;
     const result = parse_kitchenware_csv(csv);
-    const water = result.find((k) => k.id === "water");
+    const water = result.find((k) => k.id === "-------water");
     expect(water).toBeDefined();
     if (water === undefined) return;
     if (water.kind !== "ingredient") return;
     expect(water.label_names).toEqual([]);
-  });
-});
-
-describe("DEFAULT_KITCHENWARE fixture", () => {
-  it("loads without error and contains expected entries", async () => {
-    const { DEFAULT_KITCHENWARE } = await import("../default_kitchenware.js");
-    expect(DEFAULT_KITCHENWARE.length).toBeGreaterThan(0);
-    expect(DEFAULT_KITCHENWARE.find((k) => k.id === "butter")).toBeDefined();
-    expect(DEFAULT_KITCHENWARE.find((k) => k.id === "bowl")).toBeDefined();
-    expect(DEFAULT_KITCHENWARE.find((k) => k.id === "oven")).toBeDefined();
   });
 });

@@ -15,9 +15,9 @@ recipe-book/
 ├── packages/
 │   ├── shared/        # Yjs models, types, operations — shared by web & server
 │   ├── web/           # Vite + React SPA (y-indexeddb for local persistence)
+│   │   └── public/
+│   │       └── kitchenware.csv   # Static asset: default kitchenware (served by Vite)
 │   └── server/        # Node.js sync server (Yjs document store per user)
-├── docs/
-│   └── default_kitchenware.csv   # Fixture: default ingredients/containers
 ├── CLAUDE.md
 └── PROJECT_SUMMARY.md
 ```
@@ -35,9 +35,9 @@ recipe-book/
 
 ### Kitchenware
 
-Kitchenware (ingredients, containers, equipment) lives in a global shared list with defaults shipped as a CSV fixture (`docs/default_kitchenware.csv`).
+Kitchenware (ingredients, containers, equipment) lives in a global shared list with defaults shipped as a CSV static asset (`packages/web/public/kitchenware.csv`). On page load, if IndexedDB is empty, `use_ingredient_store` fetches `/kitchenware.csv`, parses it via `parse_kitchenware_csv`, and calls `init_from_kitchenware_templates` to populate the Yjs doc.
 
-**CSV columns:** `Unique ID`, `Type`, `Description`, `Default Measurement Type`, `Labels` ("+"-separated)
+**CSV columns:** `Unique ID` (left-padded to 12 chars with `"-"`), `Type`, `Description`, `Default Measurement Type`, `Labels` ("+"-separated)
 
 #### ItemLabel
 - `id`: `ItemLabelId` (branded nanoid, 7 chars)
@@ -63,7 +63,7 @@ Labels are stored in the `"labels"` Yjs map on the document root. Deleting a lab
 - `name`: string (oven, stove, etc.)
 - `labels`: `ReadonlySet<ItemLabelId>`
 
-**Branded IDs** use `ts-brand` phantom types (`Brand<string, "IngredientId">`) for compile-time type safety. Namespace+interface merging enables the `IngredientId` dot notation.
+**Branded IDs** use `ts-brand` phantom types (`Brand<string, "IngredientId">`) for compile-time type safety. Namespace+interface merging enables the `IngredientId` dot notation. Named IDs are left-padded to 12 chars with `"-"` (ASCII 45, below all nanoid chars) so they sort before random IDs.
 
 ### Recipe
 
@@ -233,7 +233,7 @@ npm run lint
 - [x] Yjs data models in `shared` (Kitchenware, Recipe, Session, RecipeGroup, Measurement types with kind discriminators)
 - [x] Measurement fraction arithmetic (simplify, add, subtract, multiply, divide) with exact rational representation
 - [x] Unit conversion tables (US customary volume/weight and metric, exact within each system)
-- [x] Default kitchenware CSV fixture and parser (11 ingredients, 5 containers, 3 equipment)
+- [x] Default kitchenware CSV static asset (`packages/web/public/kitchenware.csv`) with 11 ingredients, 5 containers, 3 equipment; IDs left-padded to 12 chars with `"-"`; fetched and loaded by `use_ingredient_store` on first page load if IndexedDB is empty
 - [x] Vite + React 19 web app scaffold with e-ink CSS design system
 - [x] Node.js + Express 5 sync server with Yjs document store endpoint
 - [x] User selection (first-load page, localStorage persistence, per-user Yjs doc via y-indexeddb)

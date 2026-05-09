@@ -1,10 +1,15 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createElement, type ReactNode } from "react";
 import * as Y from "yjs";
 import { DocContext } from "../../contexts/doc_context.js";
 import { BulkIngredientEditorPage } from "../BulkIngredientEditorPage.js";
+
+const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
+------butter,ingredient,Butter,volume,fat+solid
+------cheese,ingredient,Cheese,weight,solid
+`;
 
 function make_wrapper(doc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -16,10 +21,24 @@ let doc: Y.Doc;
 
 beforeEach(() => {
   doc = new Y.Doc();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }),
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 function setup() {
   return render(<BulkIngredientEditorPage />, { wrapper: make_wrapper(doc) });
+}
+
+async function setup_and_wait() {
+  setup();
+  // Wait for the async CSV fetch and Yjs observer to populate the table
+  await screen.findByText("Butter");
 }
 
 function get_table() {
@@ -32,8 +51,8 @@ describe("BulkIngredientEditorPage — initial render", () => {
     expect(screen.getByRole("heading", { name: "Ingredients" })).toBeInTheDocument();
   });
 
-  it("renders the ingredient table with default data", () => {
-    setup();
+  it("renders the ingredient table with default data", async () => {
+    await setup_and_wait();
     expect(get_table()).toBeInTheDocument();
     expect(within(get_table()).getByText("Butter")).toBeInTheDocument();
   });
@@ -79,7 +98,7 @@ describe("BulkIngredientEditorPage — add ingredient form", () => {
   });
 
   it("creates an ingredient with a parent", async () => {
-    setup();
+    await setup_and_wait();
     await userEvent.click(screen.getByLabelText("Add new ingredient"));
     await userEvent.type(screen.getByLabelText("New ingredient name"), "Salted Butter");
     await userEvent.selectOptions(
@@ -93,23 +112,22 @@ describe("BulkIngredientEditorPage — add ingredient form", () => {
 
 describe("BulkIngredientEditorPage — bulk actions", () => {
   it("shows bulk action bar after selecting a row", async () => {
-    setup();
+    await setup_and_wait();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select Butter" }));
     expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
     expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
 
   it("bulk add labels updates the ingredient in the store", async () => {
-    setup();
+    await setup_and_wait();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select Butter" }));
     await userEvent.type(screen.getByLabelText("Labels to add"), "organic");
     await userEvent.click(screen.getByRole("button", { name: "Apply add labels" }));
-    // Bulk bar input should be cleared after apply
     expect(screen.getByLabelText("Labels to add")).toHaveValue("");
   });
 
   it("bulk remove labels clears the input after apply", async () => {
-    setup();
+    await setup_and_wait();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select Butter" }));
     await userEvent.type(screen.getByLabelText("Labels to remove"), "fat");
     await userEvent.click(screen.getByRole("button", { name: "Apply remove labels" }));

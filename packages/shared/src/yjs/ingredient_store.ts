@@ -1,7 +1,7 @@
 import { type } from "arktype";
 import * as Y from "yjs";
 import { is_type_error } from "../assertions/index.js";
-import { DEFAULT_KITCHENWARE } from "../fixtures/default_kitchenware.js";
+import type { KitchenwareTemplate } from "../fixtures/parse_kitchenware_csv.js";
 import { load_id } from "../types/ids.js";
 import { Ingredient, IngredientId, KitchenwareKind, KitchenwareLabelId } from "../types/kitchenware.js";
 import { MeasurementType } from "../types/measurement.js";
@@ -56,15 +56,17 @@ export function get_ingredients(doc: Y.Doc): Ingredient[] {
   return results.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// TODO: Validate the defaults
-export function init_ingredients_from_defaults(doc: Y.Doc): void {
+export function init_from_kitchenware_templates(
+  doc: Y.Doc,
+  templates: readonly KitchenwareTemplate[],
+): void {
   const ingredient_map = get_ingredient_ymap(doc);
   const labels_map = get_labels_ymap(doc);
   if (ingredient_map.size > 0 || labels_map.size > 0) return;
 
-  // Collect all unique label names from the default templates
+  // Collect all unique label names across all templates
   const all_label_names = new Set<string>();
-  for (const item of DEFAULT_KITCHENWARE) {
+  for (const item of templates) {
     for (const label_name of item.label_names) {
       all_label_names.add(label_name);
     }
@@ -79,12 +81,12 @@ export function init_ingredients_from_defaults(doc: Y.Doc): void {
     }
 
     // Create each ingredient template as a real Ingredient
-    for (const item of DEFAULT_KITCHENWARE) {
+    for (const item of templates) {
       if (item.kind !== "ingredient") continue;
-      const label_ids = new Set(
+      const label_ids = new Set<KitchenwareLabelId>(
         item.label_names
-          .map((n) => label_name_to_id.get(n))
-          .filter((id) => id != null),
+          .map((name) => label_name_to_id.get(name))
+          .filter((id): id is KitchenwareLabelId => id != null),
       );
       const ingredient: Ingredient = {
         kind: "ingredient",

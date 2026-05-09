@@ -1,9 +1,20 @@
 import type { MeasurementType } from "@recipe-book/shared";
 import {
   add_ingredient,
-  add_labels_to_ingredients, find_or_create_label, get_ingredients, Ingredient, IngredientId, init_ingredients_from_defaults, KitchenwareKind, KitchenwareLabelId, remove_labels_from_ingredients, rename_ingredient as rename_ingredient_in_doc,
-  set_labels_for_ingredient, set_measurement_type_for_ingredients,
-  set_parent_for_ingredients
+  add_labels_to_ingredients,
+  find_or_create_label,
+  get_ingredients,
+  Ingredient,
+  IngredientId,
+  init_from_kitchenware_templates,
+  KitchenwareKind,
+  KitchenwareLabelId,
+  parse_kitchenware_csv,
+  remove_labels_from_ingredients,
+  rename_ingredient as rename_ingredient_in_doc,
+  set_labels_for_ingredient,
+  set_measurement_type_for_ingredients,
+  set_parent_for_ingredients,
 } from "@recipe-book/shared";
 import { random_id } from "@recipe-book/shared/src/types/ids.js";
 import { useEffect, useState } from "react";
@@ -34,10 +45,22 @@ export interface UseIngredientStoreResult {
 
 export function use_ingredient_store(): UseIngredientStoreResult {
   const doc = use_doc();
-  const [ingredients, set_ingredients] = useState<Ingredient[]>(() => {
-    init_ingredients_from_defaults(doc);
-    return get_ingredients(doc);
-  });
+  const [ingredients, set_ingredients] = useState<Ingredient[]>(() => get_ingredients(doc));
+
+  // Load defaults from static CSV asset if the store is empty
+  useEffect(() => {
+    const ingredient_map = doc.getMap("ingredients");
+    const labels_map = doc.getMap("labels");
+    if (ingredient_map.size > 0 || labels_map.size > 0) return;
+
+    fetch("/kitchenware.csv")
+      .then((r) => r.text())
+      .then((csv) => {
+        const templates = parse_kitchenware_csv(csv);
+        init_from_kitchenware_templates(doc, templates);
+      })
+      .catch((err) => console.error("Failed to load default kitchenware:", err));
+  }, [doc]);
 
   useEffect(() => {
     const map = doc.getMap("ingredients");
@@ -50,7 +73,6 @@ export function use_ingredient_store(): UseIngredientStoreResult {
     ingredients,
     create_ingredient(input) {
       const id = random_id(IngredientId);
-      // Resolve label names to IDs, creating new labels as needed
       const label_ids = new Set(
         input.label_names.map((name) => find_or_create_label(doc, name, INGREDIENT_KINDS)),
       );
