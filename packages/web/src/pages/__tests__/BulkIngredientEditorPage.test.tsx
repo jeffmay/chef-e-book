@@ -118,19 +118,22 @@ describe("BulkIngredientEditorPage — bulk actions", () => {
     expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
 
-  it("bulk add labels updates the ingredient in the store", async () => {
+  it("bulk add labels clears the selection after apply", async () => {
     await setup_and_wait();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select Butter" }));
-    await userEvent.type(screen.getByLabelText("Labels to add"), "organic");
+    await userEvent.type(screen.getByRole("combobox", { name: "Labels to add" }), "organic");
+    await userEvent.click(await screen.findByText(/Create "organic"/));
     await userEvent.click(screen.getByRole("button", { name: "Apply add labels" }));
-    expect(screen.getByLabelText("Labels to add")).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Labels to add" })).toHaveValue("");
   });
 
-  it("bulk remove labels clears the input after apply", async () => {
+  it("bulk remove labels clears the selection after apply", async () => {
     await setup_and_wait();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select Butter" }));
-    await userEvent.type(screen.getByLabelText("Labels to remove"), "fat");
+    // "fat" already exists as a label — select it from the dropdown (no Create needed)
+    await userEvent.click(screen.getByRole("combobox", { name: "Labels to remove" }));
+    await userEvent.click(await screen.findByRole("option", { name: "fat" }));
     await userEvent.click(screen.getByRole("button", { name: "Apply remove labels" }));
-    expect(screen.getByLabelText("Labels to remove")).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Labels to remove" })).toHaveValue("");
   });
 });

@@ -189,10 +189,15 @@
   flex-shrink: 0;
 }
 
-.it-confirm-btn:hover,
+.it-confirm-btn:hover:not(:disabled),
 .it-cancel-btn:hover {
   background: var(--color-fg);
   color: var(--color-bg);
+}
+
+.it-confirm-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* Group rows */
@@ -384,7 +389,12 @@
 }
 
 .le__option--is-focused {
-  background: var(--color-border) !important;
+  background: #ebebeb !important;
+}
+
+.le__option--is-focused:active,
+.le__option:active {
+  background: #c4c4c4 !important;
 }
 
 .le__option--is-selected {

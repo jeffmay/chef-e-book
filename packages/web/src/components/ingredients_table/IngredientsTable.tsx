@@ -250,7 +250,7 @@ function LabelsCell({
       <LabelEditor
         selected_label_names={parse_labels(pending)}
         all_label_names={meta.all_label_names}
-        ingredient_name={row.original.name}
+        aria_label={`Edit labels for ${row.original.name}`}
         on_change={(names) =>
           meta.on_update_edit(row.original.id, column.id, names.join(", "))
         }
@@ -578,8 +578,8 @@ export function IngredientsTable({
   const [expanded, set_expanded] = useState<ExpandedState>({});
   const [pending_edits, set_pending_edits] = useState<ReadonlyMap<string, string>>(new Map());
   const [selected_ids, set_selected_ids] = useState<ReadonlySet<IngredientId>>(new Set());
-  const [bulk_add_labels, set_bulk_add_labels] = useState("");
-  const [bulk_remove_labels, set_bulk_remove_labels] = useState("");
+  const [bulk_add_labels, set_bulk_add_labels] = useState<readonly string[]>([]);
+  const [bulk_remove_labels, set_bulk_remove_labels] = useState<readonly string[]>([]);
   const [bulk_type, set_bulk_type] = useState("");
   const [bulk_parent_id, set_bulk_parent_id] = useState("");
 
@@ -713,18 +713,16 @@ export function IngredientsTable({
   const selected_array = [...selected_ids];
 
   function apply_add_labels(): void {
-    const label_names = parse_labels(bulk_add_labels);
-    if (label_names.length > 0) {
-      on_add_labels(selected_array, label_names);
-      set_bulk_add_labels("");
+    if (bulk_add_labels.length > 0) {
+      on_add_labels(selected_array, bulk_add_labels);
+      set_bulk_add_labels([]);
     }
   }
 
   function apply_remove_labels(): void {
-    const label_names = parse_labels(bulk_remove_labels);
-    if (label_names.length > 0) {
-      on_remove_labels(selected_array, label_names);
-      set_bulk_remove_labels("");
+    if (bulk_remove_labels.length > 0) {
+      on_remove_labels(selected_array, bulk_remove_labels);
+      set_bulk_remove_labels([]);
     }
   }
 
@@ -760,49 +758,31 @@ export function IngredientsTable({
           </button>
 
           <span className="it-bulk-action">
-            <input
-              type="text"
-              className="it-bulk-input"
-              value={bulk_add_labels}
-              onChange={(e) => set_bulk_add_labels(e.target.value)}
+            <LabelEditor
+              selected_label_names={bulk_add_labels}
+              all_label_names={all_label_names}
+              aria_label="Labels to add"
               placeholder="Labels to add…"
-              aria-label="Labels to add"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") apply_add_labels();
-              }}
+              commit_aria_label="Apply add labels"
+              commit_disabled={bulk_add_labels.length === 0}
+              on_change={(names) => set_bulk_add_labels(names)}
+              on_commit={apply_add_labels}
+              on_cancel={() => set_bulk_add_labels([])}
             />
-            <button
-              type="button"
-              className="it-bulk-apply"
-              disabled={bulk_add_labels.trim() === ""}
-              onClick={apply_add_labels}
-              aria-label="Apply add labels"
-            >
-              Add labels
-            </button>
           </span>
 
           <span className="it-bulk-action">
-            <input
-              type="text"
-              className="it-bulk-input"
-              value={bulk_remove_labels}
-              onChange={(e) => set_bulk_remove_labels(e.target.value)}
+            <LabelEditor
+              selected_label_names={bulk_remove_labels}
+              all_label_names={all_label_names}
+              aria_label="Labels to remove"
               placeholder="Labels to remove…"
-              aria-label="Labels to remove"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") apply_remove_labels();
-              }}
+              commit_aria_label="Apply remove labels"
+              commit_disabled={bulk_remove_labels.length === 0}
+              on_change={(names) => set_bulk_remove_labels(names)}
+              on_commit={apply_remove_labels}
+              on_cancel={() => set_bulk_remove_labels([])}
             />
-            <button
-              type="button"
-              className="it-bulk-apply"
-              disabled={bulk_remove_labels.trim() === ""}
-              onClick={apply_remove_labels}
-              aria-label="Apply remove labels"
-            >
-              Remove labels
-            </button>
           </span>
 
           <span className="it-bulk-action">

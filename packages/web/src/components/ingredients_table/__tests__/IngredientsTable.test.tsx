@@ -358,16 +358,20 @@ describe("IngredientsTable — bulk actions", () => {
     await userEvent.click(screen.getByRole("checkbox", { name: "Select Flour" }));
   }
 
-  it("calls on_add_labels with selected ids and parsed labels", async () => {
+  it("calls on_add_labels with selected ids and created labels", async () => {
     await select_flour();
-    await userEvent.type(screen.getByLabelText("Labels to add"), "organic, fresh");
+    await userEvent.type(screen.getByRole("combobox", { name: "Labels to add" }), "organic");
+    await userEvent.click(await screen.findByText(/Create "organic"/));
+    await userEvent.type(screen.getByRole("combobox", { name: "Labels to add" }), "fresh");
+    await userEvent.click(await screen.findByText(/Create "fresh"/));
     await userEvent.click(screen.getByRole("button", { name: "Apply add labels" }));
     expect(on_add_labels).toHaveBeenCalledWith(["flour"], ["organic", "fresh"]);
   });
 
-  it("calls on_remove_labels with selected ids and parsed labels", async () => {
+  it("calls on_remove_labels with selected ids and created labels", async () => {
     await select_flour();
-    await userEvent.type(screen.getByLabelText("Labels to remove"), "baking");
+    await userEvent.type(screen.getByRole("combobox", { name: "Labels to remove" }), "baking");
+    await userEvent.click(await screen.findByText(/Create "baking"/));
     await userEvent.click(screen.getByRole("button", { name: "Apply remove labels" }));
     expect(on_remove_labels).toHaveBeenCalledWith(["flour"], ["baking"]);
   });
@@ -393,7 +397,7 @@ describe("IngredientsTable — bulk actions", () => {
     expect(on_bulk_set_parent).toHaveBeenCalledWith(["flour"], undefined);
   });
 
-  it("Add labels Apply button is disabled when input is empty", async () => {
+  it("Add labels Apply button is disabled when no labels selected", async () => {
     await select_flour();
     expect(screen.getByRole("button", { name: "Apply add labels" })).toBeDisabled();
   });

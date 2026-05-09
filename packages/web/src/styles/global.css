@@ -123,3 +123,19 @@ select {
 .msf-option {
   color: var(--color-fg);
 }
+
+/* TanStack Table */
+
+.le__multi-value {
+  border: 1px solid var(--color-fg);
+  /* border-radius: 4px; */
+}
+
+.le__multi-value__label {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+}
+
+.le__multi-value__remove {
+  background-color: var(--color-bg);
+}

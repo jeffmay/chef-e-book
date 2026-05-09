@@ -8,7 +8,7 @@ const ALL_LABELS = ["baking", "dairy", "fat", "solid"];
 interface SetupOptions {
   selected_label_names?: readonly string[];
   all_label_names?: readonly string[];
-  ingredient_name?: string;
+  aria_label?: string;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -19,7 +19,7 @@ function setup(options: SetupOptions = {}) {
     <LabelEditor
       selected_label_names={options.selected_label_names ?? []}
       all_label_names={options.all_label_names ?? ALL_LABELS}
-      ingredient_name={options.ingredient_name ?? "Flour"}
+      aria_label={options.aria_label ?? "Edit labels for Flour"}
       on_change={on_change}
       on_commit={on_commit}
       on_cancel={on_cancel}
@@ -39,8 +39,8 @@ describe("LabelEditor — rendering", () => {
     expect(screen.getByRole("button", { name: "Cancel edit" })).toBeInTheDocument();
   });
 
-  it("renders the select input with the ingredient aria-label", () => {
-    setup({ ingredient_name: "Butter" });
+  it("renders the select input with the given aria-label", () => {
+    setup({ aria_label: "Edit labels for Butter" });
     expect(screen.getByRole("combobox", { name: "Edit labels for Butter" })).toBeInTheDocument();
   });
 
