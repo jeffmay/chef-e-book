@@ -3,40 +3,72 @@
   overflow-x: auto;
 }
 
+/* =====================================================================
+   PrimeReact TreeTable overrides — e-ink palette
+   ===================================================================== */
+
 .it-table {
-  width: 100%;
-  border-collapse: collapse;
+  font-family: var(--font-body);
   font-size: 0.95em;
+  width: 100%;
 }
 
-.it-th {
-  border: 1px solid var(--color-border);
-  padding: 0;
-  text-align: left;
-  vertical-align: top;
+/* Header cells: black background, white text */
+.it-table thead th {
   background: var(--color-fg);
   color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  vertical-align: top;
   white-space: nowrap;
 }
 
-.it-td {
+/* Prevent PrimeReact from changing header bg on hover/focus */
+.it-table thead th.p-sortable-column:not(.p-highlight):hover,
+.it-table thead th.p-sortable-column.p-highlight,
+.it-table thead th.p-sortable-column:focus {
+  background: var(--color-fg);
+  color: var(--color-bg);
+  box-shadow: none;
+  outline: none;
+}
+
+/* Filter row (PrimeReact appends this when a Column has filter=true) */
+.it-table thead tr.p-treetable-column-filter-row th {
+  background: var(--color-fg);
   border: 1px solid var(--color-border);
   padding: var(--spacing-xs) var(--spacing-sm);
-  text-align: left;
+}
+
+/* Data cells */
+.it-table tbody td {
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-family: var(--font-body);
   vertical-align: middle;
 }
 
-.it-td--expand {
-  padding: 0;
-  width: 2em;
-  min-width: 2em;
+/* Remove PrimeReact row hover highlight */
+.it-table .p-treetable-tbody > tr:hover {
+  background: transparent;
 }
 
-.it-td--group-value {
-  font-weight: bold;
+/* Remove PrimeReact focus ring color on rows */
+.it-table .p-treetable-tbody > tr:focus {
+  outline: none;
 }
 
-/* Column header layout */
+/* Remove PrimeReact's built-in sort icon (we use custom sort buttons) */
+.it-table .p-sortable-column-icon {
+  display: none;
+}
+
+/* =====================================================================
+   Column header layout
+   ===================================================================== */
+
 .it-col-header {
   display: flex;
   flex-direction: column;
@@ -53,7 +85,7 @@
 .it-sort-btn {
   background: none;
   border: none;
-  padding: 0;
+  padding: var(--spacing-xs) var(--spacing-sm);
   color: inherit;
   font-weight: bold;
   font-size: inherit;
@@ -61,6 +93,7 @@
   white-space: nowrap;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .it-sort-btn:active {
@@ -71,28 +104,7 @@
 .it-sort-icon {
   font-size: 0.8em;
   opacity: 0.7;
-}
-
-.it-group-btn {
-  background: none;
-  border: 1px solid var(--color-bg);
-  padding: 0 3px;
-  color: inherit;
-  font-size: 0.8em;
-  cursor: pointer;
-  line-height: 1.3;
-  opacity: 0.7;
-}
-
-.it-group-btn:active {
-  background: none;
-  color: inherit;
-}
-
-.it-group-btn--on {
-  opacity: 1;
-  background: var(--color-bg);
-  color: var(--color-fg);
+  margin-left: var(--spacing-xs);
 }
 
 .it-filter-row {
@@ -116,13 +128,9 @@
   outline-offset: -1px;
 }
 
-/* Expand column */
-.it-expand-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
+/* =====================================================================
+   Expand column
+   ===================================================================== */
 
 .it-expand-btn {
   background: none;
@@ -143,7 +151,10 @@
   width: 1.4em;
 }
 
-/* Editable cells */
+/* =====================================================================
+   Editable cells
+   ===================================================================== */
+
 .it-editable {
   cursor: pointer;
   display: block;
@@ -200,38 +211,10 @@
   cursor: default;
 }
 
-/* Group rows */
-.it-row--group > .it-td {
-  background: #f4f4f4;
-}
+/* =====================================================================
+   Bulk action bar
+   ===================================================================== */
 
-.it-group-count {
-  font-size: 0.8em;
-  color: var(--color-muted);
-  font-weight: normal;
-}
-
-/* Select column */
-.it-td--select {
-  padding: 0;
-  width: 2em;
-  min-width: 2em;
-  text-align: center;
-  vertical-align: middle;
-}
-
-.it-td--select input[type="checkbox"] {
-  cursor: pointer;
-  width: 1em;
-  height: 1em;
-}
-
-/* Selected rows */
-.it-row--selected > .it-td {
-  background: #f0f0f0;
-}
-
-/* Bulk action bar */
 .it-bulk-bar {
   display: flex;
   flex-wrap: wrap;
@@ -311,7 +294,10 @@
   cursor: default;
 }
 
-/* Label editor (react-select CreatableSelect) */
+/* =====================================================================
+   Label editor (react-select CreatableSelect)
+   ===================================================================== */
+
 .it-label-editor {
   display: flex;
   align-items: center;
@@ -414,7 +400,10 @@
   padding: 2px 4px !important;
 }
 
-/* Misc */
+/* =====================================================================
+   Misc
+   ===================================================================== */
+
 .it-muted {
   color: var(--color-muted);
 }

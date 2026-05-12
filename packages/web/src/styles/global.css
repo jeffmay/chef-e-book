@@ -124,18 +124,22 @@ select {
   color: var(--color-fg);
 }
 
-/* TanStack Table */
-
-.le__multi-value {
-  border: 1px solid var(--color-fg);
-  /* border-radius: 4px; */
+/* PrimeReact theme overrides — e-ink palette */
+:root {
+  --primary-color: var(--color-fg);
+  --primary-text-color: var(--color-bg);
+  --primary-color-text: var(--color-bg);
+  --highlight-bg: #ebebeb;
+  --highlight-text-color: var(--color-fg);
+  --focus-ring: 0 0 0 2px var(--color-bg);
 }
 
-.le__multi-value__label {
-  background-color: var(--color-bg);
-  color: var(--color-fg);
+.p-component {
+  font-family: var(--font-body);
+  border-radius: 0;
 }
 
-.le__multi-value__remove {
-  background-color: var(--color-bg);
+.p-inputtext {
+  font-family: var(--font-body);
+  border-radius: 0;
 }

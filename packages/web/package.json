@@ -22,10 +22,11 @@
   },
   "dependencies": {
     "@recipe-book/shared": "^0.0.1",
-    "@tanstack/react-table": "^8.21.3",
     "@vitejs/plugin-react": "^6.0.1",
     "humanize-duration": "^3.33.2",
     "parse-duration": "^2.1.6",
+    "primeicons": "^7.0.0",
+    "primereact": "^10.9.7",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-select": "^5.10.2",

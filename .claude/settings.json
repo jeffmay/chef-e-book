@@ -11,7 +11,9 @@
       "Bash(find:*)",
       "Bash(grep:*)",
       "Bash(sed:*)",
+      "Bash(xargs:*)",
       "Bash(git add:*)",
+      "Bash(git checkout:*)",
       "Bash(git commit:*)",
       "Bash(git diff:*)",
       "Bash(git status:*)",
@@ -20,8 +22,9 @@
       "Bash(npm run:*)",
       "Bash(npm test:*)",
       "Bash(CI=true npm test:*)",
+      "Bash(npm uninstall *)",
       "Bash(npm view:*)",
-      "Bash(git checkout:*)"
+      "Bash(npx vitest:*)"
     ]
   }
 }

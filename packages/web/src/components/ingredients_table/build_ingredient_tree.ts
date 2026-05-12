@@ -1,62 +1,70 @@
+import type { TreeNode } from "primereact/treenode";
 import type { Ingredient, IngredientId, KitchenwareLabel, MeasurementType } from "@recipe-book/shared";
-import { ReadonlyDeep } from "type-fest";
+import type { ReadonlyDeep } from "type-fest";
 
-export interface IngredientRow {
-  readonly kind: "ingredient";
+export interface IngredientNodeData {
   readonly id: IngredientId;
   readonly name: string;
   readonly default_measurement_type: MeasurementType;
   readonly labels: readonly string[];
   readonly parent_id?: IngredientId;
   readonly parent_name: string;
-  readonly subRows: IngredientRow[]; // readonly ref, mutable contents — safe to push during build
+}
+
+export interface IngredientTreeNode extends TreeNode {
+  key: string;
+  data: IngredientNodeData;
+  children?: IngredientTreeNode[];
 }
 
 export function buildIngredientTree(
   ingredients: ReadonlyDeep<Ingredient[]>,
   item_labels: ReadonlyDeep<KitchenwareLabel[]>,
-): IngredientRow[] {
+): IngredientTreeNode[] {
   const label_name_by_id = new Map<string, string>(item_labels.map((l) => [l.id, l.name]));
   const id_to_name = new Map<string, string>(ingredients.map((i) => [i.id, i.name]));
 
-  const row_map = new Map<string, IngredientRow>();
+  const node_map = new Map<string, IngredientTreeNode>();
 
   for (const i of ingredients) {
     const label_names = [...i.labels]
       .map((id) => label_name_by_id.get(id) ?? id)
       .sort((a, b) => a.localeCompare(b));
-    const row: IngredientRow = {
-      kind: "ingredient",
-      id: i.id,
-      name: i.name,
-      default_measurement_type: i.default_measurement_type,
-      labels: label_names,
-      parent_name:
-        i.parent_id !== undefined ? (id_to_name.get(i.parent_id) ?? i.parent_id) : "",
-      subRows: [],
-      ...(i.parent_id !== undefined && { parent_id: i.parent_id }),
+    const node: IngredientTreeNode = {
+      key: i.id,
+      data: {
+        id: i.id,
+        name: i.name,
+        default_measurement_type: i.default_measurement_type,
+        labels: label_names,
+        parent_name: i.parent_id !== undefined ? (id_to_name.get(i.parent_id) ?? i.parent_id) : "",
+        ...(i.parent_id !== undefined && { parent_id: i.parent_id }),
+      },
     };
-    row_map.set(i.id, row);
+    node_map.set(i.id, node);
   }
 
-  const roots: IngredientRow[] = [];
+  const roots: IngredientTreeNode[] = [];
 
-  for (const row of row_map.values()) {
-    if (row.parent_id !== undefined) {
-      const parent = row_map.get(row.parent_id);
+  for (const node of node_map.values()) {
+    if (node.data.parent_id !== undefined) {
+      const parent = node_map.get(node.data.parent_id);
       if (parent !== undefined) {
-        parent.subRows.push(row);
+        if (!parent.children) parent.children = [];
+        parent.children.push(node);
         continue;
       }
     }
-    roots.push(row);
+    roots.push(node);
   }
 
-  function sort_level(rows: IngredientRow[]): void {
-    rows.sort((a, b) => a.name.localeCompare(b.name));
-    for (const r of rows) sort_level(r.subRows);
+  function sortLevel(nodes: IngredientTreeNode[]): void {
+    nodes.sort((a, b) => a.data.name.localeCompare(b.data.name));
+    for (const n of nodes) {
+      if (n.children) sortLevel(n.children);
+    }
   }
-  sort_level(roots);
+  sortLevel(roots);
 
   return roots;
 }

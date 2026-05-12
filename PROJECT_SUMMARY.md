@@ -266,7 +266,7 @@ npm run lint
 - [x] ProfileSettingsPage (rename user, persists to localStorage)
 - [x] Yjs ingredient CRUD store (`shared`) — init from defaults, add/remove labels, set type/parent, rename, set labels
 - [x] `useIngredientStore` hook + DocContext (React)
-- [x] Ingredients Page — TanStack Table v8 tree view (expandable parent→child), column filters (recursive fuzzy name filter with auto-expand; multi-select checkbox dropdown for type/labels), sortable columns, groupable columns, inline editable cells (click to edit, Enter/Escape hotkeys, ✔︎/✗ confirm/cancel), row checkboxes with select-all, bulk action bar (add/remove labels, change type, change parent), `+ New ingredient` form
+- [x] Ingredients Page — PrimeReact `TreeTable` tree view (expandable parent→child), column filters (name text filter with lenient-mode auto-expand; multi-select checkbox dropdown for type/labels), sortable columns, inline editable cells (click to edit, Enter/Escape hotkeys, ✔︎/✗ confirm/cancel), row checkboxes with select-all, bulk action bar (add/remove labels, change type, change parent), `+ New ingredient` form; replaced `@tanstack/react-table` with PrimeReact v10; `IngredientsTable.css` updated for e-ink PrimeReact overrides; `MultiSelectFilter` refactored to fully controlled props (no react-table dependency)
 - [x] `ItemLabel` type with branded `ItemLabelId` (7-char nanoid); `ItemKind`-scoped labels stored in `"labels"` Yjs map
 - [x] Branded IDs for all item types via `ts-brand` + TypeScript declaration merging (`IngredientId`, `ContainerId`, `EquipmentId`, `ItemLabelId`)
 - [x] `label_store.ts` — Yjs CRUD (add, find, rename, delete, find-or-create); `useLabelStore` React hook with cascade-delete observer and transactional merge

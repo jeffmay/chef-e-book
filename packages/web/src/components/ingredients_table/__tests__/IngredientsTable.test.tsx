@@ -272,29 +272,6 @@ describe("IngredientsTable — editable cells", () => {
   });
 });
 
-describe("IngredientsTable — grouping", () => {
-  it("groups rows by measurement type when toggle clicked", async () => {
-    setup([FLOUR, CHEESE]);
-    await screen.findByText("Flour");
-    await userEvent.click(
-      screen.getByRole("button", { name: "Group by default_measurement_type" }),
-    );
-    expect(screen.getByText(/volume/)).toBeInTheDocument();
-    expect(screen.getByText(/weight/)).toBeInTheDocument();
-  });
-
-  it("ungroups when toggle clicked again", async () => {
-    setup([FLOUR, CHEESE]);
-    await screen.findByText("Flour");
-    await userEvent.click(
-      screen.getByRole("button", { name: "Group by default_measurement_type" }),
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: "Ungroup by default_measurement_type" }),
-    );
-    expect(await screen.findByRole("button", { name: "Edit name for Flour" })).toBeInTheDocument();
-  });
-});
 
 describe("IngredientsTable — row selection", () => {
   it("renders a select-all checkbox in the header", () => {
