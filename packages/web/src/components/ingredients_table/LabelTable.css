@@ -56,6 +56,57 @@
   white-space: nowrap;
 }
 
+/* ---- Filter mode RadioButton group ---- */
+.lt-filter-label {
+  font-size: 0.85em;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  white-space: nowrap;
+}
+
+.lt-filter-group {
+  display: flex;
+  align-items: stretch;
+}
+
+.lt-filter-btn {
+  display: flex;
+  align-items: center;
+  padding: 1px 8px;
+  border: var(--border-width) solid var(--color-border);
+  margin-left: -1px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.85em;
+  user-select: none;
+  color: var(--color-fg);
+  background: var(--color-bg);
+  white-space: nowrap;
+}
+
+.lt-filter-btn:hover {
+  background: #f8f8f8;
+}
+
+.lt-filter-btn--active {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.lt-filter-btn--active:hover {
+  background: var(--color-accent);
+}
+
+/* Hide the radio circle visually while keeping it accessible */
+.lt-filter-btn .p-radiobutton {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 .lt-bulk-btn {
   background: none;
   border: var(--border-width) solid var(--color-border);
@@ -200,8 +251,7 @@
 }
 
 .lt-edit-btn {
-  font-size: 0.75em;
-  padding: 1px 4px;
+  padding: 1px .5em;
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-fg);

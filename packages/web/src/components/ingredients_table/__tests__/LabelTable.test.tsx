@@ -131,16 +131,22 @@ describe("LabelTable — selection and bulk actions", () => {
     expect(screen.queryByRole("region", { name: "Label bulk actions" })).not.toBeInTheDocument();
   });
 
-  it("calls onFilterAll with selected ids", async () => {
+  it("calls onFilterAll with selected ids when All radio is clicked", async () => {
     await expand_and_select();
-    await userEvent.click(screen.getByRole("button", { name: "Filter ingredients with all selected labels" }));
+    await userEvent.click(screen.getByRole("radio", { name: "All" }));
     expect(onFilterAll).toHaveBeenCalledWith([FAT.id]);
   });
 
-  it("calls onFilterAny with selected ids", async () => {
+  it("calls onFilterAny with selected ids when Any radio is clicked", async () => {
     await expand_and_select();
-    await userEvent.click(screen.getByRole("button", { name: "Filter ingredients with any selected labels" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Any" }));
     expect(onFilterAny).toHaveBeenCalledWith([FAT.id]);
+  });
+
+  it("keeps All radio selected after clicking it", async () => {
+    await expand_and_select();
+    await userEvent.click(screen.getByRole("radio", { name: "All" }));
+    expect(screen.getByRole("radio", { name: "All" })).toBeChecked();
   });
 
   it("calls onDelete with selected ids and clears selection", async () => {

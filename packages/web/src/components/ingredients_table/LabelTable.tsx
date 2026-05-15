@@ -1,4 +1,5 @@
 import type { KitchenwareLabel, KitchenwareLabelId } from "@recipe-book/shared";
+import { RadioButton } from "primereact/radiobutton";
 import { useState, type FormEvent } from "react";
 import { ReadonlyDeep } from "type-fest";
 import "./LabelTable.css";
@@ -22,6 +23,7 @@ export function LabelTable({
 }: LabelTableProps) {
   const [expanded, set_expanded] = useState(false);
   const [selected_ids, set_selected_ids] = useState<ReadonlySet<KitchenwareLabelId>>(new Set());
+  const [filter_mode, set_filter_mode] = useState<"all" | "any" | null>(null);
   const [merge_name, set_merge_name] = useState("");
   const [show_merge_input, set_show_merge_input] = useState(false);
   const [editing_id, set_editing_id] = useState<KitchenwareLabelId | null>(null);
@@ -50,10 +52,12 @@ export function LabelTable({
   }
 
   function handleFilterAll(): void {
+    set_filter_mode("all");
     onFilterAll(selected_array);
   }
 
   function handleFilterAny(): void {
+    set_filter_mode("any");
     onFilterAny(selected_array);
   }
 
@@ -117,22 +121,35 @@ export function LabelTable({
           {some_selected && (
             <div className="lt-bulk-bar" role="region" aria-label="Label bulk actions">
               <span className="lt-bulk-count">{selected_ids.size} selected</span>
-              <button
-                type="button"
-                className="lt-bulk-btn"
-                onClick={handleFilterAll}
-                aria-label="Filter ingredients with all selected labels"
-              >
-                Filter: All
-              </button>
-              <button
-                type="button"
-                className="lt-bulk-btn"
-                onClick={handleFilterAny}
-                aria-label="Filter ingredients with any selected labels"
-              >
-                Filter: Any
-              </button>
+              <span className="lt-filter-label">Filter:</span>
+              <div className="lt-filter-group" role="group" aria-label="Filter mode">
+                <label
+                  htmlFor="lt-filter-all"
+                  className={`lt-filter-btn${filter_mode === "all" ? " lt-filter-btn--active" : ""}`}
+                >
+                  <RadioButton
+                    inputId="lt-filter-all"
+                    name="lt_filter_mode"
+                    value="all"
+                    checked={filter_mode === "all"}
+                    onChange={handleFilterAll}
+                  />
+                  All
+                </label>
+                <label
+                  htmlFor="lt-filter-any"
+                  className={`lt-filter-btn${filter_mode === "any" ? " lt-filter-btn--active" : ""}`}
+                >
+                  <RadioButton
+                    inputId="lt-filter-any"
+                    name="lt_filter_mode"
+                    value="any"
+                    checked={filter_mode === "any"}
+                    onChange={handleFilterAny}
+                  />
+                  Any
+                </label>
+              </div>
               <button
                 type="button"
                 className="lt-bulk-btn lt-bulk-btn--danger"

@@ -1,0 +1,87 @@
+/* ============================================================
+   IngredientSelector — PrimeReact TreeSelect overrides
+   ============================================================ */
+
+.is-selector {
+  font-family: var(--font-body);
+  font-size: 0.9em;
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  width: 12vw;
+  min-width: 8em;
+  border-radius: 0;
+}
+
+.is-selector .p-treeselect-label-container {
+  padding: 2px var(--spacing-xs);
+}
+
+.is-selector .p-treeselect-label {
+  font-family: var(--font-body);
+  font-size: 1em;
+  color: var(--color-fg);
+  padding: 0;
+}
+
+.is-selector.p-treeselect:not(.p-disabled):hover {
+  border-color: var(--color-fg);
+}
+
+.is-selector.p-treeselect.p-focus {
+  outline: 2px solid var(--color-fg);
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
+/* Trigger icon */
+.is-selector .p-treeselect-trigger {
+  color: var(--color-fg);
+  width: 1.8em;
+}
+
+/* Panel */
+.is-panel {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: 0;
+  font-family: var(--font-body);
+  font-size: 0.9em;
+  background: var(--color-bg);
+}
+
+/* Filter input inside panel */
+.is-panel .p-treeselect-filter-container input {
+  font-family: var(--font-body);
+  font-size: 0.9em;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  padding: 2px var(--spacing-xs);
+  width: 100%;
+}
+
+/* Tree nodes */
+.is-panel .p-tree .p-treenode-content {
+  padding: 2px var(--spacing-xs);
+  font-family: var(--font-body);
+  border-radius: 0;
+}
+
+.is-panel .p-tree .p-treenode-content:hover {
+  background: #f8f8f8;
+}
+
+.is-panel .p-tree .p-treenode-content.p-highlight {
+  background: var(--color-fg) !important;
+  color: var(--color-bg) !important;
+}
+
+/* Toggler inside tree */
+.is-panel .p-tree .p-tree-toggler {
+  border: none;
+  background: none;
+  color: var(--color-fg);
+  width: 1.2em;
+  height: 1.2em;
+}

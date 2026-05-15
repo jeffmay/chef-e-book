@@ -15,6 +15,7 @@ import {
 } from "primereact/treetable";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { buildIngredientTree, type IngredientRow } from "./build_ingredient_tree.js";
+import { IngredientSelector } from "./IngredientSelector.js";
 import "./IngredientsTable.css";
 import { LabelEditor } from "./LabelEditor.js";
 import { MultiSelectFilter } from "./MultiSelectFilter.js";
@@ -389,28 +390,19 @@ export function IngredientsTable({
   function parentBody(node: TreeNode) {
     const row = node.data as IngredientRow;
     const pending = pending_edits.get(pkey(row.id, "parent_name"));
-    const display = row.parent_name || "—";
+    const display = row.parent_name || "— None -";
     if (pending !== undefined) {
+      const pending_id = pending !== "" ? (pending as IngredientId) : undefined;
       return (
         <span className="it-editing">
-          <select
-            value={pending}
-            autoFocus
-            aria-label={`Edit parent for ${row.name}`}
-            onChange={(e) => onUpdateEdit(row.id, "parent_name", e.target.value)}
-            onKeyDown={(e: KeyboardEvent<HTMLSelectElement>) => {
-              if (e.key === "Escape") onCancelEdit(row.id, "parent_name");
-            }}
-          >
-            <option value="">— None —</option>
-            {ingredients
-              .filter((i) => i.id !== row.id)
-              .map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name}
-                </option>
-              ))}
-          </select>
+          <IngredientSelector
+            value={pending_id}
+            options={ingredients.filter((i) => i.id !== row.id)}
+            labels={labels}
+            onChange={(id) => onUpdateEdit(row.id, "parent_name", id ?? "")}
+            aria_label={`Edit parent for ${row.name}`}
+            placeholder="— None —"
+          />
           <button
             type="button"
             className="it-confirm-btn"
@@ -476,12 +468,10 @@ export function IngredientsTable({
   }
 
   function applyBulkParent(): void {
-    if (bulk_parent_id === "__none__") {
-      onBulkSetParent(selected_ids, undefined);
-    } else if (bulk_parent_id !== "") {
+    if (bulk_parent_id !== "") {
       onBulkSetParent(selected_ids, loadId(IngredientId, bulk_parent_id));
+      set_bulk_parent_id("");
     }
-    set_bulk_parent_id("");
   }
 
   // ---------------------------------------------------------------------------
@@ -555,20 +545,14 @@ export function IngredientsTable({
           </span>
 
           <span className="it-bulk-action">
-            <select
-              className="it-bulk-select"
-              value={bulk_parent_id}
-              onChange={(e) => set_bulk_parent_id(e.target.value)}
-              aria-label="Bulk parent"
-            >
-              <option value="">— Parent —</option>
-              <option value="__none__">Clear parent</option>
-              {ingredients.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name}
-                </option>
-              ))}
-            </select>
+            <IngredientSelector
+              value={bulk_parent_id !== "" ? (bulk_parent_id as IngredientId) : undefined}
+              options={ingredients}
+              labels={labels}
+              onChange={(id) => set_bulk_parent_id(id ?? "")}
+              aria_label="Bulk parent"
+              placeholder="— Parent —"
+            />
             <button
               type="button"
               className="it-bulk-apply"
@@ -577,6 +561,16 @@ export function IngredientsTable({
               aria-label="Apply parent change"
             >
               Change parent
+            </button>
+            <button
+              type="button"
+              className="it-bulk-apply"
+              onClick={() => {
+                onBulkSetParent(selected_ids, undefined);
+              }}
+              aria-label="Clear parent"
+            >
+              Clear parent
             </button>
           </span>
         </div>

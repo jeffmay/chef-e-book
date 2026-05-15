@@ -1,8 +1,54 @@
 import type { Ingredient, IngredientId, KitchenwareLabelId } from "@recipe-book/shared";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { TreeSelectChangeEvent } from "primereact/treeselect";
+import type { TreeNode } from "primereact/treenode";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IngredientsTable } from "../IngredientsTable.js";
+
+interface MockTreeSelectProps {
+  value: string | null | undefined;
+  onChange: (e: TreeSelectChangeEvent) => void;
+  ariaLabel: string | undefined;
+  options: TreeNode[] | undefined;
+  placeholder: string | undefined;
+}
+
+vi.mock("primereact/treeselect", () => ({
+  TreeSelect: ({ value, onChange, ariaLabel, options, placeholder }: MockTreeSelectProps) => {
+    const allNodes: { key: string; label: string }[] = [];
+    function collect(nodes: TreeNode[]) {
+      for (const n of nodes) {
+        allNodes.push({ key: String(n.key ?? ""), label: String(n.label ?? "") });
+        if (n.children) collect(n.children);
+      }
+    }
+    collect(options ?? []);
+    return (
+      <select
+        aria-label={ariaLabel}
+        value={value ?? ""}
+        onChange={(e) => {
+          const val = e.target.value || null;
+          onChange({
+            value: val,
+            originalEvent: e,
+            stopPropagation: () => e.stopPropagation(),
+            preventDefault: () => e.preventDefault(),
+            target: { name: "", id: "", value: val },
+          });
+        }}
+      >
+        <option value="">{placeholder}</option>
+        {allNodes.map((n) => (
+          <option key={n.key} value={n.key}>
+            {n.label}
+          </option>
+        ))}
+      </select>
+    );
+  },
+}));
 
 const DAIRY: Ingredient = {
   kind: "ingredient",
@@ -336,15 +382,14 @@ describe("IngredientsTable — bulk actions", () => {
 
   it("calls onBulkSetParent when parent is selected and applied", async () => {
     await selectFlour();
-    await userEvent.selectOptions(screen.getByLabelText("Bulk parent"), "Cheese");
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Bulk parent" }), "cheese");
     await userEvent.click(screen.getByRole("button", { name: "Apply parent change" }));
     expect(onBulkSetParent).toHaveBeenCalledWith(["flour"], "cheese");
   });
 
-  it("calls onBulkSetParent with undefined when Clear parent is selected", async () => {
+  it("calls onBulkSetParent with undefined when Clear parent is clicked", async () => {
     await selectFlour();
-    await userEvent.selectOptions(screen.getByLabelText("Bulk parent"), "Clear parent");
-    await userEvent.click(screen.getByRole("button", { name: "Apply parent change" }));
+    await userEvent.click(screen.getByRole("button", { name: "Clear parent" }));
     expect(onBulkSetParent).toHaveBeenCalledWith(["flour"], undefined);
   });
 

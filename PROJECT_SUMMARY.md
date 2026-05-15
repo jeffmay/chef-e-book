@@ -287,6 +287,9 @@ npm run lint
 - [x] ESLint config updated — `varsIgnorePattern: "^_"`, `ignoreRestSiblings: true` for destructure-discard patterns; removed `rules-of-hooks` override for hooks/contexts (now that hooks are camelCase)
 - [x] All snake_case function names renamed to camelCase — `randomId`, `loadId`, `addFractions`, `getIngredients`, `useIngredientStore`, `buildFolderTree`, etc.; callback props renamed to camelCase (`onChange`, `onSave`, `onCancel`); file names remain snake_case
 - [x] `IngredientsTable` migrated from `@tanstack/react-table` to PrimeReact `TreeTable` — removed grouping (no built-in equivalent), standalone `MultiSelectFilter` (no longer coupled to TanStack's `Column` type), filter bar above table instead of column-header filters, PrimeReact lara-light-indigo theme with CSS variable overrides to match the e-ink design system
+- [x] `IngredientSelector` component — wraps PrimeReact `TreeSelect` for hierarchical ingredient selection; used in `IngredientsTable` inline parent cell editor and bulk parent action; mock-friendly via `vi.mock("primereact/treeselect")` in tests
+- [x] `IngredientsTable` parent column uses `IngredientSelector` instead of plain `<select>` — inline cell editor and bulk action both use tree-select; bulk action bar adds a "Clear parent" button (sets parent to `undefined` without needing to select anything)
+- [x] `LabelTable` filter buttons replaced with PrimeReact `RadioButton` group — "Filter: [All] [Any]" styled as button-group with black background / white text on selection; radio circle hidden with CSS clip trick for pure-CSS button appearance; selected mode persists in state
 
 ---
 
