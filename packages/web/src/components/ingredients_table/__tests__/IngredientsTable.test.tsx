@@ -54,14 +54,14 @@ const DAIRY: Ingredient = {
   kind: "ingredient",
   id: "dairy" as IngredientId,
   name: "Dairy",
-  default_measurement_type: "volume",
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set<KitchenwareLabelId>(),
 };
 const BUTTER: Ingredient = {
   kind: "ingredient",
   id: "butter" as IngredientId,
   name: "Butter",
-  default_measurement_type: "volume",
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set(["fat0000" as KitchenwareLabelId, "sol0000" as KitchenwareLabelId]),
   parent_id: "dairy" as IngredientId,
 };
@@ -69,24 +69,24 @@ const FLOUR: Ingredient = {
   kind: "ingredient",
   id: "flour" as IngredientId,
   name: "Flour",
-  default_measurement_type: "volume",
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set(["bak0000" as KitchenwareLabelId]),
 };
 const CHEESE: Ingredient = {
   kind: "ingredient",
   id: "cheese" as IngredientId,
   name: "Cheese",
-  default_measurement_type: "weight",
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "oz" as const },
   labels: new Set(["sol0000" as KitchenwareLabelId]),
 };
 
 const onRename = vi.fn();
-const onSetType = vi.fn();
+const onSetMeasurementValue = vi.fn();
 const onSetLabels = vi.fn();
 const onSetParent = vi.fn();
 const onAddLabels = vi.fn();
 const onRemoveLabels = vi.fn();
-const onBulkSetType = vi.fn();
+const onBulkSetMeasurementValue = vi.fn();
 const onBulkSetParent = vi.fn();
 
 function setup(ingredients: Ingredient[] = [DAIRY, BUTTER, FLOUR, CHEESE]) {
@@ -95,12 +95,12 @@ function setup(ingredients: Ingredient[] = [DAIRY, BUTTER, FLOUR, CHEESE]) {
       ingredients={ingredients}
       labels={[]}
       onRename={onRename}
-      onSetType={onSetType}
+      onSetMeasurementValue={onSetMeasurementValue}
       onSetLabels={onSetLabels}
       onSetParent={onSetParent}
       onAddLabels={onAddLabels}
       onRemoveLabels={onRemoveLabels}
-      onBulkSetType={onBulkSetType}
+      onBulkSetMeasurementValue={onBulkSetMeasurementValue}
       onBulkSetParent={onBulkSetParent}
     />,
   );
@@ -130,7 +130,7 @@ describe("IngredientsTable — rendering", () => {
   it("renders column headers", () => {
     setup();
     expect(screen.getByText("Name")).toBeInTheDocument();
-    expect(screen.getByText("Type")).toBeInTheDocument();
+    expect(screen.getByText("Default")).toBeInTheDocument();
     expect(screen.getByText("Parent")).toBeInTheDocument();
   });
 
@@ -287,14 +287,12 @@ describe("IngredientsTable — editable cells", () => {
     expect(onRename).not.toHaveBeenCalled();
   });
 
-  it("calls onSetType when committing type edit", async () => {
+  it("calls onSetMeasurementValue when committing measurement edit", async () => {
     setup([FLOUR]);
-    await screen.findByRole("button", { name: "Edit type for Flour" });
-    await userEvent.click(screen.getByRole("button", { name: "Edit type for Flour" }));
-    const select = screen.getByRole("combobox", { name: "Edit type for Flour" });
-    await userEvent.selectOptions(select, "weight");
-    await userEvent.click(screen.getByRole("button", { name: "Confirm edit" }));
-    expect(onSetType).toHaveBeenCalledWith("flour", "weight");
+    await screen.findByRole("button", { name: "Edit default measurement for Flour" });
+    await userEvent.click(screen.getByRole("button", { name: "Edit default measurement for Flour" }));
+    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    expect(onSetMeasurementValue).toHaveBeenCalledWith("flour", expect.objectContaining({ unit: "cup" }));
   });
 
   it("calls onSetLabels when committing labels edit", async () => {
@@ -373,11 +371,11 @@ describe("IngredientsTable — bulk actions", () => {
     expect(onRemoveLabels).toHaveBeenCalledWith(["flour"], ["baking"]);
   });
 
-  it("calls onBulkSetType when type is selected and applied", async () => {
+  it("calls onBulkSetMeasurementValue when measurement is committed", async () => {
     await selectFlour();
-    await userEvent.selectOptions(screen.getByLabelText("Bulk measurement type"), "weight");
-    await userEvent.click(screen.getByRole("button", { name: "Apply type change" }));
-    expect(onBulkSetType).toHaveBeenCalledWith(["flour"], "weight");
+    await userEvent.click(screen.getByRole("button", { name: "Edit measurement" }));
+    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    expect(onBulkSetMeasurementValue).toHaveBeenCalledWith(["flour"], expect.objectContaining({ unit: "cup" }));
   });
 
   it("calls onBulkSetParent when parent is selected and applied", async () => {
@@ -396,10 +394,5 @@ describe("IngredientsTable — bulk actions", () => {
   it("Add labels Apply button is disabled when no labels selected", async () => {
     await selectFlour();
     expect(screen.getByRole("button", { name: "Apply add labels" })).toBeDisabled();
-  });
-
-  it("Change type Apply button is disabled when no type selected", async () => {
-    await selectFlour();
-    expect(screen.getByRole("button", { name: "Apply type change" })).toBeDisabled();
   });
 });

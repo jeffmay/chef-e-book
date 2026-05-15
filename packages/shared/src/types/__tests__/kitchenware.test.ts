@@ -21,7 +21,7 @@ describe("kitchenware type guards", () => {
     kind: "ingredient",
     id: "butter" as IngredientId,
     name: "Butter",
-    default_measurement_type: "volume",
+    default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
     labels: new Set<KitchenwareLabelId>(),
   };
 
@@ -77,7 +77,7 @@ describe("Kitchenware constructors", () => {
       kind: "ingredient",
       id: paddedId(IngredientId, "butter"),
       name: "Butter",
-      default_measurement_type: "volume",
+      default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
       labels: [],
     });
     expect(result instanceof type.errors).toBe(false);
@@ -88,12 +88,12 @@ describe("Kitchenware constructors", () => {
     expect(result instanceof type.errors).toBe(true);
   });
 
-  it("Ingredient rejects an invalid measurement type", () => {
+  it("Ingredient rejects an invalid measurement unit", () => {
     const result = Ingredient({
       kind: "ingredient",
       id: "butter",
       name: "Butter",
-      default_measurement_type: "bad",
+      default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "bad_unit" },
       labels: new Set(),
     });
     expect(result instanceof type.errors).toBe(true);

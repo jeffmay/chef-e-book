@@ -3,6 +3,7 @@ import * as Y from "yjs";
 import { paddedId } from "../../types/ids.js";
 import type { IngredientTemplate } from "../../fixtures/parse_kitchenware_csv.js";
 import { KitchenwareLabelId, type Ingredient, type IngredientId } from "../../types/kitchenware.js";
+import type { Measurement } from "../../types/measurement.js";
 import {
   addIngredient,
   addLabelsToIngredients,
@@ -11,7 +12,7 @@ import {
   removeLabelsFromIngredients,
   renameIngredient,
   setLabelsForIngredient,
-  setMeasurementTypeForIngredients,
+  setMeasurementValueForIngredients,
   setParentForIngredients,
 } from "../ingredient_store.js";
 
@@ -21,18 +22,20 @@ const SOLID_ID = paddedId(KitchenwareLabelId, "sol");
 const BAKING_ID = paddedId(KitchenwareLabelId, "bak");
 const POWDER_ID = paddedId(KitchenwareLabelId, "pow");
 
+const DEFAULT_MEASUREMENT: Measurement = { value: { numerator: 1, denominator: 1 }, unit: "cup" };
+
 const BUTTER: Ingredient = {
   kind: "ingredient",
   id: "butter" as IngredientId,
   name: "Butter",
-  default_measurement_type: "volume",
+  default_measurement_value: DEFAULT_MEASUREMENT,
   labels: new Set([FAT_ID, SOLID_ID]),
 };
 const FLOUR: Ingredient = {
   kind: "ingredient",
   id: "flour" as IngredientId,
   name: "Flour",
-  default_measurement_type: "volume",
+  default_measurement_value: DEFAULT_MEASUREMENT,
   labels: new Set([BAKING_ID, POWDER_ID, SOLID_ID]),
 };
 
@@ -114,19 +117,21 @@ describe("removeLabelsFromIngredients", () => {
   });
 });
 
-describe("setMeasurementTypeForIngredients", () => {
-  it("changes measurement type", () => {
+describe("setMeasurementValueForIngredients", () => {
+  const WEIGHT_MEASUREMENT: Measurement = { value: { numerator: 1, denominator: 1 }, unit: "oz" };
+
+  it("changes measurement value", () => {
     addIngredient(doc, BUTTER);
-    setMeasurementTypeForIngredients(doc, ["butter" as IngredientId], "weight");
+    setMeasurementValueForIngredients(doc, ["butter" as IngredientId], WEIGHT_MEASUREMENT);
     const result = getIngredients(doc).find((i) => i.id === "butter");
-    expect(result?.default_measurement_type).toBe("weight");
+    expect(result?.default_measurement_value).toEqual(WEIGHT_MEASUREMENT);
   });
 
-  it("ignores ingredients already at that type", () => {
+  it("ignores ingredients already at that value", () => {
     addIngredient(doc, BUTTER);
     const map = doc.getMap("ingredients");
     const before = JSON.stringify(map.get("butter"));
-    setMeasurementTypeForIngredients(doc, ["butter" as IngredientId], "volume");
+    setMeasurementValueForIngredients(doc, ["butter" as IngredientId], DEFAULT_MEASUREMENT);
     expect(JSON.stringify(map.get("butter"))).toBe(before);
   });
 });
@@ -161,7 +166,7 @@ describe("renameIngredient", () => {
     renameIngredient(doc, "butter" as IngredientId, "Salted Butter");
     const result = getIngredients(doc).find((i) => i.id === "butter");
     expect(result?.labels).toEqual(BUTTER.labels);
-    expect(result?.default_measurement_type).toBe(BUTTER.default_measurement_type);
+    expect(result?.default_measurement_value).toEqual(BUTTER.default_measurement_value);
   });
 
   it("silently skips unknown ids", () => {

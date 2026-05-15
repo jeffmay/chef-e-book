@@ -1,6 +1,6 @@
 import { type } from "arktype";
 import { IdCompanion } from "./ids.js";
-import { MeasurementType } from "./measurement.js";
+import { Measurement } from "./measurement.js";
 import { setOf } from "./sets.js";
 
 // externalized to avoid circular definitions in KitchenwareId
@@ -38,7 +38,7 @@ export const Ingredient = type({
   kind: "'ingredient'",
   id: IngredientId.type,
   name: "string",
-  default_measurement_type: MeasurementType,
+  default_measurement_value: Measurement,
   labels: setOf<KitchenwareLabelId>(KitchenwareLabelId.type),
   "parent_id?": IngredientId.type,
 });
@@ -52,6 +52,7 @@ export const Container = type({
   id: ContainerId.type,
   name: "string",
   labels: setOf<KitchenwareLabelId>(KitchenwareLabelId.type),
+  "parent_id?": ContainerId.type,
 });
 export type Container = typeof Container.infer;
 

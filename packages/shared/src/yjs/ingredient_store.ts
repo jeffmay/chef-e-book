@@ -4,7 +4,7 @@ import { isTypeError } from "../assertions/index.js";
 import type { KitchenwareTemplate } from "../fixtures/parse_kitchenware_csv.js";
 import { loadId } from "../types/ids.js";
 import { Ingredient, IngredientId, KitchenwareKind, KitchenwareLabelId } from "../types/kitchenware.js";
-import { MeasurementType } from "../types/measurement.js";
+import { Measurement, MeasurementType, type MeasurementUnit } from "../types/measurement.js";
 import { setOf } from "../types/sets.js";
 import { findOrCreateLabel, getLabelsYmap } from "./label_store.js";
 
@@ -12,13 +12,19 @@ const MAP_KEY = "ingredients";
 
 const DEFAULT_INGREDIENT_KINDS: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 
+const DEFAULT_MEASUREMENT_BY_TYPE: Record<MeasurementType, Measurement> = {
+  volume: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
+  weight: { value: { numerator: 1, denominator: 1 }, unit: "oz" },
+  count: { value: { numerator: 1, denominator: 1 }, unit: "whole" },
+};
+
 export function getIngredientYmap(doc: Y.Doc): Y.Map<unknown> {
   return doc.getMap(MAP_KEY);
 }
 
 const StoredIngredient = type({
   name: "string",
-  default_measurement_type: MeasurementType,
+  default_measurement_value: Measurement,
   labels: setOf<KitchenwareLabelId>(KitchenwareLabelId.type),
   "parent_id?": IngredientId.type,
 });
@@ -26,7 +32,10 @@ const StoredIngredient = type({
 function toStored(i: Ingredient) {
   return {
     name: i.name,
-    default_measurement_type: i.default_measurement_type,
+    default_measurement_value: {
+      value: { numerator: i.default_measurement_value.value.numerator, denominator: i.default_measurement_value.value.denominator },
+      unit: i.default_measurement_value.unit,
+    },
     labels: [...i.labels],
     ...(i.parent_id !== undefined && { parent_id: i.parent_id }),
   };
@@ -34,13 +43,29 @@ function toStored(i: Ingredient) {
 
 // TODO: Log invalid ingredients instead of silently skipping them
 function validateStored(id: IngredientId, raw: unknown): Ingredient | null {
+  // Migrate old format: default_measurement_type → default_measurement_value
+  if (typeof raw === "object" && raw !== null) {
+    const r = raw as Record<string, unknown>;
+    if (r["default_measurement_type"] !== undefined && r["default_measurement_value"] === undefined) {
+      const old_type = r["default_measurement_type"] as string;
+      const valid_type = MeasurementType(old_type);
+      r["default_measurement_value"] = isTypeError(valid_type)
+        ? DEFAULT_MEASUREMENT_BY_TYPE.volume
+        : DEFAULT_MEASUREMENT_BY_TYPE[valid_type as MeasurementType];
+      delete r["default_measurement_type"];
+    }
+  }
+
   const result = StoredIngredient(raw);
   if (isTypeError(result)) return null;
   return {
     kind: "ingredient",
     id,
     name: result.name,
-    default_measurement_type: result.default_measurement_type,
+    default_measurement_value: {
+      value: { numerator: result.default_measurement_value.value.numerator, denominator: result.default_measurement_value.value.denominator },
+      unit: result.default_measurement_value.unit as MeasurementUnit,
+    },
     labels: result.labels,
     ...(result.parent_id !== undefined && { parent_id: result.parent_id }),
   };
@@ -64,7 +89,6 @@ export function initFromKitchenwareTemplates(
   const labels_map = getLabelsYmap(doc);
   if (ingredient_map.size > 0 || labels_map.size > 0) return;
 
-  // Collect all unique label names across all templates
   const all_label_names = new Set<string>();
   for (const item of templates) {
     for (const label_name of item.label_names) {
@@ -73,14 +97,12 @@ export function initFromKitchenwareTemplates(
   }
 
   doc.transact(() => {
-    // Create a label for each unique name and build name → id map
     const label_name_to_id = new Map<string, KitchenwareLabelId>();
     for (const label_name of all_label_names) {
       const id = findOrCreateLabel(doc, label_name, DEFAULT_INGREDIENT_KINDS);
       label_name_to_id.set(label_name, id);
     }
 
-    // Create each ingredient template as a real Ingredient
     for (const item of templates) {
       if (item.kind !== "ingredient") continue;
       const label_ids = new Set<KitchenwareLabelId>(
@@ -92,7 +114,7 @@ export function initFromKitchenwareTemplates(
         kind: "ingredient",
         id: loadId(IngredientId, item.id),
         name: item.name,
-        default_measurement_type: item.default_measurement_type,
+        default_measurement_value: DEFAULT_MEASUREMENT_BY_TYPE[item.default_measurement_type],
         labels: label_ids,
       };
       ingredient_map.set(ingredient.id, toStored(ingredient));
@@ -175,17 +197,17 @@ export function replaceLabelInAllIngredients(
   });
 }
 
-export function setMeasurementTypeForIngredients(
+export function setMeasurementValueForIngredients(
   doc: Y.Doc,
   ids: readonly IngredientId[],
-  type: MeasurementType,
+  value: Measurement,
 ): void {
   const map = getIngredientYmap(doc);
   doc.transact(() => {
     for (const id of ids) {
       const ingredient = validateStored(id, map.get(id));
-      if (ingredient === null || ingredient.default_measurement_type === type) continue;
-      map.set(id, toStored({ ...ingredient, default_measurement_type: type }));
+      if (ingredient === null) continue;
+      map.set(id, toStored({ ...ingredient, default_measurement_value: value }));
     }
   });
 }
@@ -204,7 +226,7 @@ export function setParentForIngredients(
         kind: "ingredient",
         id: ingredient.id,
         name: ingredient.name,
-        default_measurement_type: ingredient.default_measurement_type,
+        default_measurement_value: ingredient.default_measurement_value,
         labels: ingredient.labels,
         ...(parent_id !== undefined && { parent_id }),
       };

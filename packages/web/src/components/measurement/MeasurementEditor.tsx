@@ -82,10 +82,12 @@ function bestUnitConversion(value: Fraction, unit: MeasurementUnit): Measurement
 export interface MeasurementEditorProps {
   readonly value: Measurement;
   readonly onCommit: (value: Measurement) => void;
+  readonly onCancel?: () => void;
+  readonly initially_open?: boolean;
 }
 
-export function MeasurementEditor({ value, onCommit }: MeasurementEditorProps) {
-  const [editing, set_editing] = useState(false);
+export function MeasurementEditor({ value, onCommit, onCancel, initially_open = false }: MeasurementEditorProps) {
+  const [editing, set_editing] = useState(initially_open);
   const [original, set_original] = useState<Fraction>(value.value);
   const [current, set_current] = useState<Fraction>(value.value);
   const [op_mode, set_op_mode] = useState<OpMode>("÷");
@@ -101,8 +103,10 @@ export function MeasurementEditor({ value, onCommit }: MeasurementEditorProps) {
     set_editing(true);
   }
 
-  function reset() {
+  function revertAndClose() {
     set_current(original);
+    set_editing(false);
+    onCancel?.();
   }
 
   function applyOpButton(label: string) {
@@ -148,14 +152,6 @@ export function MeasurementEditor({ value, onCommit }: MeasurementEditorProps) {
   return (
     <span className="me-root me-root--open">
       <span className="fe-header">
-        <button
-          type="button"
-          className="fe-toggle-btn"
-          onClick={reset}
-          aria-label="Reset to original"
-        >
-          {"<"}
-        </button>
         <FractionDisplay value={current} />
         <span className="me-unit">{UNIT_LABELS[unit]}</span>
       </span>
@@ -255,9 +251,14 @@ export function MeasurementEditor({ value, onCommit }: MeasurementEditorProps) {
         </label>
       </span>
 
-      <button type="button" className="fe-ok-btn" onClick={commit} aria-label="OK">
-        OK
-      </button>
+      <span className="me-bottom-row">
+        <button type="button" className="fe-toggle-btn" onClick={revertAndClose} aria-label="Reset to original">
+          {"<"}
+        </button>
+        <button type="button" className="fe-ok-btn" onClick={commit} aria-label="OK">
+          OK
+        </button>
+      </span>
     </span>
   );
 }

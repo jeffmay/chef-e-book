@@ -1,10 +1,13 @@
 import {
   IngredientId,
   loadId,
+  unitType,
   type Ingredient,
   type KitchenwareLabel,
   type KitchenwareLabelId,
+  type Measurement,
   type MeasurementType,
+  type MeasurementUnit,
 } from "@recipe-book/shared";
 import { Column } from "primereact/column";
 import type { TreeNode } from "primereact/treenode";
@@ -14,6 +17,7 @@ import {
   type TreeTableSelectionKeysType,
 } from "primereact/treetable";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { MeasurementEditor } from "../measurement/MeasurementEditor.js";
 import { buildIngredientTree, type IngredientRow } from "./build_ingredient_tree.js";
 import { IngredientSelector } from "./IngredientSelector.js";
 import "./IngredientsTable.css";
@@ -35,13 +39,24 @@ export interface ExternalLabelFilter {
 
 const MEASUREMENT_TYPES = ["count", "volume", "weight"] as const satisfies readonly MeasurementType[];
 
-function pkey(ingredient_id: IngredientId, col_id: string): string {
-  return `${ingredient_id}|${col_id}`;
+const UNIT_LABELS: Record<MeasurementUnit, string> = {
+  tsp: "tsp", tbsp: "tbsp", fl_oz: "fl oz", cup: "cup",
+  pint: "pint", quart: "quart", gallon: "gallon",
+  ml: "ml", l: "L",
+  oz: "oz", lb: "lb", g: "g", kg: "kg",
+  whole: "whole", pinch: "pinch", dash: "dash",
+};
+
+const DEFAULT_BULK_MEASUREMENT: Measurement = { value: { numerator: 1, denominator: 1 }, unit: "cup" };
+
+function formatMeasurement(m: Measurement): string {
+  const { numerator: n, denominator: d } = m.value;
+  const val = d === 1 ? `${n}` : `${n}/${d}`;
+  return `${val} ${UNIT_LABELS[m.unit]}`;
 }
 
-function validateType(v: string): MeasurementType | undefined {
-  if (v === "volume" || v === "weight" || v === "count") return v;
-  return undefined;
+function pkey(ingredient_id: IngredientId, col_id: string): string {
+  return `${ingredient_id}|${col_id}`;
 }
 
 function parseLabels(raw: string): string[] {
@@ -75,7 +90,8 @@ function filterNodes(
     const row = node.data as IngredientRow;
     const filtered_children = filterNodes(node.children ?? [], name_q, type_q, label_q);
     const name_ok = name_q === "" || rowNameMatches(row, name_q.toLowerCase());
-    const type_ok = type_q.length === 0 || type_q.includes(row.default_measurement_type);
+    const row_type = unitType(row.default_measurement_value.unit) ?? "volume";
+    const type_ok = type_q.length === 0 || type_q.includes(row_type);
     const label_ok = label_q.length === 0 || label_q.some((l) => row.labels.includes(l));
     if ((name_ok && type_ok && label_ok) || filtered_children.length > 0) {
       result.push({
@@ -106,7 +122,7 @@ export interface IngredientsTableProps {
   readonly labels: readonly KitchenwareLabel[];
   readonly external_label_filter?: ExternalLabelFilter;
   readonly onRename: (id: IngredientId, name: string) => void;
-  readonly onSetType: (id: IngredientId, type: MeasurementType) => void;
+  readonly onSetMeasurementValue: (id: IngredientId, value: Measurement) => void;
   readonly onSetLabels: (id: IngredientId, label_names: readonly string[]) => void;
   readonly onSetParent: (id: IngredientId, parent_id: IngredientId | undefined) => void;
   readonly onAddLabels: (ids: readonly IngredientId[], label_names: readonly string[]) => void;
@@ -114,7 +130,7 @@ export interface IngredientsTableProps {
     ids: readonly IngredientId[],
     label_names: readonly string[],
   ) => void;
-  readonly onBulkSetType: (ids: readonly IngredientId[], type: MeasurementType) => void;
+  readonly onBulkSetMeasurementValue: (ids: readonly IngredientId[], value: Measurement) => void;
   readonly onBulkSetParent: (
     ids: readonly IngredientId[],
     parent_id: IngredientId | undefined,
@@ -130,12 +146,12 @@ export function IngredientsTable({
   labels,
   external_label_filter,
   onRename,
-  onSetType,
+  onSetMeasurementValue,
   onSetLabels,
   onSetParent,
   onAddLabels,
   onRemoveLabels,
-  onBulkSetType,
+  onBulkSetMeasurementValue,
   onBulkSetParent,
 }: IngredientsTableProps) {
   const [expanded_keys, set_expanded_keys] = useState<TreeTableExpandedKeysType>({});
@@ -146,8 +162,9 @@ export function IngredientsTable({
   const [label_filter, set_label_filter] = useState<string[]>([]);
   const [bulk_add_labels, set_bulk_add_labels] = useState<readonly string[]>([]);
   const [bulk_remove_labels, set_bulk_remove_labels] = useState<readonly string[]>([]);
-  const [bulk_type, set_bulk_type] = useState("");
+  const [bulk_measurement, set_bulk_measurement] = useState<Measurement | null>(null);
   const [bulk_parent_id, set_bulk_parent_id] = useState("");
+  const [editing_measurement_for, set_editing_measurement_for] = useState<IngredientId | null>(null);
 
   const all_label_names = useMemo(() => labels.map((l) => l.name).sort(), [labels]);
 
@@ -215,9 +232,6 @@ export function IngredientsTable({
     if (col_id === "name") {
       const trimmed = value.trim();
       if (trimmed !== "") onRename(ingredient_id, trimmed);
-    } else if (col_id === "default_measurement_type") {
-      const type = validateType(value);
-      if (type !== undefined) onSetType(ingredient_id, type);
     } else if (col_id === "labels") {
       onSetLabels(ingredient_id, parseLabels(value));
     } else if (col_id === "parent_name") {
@@ -296,44 +310,19 @@ export function IngredientsTable({
     );
   }
 
-  function typeBody(node: TreeNode) {
+  function measurementBody(node: TreeNode) {
     const row = node.data as IngredientRow;
-    const pending = pending_edits.get(pkey(row.id, "default_measurement_type"));
-    if (pending !== undefined) {
+    if (editing_measurement_for === row.id) {
       return (
-        <span className="it-editing">
-          <select
-            value={pending}
-            autoFocus
-            aria-label={`Edit type for ${row.name}`}
-            onChange={(e) => onUpdateEdit(row.id, "default_measurement_type", e.target.value)}
-            onKeyDown={(e: KeyboardEvent<HTMLSelectElement>) => {
-              if (e.key === "Escape") onCancelEdit(row.id, "default_measurement_type");
-            }}
-          >
-            {MEASUREMENT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            className="it-confirm-btn"
-            onClick={() => onCommitEdit(row.id, "default_measurement_type")}
-            aria-label="Confirm edit"
-          >
-            ✔︎
-          </button>
-          <button
-            type="button"
-            className="it-cancel-btn"
-            onClick={() => onCancelEdit(row.id, "default_measurement_type")}
-            aria-label="Cancel edit"
-          >
-            ✗
-          </button>
-        </span>
+        <MeasurementEditor
+          value={row.default_measurement_value}
+          initially_open
+          onCommit={(value) => {
+            onSetMeasurementValue(row.id, value);
+            set_editing_measurement_for(null);
+          }}
+          onCancel={() => set_editing_measurement_for(null)}
+        />
       );
     }
     return (
@@ -341,16 +330,13 @@ export function IngredientsTable({
         className="it-editable"
         role="button"
         tabIndex={0}
-        aria-label={`Edit type for ${row.name}`}
-        onClick={() =>
-          onBeginEdit(row.id, "default_measurement_type", row.default_measurement_type)
-        }
+        aria-label={`Edit default measurement for ${row.name}`}
+        onClick={() => set_editing_measurement_for(row.id)}
         onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
-          if (e.key === "Enter" || e.key === " ")
-            onBeginEdit(row.id, "default_measurement_type", row.default_measurement_type);
+          if (e.key === "Enter" || e.key === " ") set_editing_measurement_for(row.id);
         }}
       >
-        {row.default_measurement_type}
+        {formatMeasurement(row.default_measurement_value)}
       </span>
     );
   }
@@ -459,14 +445,6 @@ export function IngredientsTable({
     }
   }
 
-  function applyBulkType(): void {
-    const type = validateType(bulk_type);
-    if (type !== undefined) {
-      onBulkSetType(selected_ids, type);
-      set_bulk_type("");
-    }
-  }
-
   function applyBulkParent(): void {
     if (bulk_parent_id !== "") {
       onBulkSetParent(selected_ids, loadId(IngredientId, bulk_parent_id));
@@ -520,28 +498,14 @@ export function IngredientsTable({
           </span>
 
           <span className="it-bulk-action">
-            <select
-              className="it-bulk-select"
-              value={bulk_type}
-              onChange={(e) => set_bulk_type(e.target.value)}
-              aria-label="Bulk measurement type"
-            >
-              <option value="">— Type —</option>
-              {MEASUREMENT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="it-bulk-apply"
-              disabled={bulk_type === ""}
-              onClick={applyBulkType}
-              aria-label="Apply type change"
-            >
-              Change type
-            </button>
+            <MeasurementEditor
+              value={bulk_measurement ?? DEFAULT_BULK_MEASUREMENT}
+              onCommit={(value) => {
+                set_bulk_measurement(value);
+                onBulkSetMeasurementValue(selected_ids, value);
+              }}
+              onCancel={() => set_bulk_measurement(null)}
+            />
           </span>
 
           <span className="it-bulk-action">
@@ -619,10 +583,10 @@ export function IngredientsTable({
       >
         <Column field="name" header="Name" expander sortable body={nameBody} />
         <Column
-          field="default_measurement_type"
-          header="Type"
+          field="default_measurement_value"
+          header="Default"
           sortable
-          body={typeBody}
+          body={measurementBody}
         />
         <Column field="labels" header="Labels" body={labelsBody} />
         <Column field="parent_name" header="Parent" sortable body={parentBody} />

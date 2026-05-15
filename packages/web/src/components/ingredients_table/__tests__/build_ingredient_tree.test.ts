@@ -32,14 +32,14 @@ const DAIRY: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
   id: "dairy" as IngredientId,
   name: "Dairy",
-  default_measurement_type: "volume",
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set<KitchenwareLabelId>(),
 };
 const BUTTER: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
   id: "butter" as IngredientId,
   name: "Butter",
-  default_measurement_type: "volume",
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set([FAT_LABEL.id, SOLID_LABEL.id]),
   parent_id: "dairy" as IngredientId,
 };
@@ -47,7 +47,7 @@ const MILK: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
   id: "milk" as IngredientId,
   name: "Milk",
-  default_measurement_type: "volume",
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set([LIQUID_LABEL.id]),
   parent_id: "dairy" as IngredientId,
 };
@@ -55,7 +55,7 @@ const FLOUR: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
   id: "flour" as IngredientId,
   name: "Flour",
-  default_measurement_type: "volume",
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set([BAKING_LABEL.id]),
 };
 
@@ -125,7 +125,7 @@ describe("buildIngredientTree", () => {
     const dairy_row = rows.find((r) => r.id === "dairy")!;
     const butter_row = dairy_row.subRows[0]!;
     expect(butter_row.name).toBe("Butter");
-    expect(butter_row.default_measurement_type).toBe("volume");
+    expect(butter_row.default_measurement_value).toEqual({ value: { numerator: 1, denominator: 1 }, unit: "cup" });
     expect(butter_row.labels).toEqual(["fat", "solid"]);
     expect(butter_row.parent_id).toBe("dairy");
     expect(butter_row.kind).toBe("ingredient");

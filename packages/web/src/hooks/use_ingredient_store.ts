@@ -1,4 +1,3 @@
-import type { MeasurementType } from "@recipe-book/shared";
 import {
   addIngredient,
   addLabelsToIngredients,
@@ -9,11 +8,12 @@ import {
   initFromKitchenwareTemplates,
   KitchenwareKind,
   KitchenwareLabelId,
+  type Measurement,
   parseKitchenwareCsv,
   removeLabelsFromIngredients,
   renameIngredient as rename_ingredient_in_doc,
   setLabelsForIngredient,
-  setMeasurementTypeForIngredients,
+  setMeasurementValueForIngredients,
   setParentForIngredients,
 } from "@recipe-book/shared";
 import { randomId } from "@recipe-book/shared";
@@ -24,7 +24,7 @@ const INGREDIENT_KINDS: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 
 export interface NewIngredientInput {
   readonly name: string;
-  readonly default_measurement_type: MeasurementType;
+  readonly default_measurement_value: Measurement;
   readonly label_names: readonly string[];
   readonly parent_id?: IngredientId;
 }
@@ -39,7 +39,7 @@ export interface UseIngredientStoreResult {
     label_ids: readonly KitchenwareLabelId[],
   ) => void;
   readonly set_labels: (id: IngredientId, label_ids: readonly KitchenwareLabelId[]) => void;
-  readonly set_measurement_type: (ids: readonly IngredientId[], type: MeasurementType) => void;
+  readonly set_measurement_value: (ids: readonly IngredientId[], value: Measurement) => void;
   readonly set_parent: (ids: readonly IngredientId[], parent_id: IngredientId | undefined) => void;
 }
 
@@ -80,7 +80,7 @@ export function useIngredientStore(): UseIngredientStoreResult {
         kind: "ingredient",
         id,
         name: input.name,
-        default_measurement_type: input.default_measurement_type,
+        default_measurement_value: input.default_measurement_value,
         labels: label_ids,
         ...(input.parent_id !== undefined && { parent_id: input.parent_id }),
       };
@@ -99,8 +99,8 @@ export function useIngredientStore(): UseIngredientStoreResult {
     set_labels(id, label_ids) {
       setLabelsForIngredient(doc, id, label_ids);
     },
-    set_measurement_type(ids, type) {
-      setMeasurementTypeForIngredients(doc, ids, type);
+    set_measurement_value(ids, value) {
+      setMeasurementValueForIngredients(doc, ids, value);
     },
     set_parent(ids, parent_id) {
       setParentForIngredients(doc, ids, parent_id);

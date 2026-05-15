@@ -629,6 +629,8 @@ interface RecipeIngredientsEditorProps {
 }
 
 function RecipeIngredientsEditor({ ingredients, all_ingredients, onChange }: RecipeIngredientsEditorProps) {
+  const [adding_amount_for, set_adding_amount_for] = useState<string | null>(null);
+
   function addIngredient(ingredient_id: string) {
     if (!ingredient_id) return;
     const already_added = ingredients.some((ri) => ri.ingredient_id === ingredient_id);
@@ -659,18 +661,24 @@ function RecipeIngredientsEditor({ ingredients, all_ingredients, onChange }: Rec
                       onChange(updated);
                     }}
                   />
+                ) : adding_amount_for === ri.id ? (
+                  <MeasurementEditor
+                    value={{ value: { numerator: 1, denominator: 1 }, unit: "cup" }}
+                    initially_open
+                    onCommit={(amount) => {
+                      const updated = ingredients.map((x, j) => (j === i ? { ...x, amount } : x));
+                      onChange(updated);
+                      set_adding_amount_for(null);
+                    }}
+                    onCancel={() => set_adding_amount_for(null)}
+                  />
                 ) : (
                   <span className="re-ing-amount-calc" title="Calculated from sections">
                     (calculated)
                     <button
                       type="button"
                       className="re-ing-add-amount"
-                      onClick={() => {
-                        const updated = ingredients.map((x, j) =>
-                          j === i ? { ...x, amount: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const } } : x
-                        );
-                        onChange(updated);
-                      }}
+                      onClick={() => set_adding_amount_for(ri.id)}
                       aria-label={`Add amount for ${name}`}
                     >
                       + amount

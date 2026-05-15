@@ -1,5 +1,6 @@
-import { findOrCreateLabel, IngredientId, KitchenwareKind, KitchenwareLabelId, MeasurementType } from "@recipe-book/shared";
+import { findOrCreateLabel, IngredientId, KitchenwareKind, KitchenwareLabelId, type Measurement } from "@recipe-book/shared";
 import { useState } from "react";
+import { MeasurementEditor } from "../components/measurement/MeasurementEditor.js";
 import { IngredientsTable, type ExternalLabelFilter } from "../components/ingredients_table/IngredientsTable.js";
 import { LabelTable } from "../components/ingredients_table/LabelTable.js";
 import { useDoc } from "../contexts/doc_context.js";
@@ -13,16 +14,18 @@ const INGREDIENT_KINDS: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 // Add-ingredient form state
 // ---------------------------------------------------------------------------
 
+const DEFAULT_MEASUREMENT: Measurement = { value: { numerator: 1, denominator: 1 }, unit: "cup" };
+
 interface AddFormState {
   name: string;
-  measurement_type: MeasurementType;
+  measurement_value: Measurement;
   labels_raw: string;
   parent_id: string;
 }
 
 const EMPTY_ADD_FORM: AddFormState = {
   name: "",
-  measurement_type: "volume",
+  measurement_value: DEFAULT_MEASUREMENT,
   labels_raw: "",
   parent_id: "",
 };
@@ -41,7 +44,7 @@ export function BulkIngredientEditorPage() {
     add_labels,
     remove_labels,
     set_labels,
-    set_measurement_type,
+    set_measurement_value,
     set_parent,
   } = useIngredientStore();
 
@@ -70,7 +73,7 @@ export function BulkIngredientEditorPage() {
       .filter((l) => l !== "");
     create_ingredient({
       name: label_name,
-      default_measurement_type: add_form.measurement_type,
+      default_measurement_value: add_form.measurement_value,
       label_names,
       ...(add_form.parent_id && {
         parent_id: valid_parent_id,
@@ -147,22 +150,11 @@ export function BulkIngredientEditorPage() {
             />
           </label>
           <label className="bie-add-label">
-            Default measurement type
-            <select
-              className="bie-add-select"
-              value={add_form.measurement_type}
-              onChange={(e) =>
-                set_add_form((f) => ({
-                  ...f,
-                  measurement_type: e.target.value as MeasurementType,
-                }))
-              }
-              aria-label="New ingredient measurement type"
-            >
-              <option value="volume">Volume</option>
-              <option value="weight">Weight</option>
-              <option value="count">Count</option>
-            </select>
+            Default measurement
+            <MeasurementEditor
+              value={add_form.measurement_value}
+              onCommit={(value) => set_add_form((f) => ({ ...f, measurement_value: value }))}
+            />
           </label>
           <label className="bie-add-label">
             Labels (comma-separated)
@@ -235,12 +227,12 @@ export function BulkIngredientEditorPage() {
         labels={labels}
         {...(external_label_filter !== undefined && { external_label_filter })}
         onRename={renameIngredient}
-        onSetType={(id, type) => set_measurement_type([id], type)}
+        onSetMeasurementValue={(id, value) => set_measurement_value([id], value)}
         onSetLabels={handleSetLabels}
         onSetParent={handleSetParent}
         onAddLabels={handleAddLabels}
         onRemoveLabels={handleRemoveLabels}
-        onBulkSetType={set_measurement_type}
+        onBulkSetMeasurementValue={set_measurement_value}
         onBulkSetParent={set_parent}
       />
     </main>

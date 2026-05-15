@@ -8,6 +8,7 @@ export * from "./math/fraction.js";
 export * from "./math/units.js";
 export * from "./fixtures/parse_kitchenware_csv.js";
 export * from "./yjs/ingredient_store.js";
+export * from "./yjs/container_store.js";
 export * from "./yjs/label_store.js";
 export * from "./yjs/recipe_store.js";
 export * from "./yjs/recipe_folder_store.js";

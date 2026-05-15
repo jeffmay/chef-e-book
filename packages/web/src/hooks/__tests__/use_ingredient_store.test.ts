@@ -23,11 +23,13 @@ const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 
 const BUTTER_ID = loadId(IngredientId, "------butter");
 
+const DEFAULT_MEASUREMENT = { value: { numerator: 1, denominator: 1 }, unit: "cup" as const };
+
 const BUTTER: Ingredient = {
   kind: "ingredient",
   id: BUTTER_ID,
   name: "Butter",
-  default_measurement_type: "volume",
+  default_measurement_value: DEFAULT_MEASUREMENT,
   labels: new Set<KitchenwareLabelId>(),
 };
 
@@ -82,7 +84,7 @@ describe("useIngredientStore — create_ingredient", () => {
     act(() =>
       result.current.create_ingredient({
         name: "Almond Milk",
-        default_measurement_type: "volume",
+        default_measurement_value: DEFAULT_MEASUREMENT,
         label_names: ["liquid", "dairy-free"],
       }),
     );
@@ -99,7 +101,7 @@ describe("useIngredientStore — add_labels / remove_labels", () => {
     act(() =>
       result.current.create_ingredient({
         name: "Test Ing",
-        default_measurement_type: "volume",
+        default_measurement_value: DEFAULT_MEASUREMENT,
         label_names: ["a"],
       }),
     );
@@ -120,7 +122,7 @@ describe("useIngredientStore — add_labels / remove_labels", () => {
     act(() =>
       result.current.create_ingredient({
         name: "Test Ing 2",
-        default_measurement_type: "volume",
+        default_measurement_value: DEFAULT_MEASUREMENT,
         label_names: ["x", "y"],
       }),
     );
@@ -135,17 +137,18 @@ describe("useIngredientStore — add_labels / remove_labels", () => {
   });
 });
 
-describe("useIngredientStore — set_measurement_type", () => {
-  it("changes the measurement type", () => {
+describe("useIngredientStore — set_measurement_value", () => {
+  it("changes the measurement value", () => {
     const { result } = renderHook(() => useIngredientStore(), {
       wrapper: makeWrapper(doc),
     });
     const butter = result.current.ingredients.find((i) => i.id === BUTTER_ID);
     if (butter === undefined) throw new Error("butter not found");
-    act(() => result.current.set_measurement_type([butter.id], "weight"));
+    const weight_measurement = { value: { numerator: 1, denominator: 1 }, unit: "oz" as const };
+    act(() => result.current.set_measurement_value([butter.id], weight_measurement));
     expect(
-      result.current.ingredients.find((i) => i.id === BUTTER_ID)?.default_measurement_type,
-    ).toBe("weight");
+      result.current.ingredients.find((i) => i.id === BUTTER_ID)?.default_measurement_value,
+    ).toEqual(weight_measurement);
   });
 });
 
@@ -169,7 +172,7 @@ describe("useIngredientStore — set_labels", () => {
     act(() =>
       result.current.create_ingredient({
         name: "Test Ing Labels",
-        default_measurement_type: "volume",
+        default_measurement_value: DEFAULT_MEASUREMENT,
         label_names: ["a", "b"],
       }),
     );

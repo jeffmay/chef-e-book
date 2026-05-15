@@ -49,7 +49,7 @@ Labels are stored in the `"labels"` Yjs map on the document root. Deleting a lab
 #### Ingredient
 - `id`: `IngredientId` (branded nanoid, 12 chars)
 - `name`: string
-- `default_measurement_type`: `"volume" | "weight" | "count"`
+- `default_measurement_value`: `Measurement` — a full value like `{ value: {1,1}, unit: "cup" }` (migrated from old `default_measurement_type`)
 - `labels`: `ReadonlySet<ItemLabelId>` (stored as `string[]` in Yjs, reconstructed as Set on read)
 - `parent_id?`: `IngredientId` (supports subtypes; e.g. "Shredded Cheddar" → "Shredded Cheese" → "Cheese")
 
@@ -57,6 +57,7 @@ Labels are stored in the `"labels"` Yjs map on the document root. Deleting a lab
 - `id`: `ContainerId` (branded nanoid, 12 chars)
 - `name`: string (bowl, steamer, pot, aluminium foil, etc.)
 - `labels`: `ReadonlySet<ItemLabelId>`
+- `parent_id?`: `ContainerId` (supports container hierarchies)
 
 #### Equipment
 - `id`: `EquipmentId` (branded nanoid, 12 chars)
@@ -290,6 +291,16 @@ npm run lint
 - [x] `IngredientSelector` component — wraps PrimeReact `TreeSelect` for hierarchical ingredient selection; used in `IngredientsTable` inline parent cell editor and bulk parent action; mock-friendly via `vi.mock("primereact/treeselect")` in tests
 - [x] `IngredientsTable` parent column uses `IngredientSelector` instead of plain `<select>` — inline cell editor and bulk action both use tree-select; bulk action bar adds a "Clear parent" button (sets parent to `undefined` without needing to select anything)
 - [x] `LabelTable` filter buttons replaced with PrimeReact `RadioButton` group — "Filter: [All] [Any]" styled as button-group with black background / white text on selection; radio circle hidden with CSS clip trick for pure-CSS button appearance; selected mode persists in state
+- [x] `Ingredient.default_measurement_type` → `default_measurement_value: Measurement` — backwards migration in `validateStored` auto-converts old Yjs entries; `DEFAULT_MEASUREMENT_BY_TYPE` constant maps type names to default Measurement values; `setMeasurementTypeForIngredients` → `setMeasurementValueForIngredients`
+- [x] `Container.parent_id?` added — supports container hierarchy; `container_store.ts` Yjs CRUD store (`getContainers`, `addContainer`, `renameContainer`, `setLabelsForContainer`, `setParentForContainer`); `useContainerStore` React hook
+- [x] `KitchenwareParentSelector` component — PrimeReact `TreeSelect` over container hierarchy; builds tree inline from `parent_id` links; CSS prefix `kps-`
+- [x] `KitchenwareEditor` component — read-only name + locked kind="container"; `LabelEditor` for label management; `KitchenwareParentSelector` for parent; separate `onChangeLabels` / `onChangeParent` callbacks; CSS prefix `ke-`
+- [x] `KitchenwareSelector` component — `react-select` `CreatableSelect` (single); opening/typing creates container immediately and shows modal with `KitchenwareEditor`; Create/Cancel actions; CSS prefix `ks-`
+- [x] `RecipeFolderSelector` component — PrimeReact `TreeSelect` over folder tree; inline "+ Folder" button adds subfolder under selected folder (or root); Enter/Escape hotkeys; shows selected path as "/" separated breadcrumb; CSS prefix `rfs-`
+- [x] `MeasurementEditor` refactor — new `onCancel` and `initially_open` props; `<` button moved from header to bottom row (left of OK) and now calls `revertAndClose()` which reverts value and calls `onCancel`
+- [x] `IngredientsTable` "Type" column → "Default" — uses `MeasurementEditor` with `initially_open` for inline cell editing; `formatMeasurement` helper; bulk bar uses `MeasurementEditor` instead of type `<select>`; props renamed `onSetMeasurementValue` / `onBulkSetMeasurementValue`
+- [x] `RecipeEditorPage` "+ amount" button opens `MeasurementEditor` in editing mode (via `initially_open`) with cancel support; container selector uses `KitchenwareSelector` (WIP — `COMMON_CONTAINERS` fallback replaced); folder selector wired to `RecipeFolderSelector`
+- [x] `BulkIngredientEditorPage` add-form updated — `MeasurementEditor` replaces measurement type `<select>`; props updated for renamed ingredient store API
 
 ---
 

@@ -37,6 +37,12 @@
   color: var(--color-muted);
 }
 
+.me-bottom-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
 .me-select {
   font-size: 0.95em;
   padding: 2px var(--spacing-xs);

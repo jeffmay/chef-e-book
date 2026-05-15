@@ -1,11 +1,11 @@
-import type { Ingredient, IngredientId, KitchenwareLabel, MeasurementType } from "@recipe-book/shared";
+import type { Ingredient, IngredientId, KitchenwareLabel, Measurement } from "@recipe-book/shared";
 import { ReadonlyDeep } from "type-fest";
 
 export interface IngredientRow {
   readonly kind: "ingredient";
   readonly id: IngredientId;
   readonly name: string;
-  readonly default_measurement_type: MeasurementType;
+  readonly default_measurement_value: Measurement;
   readonly labels: readonly string[];
   readonly parent_id?: IngredientId;
   readonly parent_name: string;
@@ -29,7 +29,7 @@ export function buildIngredientTree(
       kind: "ingredient",
       id: i.id,
       name: i.name,
-      default_measurement_type: i.default_measurement_type,
+      default_measurement_value: i.default_measurement_value,
       labels: label_names,
       parent_name:
         i.parent_id !== undefined ? (id_to_name.get(i.parent_id) ?? i.parent_id) : "",

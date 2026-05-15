@@ -56,14 +56,14 @@ const DAIRY: Ingredient = {
   kind: "ingredient",
   id: "dairy000000" as IngredientId,
   name: "Dairy",
-  default_measurement_type: "volume",
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set(),
 };
 const BUTTER: Ingredient = {
   kind: "ingredient",
   id: "butter00000" as IngredientId,
   name: "Butter",
-  default_measurement_type: "volume",
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set(),
   parent_id: "dairy000000" as IngredientId,
 };
@@ -71,7 +71,7 @@ const CHEESE: Ingredient = {
   kind: "ingredient",
   id: "cheese00000" as IngredientId,
   name: "Cheese",
-  default_measurement_type: "weight",
+  default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "oz" as const },
   labels: new Set(),
 };
 
