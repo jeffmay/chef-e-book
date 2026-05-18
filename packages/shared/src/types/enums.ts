@@ -7,7 +7,9 @@ import { type Companion } from "./companion";
  * 
  * Satisfying this type signature allows you to use the functions in this module.
  */
-export interface EnumCompanion<N extends string, V extends readonly string[]> extends Companion<N, V[number]> {
+export interface EnumCompanion<N extends string, V extends readonly string[]>
+  extends Companion<N, V[number]> {
+
   readonly type: Type<V[number]>;
   readonly types: StringTypeEnum<V[number]>
   readonly values: V;
@@ -22,7 +24,11 @@ export interface EnumCompanion<N extends string, V extends readonly string[]> ex
  * @param extend extend the default companion object with additional properties or methods.
  * @returns an EnumCompanion object with the specified name and values, and a type function that generates an Arktype enumerated type for the values.
  */
-export function EnumCompanion<const V extends readonly string[], N extends string, R extends EnumCompanion<N, V> = EnumCompanion<N, V>>(name: N, values: V, extend?: (o: EnumCompanion<N, V>) => R): R {
+export function EnumCompanion<
+  const N extends string,
+  const V extends readonly string[],
+  const R extends EnumCompanion<N, V> = EnumCompanion<N, V>
+>(name: N, values: V, extend?: (o: EnumCompanion<N, V>) => R): R {
   const enumeration: Record<string, string> = {};
   for (const v of values) {
     enumeration[constantCase(v).toUpperCase()] = v;
@@ -54,3 +60,10 @@ export type StringEnum<A extends string> = Readonly<{
 export type StringTypeEnum<A extends string> = Readonly<{
   [V in A as SnakeCase<V>]: Type<`'${V}'`>
 }>
+
+/**
+ * Checks if the given string is a valid enum value of the given type companion.
+ */
+export function is<N extends string, V extends readonly string[]>(companion: EnumCompanion<N, V>, value: string): value is V[number] {
+  return companion.values.includes(value);
+}

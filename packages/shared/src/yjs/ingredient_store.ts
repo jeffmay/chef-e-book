@@ -4,7 +4,7 @@ import { isTypeError } from "../assertions/index.js";
 import type { KitchenwareTemplate } from "../fixtures/parse_kitchenware_csv.js";
 import { loadId } from "../types/ids.js";
 import { Ingredient, IngredientId, KitchenwareKind, KitchenwareLabelId } from "../types/kitchenware.js";
-import { Measurement, MeasurementType, type MeasurementUnit } from "../types/measurement.js";
+import { Measurement, MeasurementType } from "../types/measurement.js";
 import { setOf } from "../types/sets.js";
 import { findOrCreateLabel, getLabelsYmap } from "./label_store.js";
 
@@ -24,7 +24,7 @@ export function getIngredientYmap(doc: Y.Doc): Y.Map<unknown> {
 
 const StoredIngredient = type({
   name: "string",
-  default_measurement_value: Measurement,
+  default_measurement_value: Measurement.type,
   labels: setOf<KitchenwareLabelId>(KitchenwareLabelId.type),
   "parent_id?": IngredientId.type,
 });
@@ -48,10 +48,10 @@ function validateStored(id: IngredientId, raw: unknown): Ingredient | null {
     const r = raw as Record<string, unknown>;
     if (r["default_measurement_type"] !== undefined && r["default_measurement_value"] === undefined) {
       const old_type = r["default_measurement_type"] as string;
-      const valid_type = MeasurementType(old_type);
+      const valid_type = MeasurementType.type(old_type);
       r["default_measurement_value"] = isTypeError(valid_type)
         ? DEFAULT_MEASUREMENT_BY_TYPE.volume
-        : DEFAULT_MEASUREMENT_BY_TYPE[valid_type as MeasurementType];
+        : DEFAULT_MEASUREMENT_BY_TYPE[valid_type];
       delete r["default_measurement_type"];
     }
   }
@@ -64,7 +64,7 @@ function validateStored(id: IngredientId, raw: unknown): Ingredient | null {
     name: result.name,
     default_measurement_value: {
       value: { numerator: result.default_measurement_value.value.numerator, denominator: result.default_measurement_value.value.denominator },
-      unit: result.default_measurement_value.unit as MeasurementUnit,
+      unit: result.default_measurement_value.unit,
     },
     labels: result.labels,
     ...(result.parent_id !== undefined && { parent_id: result.parent_id }),

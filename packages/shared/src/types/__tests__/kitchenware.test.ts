@@ -15,6 +15,7 @@ import {
   type Kitchenware,
   type KitchenwareLabelId,
 } from "../kitchenware.js";
+import { is } from "../enums.js";
 
 describe("kitchenware type guards", () => {
   const ingredient: Kitchenware = {
@@ -60,20 +61,20 @@ describe("kitchenware type guards", () => {
 
 describe("ItemKind schema", () => {
   it("accepts valid kinds", () => {
-    expect(KitchenwareKind("ingredient") instanceof type.errors).toBe(false);
-    expect(KitchenwareKind("container") instanceof type.errors).toBe(false);
-    expect(KitchenwareKind("equipment") instanceof type.errors).toBe(false);
+    expect(is(KitchenwareKind, "ingredient")).toBe(true);
+    expect(is(KitchenwareKind, "container")).toBe(true);
+    expect(is(KitchenwareKind, "equipment")).toBe(true);
   });
 
   it("rejects invalid kinds", () => {
-    expect(KitchenwareKind("widget") instanceof type.errors).toBe(true);
-    expect(KitchenwareKind("") instanceof type.errors).toBe(true);
+    expect(is(KitchenwareKind, "widget")).toBe(false);
+    expect(is(KitchenwareKind, "")).toBe(false);
   });
 });
 
 describe("Kitchenware constructors", () => {
   it("Ingredient accepts a valid ingredient", () => {
-    const result = Ingredient({
+    const result = Ingredient.type({
       kind: "ingredient",
       id: paddedId(IngredientId, "butter"),
       name: "Butter",
@@ -84,12 +85,12 @@ describe("Kitchenware constructors", () => {
   });
 
   it("Ingredient rejects a missing required field", () => {
-    const result = Ingredient({ kind: "ingredient", id: "butter" });
+    const result = Ingredient.type({ kind: "ingredient", id: "butter" });
     expect(result instanceof type.errors).toBe(true);
   });
 
   it("Ingredient rejects an invalid measurement unit", () => {
-    const result = Ingredient({
+    const result = Ingredient.type({
       kind: "ingredient",
       id: "butter",
       name: "Butter",
@@ -100,12 +101,12 @@ describe("Kitchenware constructors", () => {
   });
 
   it("Container accepts a valid container", () => {
-    const result = Container({ kind: "container", id: "bowl", name: "Bowl", labels: [] });
+    const result = Container.type({ kind: "container", id: "bowl", name: "Bowl", labels: [] });
     expect(result).instanceOf(type.errors)
   });
 
   it("Equipment accepts a valid equipment", () => {
-    const result = Equipment({ kind: "equipment", id: paddedId(EquipmentId, "oven"), name: "Oven", labels: new Set() });
+    const result = Equipment.type({ kind: "equipment", id: paddedId(EquipmentId, "oven"), name: "Oven", labels: new Set() });
     expect(result instanceof type.errors).toBe(false);
   });
 });

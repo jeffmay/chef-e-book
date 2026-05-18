@@ -40,7 +40,7 @@ const LabelNames = type("string").pipe((s) =>
 const IngredientRow = type({
   "Unique ID": "string",
   "Description": "string",
-  "Default Measurement Type": MeasurementType,
+  "Default Measurement Type": MeasurementType.type,
   "Labels": LabelNames,
 }).pipe(
   (row): IngredientTemplate => ({

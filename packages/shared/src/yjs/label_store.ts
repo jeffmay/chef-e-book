@@ -2,23 +2,24 @@ import { type } from "arktype";
 import { ReadonlyDeep } from "type-fest";
 import * as Y from "yjs";
 import { isTypeError } from "../assertions/index.js";
+import { Companion } from "../types/companion.js";
+import { randomId } from "../types/ids.js";
 import { KitchenwareKind, KitchenwareLabelId, type KitchenwareLabel } from "../types/kitchenware.js";
 import { setOf } from "../types/sets.js";
-import { randomId } from "../types/ids.js";
 
 const LABELS_MAP_KEY = "labels";
 
-const StoredLabel = type({
+const StoredLabel = Companion("StoredLabel", type({
   name: "string",
-  kinds: setOf(KitchenwareKind),
-});
+  kinds: setOf(KitchenwareKind.type),
+}));
 
 export function getLabelsYmap(doc: Y.Doc): Y.Map<unknown> {
   return doc.getMap(LABELS_MAP_KEY);
 }
 
 function validateLabel(id: string, raw: unknown): KitchenwareLabel | type.errors {
-  const result = StoredLabel(raw);
+  const result = StoredLabel.type(raw);
   if (result instanceof type.errors) {
     return result;
   }

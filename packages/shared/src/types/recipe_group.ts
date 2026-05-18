@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { Companion } from "./companion.js";
+import { ScopedCompanion } from "./companion.js";
 import { IdCompanion } from "./ids.js";
 import { EnumCompanion } from "./enums.js";
 
@@ -9,8 +9,10 @@ export type SortOrder = typeof SortOrder.type.infer;
 export const RecipeFolderId = IdCompanion("RecipeFolderId", 12);
 export type RecipeFolderId = typeof RecipeFolderId.type.infer;
 
-// Use scope syntax to allow recursive definition
-const folderScope = type.scope({
+// Use scope syntax for the self-recursive `children` field — arktype's
+// inline `"this[]"` reference trips a "shallow resolution cycle" parse error
+// at module load.
+const recipeFolderScope = type.scope({
   RecipeFolder: {
     id: () => RecipeFolderId.type,
     name: "string",
@@ -22,13 +24,5 @@ const folderScope = type.scope({
   },
 }).export();
 
-export const RecipeFolder = Companion("RecipeFolder", folderScope.RecipeFolder);
-export type RecipeFolder = typeof folderScope.RecipeFolder.infer;
-
-// Backward-compatibility aliases so any existing code referencing the old names still compiles
-export const RecipeGroupId = RecipeFolderId;
-export type RecipeGroupId = RecipeFolderId;
-/** @deprecated Use RecipeFolder instead */
-export const RecipeGroup = RecipeFolder;
-/** @deprecated Use RecipeFolder instead */
-export type RecipeGroup = RecipeFolder;
+export const RecipeFolder = ScopedCompanion(recipeFolderScope, "RecipeFolder");
+export type RecipeFolder = typeof recipeFolderScope.RecipeFolder.infer;

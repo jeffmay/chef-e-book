@@ -1,9 +1,9 @@
 import { type } from "arktype";
 import * as Y from "yjs";
 import { isTypeError } from "../assertions/index.js";
+import { Companion } from "../types/companion.js";
 import { loadId, randomId } from "../types/ids.js";
-import { RecipeFolder, RecipeFolderId } from "../types/recipe_group.js";
-import { SortOrder } from "../types/recipe_group.js";
+import { RecipeFolder, RecipeFolderId, SortOrder } from "../types/recipe_group.js";
 
 const MAP_KEY = "recipe_folders";
 
@@ -12,14 +12,14 @@ export function getRecipeFolderYmap(doc: Y.Doc): Y.Map<unknown> {
 }
 
 // Stored format omits the `children` field — the tree is rebuilt from parent_folder_id
-const StoredRecipeFolder = type({
+const StoredRecipeFolder = Companion("StoredRecipeFolder", type({
   name: "string",
   "parent_folder_id?": RecipeFolderId.type,
   tags: "string[]",
   sort_order: SortOrder.type,
   "manual_order?": "string[]",
-});
-type StoredRecipeFolder = typeof StoredRecipeFolder.infer;
+}));
+type StoredRecipeFolder = typeof StoredRecipeFolder.type.infer;
 
 function toStored(folder: RecipeFolder): StoredRecipeFolder {
   return {
@@ -32,7 +32,7 @@ function toStored(folder: RecipeFolder): StoredRecipeFolder {
 }
 
 function validateStored(id: RecipeFolderId, raw: unknown): Omit<RecipeFolder, "children"> | null {
-  const result = StoredRecipeFolder(raw);
+  const result = StoredRecipeFolder.type(raw);
   if (isTypeError(result)) return null;
   return {
     id,

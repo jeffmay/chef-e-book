@@ -8,8 +8,10 @@ import { type Companion } from "./companion";
  * 
  * Satisfying this type signature allows you to use the functions in this module.
  */
-export interface IdCompanion<N extends string, L extends number = number> extends Companion<N, type.brand<string, N>> {
-  readonly length: L;
+export interface IdCompanion<N extends string, Opts extends { length: number } = { length: number }>
+  extends Companion<N, type.brand<string, N>> {
+
+  readonly length: Opts["length"] & number;
 }
 
 /**
@@ -20,8 +22,12 @@ export interface IdCompanion<N extends string, L extends number = number> extend
  * @param extend extend the default companion object with additional properties or methods.
  * @returns an IdCompanion object with the specified idName and length, and an idType function that generates a branded type for the ID.
  */
-export function IdCompanion<N extends string, L extends number, R extends IdCompanion<N, L> = IdCompanion<N, L>>(name: N, length: L, extend?: (o: IdCompanion<N, L>) => R): R {
-  const base: IdCompanion<N, L> = {
+export function IdCompanion<
+  const N extends string,
+  const L extends number,
+  const R extends IdCompanion<N, { length: L }> = IdCompanion<N, { length: L }>
+>(name: N, length: L, extend?: (o: IdCompanion<N, { length: L }>) => R): R {
+  const base: IdCompanion<N, { length: L }> = {
     type: type.string.exactlyLength(length).brand(name),
     name,
     length,
@@ -34,7 +40,7 @@ export function IdCompanion<N extends string, L extends number, R extends IdComp
  * 
  * This is useful for avoid the `as` keyword and potentially getting the input string type wrong or losing the literal type information.
  */
-export function branded<const N extends string, const S extends string>(_companion: IdCompanion<N, number>, str: S): type.brand<S, N> {
+export function branded<const N extends string, const S extends string>(_companion: IdCompanion<N>, str: S): type.brand<S, N> {
   return str as type.brand<S, N>
 }
 
@@ -48,7 +54,7 @@ export function branded<const N extends string, const S extends string>(_compani
  *
  * @note use this for deterministic IDs (typically for fixtures/testing); use randomId for new production IDs.
  */
-export function paddedId<S extends string, N extends string, L extends number>(companion: IdCompanion<N, L>, id: S): type.brand<PadStart<S, L, "-">, N> {
+export function paddedId<S extends string, N extends string, L extends number>(companion: IdCompanion<N, { length: L }>, id: S): type.brand<PadStart<S, L, "-">, N> {
   return branded(companion, padStart(id, companion.length, "-"));
 }
 
@@ -58,7 +64,7 @@ export function paddedId<S extends string, N extends string, L extends number>(c
  * @param companion the IdCompanion object containing the length and type information for the identifier
  * @returns a random identifier of the type specified by the companion's type function.
  */
-export function randomId<N extends string, L extends number>(companion: IdCompanion<N, L>): type.brand<string, N> {
+export function randomId<N extends string, L extends number>(companion: IdCompanion<N, { length: L }>): type.brand<string, N> {
   return branded(companion, nanoid(companion.length));
 }
 
