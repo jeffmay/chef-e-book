@@ -375,6 +375,7 @@ export function IngredientsTable({
           selectedLabelNames={parseLabels(pending)}
           allLabelNames={allLabelNames}
           ariaLabel={`Edit labels for ${row.name}`}
+          autoFocus
           onChange={(names) => onUpdateEdit(row.id, "labels", names.join(", "))}
           onCommit={() => onCommitEdit(row.id, "labels")}
           onCancel={() => onCancelEdit(row.id, "labels")}

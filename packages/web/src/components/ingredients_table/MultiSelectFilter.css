@@ -57,7 +57,8 @@
   border: var(--border-width) solid var(--color-border);
   min-width: 100%;
   max-height: 14em;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   box-shadow: 2px 2px 0 var(--color-border);
 }
 
@@ -72,11 +73,18 @@
   background: var(--color-bg);
   color: var(--color-fg);
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .msf-search:focus {
   outline: none;
   background: #f8f8f8;
+}
+
+.msf-dropdown-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .msf-option {
@@ -115,6 +123,7 @@
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-top: var(--border-width) solid var(--color-border);
+  flex-shrink: 0;
 }
 
 .msf-actions button {

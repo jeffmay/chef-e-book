@@ -1,6 +1,6 @@
-import { useState, useMemo, type MouseEvent } from "react";
+import { useState, useMemo, useRef, useEffect, type MouseEvent } from "react";
 import CreatableSelect from "react-select/creatable";
-import { components as SelectComponents } from "react-select";
+import { components as SelectComponents, type SelectInstance } from "react-select";
 import type { GroupBase, MenuProps, MultiValue } from "react-select";
 import "./LabelEditor.css";
 
@@ -38,6 +38,7 @@ export interface LabelEditorProps {
   readonly onCancel?: () => void;
   readonly commitAriaLabel?: string;
   readonly commitDisabled?: boolean;
+  readonly autoFocus?: boolean;
 }
 
 export function LabelEditor({
@@ -50,8 +51,17 @@ export function LabelEditor({
   onCancel,
   commitAriaLabel,
   commitDisabled,
+  autoFocus = false,
 }: LabelEditorProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const selectRef = useRef<SelectInstance<LabelOption, true>>(null);
+
+  useEffect(() => {
+    if (autoFocus && selectRef.current) {
+      selectRef.current.focus();
+      selectRef.current.openMenu("first");
+    }
+  }, [autoFocus]);
 
   const selectedOptions = useMemo(
     () => selectedLabelNames.map((name) => ({ label: name, value: name })),
@@ -80,12 +90,17 @@ export function LabelEditor({
         menuPosition="fixed"
         menuPlacement="auto"
         classNamePrefix="le"
+        ref={selectRef}
         components={{ Menu: LabelEditorMenu }}
         onMenuOpen={() => setMenuOpen(true)}
         onMenuClose={() => setMenuOpen(false)}
         onKeyDown={(e) => {
+          if (menuOpen && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+            e.stopPropagation();
+          }
           if (e.key === "Escape" && !menuOpen) {
             e.preventDefault();
+            e.stopPropagation();
             onCancel?.();
           }
         }}

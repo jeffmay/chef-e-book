@@ -98,27 +98,29 @@ export function MultiSelectFilter({
 
       {open && (
         <div className="msf-dropdown" role="listbox" aria-multiselectable>
-          <input
-            ref={searchRef}
-            type="text"
-            className="msf-search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search options…"
-            aria-label={`Search ${ariaLabel} options`}
-          />
-          {visibleOptions.length === 0 && <div className="msf-no-options">No options</div>}
-          {visibleOptions.map((opt) => (
-            <label key={opt} className="msf-option">
-              <input
-                type="checkbox"
-                checked={value.includes(opt)}
-                onChange={() => toggleOption(opt)}
-                aria-label={opt}
-              />
-              {opt}
-            </label>
-          ))}
+          <div className="msf-dropdown-body">
+            <input
+              ref={searchRef}
+              type="text"
+              className="msf-search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search options…"
+              aria-label={`Search ${ariaLabel} options`}
+            />
+            {visibleOptions.length === 0 && <div className="msf-no-options">No options</div>}
+            {visibleOptions.map((opt) => (
+              <label key={opt} className="msf-option">
+                <input
+                  type="checkbox"
+                  checked={value.includes(opt)}
+                  onChange={() => toggleOption(opt)}
+                  aria-label={opt}
+                />
+                {opt}
+              </label>
+            ))}
+          </div>
           <div className="msf-actions">
             <button type="button" onClick={handleAccept} aria-label="Accept filter">
               ✔︎

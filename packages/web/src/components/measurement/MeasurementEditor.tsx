@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import {
   simplify,
   convertVolume,
@@ -109,6 +109,13 @@ export function MeasurementEditor({
   const [opMode, setOpMode] = useState<OpMode>("÷");
   const [mtype, setMtype] = useState<MeasurementType>(() => inferType(value.unit));
   const [unit, setUnit] = useState<MeasurementUnit>(value.unit);
+  const rootRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (editing && rootRef.current) {
+      rootRef.current.focus();
+    }
+  }, [editing]);
 
   function openEditor() {
     setOriginal(value.value);
@@ -165,7 +172,17 @@ export function MeasurementEditor({
   }
 
   return (
-    <span className="me-root me-root--open">
+    <span
+      ref={rootRef}
+      tabIndex={-1}
+      className="me-root me-root--open"
+      onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          revertAndClose();
+        }
+      }}
+    >
       <span className="fe-header">
         <FractionDisplay value={current} />
         <span className="me-unit">{UNIT_LABELS[unit]}</span>
