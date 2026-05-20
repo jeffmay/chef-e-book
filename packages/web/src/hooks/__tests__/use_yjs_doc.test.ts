@@ -23,7 +23,7 @@ describe("useYjsDoc", () => {
     expect(result.current).toBeInstanceOf(Y.Doc);
   });
 
-  it("creates IndexeddbPersistence keyed by user_name", () => {
+  it("creates IndexeddbPersistence keyed by userName", () => {
     renderHook(() => useYjsDoc("Alice"));
     expect(MockIndexeddbPersistence).toHaveBeenCalledWith("Alice", expect.any(Y.Doc));
   });

@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createElement, type ReactNode } from "react";
 import * as Y from "yjs";
 import { DocContext } from "../../contexts/doc_context.js";
-import { RecipeEditorPage } from "../RecipeEditorPage.js";
+import { RecipeEditorPage } from "../recipe_editor_page.js";
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------butter,ingredient,Butter,volume,fat+solid
@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 function setup() {
-  return render(<RecipeEditorPage user_name="test-user" />, { wrapper: makeWrapper(doc) });
+  return render(<RecipeEditorPage userName="test-user" />, { wrapper: makeWrapper(doc) });
 }
 
 describe("RecipeEditorPage — list view", () => {

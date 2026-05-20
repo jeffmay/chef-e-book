@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { DurationEditor } from "../DurationEditor.js";
+import { DurationEditor } from "../duration_editor.js";
 
 const FIVE_MIN = 300;
 const ONE_HOUR = 3600;

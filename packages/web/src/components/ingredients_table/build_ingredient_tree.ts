@@ -30,14 +30,14 @@ export function buildIngredientTree(
   ingredients: ReadonlyDeep<Ingredient[]>,
   item_labels: ReadonlyDeep<KitchenwareLabel[]>,
 ): IngredientRow[] {
-  const label_name_by_id = new Map<KitchenwareLabelId, string>(item_labels.map((l) => [l.id, l.name]));
-  const ingredient_name_by_id = new Map<IngredientId, string>(ingredients.map((i) => [i.id, i.name]));
+  const labelNameById = new Map<KitchenwareLabelId, string>(item_labels.map((l) => [l.id, l.name]));
+  const ingredientNameById = new Map<IngredientId, string>(ingredients.map((i) => [i.id, i.name]));
 
-  const row_map = new Map<IngredientId, IngredientRow>();
+  const rowMap = new Map<IngredientId, IngredientRow>();
 
   for (const i of ingredients) {
     const label_names = [...i.labels]
-      .map((id) => label_name_by_id.get(id) ?? id)
+      .map((id) => labelNameById.get(id) ?? id)
       .sort((a, b) => a.localeCompare(b));
     const row: IngredientRow = {
       kind: "ingredient",
@@ -46,18 +46,18 @@ export function buildIngredientTree(
       default_measurement_value: i.default_measurement_value,
       labels: label_names,
       parent_name:
-        i.parent_id !== undefined ? (ingredient_name_by_id.get(i.parent_id) ?? i.parent_id) : "",
+        i.parent_id !== undefined ? (ingredientNameById.get(i.parent_id) ?? i.parent_id) : "",
       subRows: [],
       ...(i.parent_id !== undefined && { parent_id: i.parent_id }),
     };
-    row_map.set(i.id, row);
+    rowMap.set(i.id, row);
   }
 
   const roots: IngredientRow[] = [];
 
-  for (const row of row_map.values()) {
+  for (const row of rowMap.values()) {
     if (row.parent_id !== undefined) {
-      const parent = row_map.get(row.parent_id);
+      const parent = rowMap.get(row.parent_id);
       if (parent !== undefined) {
         parent.subRows.push(row);
         continue;
@@ -66,11 +66,11 @@ export function buildIngredientTree(
     roots.push(row);
   }
 
-  function sort_level(rows: IngredientRow[]): void {
+  function sortLevel(rows: IngredientRow[]): void {
     rows.sort((a, b) => a.name.localeCompare(b.name));
-    for (const r of rows) sort_level(r.subRows);
+    for (const r of rows) sortLevel(r.subRows);
   }
-  sort_level(roots);
+  sortLevel(roots);
 
   return roots;
 }

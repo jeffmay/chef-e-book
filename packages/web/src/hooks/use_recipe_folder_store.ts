@@ -13,22 +13,22 @@ import { useDoc } from "../contexts/doc_context.js";
 
 export interface RecipeFolderStore {
   readonly folders: RecipeFolder[];
-  readonly flat_folders: Array<Omit<RecipeFolder, "children">>;
-  readonly create_folder: (name: string, parent_id?: RecipeFolderId) => RecipeFolder;
-  readonly update_folder: (folder: RecipeFolder) => void;
-  readonly delete_folder: (id: RecipeFolderId) => void;
+  readonly flatFolders: Array<Omit<RecipeFolder, "children">>;
+  readonly createFolder: (name: string, parent_id?: RecipeFolderId) => RecipeFolder;
+  readonly updateFolder: (folder: RecipeFolder) => void;
+  readonly deleteFolder: (id: RecipeFolderId) => void;
 }
 
 export function useRecipeFolderStore(): RecipeFolderStore {
   const doc = useDoc();
-  const [folders, set_folders] = useState<RecipeFolder[]>(() => getRecipeFolders(doc));
-  const [flat_folders, set_flat_folders] = useState(() => getRecipeFoldersFlat(doc));
+  const [folders, setFolders] = useState<RecipeFolder[]>(() => getRecipeFolders(doc));
+  const [flatFolders, setFlatFolders] = useState(() => getRecipeFoldersFlat(doc));
 
   useEffect(() => {
     const map = getRecipeFolderYmap(doc);
     function update() {
-      set_folders(getRecipeFolders(doc));
-      set_flat_folders(getRecipeFoldersFlat(doc));
+      setFolders(getRecipeFolders(doc));
+      setFlatFolders(getRecipeFoldersFlat(doc));
     }
     map.observe(update);
     return () => map.unobserve(update);
@@ -36,9 +36,9 @@ export function useRecipeFolderStore(): RecipeFolderStore {
 
   return {
     folders,
-    flat_folders,
-    create_folder: (name, parent_id) => createRecipeFolder(doc, name, parent_id),
-    update_folder: (folder) => updateRecipeFolder(doc, folder),
-    delete_folder: (id) => deleteRecipeFolder(doc, id),
+    flatFolders,
+    createFolder: (name, parent_id) => createRecipeFolder(doc, name, parent_id),
+    updateFolder: (folder) => updateRecipeFolder(doc, folder),
+    deleteFolder: (id) => deleteRecipeFolder(doc, id),
   };
 }

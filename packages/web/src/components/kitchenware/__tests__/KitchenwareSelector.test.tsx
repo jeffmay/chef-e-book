@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { TreeSelectChangeEvent } from "primereact/treeselect";
 import type { TreeNode } from "primereact/treenode";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { KitchenwareSelector } from "../KitchenwareSelector.js";
+import { KitchenwareSelector } from "../kitchenware_selector.js";
 
 interface MockTreeSelectProps {
   value: string | null | undefined;
@@ -76,11 +76,11 @@ function setup(props: Partial<Parameters<typeof KitchenwareSelector>[0]> = {}) {
     <KitchenwareSelector
       value={undefined}
       containers={[BOWL]}
-      all_label_names={["big", "small"]}
+      allLabelNames={["big", "small"]}
       onChange={onChange}
       onCreateContainer={onCreateContainer}
       onUpdateContainer={onUpdateContainer}
-      aria_label="Container"
+      ariaLabel="Container"
       {...props}
     />,
   );

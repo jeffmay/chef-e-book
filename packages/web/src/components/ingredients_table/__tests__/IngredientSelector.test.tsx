@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { TreeSelectChangeEvent } from "primereact/treeselect";
 import type { TreeNode } from "primereact/treenode";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { IngredientSelector } from "../IngredientSelector.js";
+import { IngredientSelector } from "../ingredient_selector.js";
 
 interface MockTreeSelectProps {
   value: string | null | undefined;
@@ -85,7 +85,7 @@ function setup(props: Partial<Parameters<typeof IngredientSelector>[0]> = {}) {
       options={[DAIRY, BUTTER, CHEESE]}
       labels={LABELS}
       onChange={onChange}
-      aria_label="Select parent ingredient"
+      ariaLabel="Select parent ingredient"
       {...props}
     />,
   );

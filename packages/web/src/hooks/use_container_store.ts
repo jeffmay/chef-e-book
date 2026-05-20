@@ -21,26 +21,26 @@ export interface NewContainerInput {
 
 export interface UseContainerStoreResult {
   readonly containers: readonly Container[];
-  readonly add_container: (input: NewContainerInput) => Container;
-  readonly rename_container: (id: ContainerId, name: string) => void;
-  readonly set_labels: (id: ContainerId, label_ids: readonly KitchenwareLabelId[]) => void;
-  readonly set_parent: (id: ContainerId, parent_id: ContainerId | undefined) => void;
+  readonly addContainer: (input: NewContainerInput) => Container;
+  readonly renameContainer: (id: ContainerId, name: string) => void;
+  readonly setLabels: (id: ContainerId, label_ids: readonly KitchenwareLabelId[]) => void;
+  readonly setParent: (id: ContainerId, parent_id: ContainerId | undefined) => void;
 }
 
 export function useContainerStore(): UseContainerStoreResult {
   const doc = useDoc();
-  const [containers, set_containers] = useState<Container[]>(() => getContainers(doc));
+  const [containers, setContainers] = useState<Container[]>(() => getContainers(doc));
 
   useEffect(() => {
     const map = getContainerYmap(doc);
-    const handler = () => set_containers(getContainers(doc));
+    const handler = () => setContainers(getContainers(doc));
     map.observe(handler);
     return () => map.unobserve(handler);
   }, [doc]);
 
   return {
     containers,
-    add_container(input) {
+    addContainer(input) {
       const id = randomId(ContainerId);
       const container: Container = {
         kind: "container",
@@ -52,13 +52,13 @@ export function useContainerStore(): UseContainerStoreResult {
       addContainer(doc, container);
       return container;
     },
-    rename_container(id, name) {
+    renameContainer(id, name) {
       renameContainer(doc, id, name);
     },
-    set_labels(id, label_ids) {
+    setLabels(id, label_ids) {
       setLabelsForContainer(doc, id, label_ids);
     },
-    set_parent(id, parent_id) {
+    setParent(id, parent_id) {
       setParentForContainer(doc, id, parent_id);
     },
   };

@@ -44,13 +44,13 @@ describe("useContainerStore — initial state", () => {
   });
 });
 
-describe("useContainerStore — add_container", () => {
+describe("useContainerStore — addContainer", () => {
   it("adds a new container and returns it", () => {
     const { result } = renderHook(() => useContainerStore(), { wrapper: makeWrapper(doc) });
     const before = result.current.containers.length;
     let created: Container | undefined;
     act(() => {
-      created = result.current.add_container({ name: "Pot" });
+      created = result.current.addContainer({ name: "Pot" });
     });
     expect(result.current.containers.length).toBe(before + 1);
     expect(created?.name).toBe("Pot");
@@ -61,38 +61,38 @@ describe("useContainerStore — add_container", () => {
     const { result } = renderHook(() => useContainerStore(), { wrapper: makeWrapper(doc) });
     let created: Container | undefined;
     act(() => {
-      created = result.current.add_container({ name: "Labeled", label_ids: [LABEL_A] });
+      created = result.current.addContainer({ name: "Labeled", label_ids: [LABEL_A] });
     });
     expect(created?.labels.has(LABEL_A)).toBe(true);
   });
 });
 
-describe("useContainerStore — rename_container", () => {
+describe("useContainerStore — renameContainer", () => {
   it("renames a container", () => {
     const { result } = renderHook(() => useContainerStore(), { wrapper: makeWrapper(doc) });
-    act(() => result.current.rename_container(BOWL_ID, "Big Bowl"));
+    act(() => result.current.renameContainer(BOWL_ID, "Big Bowl"));
     expect(result.current.containers.find((c) => c.id === BOWL_ID)?.name).toBe("Big Bowl");
   });
 });
 
-describe("useContainerStore — set_labels", () => {
+describe("useContainerStore — setLabels", () => {
   it("replaces labels for a container", () => {
     const { result } = renderHook(() => useContainerStore(), { wrapper: makeWrapper(doc) });
-    act(() => result.current.set_labels(BOWL_ID, [LABEL_A]));
+    act(() => result.current.setLabels(BOWL_ID, [LABEL_A]));
     expect(result.current.containers.find((c) => c.id === BOWL_ID)?.labels.has(LABEL_A)).toBe(true);
   });
 });
 
-describe("useContainerStore — set_parent", () => {
+describe("useContainerStore — setParent", () => {
   it("sets parent_id on a container", () => {
     const { result } = renderHook(() => useContainerStore(), { wrapper: makeWrapper(doc) });
     let pot_id: ContainerId | undefined;
     act(() => {
-      const pot = result.current.add_container({ name: "Pot" });
+      const pot = result.current.addContainer({ name: "Pot" });
       pot_id = pot.id;
     });
     if (pot_id === undefined) throw new Error("pot not found");
-    act(() => result.current.set_parent(BOWL_ID, pot_id));
+    act(() => result.current.setParent(BOWL_ID, pot_id));
     expect(result.current.containers.find((c) => c.id === BOWL_ID)?.parent_id).toBe(pot_id);
   });
 
@@ -100,12 +100,12 @@ describe("useContainerStore — set_parent", () => {
     const { result } = renderHook(() => useContainerStore(), { wrapper: makeWrapper(doc) });
     let pot_id: ContainerId | undefined;
     act(() => {
-      const pot = result.current.add_container({ name: "Pot" });
+      const pot = result.current.addContainer({ name: "Pot" });
       pot_id = pot.id;
     });
     if (pot_id === undefined) throw new Error("pot not found");
-    act(() => result.current.set_parent(BOWL_ID, pot_id));
-    act(() => result.current.set_parent(BOWL_ID, undefined));
+    act(() => result.current.setParent(BOWL_ID, pot_id));
+    act(() => result.current.setParent(BOWL_ID, undefined));
     expect(result.current.containers.find((c) => c.id === BOWL_ID)?.parent_id).toBeUndefined();
   });
 

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeFraction, simplify } from "@recipe-book/shared";
-import { FractionEditor } from "../FractionEditor.js";
+import { FractionEditor } from "../fraction_editor.js";
 
 const ONE_HALF = makeFraction(1, 2);
 const ONE = makeFraction(1, 1);
@@ -168,7 +168,7 @@ describe("FractionEditor — extra_controls slot", () => {
       <FractionEditor
         value={ONE}
         onCommit={vi.fn()}
-        extra_controls={<span data-testid="extra">extra</span>}
+        extraControls={<span data-testid="extra">extra</span>}
       />,
     );
     await userEvent.click(screen.getByRole("button", { name: "Edit value" }));

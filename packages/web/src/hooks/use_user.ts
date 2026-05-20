@@ -3,25 +3,25 @@ import { useState, useCallback } from "react";
 export const USER_STORAGE_KEY = "recipe_book_current_user";
 
 export interface UseUserResult {
-  readonly user_name: string | null;
-  readonly set_user_name: (name: string) => void;
-  readonly clear_user: () => void;
+  readonly userName: string | null;
+  readonly setUserName: (name: string) => void;
+  readonly clearUser: () => void;
 }
 
 export function useUser(): UseUserResult {
-  const [user_name, set_state] = useState<string | null>(
+  const [userName, setState] = useState<string | null>(
     () => localStorage.getItem(USER_STORAGE_KEY),
   );
 
-  const set_user_name = useCallback((name: string) => {
+  const setUserName = useCallback((name: string) => {
     localStorage.setItem(USER_STORAGE_KEY, name);
-    set_state(name);
+    setState(name);
   }, []);
 
-  const clear_user = useCallback(() => {
+  const clearUser = useCallback(() => {
     localStorage.removeItem(USER_STORAGE_KEY);
-    set_state(null);
+    setState(null);
   }, []);
 
-  return { user_name, set_user_name, clear_user };
+  return { userName, setUserName, clearUser };
 }

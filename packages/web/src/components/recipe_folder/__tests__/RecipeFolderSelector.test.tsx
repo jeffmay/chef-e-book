@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { TreeSelectChangeEvent } from "primereact/treeselect";
 import type { TreeNode } from "primereact/treenode";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { RecipeFolderSelector } from "../RecipeFolderSelector.js";
+import { RecipeFolderSelector } from "../recipe_folder_selector.js";
 
 interface MockTreeSelectProps {
   value: string | null | undefined;
@@ -78,7 +78,7 @@ function setup(props: Partial<Parameters<typeof RecipeFolderSelector>[0]> = {}) 
       folders={[MAIN_FOLDER]}
       onChange={onChange}
       onCreateFolder={onCreateFolder}
-      aria_label="Select folder"
+      ariaLabel="Select folder"
       {...props}
     />,
   );

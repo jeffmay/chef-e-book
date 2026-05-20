@@ -1,0 +1,56 @@
+.ks_modal_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ks_modal {
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-md);
+  min-width: 24vw;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.ks_modal_title {
+  font-family: var(--font-display);
+  font-size: 1.1em;
+  border-bottom: var(--border-width) solid var(--color-border);
+  padding-bottom: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.ks_modal_actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  margin-top: var(--spacing-xs);
+}
+
+.ks_modal_create,
+.ks_modal_cancel {
+  font-family: var(--font-body);
+  font-size: 0.9em;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
+.ks_modal_create {
+  font-weight: bold;
+}
+
+.ks_modal_create:hover,
+.ks_modal_cancel:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}

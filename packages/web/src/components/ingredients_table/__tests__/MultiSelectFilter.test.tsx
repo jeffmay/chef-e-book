@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
-import { MultiSelectFilter } from "../MultiSelectFilter.js";
+import { MultiSelectFilter } from "../multi_select_filter.js";
 
 const OPTIONS = ["dairy", "fat", "solid", "liquid"];
 
@@ -15,8 +15,8 @@ function setup({ initial = [] }: SetupOptions = {}) {
     <MultiSelectFilter
       value={initial}
       onChange={onChange}
-      all_options={OPTIONS}
-      aria_label="Filter by labels"
+      allOptions={OPTIONS}
+      ariaLabel="Filter by labels"
     />,
   );
   return { onChange };

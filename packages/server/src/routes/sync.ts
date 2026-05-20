@@ -5,24 +5,24 @@ export const syncRouter = Router();
 
 const userDocs = new Map<string, Y.Doc>();
 
-function getOrCreateDoc(user_id: string): Y.Doc {
-  const existing = userDocs.get(user_id);
+function getOrCreateDoc(userId: string): Y.Doc {
+  const existing = userDocs.get(userId);
   if (existing !== undefined) return existing;
   const doc = new Y.Doc();
-  userDocs.set(user_id, doc);
+  userDocs.set(userId, doc);
   return doc;
 }
 
 syncRouter.post("/:user_id", (req: Request, res: Response) => {
-  const raw_user_id = req.params["user_id"];
-  const user_id = typeof raw_user_id === "string" ? raw_user_id : undefined;
-  if (user_id === undefined || user_id === "") {
+  const rawUserId = req.params["user_id"];
+  const userId = typeof rawUserId === "string" ? rawUserId : undefined;
+  if (userId === undefined || userId === "") {
     res.status(400).json({ error: "Missing user_id" });
     return;
   }
 
   const body = req.body as { update?: string };
-  const doc = getOrCreateDoc(user_id);
+  const doc = getOrCreateDoc(userId);
 
   if (body.update !== undefined) {
     const update = Buffer.from(body.update, "base64");

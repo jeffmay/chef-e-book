@@ -1,0 +1,53 @@
+.select_user_page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+.select_user_title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8em, 6vw, 3em);
+  text-align: center;
+  border-bottom: var(--border-width) solid var(--color-border);
+  padding-bottom: var(--spacing-sm);
+  width: 100%;
+  max-width: 50vw;
+}
+
+.select_user_subtitle {
+  color: var(--color-muted);
+  font-style: italic;
+  text-align: center;
+}
+
+.select_user_form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
+  max-width: 40vw;
+}
+
+.select_user_label {
+  font-size: 0.9em;
+  color: var(--color-muted);
+}
+
+.select_user_input {
+  font-size: 1.1em;
+}
+
+.select_user_submit {
+  font-size: 1em;
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-top: var(--spacing-xs);
+}
+
+.select_user_submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

@@ -1,0 +1,133 @@
+.msf_wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.msf_input_row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.msf_input {
+  font-size: 0.85em;
+  width: 100%;
+  min-width: 0;
+  border: var(--border-width) solid var(--color-border);
+  padding: 1px 4px;
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
+.msf_input:focus {
+  outline: 2px solid var(--color-fg);
+  outline-offset: -1px;
+  cursor: text;
+}
+
+.msf_badge {
+  font-size: 0.75em;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.msf_clear_btn {
+  font-size: 0.75em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-muted);
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.msf_clear_btn:hover {
+  color: var(--color-fg);
+}
+
+.msf_dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  min-width: 100%;
+  max-height: 14em;
+  overflow-y: auto;
+  box-shadow: 2px 2px 0 var(--color-border);
+}
+
+.msf_search {
+  display: block;
+  width: 100%;
+  border: none;
+  border-bottom: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.85em;
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  box-sizing: border-box;
+}
+
+.msf_search:focus {
+  outline: none;
+  background: #f8f8f8;
+}
+
+.msf_option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  cursor: pointer;
+  font-size: 0.85em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.msf_option:hover {
+  background: #f0f0f0;
+}
+
+/* Checkboxes inherit a global `input { width: 100% }` rule — keep them
+   intrinsically sized so the option label sits next to the box. */
+.msf_option input[type="checkbox"] {
+  width: auto;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.msf_no_options {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  color: var(--color-muted);
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+.msf_actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.msf_actions button {
+  font-size: 0.85em;
+  padding: 1px 6px;
+  cursor: pointer;
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+}
+
+.msf_actions button:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}

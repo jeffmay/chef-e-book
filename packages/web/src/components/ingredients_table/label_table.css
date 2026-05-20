@@ -1,0 +1,271 @@
+.lt_section {
+  margin-bottom: var(--spacing-md);
+}
+
+.lt_toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: none;
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 1em;
+  font-family: var(--font-display);
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--color-fg);
+  width: 100%;
+  text-align: left;
+}
+
+.lt_toggle:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.lt_toggle_icon {
+  font-size: 0.7em;
+}
+
+.lt_count {
+  font-size: 0.8em;
+  font-weight: normal;
+  color: var(--color-muted);
+  margin-left: auto;
+}
+
+.lt_panel {
+  border: var(--border-width) solid var(--color-border);
+  border-top: none;
+}
+
+/* Bulk action bar */
+.lt_bulk_bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: #f8f8f8;
+  border-bottom: var(--border-width) solid var(--color-border);
+  font-size: 0.9em;
+}
+
+.lt_bulk_count {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* ---- Filter mode RadioButton group ---- */
+.lt_filter_label {
+  font-size: 0.85em;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  white-space: nowrap;
+}
+
+.lt_filter_group {
+  display: flex;
+  align-items: stretch;
+}
+
+.lt_filter_btn {
+  display: flex;
+  align-items: center;
+  padding: 1px 8px;
+  border: var(--border-width) solid var(--color-border);
+  margin-left: -1px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.85em;
+  user-select: none;
+  color: var(--color-fg);
+  background: var(--color-bg);
+  white-space: nowrap;
+}
+
+.lt_filter_btn:hover {
+  background: #f8f8f8;
+}
+
+.lt_filter_btn--active {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.lt_filter_btn--active:hover {
+  background: var(--color-accent);
+}
+
+/* Hide the radio circle visually while keeping it accessible */
+.lt_filter_btn .p_radiobutton {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.lt_bulk_btn {
+  background: none;
+  border: var(--border-width) solid var(--color-border);
+  padding: 1px 8px;
+  font-size: 0.85em;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  white-space: nowrap;
+}
+
+.lt_bulk_btn:hover:not(:disabled) {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.lt_bulk_btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.lt_bulk_btn--danger {
+  border-color: #c00;
+  color: #c00;
+}
+
+.lt_bulk_btn--danger:hover {
+  background: #c00;
+  color: #fff;
+  border-color: #c00;
+}
+
+.lt_bulk_clear {
+  background: none;
+  border: var(--border-width) solid var(--color-border);
+  padding: 1px 6px;
+  font-size: 0.85em;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  margin-left: auto;
+}
+
+.lt_bulk_clear:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.lt_merge_form {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.lt_merge_input {
+  font-size: 0.85em;
+  padding: 1px 4px;
+  border: var(--border-width) solid var(--color-border);
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  width: 14vw;
+  min-width: 8em;
+}
+
+/* Table */
+.lt_table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.lt_th {
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  text-align: left;
+  background: var(--color-fg);
+  color: var(--color-bg);
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.lt_th--select {
+  width: 2em;
+  text-align: center;
+}
+
+.lt_td {
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  vertical-align: middle;
+}
+
+.lt_td--select {
+  width: 2em;
+  text-align: center;
+  padding: 0;
+}
+
+.lt_td--select input[type="checkbox"] {
+  cursor: pointer;
+  width: 1em;
+  height: 1em;
+}
+
+.lt_td--kinds {
+  color: var(--color-muted);
+  font-size: 0.85em;
+}
+
+.lt_row--selected>.lt_td {
+  background: #f0f0f0;
+}
+
+/* Inline name editing */
+.lt_name {
+  cursor: pointer;
+  display: inline;
+  min-width: 4em;
+}
+
+.lt_name:focus {
+  outline: 2px solid var(--color-fg);
+  outline-offset: 1px;
+}
+
+.lt_editing {
+  display: flex;
+  gap: 2px;
+}
+
+.lt_edit_input {
+  font-size: 0.9em;
+  padding: 1px 4px;
+  border: var(--border-width) solid var(--color-border);
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  width: 12vw;
+  min-width: 5em;
+}
+
+.lt_edit_btn {
+  padding: 1px .5em;
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.lt_edit_btn:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.lt_empty {
+  padding: var(--spacing-md);
+  text-align: center;
+  color: var(--color-muted);
+  font-style: italic;
+}

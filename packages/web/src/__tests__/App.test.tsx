@@ -7,7 +7,7 @@ vi.mock("y-indexeddb", () => ({
   IndexeddbPersistence: vi.fn().mockImplementation(() => ({ destroy: vi.fn() })),
 }));
 
-const { App } = await import("../App.js");
+const { App } = await import("../app.js");
 
 beforeEach(() => {
   localStorage.clear();

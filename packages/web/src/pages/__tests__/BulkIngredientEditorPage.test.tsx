@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createElement, type ReactNode } from "react";
 import * as Y from "yjs";
 import { DocContext } from "../../contexts/doc_context.js";
-import { BulkIngredientEditorPage } from "../BulkIngredientEditorPage.js";
+import { BulkIngredientEditorPage } from "../bulk_ingredient_editor_page.js";
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------butter,ingredient,Butter,volume,fat+solid

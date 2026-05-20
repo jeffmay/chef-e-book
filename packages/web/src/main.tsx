@@ -4,7 +4,7 @@ import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.css";
 import "primeicons/primeicons.css";
 import "./styles/global.css";
-import { App } from "./App.js";
+import { App } from "./app.js";
 
 const rootEl = document.getElementById("root");
 if (rootEl === null) throw new Error("Missing #root element");

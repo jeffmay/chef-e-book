@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReadonlyDeep } from "type-fest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LabelTable } from "../LabelTable.js";
+import { LabelTable } from "../label_table.js";
 
 const KIND_INGREDIENT: Set<KitchenwareKind> = new Set(["ingredient"]);
 

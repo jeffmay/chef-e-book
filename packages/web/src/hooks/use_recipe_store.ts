@@ -18,19 +18,19 @@ import { useDoc } from "../contexts/doc_context.js";
 export interface RecipeStore {
   readonly recipes: Recipe[];
   readonly create: (input: Omit<CreateRecipeInput, "created_by">) => Recipe;
-  readonly save: (recipe_id: RecipeId, input: Omit<SaveRecipeInput, "created_by">) => Recipe;
-  readonly copy: (recipe_id: RecipeId, new_title: string, new_folder_id?: RecipeFolderId) => Recipe;
-  readonly remove: (recipe_id: RecipeId) => void;
+  readonly save: (recipeId: RecipeId, input: Omit<SaveRecipeInput, "created_by">) => Recipe;
+  readonly copy: (recipeId: RecipeId, new_title: string, newFolderId?: RecipeFolderId) => Recipe;
+  readonly remove: (recipeId: RecipeId) => void;
 }
 
-export function useRecipeStore(user_name: string): RecipeStore {
+export function useRecipeStore(userName: string): RecipeStore {
   const doc = useDoc();
-  const [recipes, set_recipes] = useState<Recipe[]>(() => getRecipes(doc));
+  const [recipes, setRecipes] = useState<Recipe[]>(() => getRecipes(doc));
 
   useEffect(() => {
     const map = getRecipeYmap(doc);
     function update() {
-      set_recipes(getRecipes(doc));
+      setRecipes(getRecipes(doc));
     }
     map.observe(update);
     return () => map.unobserve(update);
@@ -38,11 +38,11 @@ export function useRecipeStore(user_name: string): RecipeStore {
 
   return {
     recipes,
-    create: (input) => createRecipe(doc, { ...input, created_by: user_name }),
-    save: (recipe_id, input) => saveRecipe(doc, recipe_id, { ...input, created_by: user_name }),
-    copy: (recipe_id, new_title, new_folder_id) =>
-      copyRecipe(doc, recipe_id, new_title, new_folder_id, user_name),
-    remove: (recipe_id) => deleteRecipe(doc, recipe_id),
+    create: (input) => createRecipe(doc, { ...input, created_by: userName }),
+    save: (recipeId, input) => saveRecipe(doc, recipeId, { ...input, created_by: userName }),
+    copy: (recipeId, new_title, newFolderId) =>
+      copyRecipe(doc, recipeId, new_title, newFolderId, userName),
+    remove: (recipeId) => deleteRecipe(doc, recipeId),
   };
 }
 

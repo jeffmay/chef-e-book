@@ -14,7 +14,7 @@ import * as Y from "yjs";
 import { DocContext } from "../../contexts/doc_context.js";
 import { useIngredientStore } from "../use_ingredient_store.js";
 
-const INGREDIENT_KINDS: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
+const ingredientKinds: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 
 // A small CSV returned by the mocked fetch
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
@@ -75,17 +75,17 @@ describe("useIngredientStore — async default loading", () => {
   });
 });
 
-describe("useIngredientStore — create_ingredient", () => {
+describe("useIngredientStore — createIngredient", () => {
   it("adds a new ingredient", () => {
     const { result } = renderHook(() => useIngredientStore(), {
       wrapper: makeWrapper(doc),
     });
     const before = result.current.ingredients.length;
     act(() =>
-      result.current.create_ingredient({
+      result.current.createIngredient({
         name: "Almond Milk",
         default_measurement_value: DEFAULT_MEASUREMENT,
-        label_names: ["liquid", "dairy-free"],
+        labelNames: ["liquid", "dairy-free"],
       }),
     );
     expect(result.current.ingredients.length).toBe(before + 1);
@@ -93,23 +93,23 @@ describe("useIngredientStore — create_ingredient", () => {
   });
 });
 
-describe("useIngredientStore — add_labels / remove_labels", () => {
+describe("useIngredientStore — addLabels / removeLabels", () => {
   it("appends labels to selected ingredients", () => {
     const { result } = renderHook(() => useIngredientStore(), {
       wrapper: makeWrapper(doc),
     });
     act(() =>
-      result.current.create_ingredient({
+      result.current.createIngredient({
         name: "Test Ing",
         default_measurement_value: DEFAULT_MEASUREMENT,
-        label_names: ["a"],
+        labelNames: ["a"],
       }),
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing")?.id;
     if (id === undefined) throw new Error("ingredient not found");
-    const b_id = findOrCreateLabel(doc, "b", INGREDIENT_KINDS);
-    const c_id = findOrCreateLabel(doc, "c", INGREDIENT_KINDS);
-    act(() => result.current.add_labels([id], [b_id, c_id]));
+    const b_id = findOrCreateLabel(doc, "b", ingredientKinds);
+    const c_id = findOrCreateLabel(doc, "c", ingredientKinds);
+    act(() => result.current.addLabels([id], [b_id, c_id]));
     const updated = result.current.ingredients.find((i) => i.id === id);
     expect(updated?.labels.has(b_id)).toBe(true);
     expect(updated?.labels.has(c_id)).toBe(true);
@@ -120,24 +120,24 @@ describe("useIngredientStore — add_labels / remove_labels", () => {
       wrapper: makeWrapper(doc),
     });
     act(() =>
-      result.current.create_ingredient({
+      result.current.createIngredient({
         name: "Test Ing 2",
         default_measurement_value: DEFAULT_MEASUREMENT,
-        label_names: ["x", "y"],
+        labelNames: ["x", "y"],
       }),
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing 2")?.id;
     if (id === undefined) throw new Error("ingredient not found");
-    const x_id = findOrCreateLabel(doc, "x", INGREDIENT_KINDS);
-    const y_id = findOrCreateLabel(doc, "y", INGREDIENT_KINDS);
-    act(() => result.current.remove_labels([id], [x_id]));
+    const x_id = findOrCreateLabel(doc, "x", ingredientKinds);
+    const y_id = findOrCreateLabel(doc, "y", ingredientKinds);
+    act(() => result.current.removeLabels([id], [x_id]));
     const updated = result.current.ingredients.find((i) => i.id === id);
     expect(updated?.labels.has(x_id)).toBe(false);
     expect(updated?.labels.has(y_id)).toBe(true);
   });
 });
 
-describe("useIngredientStore — set_measurement_value", () => {
+describe("useIngredientStore — setMeasurementValue", () => {
   it("changes the measurement value", () => {
     const { result } = renderHook(() => useIngredientStore(), {
       wrapper: makeWrapper(doc),
@@ -145,7 +145,7 @@ describe("useIngredientStore — set_measurement_value", () => {
     const butter = result.current.ingredients.find((i) => i.id === BUTTER_ID);
     if (butter === undefined) throw new Error("butter not found");
     const weight_measurement = { value: { numerator: 1, denominator: 1 }, unit: "oz" as const };
-    act(() => result.current.set_measurement_value([butter.id], weight_measurement));
+    act(() => result.current.setMeasurementValue([butter.id], weight_measurement));
     expect(
       result.current.ingredients.find((i) => i.id === BUTTER_ID)?.default_measurement_value,
     ).toEqual(weight_measurement);
@@ -164,30 +164,30 @@ describe("useIngredientStore — renameIngredient", () => {
   });
 });
 
-describe("useIngredientStore — set_labels", () => {
+describe("useIngredientStore — setLabels", () => {
   it("replaces all labels for an ingredient", () => {
     const { result } = renderHook(() => useIngredientStore(), {
       wrapper: makeWrapper(doc),
     });
     act(() =>
-      result.current.create_ingredient({
+      result.current.createIngredient({
         name: "Test Ing Labels",
         default_measurement_value: DEFAULT_MEASUREMENT,
-        label_names: ["a", "b"],
+        labelNames: ["a", "b"],
       }),
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing Labels")?.id;
     if (id === undefined) throw new Error("ingredient not found");
-    const x_id = findOrCreateLabel(doc, "x", INGREDIENT_KINDS);
-    const y_id = findOrCreateLabel(doc, "y", INGREDIENT_KINDS);
-    const z_id = findOrCreateLabel(doc, "z", INGREDIENT_KINDS);
-    act(() => result.current.set_labels(id, [x_id, y_id, z_id]));
+    const x_id = findOrCreateLabel(doc, "x", ingredientKinds);
+    const y_id = findOrCreateLabel(doc, "y", ingredientKinds);
+    const z_id = findOrCreateLabel(doc, "z", ingredientKinds);
+    act(() => result.current.setLabels(id, [x_id, y_id, z_id]));
     const updated = result.current.ingredients.find((i) => i.id === id);
     expect(updated?.labels).toEqual(new Set<KitchenwareLabelId>([x_id, y_id, z_id]));
   });
 });
 
-describe("useIngredientStore — set_parent", () => {
+describe("useIngredientStore — setParent", () => {
   it("sets and clears parent_id", () => {
     const { result } = renderHook(() => useIngredientStore(), {
       wrapper: makeWrapper(doc),
@@ -195,9 +195,9 @@ describe("useIngredientStore — set_parent", () => {
     const butter = result.current.ingredients.find((i) => i.id === BUTTER_ID);
     if (butter === undefined) throw new Error("butter not found");
     const dairy_id = paddedId(IngredientId, "dairy");
-    act(() => result.current.set_parent([butter.id], dairy_id));
+    act(() => result.current.setParent([butter.id], dairy_id));
     expect(result.current.ingredients.find((i) => i.id === BUTTER_ID)?.parent_id).toBe(dairy_id);
-    act(() => result.current.set_parent([butter.id], undefined));
+    act(() => result.current.setParent([butter.id], undefined));
     expect(result.current.ingredients.find((i) => i.id === BUTTER_ID)?.parent_id).toBeUndefined();
   });
 });

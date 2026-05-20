@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
-import { NavMenu } from "../NavMenu.js";
+import { NavMenu } from "../nav_menu.js";
 
 describe("NavMenu", () => {
   it("renders the trigger button", () => {

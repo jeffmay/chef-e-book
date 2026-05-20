@@ -9,27 +9,27 @@ beforeEach(() => {
 describe("useUser", () => {
   it("returns null when no user is stored", () => {
     const { result } = renderHook(() => useUser());
-    expect(result.current.user_name).toBeNull();
+    expect(result.current.userName).toBeNull();
   });
 
   it("reads an existing user from localStorage on mount", () => {
     localStorage.setItem(USER_STORAGE_KEY, "Alice");
     const { result } = renderHook(() => useUser());
-    expect(result.current.user_name).toBe("Alice");
+    expect(result.current.userName).toBe("Alice");
   });
 
-  it("set_user_name updates state and localStorage", () => {
+  it("setUserName updates state and localStorage", () => {
     const { result } = renderHook(() => useUser());
-    act(() => result.current.set_user_name("Bob"));
-    expect(result.current.user_name).toBe("Bob");
+    act(() => result.current.setUserName("Bob"));
+    expect(result.current.userName).toBe("Bob");
     expect(localStorage.getItem(USER_STORAGE_KEY)).toBe("Bob");
   });
 
-  it("clear_user resets state and removes from localStorage", () => {
+  it("clearUser resets state and removes from localStorage", () => {
     localStorage.setItem(USER_STORAGE_KEY, "Alice");
     const { result } = renderHook(() => useUser());
-    act(() => result.current.clear_user());
-    expect(result.current.user_name).toBeNull();
+    act(() => result.current.clearUser());
+    expect(result.current.userName).toBeNull();
     expect(localStorage.getItem(USER_STORAGE_KEY)).toBeNull();
   });
 });

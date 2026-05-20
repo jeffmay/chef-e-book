@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeFraction } from "@recipe-book/shared";
 import type { Measurement } from "@recipe-book/shared";
-import { MeasurementEditor } from "../MeasurementEditor.js";
+import { MeasurementEditor } from "../measurement_editor.js";
 
 const ONE_CUP: Measurement = { value: makeFraction(1, 1), unit: "cup" };
 const ONE_OZ: Measurement = { value: makeFraction(1, 1), unit: "oz" };

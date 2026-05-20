@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import type { TreeSelectChangeEvent } from "primereact/treeselect";
 import type { TreeNode } from "primereact/treenode";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { KitchenwareEditor } from "../KitchenwareEditor.js";
+import { KitchenwareEditor } from "../kitchenware_editor.js";
 
 interface MockTreeSelectProps {
   value: string | null | undefined;
@@ -64,9 +64,9 @@ function setup(overrides: Partial<Parameters<typeof KitchenwareEditor>[0]> = {})
   render(
     <KitchenwareEditor
       name="Bowl"
-      label_ids={[]}
-      parent_id={undefined}
-      all_label_names={["big", "small"]}
+      labelIds={[]}
+      parentId={undefined}
+      allLabelNames={["big", "small"]}
       containers={[POT]}
       onChangeLabels={onChangeLabels}
       onChangeParent={onChangeParent}
@@ -103,7 +103,7 @@ describe("KitchenwareEditor — rendering", () => {
 
 describe("KitchenwareEditor — label editing", () => {
   it("calls onChangeLabels when labels are changed", async () => {
-    setup({ all_label_names: ["big", "small"] });
+    setup({ allLabelNames: ["big", "small"] });
     const combobox = screen.getByRole("combobox", { name: "Container labels" });
     await userEvent.type(combobox, "new-label");
     await userEvent.click(await screen.findByText(/Create "new-label"/));
@@ -122,7 +122,7 @@ describe("KitchenwareEditor — parent selection", () => {
   });
 
   it("calls onChangeParent with undefined when cleared", async () => {
-    setup({ parent_id: "------pot000" as ContainerId, containers: [POT] });
+    setup({ parentId: "------pot000" as ContainerId, containers: [POT] });
     await userEvent.selectOptions(
       screen.getByRole("combobox", { name: "Parent container" }),
       "",

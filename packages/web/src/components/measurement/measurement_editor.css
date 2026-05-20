@@ -1,0 +1,54 @@
+/* MeasurementEditor — closed (inline) */
+.me_root--closed {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+}
+
+/* MeasurementEditor — open (block, same structure as FractionEditor) */
+.me_root--open {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-sm);
+}
+
+/* Unit label shown next to the fraction */
+.me_unit {
+  font-size: 0.9em;
+  color: var(--color-muted);
+}
+
+/* Type + unit selector row */
+.me_controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  align-items: flex-end;
+}
+
+.me_control_label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8em;
+  color: var(--color-muted);
+}
+
+.me_bottom_row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.me_select {
+  font-size: 0.95em;
+  padding: 2px var(--spacing-xs);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  width: auto;
+}
