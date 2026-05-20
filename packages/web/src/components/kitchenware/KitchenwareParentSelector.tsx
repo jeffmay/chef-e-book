@@ -72,7 +72,7 @@ export function KitchenwareParentSelector({
       selectionMode="single"
       filter
       placeholder={placeholder}
-      className="kps_selector"
+      className="kps-selector"
       panelClassName="kps-panel"
       ariaLabel={ariaLabel}
       appendTo="self"

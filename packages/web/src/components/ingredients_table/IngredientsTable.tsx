@@ -272,11 +272,11 @@ export function IngredientsTable({
     const pending = pendingEdits.get(pkey(row.id, "name"));
     if (pending !== undefined) {
       return (
-        <span className="it_editing">
+        <span className="it-editing">
           <input
             type="text"
             value={pending}
-            className="it_edit_input"
+            className="it-edit-input"
             autoFocus
             aria-label={`Edit name for ${row.name}`}
             onChange={(e) => onUpdateEdit(row.id, "name", e.target.value)}
@@ -287,7 +287,7 @@ export function IngredientsTable({
           />
           <button
             type="button"
-            className="it_confirm_btn"
+            className="it-confirm-btn"
             onClick={() => onCommitEdit(row.id, "name")}
             aria-label="Confirm edit"
           >
@@ -295,7 +295,7 @@ export function IngredientsTable({
           </button>
           <button
             type="button"
-            className="it_cancel_btn"
+            className="it-cancel-btn"
             onClick={() => onCancelEdit(row.id, "name")}
             aria-label="Cancel edit"
           >
@@ -306,7 +306,7 @@ export function IngredientsTable({
     }
     return (
       <span
-        className="it_editable"
+        className="it-editable"
         role="button"
         tabIndex={0}
         aria-label={`Edit name for ${row.name}`}
@@ -337,7 +337,7 @@ export function IngredientsTable({
     }
     return (
       <span
-        className="it_editable"
+        className="it-editable"
         role="button"
         tabIndex={0}
         aria-label={`Edit default measurement for ${row.name}`}
@@ -369,7 +369,7 @@ export function IngredientsTable({
     }
     return (
       <span
-        className="it_editable"
+        className="it-editable"
         role="button"
         tabIndex={0}
         aria-label={`Edit labels for ${row.name}`}
@@ -378,7 +378,7 @@ export function IngredientsTable({
           if (e.key === "Enter" || e.key === " ") onBeginEdit(row.id, "labels", display);
         }}
       >
-        {display || <span className="it_muted">—</span>}
+        {display || <span className="it-muted">—</span>}
       </span>
     );
   }
@@ -390,7 +390,7 @@ export function IngredientsTable({
     if (pending !== undefined) {
       const pending_id = pending !== "" ? (pending as IngredientId) : undefined;
       return (
-        <span className="it_editing">
+        <span className="it-editing">
           <IngredientSelector
             value={pending_id}
             options={ingredients.filter((i) => i.id !== row.id)}
@@ -401,7 +401,7 @@ export function IngredientsTable({
           />
           <button
             type="button"
-            className="it_confirm_btn"
+            className="it-confirm-btn"
             onClick={() => onCommitEdit(row.id, "parent_name")}
             aria-label="Confirm edit"
           >
@@ -409,7 +409,7 @@ export function IngredientsTable({
           </button>
           <button
             type="button"
-            className="it_cancel_btn"
+            className="it-cancel-btn"
             onClick={() => onCancelEdit(row.id, "parent_name")}
             aria-label="Cancel edit"
           >
@@ -420,7 +420,7 @@ export function IngredientsTable({
     }
     return (
       <span
-        className="it_editable"
+        className="it-editable"
         role="button"
         tabIndex={0}
         aria-label={`Edit parent for ${row.name}`}
@@ -467,19 +467,19 @@ export function IngredientsTable({
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="it_wrapper" role="region" aria-label="Ingredient list">
+    <div className="it-wrapper" role="region" aria-label="Ingredient list">
       {selectedIds.length > 0 && (
-        <div className="it_bulk_bar" role="region" aria-label="Bulk actions">
-          <span className="it_bulk_count">{selectedIds.length} selected</span>
+        <div className="it-bulk-bar" role="region" aria-label="Bulk actions">
+          <span className="it-bulk-count">{selectedIds.length} selected</span>
           <button
             type="button"
-            className="it_bulk_clear"
+            className="it-bulk-clear"
             onClick={() => setSelectionKeys({})}
           >
             Clear
           </button>
 
-          <span className="it_bulk_action">
+          <span className="it-bulk-action">
             <LabelEditor
               selectedLabelNames={bulkAddLabels}
               allLabelNames={allLabelNames}
@@ -493,7 +493,7 @@ export function IngredientsTable({
             />
           </span>
 
-          <span className="it_bulk_action">
+          <span className="it-bulk-action">
             <LabelEditor
               selectedLabelNames={bulkRemoveLabels}
               allLabelNames={allLabelNames}
@@ -507,7 +507,7 @@ export function IngredientsTable({
             />
           </span>
 
-          <span className="it_bulk_action">
+          <span className="it-bulk-action">
             <MeasurementEditor
               value={bulkMeasurement ?? DEFAULT_BULK_MEASUREMENT}
               onCommit={(value) => {
@@ -518,7 +518,7 @@ export function IngredientsTable({
             />
           </span>
 
-          <span className="it_bulk_action">
+          <span className="it-bulk-action">
             <IngredientSelector
               value={bulkParentId !== "" ? (bulkParentId as IngredientId) : undefined}
               options={ingredients}
@@ -529,7 +529,7 @@ export function IngredientsTable({
             />
             <button
               type="button"
-              className="it_bulk_apply"
+              className="it-bulk-apply"
               disabled={bulkParentId === ""}
               onClick={applyBulkParent}
               aria-label="Apply parent change"
@@ -538,7 +538,7 @@ export function IngredientsTable({
             </button>
             <button
               type="button"
-              className="it_bulk_apply"
+              className="it-bulk-apply"
               onClick={() => {
                 onBulkSetParent(selectedIds, undefined);
               }}
@@ -579,7 +579,7 @@ export function IngredientsTable({
           filterElement={
             <input
               type="text"
-              className="it_col_filter"
+              className="it-col-filter"
               value={nameFilter}
               onChange={(e) => setNameFilter(e.target.value)}
               placeholder="Filter by name…"

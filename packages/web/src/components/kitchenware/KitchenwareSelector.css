@@ -1,4 +1,4 @@
-.ks_modal_overlay {
+.ks-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
@@ -8,7 +8,7 @@
   z-index: 1000;
 }
 
-.ks_modal {
+.ks-modal {
   background: var(--color-bg);
   border: var(--border-width) solid var(--color-border);
   padding: var(--spacing-md);
@@ -19,7 +19,7 @@
   gap: var(--spacing-sm);
 }
 
-.ks_modal_title {
+.ks-modal-title {
   font-family: var(--font-display);
   font-size: 1.1em;
   border-bottom: var(--border-width) solid var(--color-border);
@@ -27,15 +27,15 @@
   margin-bottom: var(--spacing-xs);
 }
 
-.ks_modal_actions {
+.ks-modal-actions {
   display: flex;
   gap: var(--spacing-sm);
   justify-content: flex-end;
   margin-top: var(--spacing-xs);
 }
 
-.ks_modal_create,
-.ks_modal_cancel {
+.ks-modal-create,
+.ks-modal-cancel {
   font-family: var(--font-body);
   font-size: 0.9em;
   padding: var(--spacing-xs) var(--spacing-sm);
@@ -45,12 +45,12 @@
   cursor: pointer;
 }
 
-.ks_modal_create {
+.ks-modal-create {
   font-weight: bold;
 }
 
-.ks_modal_create:hover,
-.ks_modal_cancel:hover {
+.ks-modal-create:hover,
+.ks-modal-cancel:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }

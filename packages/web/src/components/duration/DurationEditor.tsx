@@ -83,11 +83,11 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
 
   if (!editing) {
     return (
-      <span className="de_root de_root--closed">
-        <span className="de_display">{humanizeSeconds(value)}</span>
+      <span className="de-root de-root--closed">
+        <span className="de-display">{humanizeSeconds(value)}</span>
         <button
           type="button"
-          className="de_toggle_btn"
+          className="de-toggle-btn"
           onClick={openEditor}
           aria-label="Edit duration"
         >
@@ -100,18 +100,18 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
   const deltas = unit === "min" ? MIN_DELTAS : SEC_DELTAS;
 
   return (
-    <span className="de_root de_root--open">
-      <span className="de_header">
+    <span className="de-root de-root--open">
+      <span className="de-header">
         <button
           type="button"
-          className="de_toggle_btn"
+          className="de-toggle-btn"
           onClick={revert}
           aria-label="Reset to original"
         >
           {"<"}
         </button>
         <input
-          className={`de_input${inputError ? " de_input--error" : ""}`}
+          className={`de-input${inputError ? " de-input--error" : ""}`}
           type="text"
           value={inputText}
           onChange={(e) => handleInputChange(e.target.value)}
@@ -121,10 +121,10 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
         />
       </span>
 
-      <span className="de_unit_toggle" role="group" aria-label="Duration unit">
+      <span className="de-unit-toggle" role="group" aria-label="Duration unit">
         <button
           type="button"
-          className={`de_unit_btn${unit === "min" ? " de_unit_btn--active" : ""}`}
+          className={`de-unit-btn${unit === "min" ? " de-unit-btn--active" : ""}`}
           onClick={() => setUnit("min")}
           aria-pressed={unit === "min"}
         >
@@ -132,7 +132,7 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
         </button>
         <button
           type="button"
-          className={`de_unit_btn${unit === "sec" ? " de_unit_btn--active" : ""}`}
+          className={`de-unit-btn${unit === "sec" ? " de-unit-btn--active" : ""}`}
           onClick={() => setUnit("sec")}
           aria-pressed={unit === "sec"}
         >
@@ -140,7 +140,7 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
         </button>
       </span>
 
-      <span className="de_adjust_buttons">
+      <span className="de-adjust-buttons">
         {deltas.map((delta) => {
           const seconds = unit === "min" ? delta * 60 : delta;
           const label = delta > 0 ? `+${delta}` : String(delta);
@@ -148,7 +148,7 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
             <button
               key={delta}
               type="button"
-              className="de_adjust_btn"
+              className="de-adjust-btn"
               onClick={() => adjust(seconds)}
               aria-label={`${label} ${unit}`}
             >
@@ -158,7 +158,7 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
         })}
       </span>
 
-      <button type="button" className="de_ok_btn" onClick={commit} aria-label="OK">
+      <button type="button" className="de-ok-btn" onClick={commit} aria-label="OK">
         OK
       </button>
     </span>

@@ -22,29 +22,29 @@ export function ProfileSettingsPage({
   }
 
   return (
-    <main className="profile_settings_page">
-      <h1 className="profile_settings_title">Profile Settings</h1>
-      <form className="profile_settings_form" onSubmit={handleSubmit}>
-        <label className="profile_settings_label" htmlFor="profile-name-input">
+    <main className="profile-settings-page">
+      <h1 className="profile-settings-title">Profile Settings</h1>
+      <form className="profile-settings-form" onSubmit={handleSubmit}>
+        <label className="profile-settings-label" htmlFor="profile-name-input">
           Your name
         </label>
         <input
           id="profile-name-input"
-          className="profile_settings_input"
+          className="profile-settings-input"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoComplete="name"
         />
-        <div className="profile_settings_actions">
+        <div className="profile-settings-actions">
           <button
             type="submit"
-            className="profile_settings_save"
+            className="profile-settings-save"
             disabled={trimmed === "" || isUnchanged}
           >
             Save
           </button>
-          <button type="button" className="profile_settings_cancel" onClick={onCancel}>
+          <button type="button" className="profile-settings-cancel" onClick={onCancel}>
             Cancel
           </button>
         </div>

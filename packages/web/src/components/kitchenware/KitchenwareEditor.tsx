@@ -25,17 +25,17 @@ export function KitchenwareEditor({
   const labelNames = labelIds.map(String);
 
   return (
-    <div className="ke_editor">
-      <div className="ke_field">
-        <span className="ke_field_label">Name</span>
-        <span className="ke_field_value">{name}</span>
+    <div className="ke-editor">
+      <div className="ke-field">
+        <span className="ke-field-label">Name</span>
+        <span className="ke-field-value">{name}</span>
       </div>
-      <div className="ke_field">
-        <span className="ke_field_label">Kind</span>
-        <span className="ke_field_value ke_field_value--muted">container</span>
+      <div className="ke-field">
+        <span className="ke-field-label">Kind</span>
+        <span className="ke-field-value ke-field-value--muted">container</span>
       </div>
-      <div className="ke_field">
-        <span className="ke_field_label">Labels</span>
+      <div className="ke-field">
+        <span className="ke-field-label">Labels</span>
         <LabelEditor
           selectedLabelNames={labelNames}
           allLabelNames={[...allLabelNames]}
@@ -45,8 +45,8 @@ export function KitchenwareEditor({
           onCancel={() => undefined}
         />
       </div>
-      <div className="ke_field">
-        <span className="ke_field_label">Parent</span>
+      <div className="ke-field">
+        <span className="ke-field-label">Parent</span>
         <KitchenwareParentSelector
           value={parentId}
           containers={containers}

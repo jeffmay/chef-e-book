@@ -2,7 +2,7 @@
    PrimeReact TreeTable theme overrides — high-contrast monospace
    ============================================================ */
 
-.it_wrapper {
+.it-wrapper {
   --primary-color: var(--color-fg);
   --primary-color-text: var(--color-bg);
   --surface-0: var(--color-bg);
@@ -17,19 +17,19 @@
 }
 
 /* ---- Table structure ---- */
-.it_table {
+.it-table {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-body);
   font-size: 0.95em;
 }
 
-.it_wrapper .p_treetable {
+.it-wrapper .p_treetable {
   font-family: var(--font-body);
 }
 
 /* Header cells */
-.it_wrapper .p_treetable .p_treetable_thead>tr>th {
+.it-wrapper .p_treetable .p_treetable_thead>tr>th {
   border: 1px solid var(--color-border);
   background: var(--color-fg);
   color: var(--color-bg);
@@ -41,21 +41,21 @@
 }
 
 /* Sortable column header */
-.it_wrapper .p_treetable .p_sortable_column {
+.it-wrapper .p_treetable .p_sortable_column {
   cursor: pointer;
 }
 
-.it_wrapper .p_treetable .p_sortable_column:hover {
+.it-wrapper .p_treetable .p_sortable_column:hover {
   background: var(--color-accent) !important;
   color: var(--color-bg) !important;
 }
 
-.it_wrapper .p_treetable .p_sortable_column.p_highlight {
+.it-wrapper .p_treetable .p_sortable_column.p_highlight {
   background: var(--color-fg) !important;
   color: var(--color-bg) !important;
 }
 
-.it_wrapper .p_treetable .p_sortable_column .p_sortable_column_icon {
+.it-wrapper .p_treetable .p_sortable_column .p_sortable_column_icon {
   color: var(--color-bg);
   font-size: 0.75em;
   opacity: 0.8;
@@ -63,7 +63,7 @@
 }
 
 /* Body cells */
-.it_wrapper .p_treetable .p_treetable_tbody>tr>td {
+.it-wrapper .p_treetable .p_treetable_tbody>tr>td {
   border: 1px solid var(--color-border);
   padding: var(--spacing-xs) var(--spacing-sm);
   font-family: var(--font-body);
@@ -71,18 +71,18 @@
 }
 
 /* Row hover */
-.it_wrapper .p_treetable .p_treetable_tbody>tr:hover>td {
+.it-wrapper .p_treetable .p_treetable_tbody>tr:hover>td {
   background: #f8f8f8;
 }
 
 /* Selected rows */
-.it_wrapper .p_treetable .p_treetable_tbody>tr.p_highlight>td {
+.it-wrapper .p_treetable .p_treetable_tbody>tr.p_highlight>td {
   background: #f0f0f0 !important;
   color: var(--color-fg) !important;
 }
 
 /* Empty message */
-.it_wrapper .p_treetable .p_treetable_emptymessage>td {
+.it-wrapper .p_treetable .p_treetable_emptymessage>td {
   text-align: center;
   color: var(--color-muted);
   font-style: italic;
@@ -103,18 +103,18 @@
   color: var(--color-fg);
 }
 
-.it_wrapper .p_treetable .p_checkbox .p_checkbox_box.p_highlight {
+.it-wrapper .p_treetable .p_checkbox .p_checkbox_box.p_highlight {
   background: var(--color-fg);
   border-color: var(--color-fg);
 }
 
-.it_wrapper .p_treetable .p_checkbox .p_checkbox_box .p_checkbox_icon {
+.it-wrapper .p_treetable .p_checkbox .p_checkbox_box .p_checkbox_icon {
   color: var(--color-bg);
   font-size: 0.7em;
 }
 
 /* ---- Row toggler (expand/collapse) ---- */
-.it_wrapper .p_treetable .p_treetable_toggler {
+.it-wrapper .p_treetable .p_treetable_toggler {
   background: none;
   border: none;
   color: var(--color-fg);
@@ -126,12 +126,12 @@
   flex-shrink: 0;
 }
 
-.it_wrapper .p_treetable .p_treetable_toggler:hover {
+.it-wrapper .p_treetable .p_treetable_toggler:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-.it_wrapper .p_treetable .p_treetable_toggler:focus {
+.it-wrapper .p_treetable .p_treetable_toggler:focus {
   outline: 2px solid var(--color-fg);
   outline-offset: 1px;
   box-shadow: none;
@@ -140,7 +140,7 @@
 /* ---- In-table column filter row ----
    PrimeReact renders a second <tr> of <th> cells below the header titles.
    They inherit the dark header style, so reset them to a light filter row. */
-.it_wrapper .p_treetable .p_treetable_thead > tr > th.p_filter_column {
+.it-wrapper .p_treetable .p_treetable_thead > tr > th.p_filter_column {
   background: var(--color-bg);
   color: var(--color-fg);
   padding: 0;
@@ -148,7 +148,7 @@
 }
 
 /* Name column text filter — fills its cell */
-.it_col_filter {
+.it-col-filter {
   box-sizing: border-box;
   width: 100%;
   border: none;
@@ -159,43 +159,43 @@
   color: var(--color-fg);
 }
 
-.it_col_filter:focus {
+.it-col-filter:focus {
   outline: 2px solid var(--color-fg);
   outline-offset: -2px;
 }
 
 /* MultiSelectFilter columns fill the cell without a doubled border */
-.it_filter_th .msf_input {
+.it-filter-th .msf-input {
   border: none;
   border-radius: 0;
   padding: var(--spacing-xs) var(--spacing-sm);
 }
 
 /* Let the MultiSelectFilter dropdown escape the table's scroll wrapper */
-.it_wrapper .p_treetable > .p_treetable_wrapper {
+.it-wrapper .p_treetable > .p_treetable_wrapper {
   overflow: visible;
 }
 
 /* ---- Editable cells ---- */
-.it_editable {
+.it-editable {
   margin-left: .5em;
   cursor: pointer;
   display: inline;
   min-width: 4em;
 }
 
-.it_editable:focus {
+.it-editable:focus {
   outline: 2px solid var(--color-fg);
   outline-offset: 1px;
 }
 
-.it_editing {
+.it-editing {
   margin-left: .5em;
   display: inline-flex;
   gap: 2px;
 }
 
-.it_edit_input {
+.it-edit-input {
   font-size: 0.9em;
   border: var(--border-width) solid var(--color-border);
   font-family: var(--font-body);
@@ -205,8 +205,8 @@
   min-width: 5em;
 }
 
-.it_confirm_btn,
-.it_cancel_btn {
+.it-confirm-btn,
+.it-cancel-btn {
   padding: 2px .5em;
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
@@ -216,19 +216,19 @@
   flex-shrink: 0;
 }
 
-.it_confirm_btn:hover:not(:disabled),
-.it_cancel_btn:hover {
+.it-confirm-btn:hover:not(:disabled),
+.it-cancel-btn:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-.it_confirm_btn:disabled {
+.it-confirm-btn:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
 /* ---- Bulk action bar ---- */
-.it_bulk_bar {
+.it-bulk-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -240,12 +240,12 @@
   font-size: 0.9em;
 }
 
-.it_bulk_count {
+.it-bulk-count {
   font-weight: bold;
   white-space: nowrap;
 }
 
-.it_bulk_clear {
+.it-bulk-clear {
   background: none;
   border: var(--border-width) solid var(--color-border);
   padding: 1px 6px;
@@ -255,18 +255,18 @@
   color: var(--color-fg);
 }
 
-.it_bulk_clear:hover {
+.it-bulk-clear:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-.it_bulk_action {
+.it-bulk-action {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
 }
 
-.it_bulk_select {
+.it-bulk-select {
   font-size: 0.85em;
   padding: 1px 4px;
   border: var(--border-width) solid var(--color-border);
@@ -275,7 +275,7 @@
   font-family: var(--font-body);
 }
 
-.it_bulk_apply {
+.it-bulk-apply {
   background: none;
   border: var(--border-width) solid var(--color-border);
   padding: 1px 6px;
@@ -286,30 +286,30 @@
   white-space: nowrap;
 }
 
-.it_bulk_apply:hover:not(:disabled) {
+.it-bulk-apply:hover:not(:disabled) {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-.it_bulk_apply:disabled {
+.it-bulk-apply:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
 /* ---- LabelEditor (react-select CreatableSelect) ---- */
-.it_label_editor {
+.it-label-editor {
   display: flex;
   align-items: center;
   gap: 2px;
   width: 100%;
 }
 
-.it_label_editor> :first-child {
+.it-label-editor> :first-child {
   flex: 1;
   min-width: 10vw;
 }
 
 /* ---- Misc ---- */
-.it_muted {
+.it-muted {
   color: var(--color-muted);
 }

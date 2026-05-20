@@ -130,17 +130,17 @@ export function BulkIngredientEditorPage() {
   }
 
   return (
-    <main className="bie_page">
-      <h1 className="bie_title">Ingredients</h1>
+    <main className="bie-page">
+      <h1 className="bie-title">Ingredients</h1>
 
       {/* Add ingredient form */}
       {showAddForm && (
-        <form className="bie_addForm" onSubmit={handleAddSubmit} aria-label="Add ingredient">
-          <h2 className="bie_add_title">New Ingredient</h2>
-          <label className="bie_add_label">
+        <form className="bie-addForm" onSubmit={handleAddSubmit} aria-label="Add ingredient">
+          <h2 className="bie-add-title">New Ingredient</h2>
+          <label className="bie-add-label">
             Name
             <input
-              className="bie_add_input"
+              className="bie-add-input"
               type="text"
               value={addForm.name}
               onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
@@ -149,17 +149,17 @@ export function BulkIngredientEditorPage() {
               autoFocus
             />
           </label>
-          <label className="bie_add_label">
+          <label className="bie-add-label">
             Default measurement
             <MeasurementEditor
               value={addForm.measurement_value}
               onCommit={(value) => setAddForm((f) => ({ ...f, measurement_value: value }))}
             />
           </label>
-          <label className="bie_add_label">
+          <label className="bie-add-label">
             Labels (comma-separated)
             <input
-              className="bie_add_input"
+              className="bie-add-input"
               type="text"
               value={addForm.labels_raw}
               onChange={(e) => setAddForm((f) => ({ ...f, labels_raw: e.target.value }))}
@@ -167,10 +167,10 @@ export function BulkIngredientEditorPage() {
               aria-label="New ingredient labels"
             />
           </label>
-          <label className="bie_add_label">
+          <label className="bie-add-label">
             Parent ingredient
             <select
-              className="bie_add_select"
+              className="bie-add-select"
               value={addForm.parent_id}
               onChange={(e) => setAddForm((f) => ({ ...f, parent_id: e.target.value }))}
               aria-label="New ingredient parent"
@@ -183,7 +183,7 @@ export function BulkIngredientEditorPage() {
               ))}
             </select>
           </label>
-          <div className="bie_add_actions">
+          <div className="bie-add-actions">
             <button type="submit" disabled={addForm.name.trim() === ""}>
               Add
             </button>
@@ -201,9 +201,9 @@ export function BulkIngredientEditorPage() {
       )}
 
       {/* Actions bar */}
-      <div className="bie_actions">
+      <div className="bie-actions">
         <button
-          className="bie_add_btn"
+          className="bie-add-btn"
           onClick={() => setShowAddForm((v) => !v)}
           aria-label="Add new ingredient"
         >

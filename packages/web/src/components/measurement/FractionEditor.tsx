@@ -67,12 +67,12 @@ export function FractionDisplay({ value }: FractionDisplayProps) {
   const frac = fractionalPart(s);
 
   return (
-    <span className="fe_display" aria-label={formatFraction(s)}>
+    <span className="fe-display" aria-label={formatFraction(s)}>
       {(int !== 0 || frac.numerator === 0) && (
-        <span className="fe_integer">{int === 0 ? "0" : int}</span>
+        <span className="fe-integer">{int === 0 ? "0" : int}</span>
       )}
       {frac.numerator !== 0 && (
-        <span className="fe_fraction">
+        <span className="fe-fraction">
           <sup>{Math.abs(frac.numerator)}</sup>
           {"⁄"}
           <sub>{frac.denominator}</sub>
@@ -121,11 +121,11 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
 
   if (!editing) {
     return (
-      <span className="fe_root fe_root--closed">
+      <span className="fe-root fe-root--closed">
         <FractionDisplay value={value} />
         <button
           type="button"
-          className="fe_toggle_btn"
+          className="fe-toggle-btn"
           onClick={openEditor}
           aria-label="Edit value"
         >
@@ -136,11 +136,11 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
   }
 
   return (
-    <span className="fe_root fe_root--open">
-      <span className="fe_header">
+    <span className="fe-root fe-root--open">
+      <span className="fe-header">
         <button
           type="button"
-          className="fe_toggle_btn"
+          className="fe-toggle-btn"
           onClick={reset}
           aria-label="Reset to original"
         >
@@ -149,31 +149,31 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
         <FractionDisplay value={current} />
       </span>
 
-      <span className="fe_op_modes" role="group" aria-label="Operation type">
+      <span className="fe-op-modes" role="group" aria-label="Operation type">
         {OP_MODES.map((mode) => (
-          <label key={mode} className="fe_mode_label">
+          <label key={mode} className="fe-mode-label">
             <input
               type="radio"
-              className="fe_mode_radio"
+              className="fe-mode-radio"
               name="fe-op-mode"
               value={mode}
               checked={opMode === mode}
               onChange={() => setOpMode(mode)}
               aria-label={mode}
             />
-            <span className="fe_mode_symbol" aria-hidden>
+            <span className="fe-mode-symbol" aria-hidden>
               {mode}
             </span>
           </label>
         ))}
       </span>
 
-      <span className="fe_op_buttons">
+      <span className="fe-op-buttons">
         {OP_ROWS[opMode].map((op) => (
           <button
             key={op.label}
             type="button"
-            className="fe_op_btn"
+            className="fe-op-btn"
             onClick={() => applyOp(op)}
           >
             {op.label}
@@ -183,7 +183,7 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
 
       {extraControls}
 
-      <button type="button" className="fe_ok_btn" onClick={commit} aria-label="OK">
+      <button type="button" className="fe-ok-btn" onClick={commit} aria-label="OK">
         OK
       </button>
     </span>

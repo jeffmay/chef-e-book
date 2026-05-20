@@ -1,12 +1,12 @@
 /* DurationEditor — closed (inline display) */
-.de_root--closed {
+.de-root--closed {
   display: inline-flex;
   align-items: baseline;
   gap: var(--spacing-xs);
 }
 
 /* DurationEditor — open (column layout) */
-.de_root--open {
+.de-root--open {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
@@ -16,14 +16,14 @@
 }
 
 /* Header row: < button + text input */
-.de_header {
+.de-header {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
 }
 
 /* Text input for parsing duration strings */
-.de_input {
+.de-input {
   font-size: 1em;
   font-family: var(--font-body);
   padding: 2px var(--spacing-xs);
@@ -34,24 +34,24 @@
   min-width: 8em;
 }
 
-.de_input--error {
+.de-input--error {
   border-color: var(--color-error, #c00);
   outline-color: var(--color-error, #c00);
 }
 
 /* Humanized display in closed state */
-.de_display {
+.de-display {
   font-size: 1em;
   color: var(--color-fg);
 }
 
 /* Unit toggle buttons (min / sec) */
-.de_unit_toggle {
+.de-unit-toggle {
   display: flex;
   gap: var(--spacing-xs);
 }
 
-.de_unit_btn {
+.de-unit-btn {
   font-size: 0.85em;
   padding: 2px var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
@@ -61,20 +61,20 @@
   font-family: var(--font-body);
 }
 
-.de_unit_btn--active {
+.de-unit-btn--active {
   background: var(--color-accent, var(--color-fg));
   color: var(--color-bg);
   border-color: var(--color-accent, var(--color-fg));
 }
 
 /* Adjustment buttons (-5, -1, +1, +5 / -15, -5, +5, +15) */
-.de_adjust_buttons {
+.de-adjust-buttons {
   display: flex;
   gap: var(--spacing-xs);
   flex-wrap: wrap;
 }
 
-.de_adjust_btn {
+.de-adjust-btn {
   font-size: 0.85em;
   padding: 2px var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
@@ -86,12 +86,12 @@
   text-align: center;
 }
 
-.de_adjust_btn:hover {
+.de-adjust-btn:hover {
   background: var(--color-hover, var(--color-border));
 }
 
 /* Toggle (±) button — shared style with FractionEditor */
-.de_toggle_btn {
+.de-toggle-btn {
   font-size: 0.85em;
   padding: 1px var(--spacing-xs);
   border: var(--border-width) solid var(--color-border);
@@ -102,7 +102,7 @@
 }
 
 /* OK button */
-.de_ok_btn {
+.de-ok-btn {
   font-size: 0.9em;
   padding: var(--spacing-xs) var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
@@ -113,6 +113,6 @@
   align-self: flex-end;
 }
 
-.de_ok_btn:hover {
+.de-ok-btn:hover {
   background: var(--color-hover, var(--color-border));
 }

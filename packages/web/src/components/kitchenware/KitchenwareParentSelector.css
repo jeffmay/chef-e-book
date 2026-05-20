@@ -1,11 +1,11 @@
-.kps_selector {
+.kps-selector {
   font-family: var(--font-body);
   font-size: 0.9em;
   width: 100%;
   max-width: 40vw;
 }
 
-.kps_panel {
+.kps-panel {
   font-family: var(--font-body);
   font-size: 0.9em;
 }

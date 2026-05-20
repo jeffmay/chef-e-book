@@ -96,36 +96,36 @@ export function LabelTable({
   }
 
   return (
-    <section className="lt_section" aria-label="Labels">
+    <section className="lt-section" aria-label="Labels">
       <button
         type="button"
-        className="lt_toggle"
+        className="lt-toggle"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
         aria-controls="lt-panel"
       >
-        <span className="lt_toggle_icon" aria-hidden>
+        <span className="lt-toggle-icon" aria-hidden>
           {expanded ? "▼" : "▶"}
         </span>
         Labels
         {labels.length > 0 && (
-          <span className="lt_count" aria-label={`${labels.length} labels`}>
+          <span className="lt-count" aria-label={`${labels.length} labels`}>
             {labels.length}
           </span>
         )}
       </button>
 
       {expanded && (
-        <div id="lt-panel" className="lt_panel">
+        <div id="lt-panel" className="lt-panel">
           {/* Bulk action bar */}
           {someSelected && (
-            <div className="lt_bulk_bar" role="region" aria-label="Label bulk actions">
-              <span className="lt_bulk_count">{selectedIds.size} selected</span>
-              <span className="lt_filter_label">Filter:</span>
-              <div className="lt_filter_group" role="group" aria-label="Filter mode">
+            <div className="lt-bulk-bar" role="region" aria-label="Label bulk actions">
+              <span className="lt-bulk-count">{selectedIds.size} selected</span>
+              <span className="lt-filter-label">Filter:</span>
+              <div className="lt-filter-group" role="group" aria-label="Filter mode">
                 <label
                   htmlFor="lt-filter-all"
-                  className={`lt_filter_btn${filterMode === "all" ? " lt_filter_btn--active" : ""}`}
+                  className={`lt-filter-btn${filterMode === "all" ? " lt-filter-btn--active" : ""}`}
                 >
                   <RadioButton
                     inputId="lt-filter-all"
@@ -138,7 +138,7 @@ export function LabelTable({
                 </label>
                 <label
                   htmlFor="lt-filter-any"
-                  className={`lt_filter_btn${filterMode === "any" ? " lt_filter_btn--active" : ""}`}
+                  className={`lt-filter-btn${filterMode === "any" ? " lt-filter-btn--active" : ""}`}
                 >
                   <RadioButton
                     inputId="lt-filter-any"
@@ -152,7 +152,7 @@ export function LabelTable({
               </div>
               <button
                 type="button"
-                className="lt_bulk_btn lt_bulk_btn--danger"
+                className="lt-bulk-btn lt-bulk-btn--danger"
                 onClick={handleDelete}
                 aria-label="Delete selected labels"
               >
@@ -161,10 +161,10 @@ export function LabelTable({
               {selectedArray.length >= 2 && (
                 <>
                   {showMergeInput ? (
-                    <form className="lt_merge_form" onSubmit={handleMergeSubmit}>
+                    <form className="lt-merge-form" onSubmit={handleMergeSubmit}>
                       <input
                         type="text"
-                        className="lt_merge_input"
+                        className="lt-merge-input"
                         value={mergeName}
                         onChange={(e) => setMergeName(e.target.value)}
                         placeholder="Merged label name…"
@@ -179,7 +179,7 @@ export function LabelTable({
                       />
                       <button
                         type="submit"
-                        className="lt_bulk_btn"
+                        className="lt-bulk-btn"
                         disabled={mergeName.trim() === ""}
                         aria-label="Confirm merge"
                       >
@@ -187,7 +187,7 @@ export function LabelTable({
                       </button>
                       <button
                         type="button"
-                        className="lt_bulk_btn"
+                        className="lt-bulk-btn"
                         onClick={() => {
                           setShowMergeInput(false);
                           setMergeName("");
@@ -200,7 +200,7 @@ export function LabelTable({
                   ) : (
                     <button
                       type="button"
-                      className="lt_bulk_btn"
+                      className="lt-bulk-btn"
                       onClick={() => setShowMergeInput(true)}
                       aria-label="Merge selected labels"
                     >
@@ -211,7 +211,7 @@ export function LabelTable({
               )}
               <button
                 type="button"
-                className="lt_bulk_clear"
+                className="lt-bulk-clear"
                 onClick={() => setSelectedIds(new Set())}
               >
                 Clear
@@ -220,12 +220,12 @@ export function LabelTable({
           )}
 
           {labels.length === 0 ? (
-            <p className="lt_empty">No labels yet.</p>
+            <p className="lt-empty">No labels yet.</p>
           ) : (
-            <table className="lt_table" aria-label="Label list">
+            <table className="lt-table" aria-label="Label list">
               <thead>
                 <tr>
-                  <th className="lt_th lt_th--select">
+                  <th className="lt-th lt-th--select">
                     <input
                       type="checkbox"
                       checked={allSelected}
@@ -236,8 +236,8 @@ export function LabelTable({
                       aria-label="Select all labels"
                     />
                   </th>
-                  <th className="lt_th">Name</th>
-                  <th className="lt_th">Used for</th>
+                  <th className="lt-th">Name</th>
+                  <th className="lt-th">Used for</th>
                 </tr>
               </thead>
               <tbody>
@@ -246,7 +246,7 @@ export function LabelTable({
                     key={label.id}
                     className={selectedIds.has(label.id) ? "lt-row--selected" : ""}
                   >
-                    <td className="lt_td lt_td--select">
+                    <td className="lt-td lt-td--select">
                       <input
                         type="checkbox"
                         checked={selectedIds.has(label.id)}
@@ -254,12 +254,12 @@ export function LabelTable({
                         aria-label={`Select label ${label.name}`}
                       />
                     </td>
-                    <td className="lt_td">
+                    <td className="lt-td">
                       {editingId === label.id ? (
-                        <span className="lt_editing">
+                        <span className="lt-editing">
                           <input
                             type="text"
-                            className="lt_edit_input"
+                            className="lt-edit-input"
                             value={editingName}
                             autoFocus
                             aria-label={`Edit label name ${label.name}`}
@@ -271,7 +271,7 @@ export function LabelTable({
                           />
                           <button
                             type="button"
-                            className="lt_edit_btn"
+                            className="lt-edit-btn"
                             onClick={commitEdit}
                             aria-label="Confirm rename"
                           >
@@ -279,7 +279,7 @@ export function LabelTable({
                           </button>
                           <button
                             type="button"
-                            className="lt_edit_btn"
+                            className="lt-edit-btn"
                             onClick={cancelEdit}
                             aria-label="Cancel rename"
                           >
@@ -288,7 +288,7 @@ export function LabelTable({
                         </span>
                       ) : (
                         <span
-                          className="lt_name"
+                          className="lt-name"
                           role="button"
                           tabIndex={0}
                           aria-label={`Rename label ${label.name}`}
@@ -301,7 +301,7 @@ export function LabelTable({
                         </span>
                       )}
                     </td>
-                    <td className="lt_td lt_td--kinds">
+                    <td className="lt-td lt-td--kinds">
                       {[...label.kinds].join(", ")}
                     </td>
                   </tr>

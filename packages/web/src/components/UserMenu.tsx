@@ -7,13 +7,13 @@ interface UserMenuProps {
 
 export function UserMenu({ userName, onProfile }: UserMenuProps) {
   return (
-    <details className="user_menu">
-      <summary className="user_menu_trigger" aria-label={`User menu for ${userName}`}>
+    <details className="user-menu">
+      <summary className="user-menu-trigger" aria-label={`User menu for ${userName}`}>
         {userName} ▾
       </summary>
-      <div className="user_menu_dropdown" role="menu">
+      <div className="user-menu-dropdown" role="menu">
         <button
-          className="user_menu_item"
+          className="user-menu-item"
           role="menuitem"
           onClick={onProfile}
         >

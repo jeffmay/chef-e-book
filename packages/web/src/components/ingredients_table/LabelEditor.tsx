@@ -68,7 +68,7 @@ export function LabelEditor({
   }
 
   return (
-    <span className="it_label_editor">
+    <span className="it-label-editor">
       <CreatableSelect<LabelOption, true>
         isMulti
         value={selectedOptions}
@@ -92,7 +92,7 @@ export function LabelEditor({
       />
       <button
         type="button"
-        className="it_confirm_btn"
+        className="it-confirm-btn"
         onClick={onCommit}
         disabled={commitDisabled}
         aria-label={commitAriaLabel ?? "Confirm edit"}
@@ -102,7 +102,7 @@ export function LabelEditor({
       {onCancel !== undefined && (
         <button
           type="button"
-          className="it_cancel_btn"
+          className="it-cancel-btn"
           onClick={onCancel}
           aria-label="Cancel edit"
         >

@@ -1,27 +1,27 @@
-.ke_editor {
+.ke-editor {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
 }
 
-.ke_field {
+.ke-field {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.ke_field_label {
+.ke-field-label {
   font-size: 0.8em;
   color: var(--color-muted);
   font-family: var(--font-body);
 }
 
-.ke_field_value {
+.ke-field-value {
   font-family: var(--font-body);
   font-size: 0.95em;
 }
 
-.ke_field_value--muted {
+.ke-field-value--muted {
   color: var(--color-muted);
   font-style: italic;
 }

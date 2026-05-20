@@ -1,15 +1,15 @@
-.msf_wrapper {
+.msf-wrapper {
   position: relative;
   width: 100%;
 }
 
-.msf_input_row {
+.msf-input-row {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
 }
 
-.msf_input {
+.msf-input {
   font-size: 0.85em;
   width: 100%;
   min-width: 0;
@@ -21,19 +21,19 @@
   cursor: pointer;
 }
 
-.msf_input:focus {
+.msf-input:focus {
   outline: 2px solid var(--color-fg);
   outline-offset: -1px;
   cursor: text;
 }
 
-.msf_badge {
+.msf-badge {
   font-size: 0.75em;
   color: var(--color-muted);
   white-space: nowrap;
 }
 
-.msf_clear_btn {
+.msf-clear-btn {
   font-size: 0.75em;
   background: none;
   border: none;
@@ -44,11 +44,11 @@
   flex-shrink: 0;
 }
 
-.msf_clear_btn:hover {
+.msf-clear-btn:hover {
   color: var(--color-fg);
 }
 
-.msf_dropdown {
+.msf-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
@@ -61,7 +61,7 @@
   box-shadow: 2px 2px 0 var(--color-border);
 }
 
-.msf_search {
+.msf-search {
   display: block;
   width: 100%;
   border: none;
@@ -74,12 +74,12 @@
   box-sizing: border-box;
 }
 
-.msf_search:focus {
+.msf-search:focus {
   outline: none;
   background: #f8f8f8;
 }
 
-.msf_option {
+.msf-option {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -90,26 +90,26 @@
   user-select: none;
 }
 
-.msf_option:hover {
+.msf-option:hover {
   background: #f0f0f0;
 }
 
 /* Checkboxes inherit a global `input { width: 100% }` rule — keep them
    intrinsically sized so the option label sits next to the box. */
-.msf_option input[type="checkbox"] {
+.msf-option input[type="checkbox"] {
   width: auto;
   flex-shrink: 0;
   margin: 0;
 }
 
-.msf_no_options {
+.msf-no-options {
   padding: var(--spacing-xs) var(--spacing-sm);
   color: var(--color-muted);
   font-style: italic;
   font-size: 0.85em;
 }
 
-.msf_actions {
+.msf-actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-xs);
@@ -117,7 +117,7 @@
   border-top: var(--border-width) solid var(--color-border);
 }
 
-.msf_actions button {
+.msf-actions button {
   font-size: 0.85em;
   padding: 1px 6px;
   cursor: pointer;
@@ -127,7 +127,7 @@
   font-family: var(--font-body);
 }
 
-.msf_actions button:hover {
+.msf-actions button:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }

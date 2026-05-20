@@ -8,19 +8,19 @@ interface NavMenuProps {
 
 export function NavMenu({ onNavigate }: NavMenuProps) {
   return (
-    <details className="nav_menu">
-      <summary className="nav_menu_trigger" aria-label="Navigation menu">
+    <details className="nav-menu">
+      <summary className="nav-menu-trigger" aria-label="Navigation menu">
         ☰
       </summary>
-      <nav className="nav_menu_dropdown" aria-label="Main navigation">
+      <nav className="nav-menu-dropdown" aria-label="Main navigation">
         <button
-          className="nav_menu_item"
+          className="nav-menu-item"
           onClick={() => onNavigate("recipe_editor")}
         >
           Recipes
         </button>
         <button
-          className="nav_menu_item"
+          className="nav-menu-item"
           onClick={() => onNavigate("bulk_ingredient_editor")}
         >
           Ingredients

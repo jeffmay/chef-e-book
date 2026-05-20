@@ -85,14 +85,14 @@ function NotesPanel({ notes, onChange }: NotesPanelProps) {
   }
 
   return (
-    <aside className="re_notes_panel" aria-label="Notes">
-      <ul className="re_notes_list">
+    <aside className="re-notes-panel" aria-label="Notes">
+      <ul className="re-notes-list">
         {notes.map((note, i) => (
-          <li key={i} className="re_note_item">
-            <span className="re_note_text">{note}</span>
+          <li key={i} className="re-note-item">
+            <span className="re-note-text">{note}</span>
             <button
               type="button"
-              className="re_note_remove"
+              className="re-note-remove"
               onClick={() => onChange(notes.filter((_, j) => j !== i))}
               aria-label={`Remove note: ${note}`}
             >
@@ -102,9 +102,9 @@ function NotesPanel({ notes, onChange }: NotesPanelProps) {
         ))}
       </ul>
       {adding ? (
-        <span className="re_notes_add_row">
+        <span className="re-notes-add-row">
           <input
-            className="re_notes_input"
+            className="re-notes-input"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submitNote()}
@@ -118,7 +118,7 @@ function NotesPanel({ notes, onChange }: NotesPanelProps) {
       ) : (
         <button
           type="button"
-          className="re_notes_add_btn"
+          className="re-notes-add-btn"
           onClick={() => setAdding(true)}
           aria-label="Add note"
         >
@@ -154,10 +154,10 @@ function IngredientItemRow({
   const amount_from_top = top?.amount;
 
   return (
-    <div className="re_item re_item--ingredient" role="group" aria-label={`Ingredient: ${name}`}>
-      <span className="re_item_label">{name}</span>
+    <div className="re-item re-item--ingredient" role="group" aria-label={`Ingredient: ${name}`}>
+      <span className="re-item-label">{name}</span>
       {amount_from_top !== undefined ? (
-        <span className="re_item_amount re_item_amount--inherited" title="Amount from top-level ingredients">
+        <span className="re-item-amount re-item-amount--inherited" title="Amount from top-level ingredients">
           {/* Amount inherited from top-level; hidden inline */}
         </span>
       ) : (
@@ -170,7 +170,7 @@ function IngredientItemRow({
         notes={item.notes ?? []}
         onChange={(notes) => onChange({ ...item, notes })}
       />
-      <button type="button" className="re_item_remove" onClick={onRemove} aria-label={`Remove ingredient ${name}`}>−</button>
+      <button type="button" className="re-item-remove" onClick={onRemove} aria-label={`Remove ingredient ${name}`}>−</button>
     </div>
   );
 }
@@ -210,10 +210,10 @@ function ContainerItemRow({ item, top_ingredients, all_ingredients, onChange, on
   }
 
   return (
-    <div className="re_item re_item--container" role="group" aria-label={`Container: ${container_name} — ${item.descriptor}`}>
-      <div className="re_item_header">
+    <div className="re-item re-item--container" role="group" aria-label={`Container: ${container_name} — ${item.descriptor}`}>
+      <div className="re-item-header">
         <select
-          className="re_container_select"
+          className="re-container-select"
           value={item.container_id}
           onChange={(e) => onChange({ ...item, container_id: e.target.value as ContainerItem["container_id"] })}
           aria-label="Container type"
@@ -223,13 +223,13 @@ function ContainerItemRow({ item, top_ingredients, all_ingredients, onChange, on
           ))}
         </select>
         <input
-          className="re_container_descriptor"
+          className="re-container-descriptor"
           value={item.descriptor}
           onChange={(e) => onChange({ ...item, descriptor: e.target.value })}
           placeholder="Descriptor (e.g. large, wet ingredients)"
           aria-label="Container descriptor"
         />
-        <label className="re_container_ordered">
+        <label className="re-container-ordered">
           <input
             type="checkbox"
             checked={item.ordered ?? false}
@@ -238,9 +238,9 @@ function ContainerItemRow({ item, top_ingredients, all_ingredients, onChange, on
           />
           ordered
         </label>
-        <button type="button" className="re_item_remove" onClick={onRemove} aria-label={`Remove container ${container_name}`}>−</button>
+        <button type="button" className="re-item-remove" onClick={onRemove} aria-label={`Remove container ${container_name}`}>−</button>
       </div>
-      <div className="re_container_contents">
+      <div className="re-container-contents">
         {item.contents.map((content, i) => (
           <IngredientItemRow
             key={content.id}
@@ -255,7 +255,7 @@ function ContainerItemRow({ item, top_ingredients, all_ingredients, onChange, on
           />
         ))}
         <select
-          className="re_container_add_ingredient"
+          className="re-container-add-ingredient"
           value=""
           onChange={(e) => { addContentIngredient(e.target.value); e.target.value = ""; }}
           aria-label="Add ingredient to container"
@@ -316,17 +316,17 @@ function InstructionRow({ item, top_ingredients, all_ingredients, onChange, onRe
   }
 
   return (
-    <div className="re_item re_item--instruction" role="group" aria-label={`Instruction: ${item.instruction || "new"}`}>
-      <div className="re_item_header">
+    <div className="re-item re-item--instruction" role="group" aria-label={`Instruction: ${item.instruction || "new"}`}>
+      <div className="re-item-header">
         <input
-          className="re_instruction_text"
+          className="re-instruction-text"
           value={item.instruction}
           onChange={(e) => onChange({ ...item, instruction: e.target.value })}
           placeholder="Action (e.g. mix, bake, stir)"
           aria-label="Instruction text"
         />
         <select
-          className="re_instruction_equipment"
+          className="re-instruction-equipment"
           value={item.equipment_id ?? ""}
           onChange={(e) => {
             if (e.target.value) {
@@ -343,11 +343,11 @@ function InstructionRow({ item, top_ingredients, all_ingredients, onChange, onRe
             <option key={eq.id} value={eq.id}>{eq.name}</option>
           ))}
         </select>
-        <button type="button" className="re_item_remove" onClick={onRemove} aria-label="Remove instruction">−</button>
+        <button type="button" className="re-item-remove" onClick={onRemove} aria-label="Remove instruction">−</button>
       </div>
 
-      <div className="re_instruction_duration">
-        <label className="re_instruction_duration_label">
+      <div className="re-instruction-duration">
+        <label className="re-instruction-duration-label">
           Duration:
           {item.duration_seconds !== undefined ? (
             <DurationEditor
@@ -357,7 +357,7 @@ function InstructionRow({ item, top_ingredients, all_ingredients, onChange, onRe
           ) : (
             <button
               type="button"
-              className="re_instruction_add_duration"
+              className="re-instruction-add-duration"
               onClick={() => onChange({ ...item, duration_seconds: 300 })}
             >
               + Add duration
@@ -367,7 +367,7 @@ function InstructionRow({ item, top_ingredients, all_ingredients, onChange, onRe
         {item.duration_seconds !== undefined && (
           <button
             type="button"
-            className="re_instruction_remove_duration"
+            className="re-instruction-remove-duration"
             onClick={() => {
               const { duration_seconds: _, ...rest } = item;
               onChange(rest as Instruction);
@@ -379,13 +379,13 @@ function InstructionRow({ item, top_ingredients, all_ingredients, onChange, onRe
         )}
       </div>
 
-      <div className="re_instruction_ingredients">
-        <span className="re_instruction_ing_label">Ingredients:</span>
+      <div className="re-instruction-ingredients">
+        <span className="re-instruction-ing-label">Ingredients:</span>
         {all_ingredients.map((ing) => {
           const checked = (item.ingredient_ids ?? []).includes(ing.id as IngredientItem["ingredient_id"]);
           const top = top_ingredients.find((ti) => ti.ingredient_id === ing.id);
           return (
-            <label key={ing.id} className="re_instruction_ing_option">
+            <label key={ing.id} className="re-instruction-ing-option">
               <input
                 type="checkbox"
                 checked={checked}
@@ -428,9 +428,9 @@ interface TextBlockRowProps {
 
 function TextBlockRow({ item, onChange, onRemove }: TextBlockRowProps) {
   return (
-    <div className="re_item re_item--text_block" role="group" aria-label="Text block">
+    <div className="re-item re-item--text-block" role="group" aria-label="Text block">
       <textarea
-        className="re_text_block_input"
+        className="re-text-block-input"
         value={item.text}
         onChange={(e) => onChange({ ...item, text: e.target.value })}
         placeholder="Enter text…"
@@ -441,7 +441,7 @@ function TextBlockRow({ item, onChange, onRemove }: TextBlockRowProps) {
         notes={item.notes ?? []}
         onChange={(notes) => onChange({ ...item, notes })}
       />
-      <button type="button" className="re_item_remove" onClick={onRemove} aria-label="Remove text block">−</button>
+      <button type="button" className="re-item-remove" onClick={onRemove} aria-label="Remove text block">−</button>
     </div>
   );
 }
@@ -511,11 +511,11 @@ function SectionEditor({
   }
 
   return (
-    <div role="group" className={`re_section re_section--depth_${depth}`} aria-label={`Section: ${section.header ?? "unnamed"}`}>
-      <div className="re_section_header_row">
-        <Heading className="re_section_heading">
+    <div role="group" className={`re-section re-section--depth-${depth}`} aria-label={`Section: ${section.header ?? "unnamed"}`}>
+      <div className="re-section-header-row">
+        <Heading className="re-section-heading">
           <input
-            className="re_section_header_input"
+            className="re-section-header-input"
             value={section.header ?? ""}
             onChange={(e) => {
               const val = e.target.value;
@@ -534,10 +534,10 @@ function SectionEditor({
           notes={section.notes ?? []}
           onChange={(notes) => onChange({ ...section, notes })}
         />
-        <button type="button" className="re_item_remove" onClick={onRemove} aria-label="Remove section">−</button>
+        <button type="button" className="re-item-remove" onClick={onRemove} aria-label="Remove section">−</button>
       </div>
 
-      <div className="re_section_contents">
+      <div className="re-section-contents">
         {section.contents.map((item, i) => {
           if (item.kind === "ingredient") {
             return (
@@ -604,8 +604,8 @@ function SectionEditor({
         })}
       </div>
 
-      <div className="re_section_add_row">
-        <span className="re_section_add_label">Add:</span>
+      <div className="re-section-add-row">
+        <span className="re-section-add-label">Add:</span>
         <button type="button" onClick={() => addItem("ingredient")} aria-label="Add ingredient to section">Ingredient</button>
         <button type="button" onClick={() => addItem("container")} aria-label="Add container to section">Container</button>
         <button type="button" onClick={() => addItem("instruction")} aria-label="Add instruction to section">Instruction</button>
@@ -643,16 +643,16 @@ function RecipeIngredientsEditor({ ingredients, all_ingredients, onChange }: Rec
   }
 
   return (
-    <section className="re_section_block" aria-label="Ingredients">
-      <h2 className="re_section_title">Ingredients</h2>
-      <div className="re_ing_list">
+    <section className="re-section-block" aria-label="Ingredients">
+      <h2 className="re-section-title">Ingredients</h2>
+      <div className="re-ing-list">
         {ingredients.map((ri, i) => {
           const ing = all_ingredients.find((a) => a.id === ri.ingredient_id);
           const name = ing?.name ?? ri.ingredient_id;
           return (
-            <div key={ri.id} className="re_ing_row" role="group" aria-label={`Ingredient: ${name}`}>
-              <span className="re_ing_name">{name}</span>
-              <span className="re_ing_amount">
+            <div key={ri.id} className="re-ing-row" role="group" aria-label={`Ingredient: ${name}`}>
+              <span className="re-ing-name">{name}</span>
+              <span className="re-ing-amount">
                 {ri.amount !== undefined ? (
                   <MeasurementEditor
                     value={ri.amount}
@@ -673,11 +673,11 @@ function RecipeIngredientsEditor({ ingredients, all_ingredients, onChange }: Rec
                     onCancel={() => setAddingAmountFor(null)}
                   />
                 ) : (
-                  <span className="re_ing_amount_calc" title="Calculated from sections">
+                  <span className="re-ing-amount-calc" title="Calculated from sections">
                     (calculated)
                     <button
                       type="button"
-                      className="re_ing_add_amount"
+                      className="re-ing-add-amount"
                       onClick={() => setAddingAmountFor(ri.id)}
                       aria-label={`Add amount for ${name}`}
                     >
@@ -688,7 +688,7 @@ function RecipeIngredientsEditor({ ingredients, all_ingredients, onChange }: Rec
               </span>
               <button
                 type="button"
-                className="re_ing_remove"
+                className="re-ing-remove"
                 onClick={() => onChange(ingredients.filter((_, j) => j !== i))}
                 aria-label={`Remove ${name}`}
               >
@@ -699,7 +699,7 @@ function RecipeIngredientsEditor({ ingredients, all_ingredients, onChange }: Rec
         })}
       </div>
       <select
-        className="re_ing_add_select"
+        className="re-ing-add-select"
         value=""
         onChange={(e) => { addIngredient(e.target.value); e.target.value = ""; }}
         aria-label="Add ingredient to recipe"
@@ -729,18 +729,18 @@ function VersionHistoryTable({ versions }: VersionHistoryTableProps) {
 
   return (
     <details
-      className="re_version_history"
+      className="re-version-history"
       open={open}
       onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
     >
-      <summary className="re_version_history_summary">
+      <summary className="re-version-history-summary">
         Version history ({versions.length})
       </summary>
-      <div className="re_version_history_body">
-        <div className="re_version_filter" role="search" aria-label="Filter versions">
+      <div className="re-version-history-body">
+        <div className="re-version-filter" role="search" aria-label="Filter versions">
           {/* placeholder for filter bar */}
         </div>
-        <table className="re_version_table">
+        <table className="re-version-table">
           <thead>
             <tr>
               <th>Date</th>
@@ -779,22 +779,22 @@ function CopyRecipeDialog({ recipe, flatFolders, onCopy, onCancel }: CopyRecipeD
   const [folder_id, setFolderId] = useState<RecipeFolderId | undefined>(recipe.parent_folder_id);
 
   return (
-    <div className="re_dialog_overlay" role="dialog" aria-modal="true" aria-label="Copy recipe">
-      <div className="re_dialog">
-        <h2 className="re_dialog_title">Copy Recipe</h2>
-        <label className="re_field_label">
+    <div className="re-dialog-overlay" role="dialog" aria-modal="true" aria-label="Copy recipe">
+      <div className="re-dialog">
+        <h2 className="re-dialog-title">Copy Recipe</h2>
+        <label className="re-field-label">
           New title
           <input
-            className="re_field_input"
+            className="re-field-input"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             aria-label="New recipe title"
           />
         </label>
-        <label className="re_field_label">
+        <label className="re-field-label">
           Parent folder
           <select
-            className="re_field_select"
+            className="re-field-select"
             value={folder_id ?? ""}
             onChange={(e) => setFolderId(e.target.value ? (e.target.value as RecipeFolderId) : undefined)}
             aria-label="Parent folder for copy"
@@ -805,7 +805,7 @@ function CopyRecipeDialog({ recipe, flatFolders, onCopy, onCancel }: CopyRecipeD
             ))}
           </select>
         </label>
-        <div className="re_dialog_actions">
+        <div className="re-dialog-actions">
           <button type="button" onClick={() => onCopy(title, folder_id)} disabled={title.trim() === ""}>
             Copy
           </button>
@@ -940,27 +940,27 @@ function RecipeEditor({ recipe, userName, onSave, onCancel }: RecipeEditorProps)
   }
 
   return (
-    <main className="re_editor" aria-label="Recipe editor">
-      <div className="re_editor_header">
-        <button type="button" className="re_back_btn" onClick={onCancel} aria-label="Back to recipe list">
+    <main className="re-editor" aria-label="Recipe editor">
+      <div className="re-editor-header">
+        <button type="button" className="re-back-btn" onClick={onCancel} aria-label="Back to recipe list">
           ← Back
         </button>
-        <h1 className="re_editor_title">{recipe ? `Edit: ${recipe.title}` : "New Recipe"}</h1>
+        <h1 className="re-editor-title">{recipe ? `Edit: ${recipe.title}` : "New Recipe"}</h1>
         {recipe && (
-          <button type="button" className="re_copy_btn" onClick={() => setShowCopyDialog(true)}>
+          <button type="button" className="re-copy-btn" onClick={() => setShowCopyDialog(true)}>
             Copy recipe
           </button>
         )}
       </div>
 
       {/* Recipe info */}
-      <section className="re_section_block" aria-label="Recipe info">
-        <h2 className="re_section_title">Recipe Info</h2>
+      <section className="re-section-block" aria-label="Recipe info">
+        <h2 className="re-section-title">Recipe Info</h2>
 
-        <label className="re_field_label">
+        <label className="re-field-label">
           Source URL
           <input
-            className="re_field_input"
+            className="re-field-input"
             type="url"
             value={form.source_url}
             onChange={(e) => patch("source_url", e.target.value)}
@@ -969,10 +969,10 @@ function RecipeEditor({ recipe, userName, onSave, onCancel }: RecipeEditorProps)
           />
         </label>
 
-        <label className="re_field_label">
+        <label className="re-field-label">
           Title
           <input
-            className="re_field_input re_field_input--title"
+            className="re-field-input re-field-input--title"
             value={form.title}
             onChange={(e) => patch("title", e.target.value)}
             placeholder="Recipe title"
@@ -981,10 +981,10 @@ function RecipeEditor({ recipe, userName, onSave, onCancel }: RecipeEditorProps)
           />
         </label>
 
-        <label className="re_field_label">
+        <label className="re-field-label">
           Subtitle
           <input
-            className="re_field_input"
+            className="re-field-input"
             value={form.subtitle}
             onChange={(e) => patch("subtitle", e.target.value)}
             placeholder="Subtitle"
@@ -992,10 +992,10 @@ function RecipeEditor({ recipe, userName, onSave, onCancel }: RecipeEditorProps)
           />
         </label>
 
-        <label className="re_field_label">
+        <label className="re-field-label">
           Version note
           <input
-            className="re_field_input"
+            className="re-field-input"
             value={form.description}
             onChange={(e) => patch("description", e.target.value)}
             placeholder='ex: "Untested" or "Final Version"'
@@ -1003,10 +1003,10 @@ function RecipeEditor({ recipe, userName, onSave, onCancel }: RecipeEditorProps)
           />
         </label>
 
-        <label className="re_field_label">
+        <label className="re-field-label">
           Folder
           <select
-            className="re_field_select"
+            className="re-field-select"
             value={form.parent_folder_id ?? ""}
             onChange={(e) =>
               patch("parent_folder_id", e.target.value ? (e.target.value as RecipeFolderId) : undefined)
@@ -1029,8 +1029,8 @@ function RecipeEditor({ recipe, userName, onSave, onCancel }: RecipeEditorProps)
       />
 
       {/* Instruction sections */}
-      <section className="re_section_block" aria-label="Instructions">
-        <h2 className="re_section_title">Instructions</h2>
+      <section className="re-section-block" aria-label="Instructions">
+        <h2 className="re-section-title">Instructions</h2>
         {form.sections.map((sec, i) => (
           <SectionEditor
             key={sec.id}
@@ -1047,7 +1047,7 @@ function RecipeEditor({ recipe, userName, onSave, onCancel }: RecipeEditorProps)
         ))}
         <button
           type="button"
-          className="re_add_section_btn"
+          className="re-add-section-btn"
           onClick={() => {
             const new_section: Section = {
               kind: "section",
@@ -1066,9 +1066,9 @@ function RecipeEditor({ recipe, userName, onSave, onCancel }: RecipeEditorProps)
       {recipe && <VersionHistoryTable versions={recipe.versions} />}
 
       {/* Save actions */}
-      <section className="re_actions" aria-label="Save actions">
+      <section className="re-actions" aria-label="Save actions">
         {recipe && (
-          <label className="re_new_version_label">
+          <label className="re-new-version-label">
             <input
               type="checkbox"
               checked={form.create_new_version}
@@ -1080,14 +1080,14 @@ function RecipeEditor({ recipe, userName, onSave, onCancel }: RecipeEditorProps)
         )}
         <button
           type="button"
-          className="re_save_btn"
+          className="re-save-btn"
           onClick={handleSave}
           disabled={form.title.trim() === ""}
           aria-label="Save recipe"
         >
           Save updates
         </button>
-        <button type="button" className="re_cancel_btn" onClick={onCancel}>
+        <button type="button" className="re-cancel-btn" onClick={onCancel}>
           Cancel
         </button>
       </section>
@@ -1117,29 +1117,29 @@ interface RecipeListProps {
 
 function RecipeList({ recipes, onSelect, onNew }: RecipeListProps) {
   return (
-    <main className="re_list_page" aria-label="Recipe list">
-      <h1 className="re_list_title">Recipes</h1>
-      <button type="button" className="re_new_btn" onClick={onNew} aria-label="New recipe">
+    <main className="re-list-page" aria-label="Recipe list">
+      <h1 className="re-list-title">Recipes</h1>
+      <button type="button" className="re-new-btn" onClick={onNew} aria-label="New recipe">
         + New recipe
       </button>
       {recipes.length === 0 ? (
-        <p className="re_list_empty">No recipes yet. Create your first one!</p>
+        <p className="re-list-empty">No recipes yet. Create your first one!</p>
       ) : (
-        <ul className="re_list">
+        <ul className="re-list">
           {recipes.map((r) => {
             const v = latestVersion(r);
             return (
-              <li key={r.id} className="re_list_item">
+              <li key={r.id} className="re-list-item">
                 <button
                   type="button"
-                  className="re_list_item_btn"
+                  className="re-list-item-btn"
                   onClick={() => onSelect(r)}
                   aria-label={`Edit recipe: ${r.title}`}
                 >
-                  <span className="re_list_item_title">{r.title}</span>
-                  {r.subtitle && <span className="re_list_item_subtitle">{r.subtitle}</span>}
-                  {v?.description && <span className="re_list_item_desc">{v.description}</span>}
-                  <span className="re_list_item_date">
+                  <span className="re-list-item-title">{r.title}</span>
+                  {r.subtitle && <span className="re-list-item-subtitle">{r.subtitle}</span>}
+                  {v?.description && <span className="re-list-item-desc">{v.description}</span>}
+                  <span className="re-list-item-date">
                     {new Date(r.updated_at).toLocaleDateString()}
                   </span>
                 </button>

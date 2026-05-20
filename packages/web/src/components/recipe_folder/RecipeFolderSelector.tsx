@@ -70,8 +70,8 @@ export function RecipeFolderSelector({
   }
 
   return (
-    <div className="rfs_root">
-      <div className="rfs_selector_row">
+    <div className="rfs-root">
+      <div className="rfs-selector-row">
         <TreeSelect
           value={value ?? null}
           options={treeNodes}
@@ -79,14 +79,14 @@ export function RecipeFolderSelector({
           selectionMode="single"
           filter
           placeholder={placeholder}
-          className="rfs_selector"
+          className="rfs-selector"
           panelClassName="rfs-panel"
           ariaLabel={ariaLabel}
           appendTo="self"
         />
         <button
           type="button"
-          className="rfs_add_btn"
+          className="rfs-add-btn"
           onClick={() => setAdding((v) => !v)}
           title={value !== undefined ? `Add subfolder under "${selectedPath}"` : "Add root folder"}
           aria-label="New subfolder"
@@ -95,14 +95,14 @@ export function RecipeFolderSelector({
         </button>
       </div>
       {value !== undefined && (
-        <span className="rfs_path" aria-label="Selected folder path">
+        <span className="rfs-path" aria-label="Selected folder path">
           {selectedPath}
         </span>
       )}
       {adding && (
-        <span className="rfs_add_row">
+        <span className="rfs-add-row">
           <input
-            className="rfs_add_input"
+            className="rfs-add-input"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => {

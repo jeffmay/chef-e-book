@@ -10,7 +10,7 @@ A local-first single-page web app for creating and managing recipes, with option
 - 2-space indentation
 - TitleCase for components, classes, and enum type names
 - camelCase for function names (including hooks, event handlers, and utility functions)
-- snake_case for data: object/interface field names, Yjs map keys, and CSS class names
+- snake_case for data: object/interface field names, Yjs map keys
 
 ## Common Development Tasks
 
@@ -272,10 +272,12 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 | Functions (hooks, handlers, utilities) | camelCase | `useRecipeStore`, `handleSave`, `buildFolderTree` |
 | React component props | camelCase | `onChange`, `onSave`, `onCancel`, `initiallyOpen` |
 | Local variables | camelCase | `currentValue`, `filteredItems` |
-| Constants | CONSTANT_CASE | `DEFAULT_MEASUREMENT_BY_TYPE` |
+| Constants, environment variable / config names | CONSTANT_CASE | `DEFAULT_MEASUREMENT_BY_TYPE`, `PORT` |
 | Object / interface fields (Yjs-backed) | snake_case | `recipe_id`, `created_at`, `parent_folder_id` |
-| Yjs map keys, CSS classes | snake_case | `"recipe_folders"`, `recipe_store.ts`, `.re-editor` |
+| Yjs map keys | snake_case | `"recipe_folders"`, `recipe_store.ts` |
 | String discriminator values (enum) | snake_case | `"measurement_type"`, `"ingredient_item"`, `"volume"` |
+| CSS classes | kebab-case | `.re-editor` |
+| CSS file names | TitleCase (matches component) | `DurationEditor.css` for `DurationEditor.tsx` |
 
 Run order before every commit:
 ```

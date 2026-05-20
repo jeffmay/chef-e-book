@@ -28,11 +28,11 @@ function AppContent({ userName, onRename }: AppContentProps) {
   return (
     <DocContext.Provider value={doc}>
       <div className="app">
-        <header className="top_nav">
+        <header className="top-nav">
           <NavMenu onNavigate={(page) => setRoute(page)} />
-          <span className="app_title">Recipe Book</span>
-          <div className="nav_right">
-            <button className="undo_btn" aria-label="Undo">↩ Undo</button>
+          <span className="app-title">Recipe Book</span>
+          <div className="nav-right">
+            <button className="undo-btn" aria-label="Undo">↩ Undo</button>
             <UserMenu
               userName={userName}
               onProfile={() => setRoute("profile_settings")}
@@ -51,7 +51,7 @@ function AppContent({ userName, onRename }: AppContentProps) {
         ) : route === "recipe_editor" ? (
           <RecipeEditorPage userName={userName} />
         ) : (
-          <main className="page_content">
+          <main className="page-content">
             <p className="placeholder">Your recipes will appear here.</p>
           </main>
         )}

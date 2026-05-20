@@ -2,7 +2,7 @@
    IngredientSelector — PrimeReact TreeSelect overrides
    ============================================================ */
 
-.is_selector {
+.is-selector {
   font-family: var(--font-body);
   font-size: 0.9em;
   border: var(--border-width) solid var(--color-border);
@@ -13,35 +13,35 @@
   border-radius: 0;
 }
 
-.is_selector .p_treeselect_label_container {
+.is-selector .p_treeselect_label_container {
   padding: 2px var(--spacing-xs);
 }
 
-.is_selector .p_treeselect_label {
+.is-selector .p_treeselect_label {
   font-family: var(--font-body);
   font-size: 1em;
   color: var(--color-fg);
   padding: 0;
 }
 
-.is_selector.p_treeselect:not(.p_disabled):hover {
+.is-selector.p_treeselect:not(.p_disabled):hover {
   border-color: var(--color-fg);
 }
 
-.is_selector.p_treeselect.p_focus {
+.is-selector.p_treeselect.p_focus {
   outline: 2px solid var(--color-fg);
   outline-offset: 1px;
   box-shadow: none;
 }
 
 /* Trigger icon */
-.is_selector .p_treeselect_trigger {
+.is-selector .p_treeselect_trigger {
   color: var(--color-fg);
   width: 1.8em;
 }
 
 /* Panel */
-.is_panel {
+.is-panel {
   border: var(--border-width) solid var(--color-border);
   border-radius: 0;
   font-family: var(--font-body);
@@ -50,7 +50,7 @@
 }
 
 /* Panel header — compact, no rounded corners, no tinted background */
-.is_panel .p_treeselect_header {
+.is-panel .p_treeselect_header {
   padding: var(--spacing-xs) var(--spacing-sm);
   border-bottom: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
@@ -59,13 +59,13 @@
 }
 
 /* Filter container fills the header row */
-.is_panel .p_treeselect_header .p_treeselect_filter_container {
+.is-panel .p_treeselect_header .p_treeselect_filter_container {
   flex: 1 1 auto;
   margin: 0;
 }
 
 /* Filter input inside panel — room on right for search icon */
-.is_panel .p_treeselect_header .p_treeselect_filter_container input {
+.is-panel .p_treeselect_header .p_treeselect_filter_container input {
   font-family: var(--font-body);
   font-size: 0.9em;
   border: var(--border-width) solid var(--color-border);
@@ -79,14 +79,14 @@
 
 /* All panel icons are SVGs sized 1rem by the theme — pin them to the
    surrounding text size and stop flex containers from squishing them. */
-.is_panel .p_icon {
+.is-panel .p_icon {
   width: 0.9em;
   height: 0.9em;
   flex-shrink: 0;
 }
 
 /* Search icon — vertically centred inside the input, off the right edge */
-.is_panel .p_treeselect_filter_icon {
+.is-panel .p_treeselect_filter_icon {
   width: 0.95em;
   height: 0.95em;
   top: 50%;
@@ -96,7 +96,7 @@
 }
 
 /* Close button — override the circular 2rem theme default */
-.is_panel .p_treeselect_header .p_treeselect_close {
+.is-panel .p_treeselect_header .p_treeselect_close {
   width: 1.7em !important;
   height: 1.7em !important;
   border-radius: 0 !important;
@@ -106,39 +106,39 @@
   flex-shrink: 0;
 }
 
-.is_panel .p_treeselect_header .p_treeselect_close .p_treeselect_close_icon {
+.is-panel .p_treeselect_header .p_treeselect_close .p_treeselect_close_icon {
   width: 0.9em;
   height: 0.9em;
 }
 
-.is_panel .p_treeselect_header .p_treeselect_close:hover {
+.is-panel .p_treeselect_header .p_treeselect_close:hover {
   background: var(--color-fg) !important;
   color: var(--color-bg) !important;
 }
 
 /* Tree nodes */
-.is_panel .p_tree .p_treenode_content {
+.is-panel .p_tree .p_treenode_content {
   padding: 2px var(--spacing-xs);
   font-family: var(--font-body);
   border-radius: 0;
 }
 
-.is_panel .p_tree .p_treenode_content:hover {
+.is-panel .p_tree .p_treenode_content:hover {
   background: #f8f8f8;
 }
 
-.is_panel .p_tree .p_treenode_content.p_highlight {
+.is-panel .p_tree .p_treenode_content.p_highlight {
   background: var(--color-fg) !important;
   color: var(--color-bg) !important;
 }
 
 /* Child node indentation */
-.is_panel .p_tree .p_treenode_children {
+.is-panel .p_tree .p_treenode_children {
   padding-left: 1.2em;
 }
 
 /* Toggler inside tree — larger, square, matches table style */
-.is_panel .p_tree .p_tree_toggler {
+.is-panel .p_tree .p_tree_toggler {
   width: 1.5em;
   height: 1.5em;
   border-radius: 0 !important;
@@ -149,17 +149,17 @@
 }
 
 /* Toggler chevron — bigger than the default 1rem icon */
-.is_panel .p_tree .p_tree_toggler .p_tree_toggler_icon {
+.is-panel .p_tree .p_tree_toggler .p_tree_toggler_icon {
   width: 0.95em;
   height: 0.95em;
 }
 
-.is_panel .p_tree .p_tree_toggler:hover {
+.is-panel .p_tree .p_tree_toggler:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
 /* Leaf rows have no toggler — reserve the same width so labels line up */
-.is_panel .p_tree .p_treenode_leaf > .p_treenode_content .p_tree_toggler {
+.is-panel .p_tree .p_treenode_leaf > .p_treenode_content .p_tree_toggler {
   visibility: hidden;
 }

@@ -133,12 +133,12 @@ export function MeasurementEditor({ value, onCommit, onCancel, initiallyOpen = f
 
   if (!editing) {
     return (
-      <span className="me_root me_root--closed">
+      <span className="me-root me-root--closed">
         <FractionDisplay value={value.value} />
-        <span className="me_unit">{UNIT_LABELS[value.unit]}</span>
+        <span className="me-unit">{UNIT_LABELS[value.unit]}</span>
         <button
           type="button"
-          className="fe_toggle_btn"
+          className="fe-toggle-btn"
           onClick={openEditor}
           aria-label="Edit measurement"
         >
@@ -149,37 +149,37 @@ export function MeasurementEditor({ value, onCommit, onCancel, initiallyOpen = f
   }
 
   return (
-    <span className="me_root me_root--open">
-      <span className="fe_header">
+    <span className="me-root me-root--open">
+      <span className="fe-header">
         <FractionDisplay value={current} />
-        <span className="me_unit">{UNIT_LABELS[unit]}</span>
+        <span className="me-unit">{UNIT_LABELS[unit]}</span>
       </span>
 
-      <span className="fe_op_modes" role="group" aria-label="Operation type">
+      <span className="fe-op-modes" role="group" aria-label="Operation type">
         {OP_MODES.map((mode) => (
-          <label key={mode} className="fe_mode_label">
+          <label key={mode} className="fe-mode-label">
             <input
               type="radio"
-              className="fe_mode_radio"
+              className="fe-mode-radio"
               name="me-op-mode"
               value={mode}
               checked={opMode === mode}
               onChange={() => setOpMode(mode)}
               aria-label={mode}
             />
-            <span className="fe_mode_symbol" aria-hidden>
+            <span className="fe-mode-symbol" aria-hidden>
               {mode}
             </span>
           </label>
         ))}
       </span>
 
-      <span className="fe_op_buttons">
+      <span className="fe-op-buttons">
         {OP_ROWS[opMode].map((op) => (
           <button
             key={op.label}
             type="button"
-            className="fe_op_btn"
+            className="fe-op-btn"
             onClick={() => applyOpButton(op.label)}
           >
             {op.label}
@@ -188,11 +188,11 @@ export function MeasurementEditor({ value, onCommit, onCancel, initiallyOpen = f
       </span>
 
       {/* Type + unit selectors inserted between op buttons and OK */}
-      <span className="me_controls">
-        <label className="me_control_label">
+      <span className="me-controls">
+        <label className="me-control-label">
           Type
           <select
-            className="me_select"
+            className="me-select"
             value={mtype}
             onChange={(e) => handleTypeChange(e.target.value as MeasurementType)}
             aria-label="Measurement type"
@@ -203,10 +203,10 @@ export function MeasurementEditor({ value, onCommit, onCancel, initiallyOpen = f
           </select>
         </label>
 
-        <label className="me_control_label">
+        <label className="me-control-label">
           Unit
           <select
-            className="me_select"
+            className="me-select"
             value={unit}
             onChange={(e) => handleUnitChange(e.target.value as MeasurementUnit)}
             aria-label="Measurement unit"
@@ -250,11 +250,11 @@ export function MeasurementEditor({ value, onCommit, onCancel, initiallyOpen = f
         </label>
       </span>
 
-      <span className="me_bottom_row">
-        <button type="button" className="fe_toggle_btn" onClick={revertAndClose} aria-label="Reset to original">
+      <span className="me-bottom-row">
+        <button type="button" className="fe-toggle-btn" onClick={revertAndClose} aria-label="Reset to original">
           {"<"}
         </button>
-        <button type="button" className="fe_ok_btn" onClick={commit} aria-label="OK">
+        <button type="button" className="fe-ok-btn" onClick={commit} aria-label="OK">
           OK
         </button>
       </span>

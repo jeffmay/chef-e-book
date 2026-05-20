@@ -53,7 +53,7 @@ export function IngredientSelector({
       selectionMode="single"
       filter
       placeholder={placeholder}
-      className="is_selector"
+      className="is-selector"
       panelClassName="is-panel"
       ariaLabel={ariaLabel}
       appendTo="self"

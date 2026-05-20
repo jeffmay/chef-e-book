@@ -72,9 +72,9 @@ export function KitchenwareSelector({
       />
 
       {newContainer !== null && (
-        <div className="ks_modal_overlay" role="dialog" aria-modal="true" aria-label="New container">
-          <div className="ks_modal">
-            <h3 className="ks_modal_title">New Container: {newContainer.container.name}</h3>
+        <div className="ks-modal-overlay" role="dialog" aria-modal="true" aria-label="New container">
+          <div className="ks-modal">
+            <h3 className="ks-modal-title">New Container: {newContainer.container.name}</h3>
             <KitchenwareEditor
               name={newContainer.container.name}
               labelIds={newContainer.labelIds}
@@ -84,11 +84,11 @@ export function KitchenwareSelector({
               onChangeLabels={(ids) => setNewContainer((prev) => prev ? { ...prev, labelIds: ids } : prev)}
               onChangeParent={(id) => setNewContainer((prev) => prev ? { ...prev, parentId: id } : prev)}
             />
-            <div className="ks_modal_actions">
-              <button type="button" className="ks_modal_create" onClick={handleSave}>
+            <div className="ks-modal-actions">
+              <button type="button" className="ks-modal-create" onClick={handleSave}>
                 Create
               </button>
-              <button type="button" className="ks_modal_cancel" onClick={handleCancel}>
+              <button type="button" className="ks-modal-cancel" onClick={handleCancel}>
                 Cancel
               </button>
             </div>

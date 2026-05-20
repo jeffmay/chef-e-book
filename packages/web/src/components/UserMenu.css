@@ -1,8 +1,8 @@
-.user_menu {
+.user-menu {
   position: relative;
 }
 
-.user_menu_trigger {
+.user-menu-trigger {
   cursor: pointer;
   list-style: none;
   border: none;
@@ -17,11 +17,11 @@
   text-overflow: ellipsis;
 }
 
-.user_menu_trigger::-webkit-details-marker {
+.user-menu-trigger::-webkit-details-marker {
   display: none;
 }
 
-.user_menu_dropdown {
+.user-menu-dropdown {
   position: absolute;
   right: 0;
   top: 100%;
@@ -33,7 +33,7 @@
   flex-direction: column;
 }
 
-.user_menu_item {
+.user-menu-item {
   border: none;
   border-bottom: 1px solid var(--color-border);
   text-align: left;
@@ -41,6 +41,6 @@
   width: 100%;
 }
 
-.user_menu_item:last-child {
+.user-menu-item:last-child {
   border-bottom: none;
 }

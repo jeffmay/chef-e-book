@@ -15,16 +15,16 @@ export function SelectUserPage({ onSelect }: SelectUserPageProps) {
   }
 
   return (
-    <main className="select_user_page">
-      <h1 className="select_user_title">Recipe Book</h1>
-      <p className="select_user_subtitle">Enter your name to get started.</p>
-      <form className="select_user_form" onSubmit={handleSubmit}>
-        <label className="select_user_label" htmlFor="user-name-input">
+    <main className="select-user-page">
+      <h1 className="select-user-title">Recipe Book</h1>
+      <p className="select-user-subtitle">Enter your name to get started.</p>
+      <form className="select-user-form" onSubmit={handleSubmit}>
+        <label className="select-user-label" htmlFor="user-name-input">
           Your name
         </label>
         <input
           id="user-name-input"
-          className="select_user_input"
+          className="select-user-input"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -34,7 +34,7 @@ export function SelectUserPage({ onSelect }: SelectUserPageProps) {
         />
         <button
           type="submit"
-          className="select_user_submit"
+          className="select-user-submit"
           disabled={name.trim() === ""}
         >
           Get Started

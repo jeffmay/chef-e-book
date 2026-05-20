@@ -64,11 +64,11 @@ export function MultiSelectFilter({ value, onChange, allOptions, ariaLabel }: Mu
     value.length === 0 ? "" : value.length === 1 ? value[0]! : `${value.length} selected`;
 
   return (
-    <div ref={containerRef} className="msf_wrapper">
-      <div className="msf_input_row">
+    <div ref={containerRef} className="msf-wrapper">
+      <div className="msf-input-row">
         <input
           type="text"
-          className="msf_input"
+          className="msf-input"
           value={summary}
           readOnly
           onClick={openDropdown}
@@ -81,7 +81,7 @@ export function MultiSelectFilter({ value, onChange, allOptions, ariaLabel }: Mu
         {value.length > 0 && (
           <button
             type="button"
-            className="msf_clear_btn"
+            className="msf-clear-btn"
             onClick={(e) => {
               e.stopPropagation();
               onChange([]);
@@ -94,21 +94,21 @@ export function MultiSelectFilter({ value, onChange, allOptions, ariaLabel }: Mu
       </div>
 
       {open && (
-        <div className="msf_dropdown" role="listbox" aria-multiselectable>
+        <div className="msf-dropdown" role="listbox" aria-multiselectable>
           <input
             ref={searchRef}
             type="text"
-            className="msf_search"
+            className="msf-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search options…"
             aria-label={`Search ${ariaLabel} options`}
           />
           {visibleOptions.length === 0 && (
-            <div className="msf_no_options">No options</div>
+            <div className="msf-no-options">No options</div>
           )}
           {visibleOptions.map((opt) => (
-            <label key={opt} className="msf_option">
+            <label key={opt} className="msf-option">
               <input
                 type="checkbox"
                 checked={value.includes(opt)}
@@ -118,7 +118,7 @@ export function MultiSelectFilter({ value, onChange, allOptions, ariaLabel }: Mu
               {opt}
             </label>
           ))}
-          <div className="msf_actions">
+          <div className="msf-actions">
             <button type="button" onClick={handleAccept} aria-label="Accept filter">
               ✔︎
             </button>

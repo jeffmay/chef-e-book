@@ -1,9 +1,9 @@
-.bie_page {
+.bie-page {
   padding: var(--spacing-md);
   max-width: 100vw;
 }
 
-.bie_title {
+.bie-title {
   font-family: var(--font-display);
   font-size: clamp(1.2em, 3vw, 2em);
   border-bottom: var(--border-width) solid var(--color-border);
@@ -12,7 +12,7 @@
 }
 
 /* Add form */
-.bie_add_form {
+.bie-add-form {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
@@ -22,13 +22,13 @@
   max-width: 60vw;
 }
 
-.bie_add_title {
+.bie-add-title {
   font-size: 1em;
   font-family: var(--font-display);
   margin-bottom: var(--spacing-xs);
 }
 
-.bie_add_label {
+.bie-add-label {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
@@ -36,25 +36,25 @@
   color: var(--color-muted);
 }
 
-.bie_add_input,
-.bie_add_select {
+.bie-add-input,
+.bie-add-select {
   font-size: 1em;
 }
 
-.bie_add_actions {
+.bie-add-actions {
   display: flex;
   gap: var(--spacing-sm);
   margin-top: var(--spacing-xs);
 }
 
 /* Actions bar */
-.bie_actions {
+.bie-actions {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
 }
 
-.bie_add_btn {
+.bie-add-btn {
   align-self: flex-start;
 }
