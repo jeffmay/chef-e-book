@@ -8,12 +8,8 @@
   gap: var(--spacing-md);
 }
 
-.select-user-title {
-  font-family: var(--font-display);
+.select-user-page > .page-title {
   font-size: clamp(1.8em, 6vw, 3em);
-  text-align: center;
-  border-bottom: var(--border-width) solid var(--color-border);
-  padding-bottom: var(--spacing-sm);
   width: 100%;
   max-width: 50vw;
 }

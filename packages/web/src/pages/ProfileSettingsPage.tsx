@@ -19,7 +19,7 @@ export function ProfileSettingsPage({ currentName, onSave, onCancel }: ProfileSe
 
   return (
     <main className="profile-settings-page">
-      <h1 className="profile-settings-title">Profile Settings</h1>
+      <h1 className="page-title">Profile Settings</h1>
       <form className="profile-settings-form" onSubmit={handleSubmit}>
         <label className="profile-settings-label" htmlFor="profile-name-input">
           Your name

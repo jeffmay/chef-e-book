@@ -16,7 +16,7 @@ export function SelectUserPage({ onSelect }: SelectUserPageProps) {
 
   return (
     <main className="select-user-page">
-      <h1 className="select-user-title">Recipe Book</h1>
+      <h1 className="page-title">Recipe Book</h1>
       <p className="select-user-subtitle">Enter your name to get started.</p>
       <form className="select-user-form" onSubmit={handleSubmit}>
         <label className="select-user-label" htmlFor="user-name-input">

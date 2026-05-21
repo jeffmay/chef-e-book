@@ -1259,7 +1259,7 @@ interface RecipeListProps {
 function RecipeList({ recipes, onSelect, onNew }: RecipeListProps) {
   return (
     <main className="re-list-page" aria-label="Recipe list">
-      <h1 className="re-list-title">Recipes</h1>
+      <h1 className="page-title">Recipes</h1>
       <button type="button" className="re-new-btn" onClick={onNew} aria-label="New recipe">
         + New recipe
       </button>

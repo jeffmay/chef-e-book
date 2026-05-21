@@ -135,7 +135,7 @@ export function BulkIngredientEditorPage() {
 
   return (
     <main className="bie-page">
-      <h1 className="bie-title">Ingredients</h1>
+      <h1 className="page-title">Ingredients</h1>
 
       {/* Add ingredient form */}
       {showAddForm && (
