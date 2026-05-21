@@ -1,9 +1,11 @@
 # Project: Recipe Book
 
 ## Project Description
+
 A local-first single-page web app for creating and managing recipes, with optional cloud sync. Built on Yjs for real-time collaborative state, with an e-ink inspired aesthetic (2D wireframe, handwritten style) and touch/click-first interactions.
 
 ## Code Conventions
+
 - Prettier for formatting
 - ESLint for linting
 - Functional components with hooks for React
@@ -77,6 +79,7 @@ Kitchenware (ingredients, containers, equipment) lives in a global shared list w
 **CSV columns:** `Unique ID` (left-padded to 12 chars with `"-"`), `Type`, `Description`, `Default Measurement Type`, `Labels` ("+"-separated)
 
 #### ItemLabel
+
 - `id`: `ItemLabelId` (branded nanoid, 7 chars)
 - `name`: string
 - `kinds`: `ReadonlySet<ItemKind>` — which item types this label applies to
@@ -84,6 +87,7 @@ Kitchenware (ingredients, containers, equipment) lives in a global shared list w
 Labels are stored in the `"labels"` Yjs map on the document root. Deleting a label cascades to remove it from all ingredient label sets (via Yjs observer in `use_label_store`). Merging replaces multiple old IDs with a single new ID transactionally.
 
 #### Ingredient
+
 - `id`: `IngredientId` (branded nanoid, 12 chars)
 - `name`: string
 - `default_measurement_value`: `Measurement` — a full value like `{ value: {1,1}, unit: "cup" }` (migrated from old `default_measurement_type`)
@@ -91,12 +95,14 @@ Labels are stored in the `"labels"` Yjs map on the document root. Deleting a lab
 - `parent_id?`: `IngredientId` (supports subtypes; e.g. "Shredded Cheddar" → "Shredded Cheese" → "Cheese")
 
 #### Container
+
 - `id`: `ContainerId` (branded nanoid, 12 chars)
 - `name`: string (bowl, steamer, pot, aluminium foil, etc.)
 - `labels`: `ReadonlySet<ItemLabelId>`
 - `parent_id?`: `ContainerId` (supports container hierarchies)
 
 #### Equipment
+
 - `id`: `EquipmentId` (branded nanoid, 12 chars)
 - `name`: string (oven, stove, etc.)
 - `labels`: `ReadonlySet<ItemLabelId>`
@@ -115,6 +121,7 @@ Labels are stored in the `"labels"` Yjs map on the document root. Deleting a lab
 - `updated_at`: timestamp
 
 #### RecipeVersion
+
 A snapshot of a recipe's ingredients and sections at a point in time.
 
 - `id`: `RecipeVersionId` (branded nanoid, 12 chars)
@@ -128,11 +135,12 @@ A snapshot of a recipe's ingredients and sections at a point in time.
 #### SectionItem (recursive)
 
 Sections contain `SectionItem[]`. Each item is one of:
-  - `IngredientItem` — ingredient ref, optional `amount` (Measurement), notes
-  - `ContainerItem` — container ref, `descriptor`, optional `ordered`, nested `IngredientItem[]`, notes
-  - `TextBlock` — freeform text, notes
-  - `Instruction` — instruction verb (mix/bake/stir), optional `equipment_id`, optional `ingredient_ids[]`, optional `duration_seconds`, notes
-  - `Section` — nested section with optional `header` and recursive `contents`
+
+- `IngredientItem` — ingredient ref, optional `amount` (Measurement), notes
+- `ContainerItem` — container ref, `descriptor`, optional `ordered`, nested `IngredientItem[]`, notes
+- `TextBlock` — freeform text, notes
+- `Instruction` — instruction verb (mix/bake/stir), optional `equipment_id`, optional `ingredient_ids[]`, optional `duration_seconds`, notes
+- `Section` — nested section with optional `header` and recursive `contents`
 
 ### Measurement
 
@@ -174,10 +182,12 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 ## UI Pages & Components
 
 ### Home Page
+
 - Active sessions list: progress bar, estimated time left, percent complete (opens in new tab)
 - Search bar: searches recipes, kitchenware, and groups
 
 ### Recipe Editor
+
 - Edit name and description
 - Add sections with an optional header
 - Add/edit ingredients (with measurement editor)
@@ -194,6 +204,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Move to a parent group ("organize")
 
 ### Active Session View
+
 - Ingredients and containers as checkboxes (nested for containers)
 - Checking a container does not auto-check its contents
 - "±" button per ingredient opens the measurement value editor:
@@ -203,6 +214,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Marks session complete
 
 ### Bulk Rescale Interface
+
 - "Rescale multiplier" input (uses measurement editor component)
 - "Include one-off adjustments" checkbox (unchecked by default; when checked, resets one-offs to `original × multiplier`)
 - Can open with pre-filled one-off adjustments
@@ -211,12 +223,14 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - "Cancel" / "Accept" buttons
 
 ### Edit Past Session
+
 - 5-star (0–10) rating
 - Attach notes
 - Update existing recipe with a new version using session measurements
 - Clone and name a new recipe from the session
 
 ### Measurement Value Editor (shared component)
+
 1. Display: `${integer}<sup>${num}</sup>⁄<sub>${denom}</sub>`
 2. Radio buttons: ➗ / × / − / + (opens one of 4 button rows):
    - ➗2, ➗3, ➗5
@@ -225,9 +239,11 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
    - +⅛, +⅕, +⅓, +½, +1
 3. "OK" — accepts value; if a measurement unit, converts to largest evenly-dividing unit
 4. "<" — resets to value before editor opened
+
 - Unit selector: radio/select for all units of the same measurement type
 
 ### Bulk Ingredient Editor
+
 - Search/filter by label, default measurement type, or parent type
 - Multi-select checkboxes
 - Bulk actions: add label, remove label, change measurement type, change parent ingredient
@@ -235,6 +251,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - "Refresh filter" link when changes invalidate the current filter
 
 ### Recipe Group Editor (Directory View)
+
 - Breadcrumb navigation back to root
 - Recursive filter by name (shows full parent-chain to matches)
 - Add tags to current group or to recipes/subgroups
@@ -243,11 +260,13 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Per-item buttons: edit recipe, expand versions, expand subgroup
 
 ### Recipe Import
+
 - URL input → scrape page content (strip ads, extract text + links)
 - Local AI processes scraped content into ingredients, containers, instructions, text blocks
 - Review and confirm before saving
 
 ### Top Nav Bar
+
 - "☰" hamburger menu to navigate between pages
 - "↩ Undo" button (Yjs undo manager)
 
@@ -268,22 +287,23 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 
 ### Naming Conventions
 
-| Category | Convention | Examples |
-| --- | --- | --- |
-| Components, classes, enums | TitleCase | `RecipeEditorPage`, `SectionItem`, `SortOrder` |
-| Component file names | TitleCase | `RecipeEditorPage.ts` |
-| File names (non-component) | camelCase | `useRecipeStore.ts` |
-| Functions (hooks, handlers, utilities) | camelCase | `useRecipeStore`, `handleSave`, `buildFolderTree` |
-| React component props | camelCase | `onChange`, `onSave`, `onCancel`, `initiallyOpen` |
-| Local variables | camelCase | `currentValue`, `filteredItems` |
-| Constants, environment variable / config names | CONSTANT_CASE | `DEFAULT_MEASUREMENT_BY_TYPE`, `PORT` |
-| Object / interface fields (Yjs-backed) | snake_case | `recipe_id`, `created_at`, `parent_folder_id` |
-| Yjs map keys | snake_case | `"recipe_folders"`, `recipe_store.ts` |
-| String discriminator values (enum) | snake_case | `"measurement_type"`, `"ingredient_item"`, `"volume"` |
-| CSS classes | kebab-case | `.re-editor` |
-| CSS file names | TitleCase (matches component) | `DurationEditor.css` for `DurationEditor.tsx` |
+| Category                                       | Convention                    | Examples                                              |
+| ---------------------------------------------- | ----------------------------- | ----------------------------------------------------- |
+| Components, classes, enums                     | TitleCase                     | `RecipeEditorPage`, `SectionItem`, `SortOrder`        |
+| Component file names                           | TitleCase                     | `RecipeEditorPage.ts`                                 |
+| File names (non-component)                     | camelCase                     | `useRecipeStore.ts`                                   |
+| Functions (hooks, handlers, utilities)         | camelCase                     | `useRecipeStore`, `handleSave`, `buildFolderTree`     |
+| React component props                          | camelCase                     | `onChange`, `onSave`, `onCancel`, `initiallyOpen`     |
+| Local variables                                | camelCase                     | `currentValue`, `filteredItems`                       |
+| Constants, environment variable / config names | CONSTANT_CASE                 | `DEFAULT_MEASUREMENT_BY_TYPE`, `PORT`                 |
+| Object / interface fields (Yjs-backed)         | snake_case                    | `recipe_id`, `created_at`, `parent_folder_id`         |
+| Yjs map keys                                   | snake_case                    | `"recipe_folders"`, `recipe_store.ts`                 |
+| String discriminator values (enum)             | snake_case                    | `"measurement_type"`, `"ingredient_item"`, `"volume"` |
+| CSS classes                                    | kebab-case                    | `.re-editor`                                          |
+| CSS file names                                 | TitleCase (matches component) | `DurationEditor.css` for `DurationEditor.tsx`         |
 
 Run order before every commit:
+
 ```
 npm run typecheck
 npm test

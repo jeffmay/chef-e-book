@@ -3,17 +3,14 @@
   "permission": {
     "grep *": "allow",
     "find *": "allow",
-    "xargs": "allow"
+    "xargs": "allow",
   },
   "mcp": {
     "playwright": {
       "enabled": true,
       "type": "local",
-      "command": [
-        "npx",
-        "@playwright/mcp@latest"
-      ]
-    }
+      "command": ["npx", "@playwright/mcp@latest"],
+    },
   },
   "agent": {
     "build": {
@@ -27,9 +24,9 @@
           "git status*": "allow",
           "npm *": "allow",
           "npm install -g *": "ask",
-          "npx *": "allow"
-        }
-      }
-    }
-  }
+          "npx *": "allow",
+        },
+      },
+    },
+  },
 }

@@ -22,16 +22,19 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
-      "react": reactPlugin,
+      react: reactPlugin,
       "react-hooks": reactHooksPlugin,
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
       "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "ignoreRestSiblings": true }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", ignoreRestSiblings: true },
+      ],
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
-      "quotes": ["error", "double", { "avoidEscape": true }],
+      quotes: ["error", "double", { avoidEscape: true }],
       // TypeScript allows `const Foo = [...] as const; type Foo = ...` (merged declaration).
       // The base no-redeclare rule doesn't understand this — disable it in TS files.
       "no-redeclare": "off",
