@@ -1,6 +1,17 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "permission": {
+    "bash": {
+      "git add*": "allow",
+      "git checkout*": "allow",
+      "git commit*": "allow",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git stash*": "allow",
+      "npm *": "allow",
+      "npm install -g *": "ask",
+      "npx *": "allow",
+    },
     "grep *": "allow",
     "find *": "allow",
     "xargs": "allow",
