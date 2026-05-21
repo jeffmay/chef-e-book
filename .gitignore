@@ -24,7 +24,10 @@ playwright-report/
 .DS_Store
 *.numbers
 
-# dot env
+# eslint
+.eslintcache
+
+# dotenv
 .env.local
 .env.development.local
 .env.test.local
