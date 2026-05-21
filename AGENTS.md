@@ -210,7 +210,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Checking a container does not auto-check its contents
 - "±" button per ingredient opens the measurement value editor:
   - After any button press, replaced by a visual slider with "-"/"+" buttons
-  - "OK" to accept, "Rescale" to open bulk rescale interface with current one-off adjustments
+  - "✔︎" to accept, "Rescale" to open bulk rescale interface with current one-off adjustments
 - Attach notes to ingredients, containers, or sections
 - Marks session complete
 
@@ -221,7 +221,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Can open with pre-filled one-off adjustments
 - "Rescale to adjusted amount" button per ingredient (sets multiplier to ratio of one-off ÷ original)
 - Additional one-off adjustment inputs (reuses active session one-off component)
-- "Cancel" / "Accept" buttons
+- "↩" / "✔︎" buttons
 
 ### Edit Past Session
 
@@ -238,8 +238,8 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
    - ×2, ×3, ×5
    - −1, −½, −⅓, −⅕, −⅛
    - +⅛, +⅕, +⅓, +½, +1
-3. "OK" — accepts value; if a measurement unit, converts to largest evenly-dividing unit
-4. "<" — resets to value before editor opened
+3. "✔︎" — accepts value; if a measurement unit, converts to largest evenly-dividing unit
+4. "↩" — resets to value before editor opened
 
 - Unit selector: radio/select for all units of the same measurement type
 

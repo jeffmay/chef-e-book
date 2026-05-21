@@ -271,18 +271,18 @@ export function LabelTable({
                           <button
                             type="button"
                             className="lt-edit-btn"
-                            onClick={commitEdit}
-                            aria-label="Confirm rename"
+                            onClick={cancelEdit}
+                            aria-label="Cancel rename"
                           >
-                            ✔︎
+                            ↩
                           </button>
                           <button
                             type="button"
                             className="lt-edit-btn"
-                            onClick={cancelEdit}
-                            aria-label="Cancel rename"
+                            onClick={commitEdit}
+                            aria-label="Confirm rename"
                           >
-                            ✗
+                            ✔︎
                           </button>
                         </span>
                       ) : (

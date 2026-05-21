@@ -296,12 +296,12 @@ export function MeasurementEditor({
           type="button"
           className="fe-toggle-btn"
           onClick={revertAndClose}
-          aria-label="Reset to original"
+          aria-label="Cancel changes"
         >
-          {"<"}
+          ↩
         </button>
-        <button type="button" className="fe-ok-btn" onClick={commit} aria-label="OK">
-          OK
+        <button type="button" className="fe-ok-btn" onClick={commit} aria-label="Accept changes">
+          ✔︎
         </button>
       </span>
     </span>

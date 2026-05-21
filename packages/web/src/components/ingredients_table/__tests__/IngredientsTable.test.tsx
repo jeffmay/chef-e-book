@@ -301,7 +301,7 @@ describe("IngredientsTable — editable cells", () => {
     expect(onRename).toHaveBeenCalledWith(FLOUR.id, "Rice Flour");
   });
 
-  it("cancels edit on ✗ button click without calling callback", async () => {
+  it("cancels edit on ↩ button click without calling callback", async () => {
     setup([FLOUR]);
     await screen.findByRole("button", { name: "Edit name for Flour" });
     await userEvent.click(screen.getByRole("button", { name: "Edit name for Flour" }));
@@ -328,7 +328,7 @@ describe("IngredientsTable — editable cells", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Edit default measurement for Flour" }),
     );
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onSetMeasurementValue).toHaveBeenCalledWith(
       FLOUR.id,
       expect.objectContaining({ unit: "cup" }),
@@ -414,7 +414,7 @@ describe("IngredientsTable — bulk actions", () => {
   it("calls onBulkSetMeasurementValue when measurement is committed", async () => {
     await selectFlour();
     await userEvent.click(screen.getByRole("button", { name: "Edit measurement" }));
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onBulkSetMeasurementValue).toHaveBeenCalledWith(
       [FLOUR.id],
       expect.objectContaining({ unit: "cup" }),

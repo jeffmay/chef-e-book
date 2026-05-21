@@ -138,13 +138,8 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
   return (
     <span className="fe-root fe-root--open">
       <span className="fe-header">
-        <button
-          type="button"
-          className="fe-toggle-btn"
-          onClick={reset}
-          aria-label="Reset to original"
-        >
-          {"<"}
+        <button type="button" className="fe-toggle-btn" onClick={reset} aria-label="Cancel changes">
+          ↩
         </button>
         <FractionDisplay value={current} />
       </span>
@@ -178,8 +173,8 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
 
       {extraControls}
 
-      <button type="button" className="fe-ok-btn" onClick={commit} aria-label="OK">
-        OK
+      <button type="button" className="fe-ok-btn" onClick={commit} aria-label="Accept changes">
+        ✔︎
       </button>
     </span>
   );

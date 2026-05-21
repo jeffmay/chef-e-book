@@ -122,11 +122,11 @@ export function MultiSelectFilter({
             ))}
           </div>
           <div className="msf-actions">
+            <button type="button" onClick={handleRevert} aria-label="Revert filter">
+              ↩
+            </button>
             <button type="button" onClick={handleAccept} aria-label="Accept filter">
               ✔︎
-            </button>
-            <button type="button" onClick={handleRevert} aria-label="Revert filter">
-              ✗
             </button>
           </div>
         </div>

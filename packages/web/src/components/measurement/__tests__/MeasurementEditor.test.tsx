@@ -43,19 +43,19 @@ describe("MeasurementEditor — closed state", () => {
 
   it("does not show OK when closed", () => {
     setup();
-    expect(screen.queryByRole("button", { name: "OK" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Accept changes" })).not.toBeInTheDocument();
   });
 });
 
 describe("MeasurementEditor — opening the editor", () => {
   it("shows < button after opening", async () => {
     await openEditor();
-    expect(screen.getByRole("button", { name: "Reset to original" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel changes" })).toBeInTheDocument();
   });
 
   it("shows OK button", async () => {
     await openEditor();
-    expect(screen.getByRole("button", { name: "OK" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Accept changes" })).toBeInTheDocument();
   });
 
   it("shows the type selector", async () => {
@@ -96,7 +96,7 @@ describe("MeasurementEditor — operation buttons", () => {
   it("< resets to original fraction", async () => {
     await openEditor(ONE_CUP);
     await userEvent.click(screen.getByRole("button", { name: "÷2" }));
-    await userEvent.click(screen.getByRole("button", { name: "Reset to original" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes" }));
     expect(screen.getByLabelText("1")).toBeInTheDocument();
   });
 });
@@ -167,7 +167,7 @@ describe("MeasurementEditor — OK with best unit conversion", () => {
       "tsp",
     );
     // now at 48 tsp; largest whole unit for 48 tsp is cup (48/48 = 1)
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ unit: "cup" }));
     expect(onCommit).toHaveBeenCalledWith(
       expect.objectContaining({ value: expect.objectContaining({ numerator: 1, denominator: 1 }) }),
@@ -176,15 +176,15 @@ describe("MeasurementEditor — OK with best unit conversion", () => {
 
   it("OK on 1 cup stays as 1 cup (already at best unit)", async () => {
     const { onCommit } = await openEditor(ONE_CUP);
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ unit: "cup" }));
   });
 
   it("OK closes the editor", async () => {
     await openEditor();
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(screen.getByRole("button", { name: "Edit measurement" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "OK" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Accept changes" })).not.toBeInTheDocument();
   });
 
   it("OK on weight value converts to largest whole unit (16 oz → 1 lb)", async () => {
@@ -202,7 +202,7 @@ describe("MeasurementEditor — OK with best unit conversion", () => {
     await userEvent.click(screen.getByRole("radio", { name: "×" }));
     await userEvent.click(screen.getByRole("button", { name: "×2" }));
     // now 16 oz = 1 lb
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onCommit).toHaveBeenCalledWith(
       expect.objectContaining({
         unit: "lb",
@@ -213,13 +213,13 @@ describe("MeasurementEditor — OK with best unit conversion", () => {
 
   it("OK on count value passes through unchanged", async () => {
     const { onCommit } = await openEditor(WHOLE);
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ unit: "whole" }));
   });
 
   it("fractional cup value on OK converts to fl_oz (1/2 cup = 4 fl_oz)", async () => {
     const { onCommit } = await openEditor(HALF_CUP);
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     // 1/2 cup → largest whole unit: fl_oz (4 fl_oz, larger than 24 tsp or 8 tbsp)
     expect(onCommit).toHaveBeenCalledWith(
       expect.objectContaining({

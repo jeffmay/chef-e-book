@@ -105,6 +105,11 @@ export function LabelEditor({
           }
         }}
       />
+      {onCancel !== undefined && (
+        <button type="button" className="it-cancel-btn" onClick={onCancel} aria-label="Cancel edit">
+          ↩
+        </button>
+      )}
       <button
         type="button"
         className="it-confirm-btn"
@@ -114,11 +119,6 @@ export function LabelEditor({
       >
         ✔︎
       </button>
-      {onCancel !== undefined && (
-        <button type="button" className="it-cancel-btn" onClick={onCancel} aria-label="Cancel edit">
-          ✗
-        </button>
-      )}
     </span>
   );
 }

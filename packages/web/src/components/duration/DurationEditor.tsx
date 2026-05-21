@@ -106,9 +106,9 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
           type="button"
           className="de-toggle-btn"
           onClick={revert}
-          aria-label="Reset to original"
+          aria-label="Cancel changes"
         >
-          {"<"}
+          ↩
         </button>
         <input
           className={`de-input${inputError ? " de-input--error" : ""}`}
@@ -158,8 +158,8 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
         })}
       </span>
 
-      <button type="button" className="de-ok-btn" onClick={commit} aria-label="OK">
-        OK
+      <button type="button" className="de-ok-btn" onClick={commit} aria-label="Accept changes">
+        ✔︎
       </button>
     </span>
   );

@@ -36,20 +36,20 @@ describe("FractionEditor — closed state", () => {
 
   it("does not show the OK button when closed", () => {
     setup();
-    expect(screen.queryByRole("button", { name: "OK" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Accept changes" })).not.toBeInTheDocument();
   });
 });
 
 describe("FractionEditor — opening the editor", () => {
   it("clicking ± replaces it with the < button", async () => {
     await openEditor();
-    expect(screen.getByRole("button", { name: "Reset to original" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel changes" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Edit value" })).not.toBeInTheDocument();
   });
 
   it("shows the OK button after opening", async () => {
     await openEditor();
-    expect(screen.getByRole("button", { name: "OK" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Accept changes" })).toBeInTheDocument();
   });
 
   it("shows the operation type radio group", async () => {
@@ -129,14 +129,14 @@ describe("FractionEditor — reset", () => {
     await openEditor(ONE);
     await userEvent.click(screen.getByRole("button", { name: "÷2" }));
     expect(screen.getByLabelText("1/2")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Reset to original" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes" }));
     expect(screen.getByLabelText("1")).toBeInTheDocument();
   });
 
   it("editor stays open after reset", async () => {
     await openEditor();
-    await userEvent.click(screen.getByRole("button", { name: "Reset to original" }));
-    expect(screen.getByRole("button", { name: "OK" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes" }));
+    expect(screen.getByRole("button", { name: "Accept changes" })).toBeInTheDocument();
   });
 });
 
@@ -144,20 +144,20 @@ describe("FractionEditor — OK", () => {
   it("calls onCommit with the current fraction", async () => {
     const { onCommit } = await openEditor(ONE);
     await userEvent.click(screen.getByRole("button", { name: "÷2" }));
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onCommit).toHaveBeenCalledWith(simplify(ONE_HALF));
   });
 
   it("closes the editor and restores ± after OK", async () => {
     await openEditor();
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(screen.getByRole("button", { name: "Edit value" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "OK" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Accept changes" })).not.toBeInTheDocument();
   });
 
   it("calls onCommit with unchanged value when no ops applied", async () => {
     const { onCommit } = await openEditor(ONE);
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onCommit).toHaveBeenCalledWith(ONE);
   });
 });

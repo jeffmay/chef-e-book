@@ -301,19 +301,19 @@ export function IngredientsTable({
           />
           <button
             type="button"
+            className="it-cancel-btn"
+            onClick={() => onCancelEdit(row.id, "name")}
+            aria-label="Cancel edit"
+          >
+            ↩
+          </button>
+          <button
+            type="button"
             className="it-confirm-btn"
             onClick={() => onCommitEdit(row.id, "name")}
             aria-label="Confirm edit"
           >
             ✔︎
-          </button>
-          <button
-            type="button"
-            className="it-cancel-btn"
-            onClick={() => onCancelEdit(row.id, "name")}
-            aria-label="Cancel edit"
-          >
-            ✗
           </button>
         </span>
       );
@@ -416,19 +416,19 @@ export function IngredientsTable({
           />
           <button
             type="button"
+            className="it-cancel-btn"
+            onClick={() => onCancelEdit(row.id, "parent_name")}
+            aria-label="Cancel edit"
+          >
+            ↩
+          </button>
+          <button
+            type="button"
             className="it-confirm-btn"
             onClick={() => onCommitEdit(row.id, "parent_name")}
             aria-label="Confirm edit"
           >
             ✔︎
-          </button>
-          <button
-            type="button"
-            className="it-cancel-btn"
-            onClick={() => onCancelEdit(row.id, "parent_name")}
-            aria-label="Cancel edit"
-          >
-            ✗
           </button>
         </span>
       );

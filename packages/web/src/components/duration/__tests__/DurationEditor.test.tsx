@@ -40,14 +40,14 @@ describe("DurationEditor — closed state", () => {
 
   it("does not show OK when closed", () => {
     setup();
-    expect(screen.queryByRole("button", { name: "OK" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Accept changes" })).not.toBeInTheDocument();
   });
 });
 
 describe("DurationEditor — open state", () => {
   it("shows < reset button", async () => {
     await openEditor();
-    expect(screen.getByRole("button", { name: "Reset to original" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel changes" })).toBeInTheDocument();
   });
 
   it("shows duration text input", async () => {
@@ -74,7 +74,7 @@ describe("DurationEditor — open state", () => {
 
   it("shows OK button", async () => {
     await openEditor();
-    expect(screen.getByRole("button", { name: "OK" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Accept changes" })).toBeInTheDocument();
   });
 
   it("shows -5, -1, +1, +5 adjust buttons in min mode", async () => {
@@ -161,22 +161,22 @@ describe("DurationEditor — reset and commit", () => {
   it("< resets the input to the original value", async () => {
     await openEditor(FIVE_MIN);
     await userEvent.click(screen.getByRole("button", { name: "+5 min" }));
-    await userEvent.click(screen.getByRole("button", { name: "Reset to original" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes" }));
     expect(screen.getByRole("textbox", { name: "Duration" })).toHaveValue("5 minutes");
   });
 
   it("OK calls onCommit with the current seconds value", async () => {
     const { onCommit } = await openEditor(FIVE_MIN);
     await userEvent.click(screen.getByRole("button", { name: "+1 min" }));
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onCommit).toHaveBeenCalledWith(360); // 5 + 1 = 6 min = 360 sec
   });
 
   it("OK closes the editor", async () => {
     await openEditor();
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(screen.getByRole("button", { name: "Edit duration" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "OK" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Accept changes" })).not.toBeInTheDocument();
   });
 
   it("OK with typed input commits parsed value", async () => {
@@ -184,7 +184,7 @@ describe("DurationEditor — reset and commit", () => {
     const input = screen.getByRole("textbox", { name: "Duration" });
     await userEvent.clear(input);
     await userEvent.type(input, "10 min");
-    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onCommit).toHaveBeenCalledWith(600);
   });
 });
