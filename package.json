@@ -11,7 +11,7 @@
     "test": "npm test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write .",
-    "prepare": "husky install"
+    "prepare": "husky install || true # skip if devDependencies are not installed"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.0.0",
