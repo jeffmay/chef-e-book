@@ -957,7 +957,7 @@ interface EditorState {
   create_new_version: boolean;
 }
 
-function makeInitialState(recipe: Recipe | null): EditorState {
+function makeInitialState(recipe: Recipe | null, versionId?: string): EditorState {
   if (recipe === null) {
     return {
       title: "",
@@ -970,7 +970,10 @@ function makeInitialState(recipe: Recipe | null): EditorState {
       create_new_version: false,
     };
   }
-  const v = latestVersion(recipe);
+  const v =
+    versionId !== undefined
+      ? (recipe.versions.find((ver) => ver.id === versionId) ?? latestVersion(recipe))
+      : latestVersion(recipe);
   return {
     title: recipe.title,
     subtitle: recipe.subtitle ?? "",
@@ -987,18 +990,19 @@ function makeInitialState(recipe: Recipe | null): EditorState {
 // RecipeEditor
 // ---------------------------------------------------------------------------
 
-interface RecipeEditorProps {
+export interface RecipeEditorProps {
   readonly recipe: Recipe | null;
   readonly userName: string;
+  readonly versionId?: string;
   readonly onSave: (recipe: Recipe) => void;
   readonly onCancel: () => void;
 }
 
-function RecipeEditor({ recipe, userName, onSave, onCancel }: RecipeEditorProps) {
+export function RecipeEditor({ recipe, userName, versionId, onSave, onCancel }: RecipeEditorProps) {
   const { create, save, copy } = useRecipeStore(userName);
   const { flatFolders, folders } = useRecipeFolderStore();
   const { ingredients: all_ingredients } = useIngredientStore();
-  const [form, setForm] = useState<EditorState>(() => makeInitialState(recipe));
+  const [form, setForm] = useState<EditorState>(() => makeInitialState(recipe, versionId));
   const [showCopyDialog, setShowCopyDialog] = useState(false);
 
   const flat = flattenFolders(folders);

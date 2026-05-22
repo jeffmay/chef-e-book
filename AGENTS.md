@@ -55,14 +55,39 @@ The app is running at http://localhost:5173, and you can use the Playwright MCP 
 recipe-book/
 ├── packages/
 │   ├── shared/        # Yjs models, types, operations — shared by web & server
-│   ├── web/           # Vite + React SPA (y-indexeddb for local persistence)
-|   │   ├── e2e/       # E2E tests + PlayWright
+│   ├── web/           # Vite + React Router (Framework mode) SPA
+│   │   ├── react-router.config.ts   # appDirectory: "src", ssr: false
+│   │   ├── e2e/       # E2E tests + PlayWright
 │   │   └── public/
 │   │       └── kitchenware.csv   # Static asset: default kitchenware (served by Vite)
+│   │   └── src/
+│   │       ├── entry.client.tsx  # Client bootstrap (HydratedRouter)
+│   │       ├── root.tsx          # Root layout (HTML shell) + auth gate + nav shell
+│   │       ├── routes.ts         # Route definitions (React Router Framework mode)
+│   │       └── routes/           # Route components
+│   │           ├── index.tsx                              # / → redirect to /dashboard
+│   │           ├── dashboard.tsx                          # /dashboard
+│   │           ├── ingredients.tsx                        # /ingredients
+│   │           ├── recipes.tsx                            # /recipes (list + inline new)
+│   │           ├── recipes.new.tsx                        # /recipes/new
+│   │           ├── recipes.$recipe_id.tsx                 # /recipes/:recipe_id
+│   │           ├── recipes.$recipe_id.v.$version_id.tsx   # /recipes/:recipe_id/v/:version_id
+│   │           └── profile.tsx                            # /profile
 │   └── server/        # Node.js sync server (Yjs document store per user)
-├── CLAUDE.md
+├── AGENTS.md
 └── PROJECT_SUMMARY.md
 ```
+
+### Routing (React Router v7 — Framework Mode)
+
+The app uses **React Router v7 in Framework mode** via `@react-router/dev/vite` Vite plugin.
+
+- **`root.tsx`** — exports `Layout` (HTML shell) and the default `Root` component (auth gate + nav). Authenticated users see the nav bar + `<Outlet>` with outlet context `{ userName, onRename }`.
+- **`routes.ts`** — explicit route definitions using `index()`/`route()` helpers.
+- **Route components** — thin wrappers that read `useOutletContext<RootContext>()` for `userName`/`onRename`, then delegate to page components.
+- **`RecipeEditorPage`** at `/recipes` — still uses internal state for list↔editor transitions. `RecipeEditor` is exported for direct use by `/recipes/:id` and `/recipes/:id/v/:vid` routes.
+- **NavMenu** — uses `<Link>` components (no `onNavigate` callback); closes on blur via `onBlur`+`focusout`.
+- **UserMenu** — closes on blur via same pattern.
 
 ### State & Sync
 

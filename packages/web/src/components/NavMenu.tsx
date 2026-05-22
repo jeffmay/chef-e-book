@@ -1,24 +1,31 @@
+import { useRef, type FocusEvent } from "react";
+import { Link } from "react-router";
 import "./NavMenu.css";
 
-type NavPage = "bulk_ingredient_editor" | "recipe_editor";
+export function NavMenu() {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
 
-interface NavMenuProps {
-  readonly onNavigate: (page: NavPage) => void;
-}
+  function close() {
+    if (detailsRef.current) detailsRef.current.open = false;
+  }
 
-export function NavMenu({ onNavigate }: NavMenuProps) {
+  function handleBlur(e: FocusEvent<HTMLDetailsElement>) {
+    const related = e.relatedTarget instanceof Node ? e.relatedTarget : null;
+    if (!e.currentTarget.contains(related)) close();
+  }
+
   return (
-    <details className="nav-menu">
+    <details ref={detailsRef} className="nav-menu" onBlur={handleBlur}>
       <summary className="nav-menu-trigger" aria-label="Navigation menu">
         ☰
       </summary>
       <nav className="nav-menu-dropdown" aria-label="Main navigation">
-        <button className="nav-menu-item" onClick={() => onNavigate("recipe_editor")}>
+        <Link className="nav-menu-item" to="/recipes" onClick={close}>
           Recipes
-        </button>
-        <button className="nav-menu-item" onClick={() => onNavigate("bulk_ingredient_editor")}>
+        </Link>
+        <Link className="nav-menu-item" to="/ingredients" onClick={close}>
           Ingredients
-        </button>
+        </Link>
       </nav>
     </details>
   );

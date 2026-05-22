@@ -2,9 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
     "jsx": "react-jsx",
     "types": ["node"]
   },
-  "include": ["src"]
+  "include": [".react-router/types/**/*", "src", "react-router.config.ts"]
 }
