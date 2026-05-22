@@ -13,8 +13,12 @@ node_modules/
 /coverage
 test-results/
 
+# react-router
+packages/web/.react-router/
+
 # production
-dist/
+packages/web/build/
+packages/*/dist/
 
 # claude / playwright
 playwright-report/

@@ -5,6 +5,7 @@
     "packages/*"
   ],
   "scripts": {
+    "build": "npm run build --workspaces",
     "server": "npm run dev --workspace=packages/server",
     "web": "npm run dev --workspace=packages/web",
     "typecheck": "tsc --noEmit *.ts && npm run typecheck --workspaces --if-present",
