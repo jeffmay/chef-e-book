@@ -37,7 +37,7 @@
     "react-dom": "^19.2.5",
     "react-router": "^7.15.1",
     "react-select": "^5.10.2",
-    "vite": "^8.0.10",
+    "vite": "^8.0.14",
     "y-indexeddb": "^9.0.12",
     "yjs": "^13.6.30"
   }
