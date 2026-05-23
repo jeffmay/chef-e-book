@@ -1,5 +1,6 @@
 .lt-section {
   margin-bottom: var(--spacing-md);
+  position: relative;
 }
 
 .lt-toggle {
@@ -128,17 +129,6 @@
   cursor: default;
 }
 
-.lt-bulk-btn--danger {
-  border-color: #c00;
-  color: #c00;
-}
-
-.lt-bulk-btn--danger:hover {
-  background: #c00;
-  color: #fff;
-  border-color: #c00;
-}
-
 .lt-bulk-clear {
   background: none;
   border: var(--border-width) solid var(--color-border);
@@ -147,12 +137,91 @@
   cursor: pointer;
   font-family: var(--font-body);
   color: var(--color-fg);
-  margin-left: auto;
 }
 
 .lt-bulk-clear:hover {
   background: var(--color-fg);
   color: var(--color-bg);
+}
+
+/* Delete confirmation dialog */
+.lt-delete-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.lt-delete-dialog {
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-md);
+  min-width: 22em;
+  max-width: 36em;
+  font-family: var(--font-body);
+  font-size: 0.9em;
+}
+
+.lt-delete-title {
+  font-weight: bold;
+  margin: 0 0 var(--spacing-xs);
+}
+
+.lt-delete-subtitle {
+  margin: 0 0 var(--spacing-xs);
+  color: var(--color-muted);
+  font-size: 0.9em;
+}
+
+.lt-delete-list {
+  margin: 0 0 var(--spacing-sm);
+  padding-left: 1.5em;
+  max-height: 12em;
+  overflow-y: auto;
+  font-size: 0.9em;
+}
+
+.lt-delete-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  margin-top: var(--spacing-sm);
+}
+
+.lt-delete-btn {
+  padding: 2px 12px;
+  border: var(--border-width) solid var(--color-border);
+  font-size: 0.9em;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.lt-delete-btn--cancel {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.lt-delete-btn--cancel:hover {
+  opacity: 0.85;
+}
+
+.lt-delete-btn--accept {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(0, 0, 0, 0.12) 4px,
+    rgba(0, 0, 0, 0.12) 8px
+  );
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+}
+
+.lt-delete-btn--accept:hover {
+  background-color: #eee;
 }
 
 .lt-merge-form {
