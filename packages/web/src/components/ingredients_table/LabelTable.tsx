@@ -1,4 +1,4 @@
-import type { KitchenwareLabel, KitchenwareLabelId } from "@recipe-book/shared";
+import type { Ingredient, KitchenwareLabel, KitchenwareLabelId } from "@recipe-book/shared";
 import { RadioButton } from "primereact/radiobutton";
 import { useState, type FormEvent } from "react";
 import { ReadonlyDeep } from "type-fest";
@@ -6,6 +6,7 @@ import "./LabelTable.css";
 
 export interface LabelTableProps {
   readonly labels: ReadonlyDeep<KitchenwareLabel[]>;
+  readonly ingredients: ReadonlyDeep<Ingredient[]>;
   readonly onFilterAll: (label_ids: readonly KitchenwareLabelId[]) => void;
   readonly onFilterAny: (label_ids: readonly KitchenwareLabelId[]) => void;
   readonly onDelete: (label_ids: readonly KitchenwareLabelId[]) => void;
@@ -15,6 +16,7 @@ export interface LabelTableProps {
 
 export function LabelTable({
   labels,
+  ingredients,
   onFilterAll,
   onFilterAny,
   onDelete,
@@ -28,6 +30,7 @@ export function LabelTable({
   const [showMergeInput, setShowMergeInput] = useState(false);
   const [editingId, setEditingId] = useState<KitchenwareLabelId | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const selectedArray = [...selectedIds];
   const allSelected = labels.length > 0 && labels.every((l) => selectedIds.has(l.id));
@@ -60,10 +63,23 @@ export function LabelTable({
     onFilterAny(selectedArray);
   }
 
-  function handleDelete(): void {
+  function handleDeleteClick(): void {
+    setShowDeleteConfirm(true);
+  }
+
+  function handleDeleteConfirm(): void {
     onDelete(selectedArray);
     setSelectedIds(new Set());
+    setShowDeleteConfirm(false);
   }
+
+  function handleDeleteCancel(): void {
+    setShowDeleteConfirm(false);
+  }
+
+  const affectedIngredients = ingredients.filter((ing) =>
+    selectedArray.some((id) => ing.labels.has(id)),
+  );
 
   function handleMergeSubmit(e: FormEvent): void {
     e.preventDefault();
@@ -119,6 +135,13 @@ export function LabelTable({
           {/* Bulk action bar */}
           {someSelected && (
             <div className="lt-bulk-bar" role="region" aria-label="Label bulk actions">
+              <button
+                type="button"
+                className="lt-bulk-clear"
+                onClick={() => setSelectedIds(new Set())}
+              >
+                Clear
+              </button>
               <span className="lt-bulk-count">{selectedIds.size} selected</span>
               <span className="lt-filter-label">Filter:</span>
               <div className="lt-filter-group" role="group" aria-label="Filter mode">
@@ -151,8 +174,8 @@ export function LabelTable({
               </div>
               <button
                 type="button"
-                className="lt-bulk-btn lt-bulk-btn--danger"
-                onClick={handleDelete}
+                className="lt-bulk-btn"
+                onClick={handleDeleteClick}
                 aria-label="Delete selected labels"
               >
                 Delete
@@ -208,13 +231,55 @@ export function LabelTable({
                   )}
                 </>
               )}
-              <button
-                type="button"
-                className="lt-bulk-clear"
-                onClick={() => setSelectedIds(new Set())}
-              >
-                Clear
-              </button>
+            </div>
+          )}
+
+          {showDeleteConfirm && (
+            <div
+              className="lt-delete-overlay"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Confirm delete labels"
+            >
+              <div className="lt-delete-dialog">
+                <p className="lt-delete-title">
+                  Delete {selectedIds.size} label{selectedIds.size !== 1 ? "s" : ""}?
+                </p>
+                {affectedIngredients.length > 0 ? (
+                  <>
+                    <p className="lt-delete-subtitle">
+                      The following ingredient{affectedIngredients.length !== 1 ? "s" : ""} will be
+                      affected:
+                    </p>
+                    <ul className="lt-delete-list">
+                      {affectedIngredients.map((ing) => (
+                        <li key={ing.id}>{ing.name}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p className="lt-delete-subtitle">No ingredients use these labels.</p>
+                )}
+                <div className="lt-delete-actions">
+                  <button
+                    type="button"
+                    className="lt-delete-btn lt-delete-btn--cancel"
+                    onClick={handleDeleteCancel}
+                    autoFocus
+                    aria-label="Cancel delete"
+                  >
+                    ↩ Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="lt-delete-btn lt-delete-btn--accept"
+                    onClick={handleDeleteConfirm}
+                    aria-label="Confirm delete"
+                  >
+                    ✔︎ Delete
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

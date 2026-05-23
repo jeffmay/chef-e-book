@@ -37,6 +37,7 @@ function setup(labels: ReadonlyDeep<KitchenwareLabel[]> = [FAT, SOLID, BAKING]) 
   return render(
     <LabelTable
       labels={labels}
+      ingredients={[]}
       onFilterAll={onFilterAll}
       onFilterAny={onFilterAny}
       onDelete={onDelete}
@@ -84,6 +85,7 @@ describe("LabelTable — expanded state", () => {
     render(
       <LabelTable
         labels={[]}
+        ingredients={[]}
         onFilterAll={onFilterAll}
         onFilterAny={onFilterAny}
         onDelete={onDelete}
@@ -112,6 +114,7 @@ describe("LabelTable — selection and bulk actions", () => {
     render(
       <LabelTable
         labels={labels}
+        ingredients={[]}
         onFilterAll={onFilterAll}
         onFilterAny={onFilterAny}
         onDelete={onDelete}

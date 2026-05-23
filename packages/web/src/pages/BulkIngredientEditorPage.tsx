@@ -218,6 +218,7 @@ export function BulkIngredientEditorPage() {
       {/* Label table (expandable) */}
       <LabelTable
         labels={labels}
+        ingredients={ingredients}
         onFilterAll={handleFilterAll}
         onFilterAny={handleFilterAny}
         onDelete={(ids) => deleteLabels([...ids])}
