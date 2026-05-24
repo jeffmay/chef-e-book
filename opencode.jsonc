@@ -10,7 +10,7 @@
       "git stash*": "allow",
       "npm *": "allow",
       "npm install -g *": "ask",
-      "npx *": "allow",
+      "npx tsc *": "allow",
     },
     "grep *": "allow",
     "find *": "allow",

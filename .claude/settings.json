@@ -12,17 +12,18 @@
       "Bash(grep:*)",
       "Bash(sed:*)",
       "Bash(git add:*)",
+      "Bash(git checkout:*)",
       "Bash(git commit:*)",
       "Bash(git diff:*)",
-      "Bash(git status:*)",
       "Bash(npm install:*)",
       "Bash(npm list:*)",
       "Bash(npm run:*)",
+      "Bash(git stash *)",
+      "Bash(git status:*)",
       "Bash(npm test:*)",
       "Bash(CI=true npm test:*)",
       "Bash(npm view:*)",
-      "Bash(git checkout:*)",
-      "Bash(git stash *)"
+      "Bash(npx tsc *)"
     ]
   }
 }
