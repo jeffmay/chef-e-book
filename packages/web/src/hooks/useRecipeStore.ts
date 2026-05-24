@@ -13,7 +13,7 @@ import {
   saveRecipe,
 } from "@recipe-book/shared";
 import type { RecipeFolderId } from "@recipe-book/shared";
-import { useDoc } from "../contexts/docContext.js";
+import { useRecipeBookDoc } from "../contexts/docContext.js";
 
 export interface RecipeStore {
   readonly recipes: Recipe[];
@@ -24,7 +24,7 @@ export interface RecipeStore {
 }
 
 export function useRecipeStore(userName: string): RecipeStore {
-  const doc = useDoc();
+  const doc = useRecipeBookDoc();
   const [recipes, setRecipes] = useState<Recipe[]>(() => getRecipes(doc));
 
   useEffect(() => {

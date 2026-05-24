@@ -9,7 +9,7 @@ import {
   getRecipeFoldersFlat,
   updateRecipeFolder,
 } from "@recipe-book/shared";
-import { useDoc } from "../contexts/docContext.js";
+import { useRecipeBookDoc } from "../contexts/docContext.js";
 
 export interface RecipeFolderStore {
   readonly folders: RecipeFolder[];
@@ -20,7 +20,7 @@ export interface RecipeFolderStore {
 }
 
 export function useRecipeFolderStore(): RecipeFolderStore {
-  const doc = useDoc();
+  const doc = useRecipeBookDoc();
   const [folders, setFolders] = useState<RecipeFolder[]>(() => getRecipeFolders(doc));
   const [flatFolders, setFlatFolders] = useState(() => getRecipeFoldersFlat(doc));
 

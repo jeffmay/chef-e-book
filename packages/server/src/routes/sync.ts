@@ -1,34 +1,40 @@
 import { Router, type Request, type Response } from "express";
 import * as Y from "yjs";
+import type { DocumentStore } from "../storage/types.js";
 
-export const syncRouter = Router();
+export function createSyncRouter(store: DocumentStore): Router {
+  const router = Router();
 
-const userDocs = new Map<string, Y.Doc>();
+  // POST /sync — body: { book_id: string, update?: string }
+  router.post("/", async (req: Request, res: Response) => {
+    const body = req.body as { book_id?: string; update?: string };
+    const bookId = body.book_id;
+    if (typeof bookId !== "string" || bookId === "") {
+      res.status(400).json({ error: "Missing book_id" });
+      return;
+    }
 
-function getOrCreateDoc(userId: string): Y.Doc {
-  const existing = userDocs.get(userId);
-  if (existing !== undefined) return existing;
-  const doc = new Y.Doc();
-  userDocs.set(userId, doc);
-  return doc;
+    const doc = new Y.Doc();
+
+    // Load existing document state from storage
+    const existing = await store.load(bookId);
+    if (existing !== null) {
+      Y.applyUpdate(doc, existing);
+    }
+
+    // Apply client update if provided
+    if (typeof body.update === "string") {
+      const update = Buffer.from(body.update, "base64");
+      Y.applyUpdate(doc, update);
+    }
+
+    // Persist after applying client update
+    const newState = Y.encodeStateAsUpdate(doc);
+    await store.save(bookId, newState);
+
+    // Return full state (server always has the canonical copy)
+    res.json({ update: Buffer.from(newState).toString("base64") });
+  });
+
+  return router;
 }
-
-syncRouter.post("/:user_id", (req: Request, res: Response) => {
-  const rawUserId = req.params["user_id"];
-  const userId = typeof rawUserId === "string" ? rawUserId : undefined;
-  if (userId === undefined || userId === "") {
-    res.status(400).json({ error: "Missing user_id" });
-    return;
-  }
-
-  const body = req.body as { update?: string };
-  const doc = getOrCreateDoc(userId);
-
-  if (body.update !== undefined) {
-    const update = Buffer.from(body.update, "base64");
-    Y.applyUpdate(doc, update);
-  }
-
-  const state = Y.encodeStateAsUpdate(doc);
-  res.json({ update: Buffer.from(state).toString("base64") });
-});

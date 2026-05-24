@@ -59,6 +59,18 @@ _(none)_
 
 ---
 
+## Completed
+
+- [x] Document separation: kitchenware (ingredients, containers, labels) and recipes/folders are now separate Y.Doc instances (`useKitchenwareDoc` + `KitchenwareDocContext` and `useRecipeBookDoc` + `RecipeBookDocContext`)
+- [x] Branded `UserId`, `RecipeBookId`, `RecipeBookName` types in shared package; `snakeCaseName` unbranded arktype (trims + normalizes to snake_case via `string-ts` `snakeCase`, brandable for different types)
+- [x] Server storage layer: `DocumentStore` interface with three backends — `LocalMemoryStore` (in-memory Map, default for tests), `LocalFileStore` (filesystem, `./data/{bookId}.yjs`), `NetlifyBlobStore` (Netlify Blobs, store `"recipe-books"`, key `book-{bookId}`)
+- [x] `PUT /book` endpoint: creates a new recipe book with snake_case name, returns `{ book_id, name }` (201); body validated via `CreateBookBody` arktype schema
+- [x] `POST /sync` updated: removed `:user_id` URL param; body is now `{ book_id: string, update?: string }`; loads/saves through `DocumentStore` interface
+- [x] Server config via `arkenv`: `PORT`, `STORAGE_ENGINE` (`'local-memory' | 'local-file' | 'netlify-blobs'`), `NETLIFY_PROJECT_ID`
+- [x] Fixed Vite version hoisting: added `vite@^8.0.10` to root `devDependencies` so `@react-router/dev` resolves vite 8 (which has `isRunnableDevEnvironment`) instead of vite 5 (from vitest's dependency tree)
+
+---
+
 ## Future Development Goals
 
 - Offline-first PWA support (service worker)

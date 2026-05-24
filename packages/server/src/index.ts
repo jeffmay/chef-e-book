@@ -1,12 +1,16 @@
 import express from "express";
-import { syncRouter } from "./routes/sync.js";
+import { serverConfig } from "./config.js";
+import { createDocumentStore } from "./storage/index.js";
+import { createBookRouter } from "./routes/book.js";
+import { createSyncRouter } from "./routes/sync.js";
 
-const PORT = Number(process.env["PORT"] ?? 3001);
+const store = createDocumentStore();
 
 const app = express();
-app.use(express.json());
-app.use("/sync", syncRouter);
+app.use(express.json({ limit: "10mb" }));
+app.use("/book", createBookRouter(store));
+app.use("/sync", createSyncRouter(store));
 
-app.listen(PORT, () => {
-  console.log(`Recipe Book sync server listening on port ${PORT}`);
+app.listen(serverConfig.PORT, () => {
+  console.log(`Recipe Book sync server listening on port ${serverConfig.PORT}`);
 });

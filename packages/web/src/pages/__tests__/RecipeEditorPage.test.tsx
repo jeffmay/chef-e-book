@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createElement, type ReactNode } from "react";
 import * as Y from "yjs";
-import { DocContext } from "../../contexts/docContext.js";
+import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.js";
 import { RecipeEditorPage } from "../RecipeEditorPage.js";
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
@@ -11,12 +11,13 @@ const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------flour,ingredient,Flour,volume,dry
 `;
 
-function makeWrapper(doc: Y.Doc) {
+function makeWrapper(kitchenwareDoc: Y.Doc) {
+  const recipeBookDoc = new Y.Doc();
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
-      DocContext.Provider,
-      { value: { doc, whenSynced: Promise.resolve() } },
-      children,
+      KitchenwareDocContext.Provider,
+      { value: kitchenwareDoc },
+      createElement(RecipeBookDocContext.Provider, { value: recipeBookDoc }, children),
     );
   };
 }

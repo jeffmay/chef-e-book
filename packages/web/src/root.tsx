@@ -5,8 +5,8 @@ import "primereact/resources/primereact.css";
 import "primeicons/primeicons.css";
 import "./styles/global.css";
 import { useUser } from "./hooks/useUser.js";
-import { useYjsDoc } from "./hooks/useYjsDoc.js";
-import { DocContext } from "./contexts/docContext.js";
+import { useKitchenwareDoc, useRecipeBookDoc } from "./hooks/useYjsDoc.js";
+import { KitchenwareDocContext, RecipeBookDocContext } from "./contexts/docContext.js";
 import { NavMenu } from "./components/NavMenu.js";
 import { UserMenu } from "./components/UserMenu.js";
 import { SelectUserPage } from "./pages/SelectUserPage.js";
@@ -42,6 +42,68 @@ interface AuthenticatedShellProps {
 }
 
 function AuthenticatedShell({ userName, onRename }: AuthenticatedShellProps) {
+  const kitchenwareDoc = useKitchenwareDoc(userName);
+  const recipeBookDoc = useRecipeBookDoc(userName);
+  const navigate = useNavigate();
+
+  return (
+    <KitchenwareDocContext.Provider value={kitchenwareDoc}>
+      <RecipeBookDocContext.Provider value={recipeBookDoc}>
+        <div className="app">
+          <header className="top-nav">
+            <NavMenu />
+            <span className="app-title">Recipe Book</span>
+            <div className="nav-right">
+              <button className="undo-btn" aria-label="Undo">
+                ↩ Undo
+              </button>
+              <UserMenu userName={userName} onProfile={() => navigate("/profile")} />
+            </div>
+          </header>
+          <Outlet context={{ userName, onRename } satisfies RootContext} />
+        </div>
+      </RecipeBookDocContext.Provider>
+    </KitchenwareDocContext.Provider>
+  );
+}
+
+export default function Root() {
+  const { userName, setUserName } = useUser();
+
+  if (userName === null) {
+    return <SelectUserPage onSelect={setUserName} />;
+  }
+
+  return <AuthenticatedShell key={userName} userName={userName} onRename={setUserName} />;
+}
+
+export function Layout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Recipe Book</title>
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        {children}
+        <ScrollRestoration />
+        <Scripts />
+      </body>
+    </html>
+  );
+}
+
+interface AuthenticatedShellProps {
+  readonly userName: string;
+  readonly onRename: (name: string) => void;
+}
+
+function AuthenticatedShell({ userName, onRename }: AuthenticatedShellProps) {
+<<<<<<< HEAD
   const { doc, whenSynced } = useYjsDoc(userName);
   const navigate = useNavigate();
 
@@ -61,6 +123,30 @@ function AuthenticatedShell({ userName, onRename }: AuthenticatedShellProps) {
         <Outlet context={{ userName, onRename } satisfies RootContext} />
       </div>
     </DocContext.Provider>
+=======
+  const kitchenwareDoc = useKitchenwareDoc(userName);
+  const recipeBookDoc = useRecipeBookDoc(userName);
+  const navigate = useNavigate();
+
+  return (
+    <KitchenwareDocContext.Provider value={kitchenwareDoc}>
+      <RecipeBookDocContext.Provider value={recipeBookDoc}>
+        <div className="app">
+          <header className="top-nav">
+            <NavMenu />
+            <span className="app-title">Recipe Book</span>
+            <div className="nav-right">
+              <button className="undo-btn" aria-label="Undo">
+                ↩ Undo
+              </button>
+              <UserMenu userName={userName} onProfile={() => navigate("/profile")} />
+            </div>
+          </header>
+          <Outlet context={{ userName, onRename } satisfies RootContext} />
+        </div>
+      </RecipeBookDocContext.Provider>
+    </KitchenwareDocContext.Provider>
+>>>>>>> a3ae51f (📦 Separate kitchenware and recipe documents, add RecipeBook API and storage backends)
   );
 }
 
