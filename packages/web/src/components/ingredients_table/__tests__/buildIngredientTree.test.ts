@@ -6,22 +6,22 @@ import { ReadonlyDeep } from "type-fest";
 
 // Label fixtures
 const FAT_LABEL: ReadonlyDeep<KitchenwareLabel> = {
-  id: paddedId(KitchenwareLabelId, "fat0000"),
+  id: paddedId(KitchenwareLabelId, "fat"),
   name: "fat",
   kinds: new Set<KitchenwareKind>(["ingredient"]),
 };
 const SOLID_LABEL: ReadonlyDeep<KitchenwareLabel> = {
-  id: paddedId(KitchenwareLabelId, "sol0000"),
+  id: paddedId(KitchenwareLabelId, "solid"),
   name: "solid",
   kinds: new Set<KitchenwareKind>(["ingredient"]),
 };
 const LIQUID_LABEL: ReadonlyDeep<KitchenwareLabel> = {
-  id: paddedId(KitchenwareLabelId, "liq0000"),
+  id: paddedId(KitchenwareLabelId, "liquid"),
   name: "liquid",
   kinds: new Set<KitchenwareKind>(["ingredient"]),
 };
 const BAKING_LABEL: ReadonlyDeep<KitchenwareLabel> = {
-  id: paddedId(KitchenwareLabelId, "bak0000"),
+  id: paddedId(KitchenwareLabelId, "baking"),
   name: "baking",
   kinds: new Set<KitchenwareKind>(["ingredient"]),
 };

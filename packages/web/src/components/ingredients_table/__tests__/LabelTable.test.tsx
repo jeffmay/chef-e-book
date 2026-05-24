@@ -2,6 +2,7 @@ import {
   type KitchenwareKind,
   type KitchenwareLabel,
   KitchenwareLabelId,
+  paddedId,
 } from "@recipe-book/shared";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -12,17 +13,17 @@ import { LabelTable } from "../LabelTable.js";
 const KIND_INGREDIENT: Set<KitchenwareKind> = new Set(["ingredient"]);
 
 const FAT: ReadonlyDeep<KitchenwareLabel> = {
-  id: "fat0000" as KitchenwareLabelId,
+  id: paddedId(KitchenwareLabelId, "fat"),
   name: "fat",
   kinds: KIND_INGREDIENT,
 };
 const SOLID: ReadonlyDeep<KitchenwareLabel> = {
-  id: "sol0000" as KitchenwareLabelId,
+  id: paddedId(KitchenwareLabelId, "solid"),
   name: "solid",
   kinds: KIND_INGREDIENT,
 };
 const BAKING: ReadonlyDeep<KitchenwareLabel> = {
-  id: "bak0000" as KitchenwareLabelId,
+  id: paddedId(KitchenwareLabelId, "baking"),
   name: "baking",
   kinds: KIND_INGREDIENT,
 };
@@ -159,6 +160,7 @@ describe("LabelTable — selection and bulk actions", () => {
   it("calls onDelete with selected ids and clears selection", async () => {
     await expand_and_select();
     await userEvent.click(screen.getByRole("button", { name: "Delete selected labels" }));
+    await userEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
     expect(onDelete).toHaveBeenCalledWith([FAT.id]);
     expect(screen.queryByRole("region", { name: "Label bulk actions" })).not.toBeInTheDocument();
   });

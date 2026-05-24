@@ -18,9 +18,9 @@ import {
 
 // Test label IDs formatted to the expected length
 const FAT_ID = paddedId(KitchenwareLabelId, "fat");
-const SOLID_ID = paddedId(KitchenwareLabelId, "sol");
-const BAKING_ID = paddedId(KitchenwareLabelId, "bak");
-const POWDER_ID = paddedId(KitchenwareLabelId, "pow");
+const SOLID_ID = paddedId(KitchenwareLabelId, "solid");
+const BAKING_ID = paddedId(KitchenwareLabelId, "baking");
+const POWDER_ID = paddedId(KitchenwareLabelId, "powder");
 
 const DEFAULT_MEASUREMENT: Measurement = { value: { numerator: 1, denominator: 1 }, unit: "cup" };
 
@@ -82,7 +82,7 @@ describe("addIngredient", () => {
 });
 
 describe("addLabelsToIngredients", () => {
-  const DAIRY_ID = paddedId(KitchenwareLabelId, "dai0000");
+  const DAIRY_ID = paddedId(KitchenwareLabelId, "dairy");
 
   it("adds new labels and deduplicates", () => {
     addIngredient(doc, BUTTER);
@@ -143,14 +143,11 @@ describe("setMeasurementValueForIngredients", () => {
 
 describe("setParentForIngredients", () => {
   it("sets parent_id", () => {
+    const DAIRY_ID = paddedId(IngredientId, "dairy");
     addIngredient(doc, BUTTER);
-    setParentForIngredients(
-      doc,
-      [paddedId(IngredientId, "butter")],
-      paddedId(IngredientId, "dairy0000000"),
-    );
+    setParentForIngredients(doc, [paddedId(IngredientId, "butter")], DAIRY_ID);
     const result = getIngredients(doc).find((i) => i.id === paddedId(IngredientId, "butter"));
-    expect(result?.parent_id).toBe(paddedId(IngredientId, "dairy0000000"));
+    expect(result?.parent_id).toBe(DAIRY_ID);
   });
 
   it("clears parent_id when undefined passed", () => {
@@ -186,7 +183,7 @@ describe("renameIngredient", () => {
 });
 
 describe("setLabelsForIngredient", () => {
-  const DAIRY_ID = paddedId(KitchenwareLabelId, "dai0000");
+  const DAIRY_ID = paddedId(KitchenwareLabelId, "dairy");
   const PREMIUM_ID = paddedId(KitchenwareLabelId, "pre0000");
 
   it("replaces all labels for the ingredient", () => {
