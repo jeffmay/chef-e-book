@@ -25,16 +25,17 @@ export function useRecipeFolderStore(): RecipeFolderStore {
   const [flatFolders, setFlatFolders] = useState(() => getRecipeFoldersFlat(doc));
 
   useEffect(() => {
-    (async function syncRecipeFolder() {
-      await whenSynced;
-      const map = getRecipeFolderYmap(doc);
-      function update() {
-        setFolders(getRecipeFolders(doc));
-        setFlatFolders(getRecipeFoldersFlat(doc));
-      }
-      map.observe(update);
-      return () => map.unobserve(update);
-    })();
+    const map = getRecipeFolderYmap(doc);
+    function update() {
+      setFolders(getRecipeFolders(doc));
+      setFlatFolders(getRecipeFoldersFlat(doc));
+    }
+    map.observe(update);
+    whenSynced.then(() => {
+      setFolders(getRecipeFolders(doc));
+      setFlatFolders(getRecipeFoldersFlat(doc));
+    });
+    return () => map.unobserve(update);
   }, [doc, whenSynced]);
 
   return {

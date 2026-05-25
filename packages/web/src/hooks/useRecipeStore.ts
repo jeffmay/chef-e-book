@@ -28,15 +28,13 @@ export function useRecipeStore(userName: string): RecipeStore {
   const [recipes, setRecipes] = useState<Recipe[]>(() => getRecipes(doc));
 
   useEffect(() => {
-    (async function syncRecipeStore() {
-      await whenSynced;
-      const map = getRecipeYmap(doc);
-      function update() {
-        setRecipes(getRecipes(doc));
-      }
-      map.observe(update);
-      return () => map.unobserve(update);
-    })();
+    const map = getRecipeYmap(doc);
+    function update() {
+      setRecipes(getRecipes(doc));
+    }
+    map.observe(update);
+    whenSynced.then(() => setRecipes(getRecipes(doc)));
+    return () => map.unobserve(update);
   }, [doc, whenSynced]);
 
   return {

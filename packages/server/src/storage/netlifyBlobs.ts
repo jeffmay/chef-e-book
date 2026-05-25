@@ -28,7 +28,7 @@ export class NetlifyBlobStore implements DocumentStore {
   }
 
   async save(bookId: string, data: Uint8Array): Promise<void> {
-    await this.store().setJSON(this.keyFor(bookId), Array.from(data));
+    await this.store().set(this.keyFor(bookId), new Blob([data.buffer as ArrayBuffer]));
   }
 
   async delete(bookId: string): Promise<void> {
