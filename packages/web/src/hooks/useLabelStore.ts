@@ -11,7 +11,7 @@ import {
   renameLabel as renameLabelInDoc,
   replaceLabelInAllIngredients,
 } from "@recipe-book/shared";
-import { loadId, randomId } from "@recipe-book/shared/src/types/ids.js";
+import { loadId, randomId } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
 import * as Y from "yjs";
 import { useKitchenwareDoc } from "../contexts/docContext.js";

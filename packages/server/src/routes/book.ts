@@ -2,15 +2,8 @@ import { Router, type Request, type Response } from "express";
 import { nanoid } from "nanoid";
 import * as Y from "yjs";
 import { type } from "arktype";
-import { snakeCaseName } from "@recipe-book/shared";
+import { CreateBookBody, type CreateBookBody as CreateBookBodyType } from "@recipe-book/shared";
 import type { DocumentStore } from "../storage/types.js";
-
-const CreateBookBody = type({
-  "user_id?": "string",
-  name: snakeCaseName,
-});
-
-type CreateBookBody = typeof CreateBookBody.infer;
 
 export function createBookRouter(store: DocumentStore): Router {
   const router = Router();
@@ -23,7 +16,7 @@ export function createBookRouter(store: DocumentStore): Router {
       return;
     }
 
-    const body = result as CreateBookBody;
+    const body = result as CreateBookBodyType;
     const bookId = nanoid(12);
 
     // Create an empty Yjs doc and persist it

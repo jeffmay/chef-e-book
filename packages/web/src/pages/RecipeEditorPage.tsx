@@ -351,7 +351,7 @@ function InstructionRow({
   function toggleIngredient(id: IngredientId) {
     const current = item.ingredient_ids ?? [];
     const exists = current.includes(id);
-    const new_ids = exists ? current.filter((id) => id !== id) : [...current, id];
+    const new_ids = exists ? current.filter((x) => x !== id) : [...current, id];
     // If adding a new ingredient not in top-level list, add it there too
     if (!exists && !topIngredients.some((ti) => ti.ingredient_id === id)) {
       onAddTopIngredient(id);
@@ -447,7 +447,6 @@ function InstructionRow({
           const checked = (item.ingredient_ids ?? []).includes(
             ing.id as IngredientItem["ingredient_id"],
           );
-          const top = topIngredients.find((ti) => ti.ingredient_id === ing.id);
           return (
             <label key={ing.id} className="re-instruction-ing-option">
               <input
@@ -457,16 +456,6 @@ function InstructionRow({
                 aria-label={ing.name}
               />
               {ing.name}
-              {checked && top?.amount === undefined && (
-                <MeasurementEditor
-                  value={{ value: { numerator: 1, denominator: 1 }, unit: "cup" }}
-                  onCommit={(amount) => {
-                    // Update the ingredient amount on the top-level RecipeIngredient
-                    // This is handled by the parent; we emit a signal here
-                    void amount;
-                  }}
-                />
-              )}
             </label>
           );
         })}
@@ -1006,12 +995,6 @@ export function RecipeEditor({ recipe, userName, versionId, onSave, onCancel }: 
   }
 
   function handleSave() {
-    const version_base: Omit<RecipeVersion, "id" | "recipe_id" | "created_at" | "created_by"> = {
-      description: form.description,
-      ingredients: form.ingredients,
-      sections: form.sections,
-    };
-
     if (recipe === null) {
       const created = create({
         title: form.title,
@@ -1042,7 +1025,6 @@ export function RecipeEditor({ recipe, userName, versionId, onSave, onCancel }: 
       });
       onSave(updated);
     }
-    void version_base;
   }
 
   function handleCopy(title: string, folder_id: RecipeFolderId | undefined) {
