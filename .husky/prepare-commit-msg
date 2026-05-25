@@ -27,7 +27,7 @@ if ! command -v opencode >/dev/null 2>&1; then
   exit 0
 fi
 
-MODEL="${OPENCODE_COMMIT_MODEL:-opencode/big-pickle}"
+MODEL="${OPENCODE_COMMIT_MODEL:-opencode/deepseek-v4-flash-free}"
 
 # Write the prompt to a temp file
 PROMPT_FILE="$(mktemp)"
