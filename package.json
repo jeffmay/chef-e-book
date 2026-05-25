@@ -1,5 +1,6 @@
 {
   "name": "recipe-book",
+  "type": "module",
   "private": true,
   "workspaces": [
     "packages/*"
