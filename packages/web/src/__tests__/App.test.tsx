@@ -5,7 +5,10 @@ import { createRoutesStub } from "react-router";
 import { USER_STORAGE_KEY } from "../hooks/useUser.js";
 
 vi.mock("y-indexeddb", () => ({
-  IndexeddbPersistence: vi.fn().mockImplementation(() => ({ destroy: vi.fn() })),
+  IndexeddbPersistence: vi.fn().mockImplementation(() => ({
+    destroy: vi.fn(),
+    whenSynced: Promise.resolve(),
+  })),
 }));
 
 const { default: Root } = await import("../root.js");

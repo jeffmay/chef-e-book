@@ -23,7 +23,9 @@
       "Bash(npm test:*)",
       "Bash(CI=true npm test:*)",
       "Bash(npm view:*)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(npx vitest *)",
+      "Bash(npx playwright *)"
     ]
   }
 }

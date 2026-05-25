@@ -18,7 +18,7 @@ import {
 } from "@recipe-book/shared";
 import { randomId } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
-import { useDocContext } from "../contexts/docContext.js";
+import { useKitchenwareDoc } from "../contexts/docContext.js";
 
 const ingredientKinds: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 
@@ -47,12 +47,12 @@ export interface UseIngredientStoreResult {
 }
 
 export function useIngredientStore(): UseIngredientStoreResult {
-  const { doc, whenSynced } = useDocContext();
+  const { doc, whenSynced } = useKitchenwareDoc();
   const [ingredients, setIngredients] = useState<Ingredient[]>(() => getIngredients(doc));
 
   // Load defaults from static CSV asset if the store is empty after IndexedDB sync
   useEffect(() => {
-    (async function syncOrDefault() {
+    (async function syncIngredientStore() {
       try {
         await whenSynced;
       } catch (e) {
@@ -80,8 +80,10 @@ export function useIngredientStore(): UseIngredientStoreResult {
     const map = doc.getMap("ingredients");
     const handler = () => setIngredients(getIngredients(doc));
     map.observe(handler);
+    // Refresh ingredients once IndexedDB has finished loading existing data
+    whenSynced.then(() => setIngredients(getIngredients(doc)));
     return () => map.unobserve(handler);
-  }, [doc]);
+  }, [doc, whenSynced]);
 
   return {
     ingredients,

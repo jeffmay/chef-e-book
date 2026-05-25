@@ -1,9 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createElement, type ReactNode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
-import { DocContext } from "../../contexts/docContext.js";
+import { KitchenwareDocContext } from "../../contexts/docContext.js";
 import { BulkIngredientEditorPage } from "../BulkIngredientEditorPage.js";
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
@@ -14,7 +14,7 @@ const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 function makeWrapper(doc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
-      DocContext.Provider,
+      KitchenwareDocContext.Provider,
       { value: { doc, whenSynced: Promise.resolve() } },
       children,
     );

@@ -13,7 +13,7 @@ import {
   type ExternalLabelFilter,
 } from "../components/ingredients_table/IngredientsTable.js";
 import { LabelTable } from "../components/ingredients_table/LabelTable.js";
-import { useDoc } from "../contexts/docContext.js";
+import { useKitchenwareDoc } from "../contexts/docContext.js";
 import { useIngredientStore } from "../hooks/useIngredientStore.js";
 import { useLabelStore } from "../hooks/useLabelStore.js";
 import "./BulkIngredientEditorPage.css";
@@ -45,7 +45,7 @@ const EMPTY_ADD_FORM: AddFormState = {
 // ---------------------------------------------------------------------------
 
 export function BulkIngredientEditorPage() {
-  const doc = useDoc();
+  const { doc } = useKitchenwareDoc();
 
   const {
     ingredients,

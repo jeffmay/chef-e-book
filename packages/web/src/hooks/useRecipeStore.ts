@@ -24,17 +24,20 @@ export interface RecipeStore {
 }
 
 export function useRecipeStore(userName: string): RecipeStore {
-  const doc = useRecipeBookDoc();
+  const { doc, whenSynced } = useRecipeBookDoc();
   const [recipes, setRecipes] = useState<Recipe[]>(() => getRecipes(doc));
 
   useEffect(() => {
-    const map = getRecipeYmap(doc);
-    function update() {
-      setRecipes(getRecipes(doc));
-    }
-    map.observe(update);
-    return () => map.unobserve(update);
-  }, [doc]);
+    (async function syncRecipeStore() {
+      await whenSynced;
+      const map = getRecipeYmap(doc);
+      function update() {
+        setRecipes(getRecipes(doc));
+      }
+      map.observe(update);
+      return () => map.unobserve(update);
+    })();
+  }, [doc, whenSynced]);
 
   return {
     recipes,

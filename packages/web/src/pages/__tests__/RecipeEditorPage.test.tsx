@@ -16,8 +16,12 @@ function makeWrapper(kitchenwareDoc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
       KitchenwareDocContext.Provider,
-      { value: kitchenwareDoc },
-      createElement(RecipeBookDocContext.Provider, { value: recipeBookDoc }, children),
+      { value: { doc: kitchenwareDoc, whenSynced: Promise.resolve() } },
+      createElement(
+        RecipeBookDocContext.Provider,
+        { value: { doc: recipeBookDoc, whenSynced: Promise.resolve() } },
+        children,
+      ),
     );
   };
 }

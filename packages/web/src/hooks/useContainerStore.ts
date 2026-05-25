@@ -11,7 +11,7 @@ import {
   setParentForContainer,
 } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
-import { useDoc } from "../contexts/docContext.js";
+import { useKitchenwareDoc } from "../contexts/docContext.js";
 
 export interface NewContainerInput {
   readonly name: string;
@@ -28,15 +28,18 @@ export interface UseContainerStoreResult {
 }
 
 export function useContainerStore(): UseContainerStoreResult {
-  const doc = useDoc();
+  const { doc, whenSynced } = useKitchenwareDoc();
   const [containers, setContainers] = useState<Container[]>(() => getContainers(doc));
 
   useEffect(() => {
-    const map = getContainerYmap(doc);
-    const handler = () => setContainers(getContainers(doc));
-    map.observe(handler);
-    return () => map.unobserve(handler);
-  }, [doc]);
+    (async function loadContainerStore() {
+      await whenSynced;
+      const map = getContainerYmap(doc);
+      const handler = () => setContainers(getContainers(doc));
+      map.observe(handler);
+      return () => map.unobserve(handler);
+    })();
+  }, [doc, whenSynced]);
 
   return {
     containers,

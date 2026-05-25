@@ -20,7 +20,9 @@ import {
   RecipeIngredientId,
   RecipeVersionId,
   SectionItemId,
+  IngredientId,
 } from "@recipe-book/shared";
+import { ReadonlyDeep } from "type-fest";
 import { MeasurementEditor } from "../components/measurement/MeasurementEditor.js";
 import { DurationEditor } from "../components/duration/DurationEditor.js";
 import { useIngredientStore } from "../hooks/useIngredientStore.js";
@@ -143,27 +145,33 @@ function NotesPanel({ notes, onChange }: NotesPanelProps) {
   );
 }
 
+interface RecipeSectionItemRowProps<T extends SectionItem = SectionItem> {
+  readonly item: T;
+  readonly onChange: (item: T) => void;
+  readonly onRemove: () => void;
+}
+
+interface WithIngredients {
+  readonly allIngredients: ReadonlyDeep<Ingredient[]>;
+  readonly topIngredients: ReadonlyDeep<RecipeIngredient[]>;
+}
+
 // ---------------------------------------------------------------------------
 // IngredientItemRow
 // ---------------------------------------------------------------------------
 
-interface IngredientItemRowProps {
-  readonly item: IngredientItem;
-  readonly top_ingredients: RecipeIngredient[];
-  readonly all_ingredients: readonly Ingredient[];
-  readonly onChange: (item: IngredientItem) => void;
-  readonly onRemove: () => void;
-}
+interface IngredientItemRowProps
+  extends RecipeSectionItemRowProps<IngredientItem>, WithIngredients {}
 
 function IngredientItemRow({
   item,
-  top_ingredients,
-  all_ingredients,
+  topIngredients,
+  allIngredients,
   onChange,
   onRemove,
 }: IngredientItemRowProps) {
-  const top = top_ingredients.find((ti) => ti.ingredient_id === item.ingredient_id);
-  const ingredient = all_ingredients.find((i) => i.id === item.ingredient_id);
+  const top = topIngredients.find((ti) => ti.ingredient_id === item.ingredient_id);
+  const ingredient = allIngredients.find((i) => i.id === item.ingredient_id);
   const name = ingredient?.name ?? item.ingredient_id;
   const amount_from_top = top?.amount;
 
@@ -209,18 +217,12 @@ const COMMON_CONTAINERS = [
   { id: paddedId(ContainerId, "plate"), name: "Plate" },
 ] as const;
 
-interface ContainerItemRowProps {
-  readonly item: ContainerItem;
-  readonly top_ingredients: RecipeIngredient[];
-  readonly all_ingredients: readonly Ingredient[];
-  readonly onChange: (item: ContainerItem) => void;
-  readonly onRemove: () => void;
-}
+interface ContainerItemRowProps extends RecipeSectionItemRowProps<ContainerItem>, WithIngredients {}
 
 function ContainerItemRow({
   item,
-  top_ingredients,
-  all_ingredients,
+  topIngredients,
+  allIngredients,
   onChange,
   onRemove,
 }: ContainerItemRowProps) {
@@ -288,8 +290,8 @@ function ContainerItemRow({
           <IngredientItemRow
             key={content.id}
             item={content}
-            top_ingredients={top_ingredients}
-            all_ingredients={all_ingredients}
+            topIngredients={topIngredients}
+            allIngredients={allIngredients}
             onChange={(updated) => {
               const new_contents = item.contents.map((c, j) => (j === i ? updated : c));
               onChange({ ...item, contents: new_contents });
@@ -309,7 +311,7 @@ function ContainerItemRow({
           aria-label="Add ingredient to container"
         >
           <option value="">+ Add ingredient…</option>
-          {all_ingredients.map((ing) => (
+          {allIngredients.map((ing) => (
             <option key={ing.id} value={ing.id}>
               {ing.name}
             </option>
@@ -334,38 +336,31 @@ const COMMON_EQUIPMENT = [
   { id: paddedId(EquipmentId, "skillet"), name: "Skillet" },
 ] as const;
 
-interface InstructionRowProps {
-  readonly item: Instruction;
-  readonly top_ingredients: RecipeIngredient[];
-  readonly all_ingredients: readonly Ingredient[];
-  readonly onChange: (item: Instruction) => void;
-  readonly onRemove: () => void;
-  readonly onAddTopIngredient: (ingredient_id: IngredientItem["ingredient_id"]) => void;
+interface InstructionRowProps extends RecipeSectionItemRowProps<Instruction>, WithIngredients {
+  readonly onAddTopIngredient: (id: IngredientId) => void;
 }
 
 function InstructionRow({
   item,
-  top_ingredients,
-  all_ingredients,
+  topIngredients,
+  allIngredients,
   onChange,
   onRemove,
   onAddTopIngredient,
 }: InstructionRowProps) {
-  function toggleIngredient(ingredient_id: IngredientItem["ingredient_id"]) {
+  function toggleIngredient(id: IngredientId) {
     const current = item.ingredient_ids ?? [];
-    const exists = current.includes(ingredient_id);
-    const new_ids = exists
-      ? current.filter((id) => id !== ingredient_id)
-      : [...current, ingredient_id];
+    const exists = current.includes(id);
+    const new_ids = exists ? current.filter((id) => id !== id) : [...current, id];
     // If adding a new ingredient not in top-level list, add it there too
-    if (!exists && !top_ingredients.some((ti) => ti.ingredient_id === ingredient_id)) {
-      onAddTopIngredient(ingredient_id);
+    if (!exists && !topIngredients.some((ti) => ti.ingredient_id === id)) {
+      onAddTopIngredient(id);
     }
     if (new_ids.length > 0) {
       onChange({ ...item, ingredient_ids: new_ids });
     } else {
       const { ingredient_ids: _, ...rest } = item;
-      onChange(rest as Instruction);
+      onChange(rest);
     }
   }
 
@@ -391,7 +386,7 @@ function InstructionRow({
               onChange({ ...item, equipment_id: loadId(EquipmentId, e.target.value) });
             } else {
               const { equipment_id: _, ...rest } = item;
-              onChange(rest as Instruction);
+              onChange(rest);
             }
           }}
           aria-label="Equipment"
@@ -437,7 +432,7 @@ function InstructionRow({
             className="re-instruction-remove-duration"
             onClick={() => {
               const { duration_seconds: _, ...rest } = item;
-              onChange(rest as Instruction);
+              onChange(rest);
             }}
             aria-label="Remove duration"
           >
@@ -448,11 +443,11 @@ function InstructionRow({
 
       <div className="re-instruction-ingredients">
         <span className="re-instruction-ing-label">Ingredients:</span>
-        {all_ingredients.map((ing) => {
+        {allIngredients.map((ing) => {
           const checked = (item.ingredient_ids ?? []).includes(
             ing.id as IngredientItem["ingredient_id"],
           );
-          const top = top_ingredients.find((ti) => ti.ingredient_id === ing.id);
+          const top = topIngredients.find((ti) => ti.ingredient_id === ing.id);
           return (
             <label key={ing.id} className="re-instruction-ing-option">
               <input
@@ -486,11 +481,7 @@ function InstructionRow({
 // TextBlockRow
 // ---------------------------------------------------------------------------
 
-interface TextBlockRowProps {
-  readonly item: TextBlock;
-  readonly onChange: (item: TextBlock) => void;
-  readonly onRemove: () => void;
-}
+type TextBlockRowProps = RecipeSectionItemRowProps<TextBlock>;
 
 function TextBlockRow({ item, onChange, onRemove }: TextBlockRowProps) {
   return (
@@ -522,21 +513,16 @@ function TextBlockRow({ item, onChange, onRemove }: TextBlockRowProps) {
 
 type NewItemKind = "ingredient" | "container" | "instruction" | "text_block" | "section";
 
-interface SectionEditorProps {
-  readonly section: Section;
+interface SectionEditorProps extends RecipeSectionItemRowProps<Section>, WithIngredients {
   readonly depth: number;
-  readonly top_ingredients: RecipeIngredient[];
-  readonly all_ingredients: readonly Ingredient[];
-  readonly onChange: (section: Section) => void;
-  readonly onRemove: () => void;
-  readonly onAddTopIngredient: (ingredient_id: IngredientItem["ingredient_id"]) => void;
+  readonly onAddTopIngredient: (id: IngredientId) => void;
 }
 
 function SectionEditor({
-  section,
+  item: section,
   depth,
-  top_ingredients,
-  all_ingredients,
+  topIngredients,
+  allIngredients,
   onChange,
   onRemove,
   onAddTopIngredient,
@@ -559,13 +545,13 @@ function SectionEditor({
       new_item = {
         kind: "ingredient",
         id: new_id,
-        ingredient_id: all_ingredients[0]?.id ?? ("" as IngredientItem["ingredient_id"]),
+        ingredient_id: allIngredients[0]?.id ?? loadId(IngredientId, ""),
       };
     } else if (kind === "container") {
       new_item = {
         kind: "container",
         id: new_id,
-        container_id: COMMON_CONTAINERS[0]!.id as ContainerItem["container_id"],
+        container_id: COMMON_CONTAINERS[0].id,
         descriptor: "",
         contents: [],
       };
@@ -625,8 +611,8 @@ function SectionEditor({
               <IngredientItemRow
                 key={item.id}
                 item={item}
-                top_ingredients={top_ingredients}
-                all_ingredients={all_ingredients}
+                topIngredients={topIngredients}
+                allIngredients={allIngredients}
                 onChange={(updated) => updateItem(i, updated)}
                 onRemove={() => removeItem(i)}
               />
@@ -637,8 +623,8 @@ function SectionEditor({
               <ContainerItemRow
                 key={item.id}
                 item={item}
-                top_ingredients={top_ingredients}
-                all_ingredients={all_ingredients}
+                topIngredients={topIngredients}
+                allIngredients={allIngredients}
                 onChange={(updated) => updateItem(i, updated)}
                 onRemove={() => removeItem(i)}
               />
@@ -649,8 +635,8 @@ function SectionEditor({
               <InstructionRow
                 key={item.id}
                 item={item}
-                top_ingredients={top_ingredients}
-                all_ingredients={all_ingredients}
+                topIngredients={topIngredients}
+                allIngredients={allIngredients}
                 onChange={(updated) => updateItem(i, updated)}
                 onRemove={() => removeItem(i)}
                 onAddTopIngredient={onAddTopIngredient}
@@ -671,10 +657,10 @@ function SectionEditor({
             return (
               <SectionEditor
                 key={item.id}
-                section={item}
+                item={item}
                 depth={depth + 1}
-                top_ingredients={top_ingredients}
-                all_ingredients={all_ingredients}
+                topIngredients={topIngredients}
+                allIngredients={allIngredients}
                 onChange={(updated) => updateItem(i, updated)}
                 onRemove={() => removeItem(i)}
                 onAddTopIngredient={onAddTopIngredient}
@@ -731,13 +717,13 @@ function SectionEditor({
 
 interface RecipeIngredientsEditorProps {
   readonly ingredients: RecipeIngredient[];
-  readonly all_ingredients: readonly Ingredient[];
+  readonly allIngredients: readonly Ingredient[];
   readonly onChange: (ingredients: RecipeIngredient[]) => void;
 }
 
 function RecipeIngredientsEditor({
   ingredients,
-  all_ingredients,
+  allIngredients,
   onChange,
 }: RecipeIngredientsEditorProps) {
   const [addingAmountFor, setAddingAmountFor] = useState<string | null>(null);
@@ -758,7 +744,7 @@ function RecipeIngredientsEditor({
       <h2 className="re-section-title">Ingredients</h2>
       <div className="re-ing-list">
         {ingredients.map((ri, i) => {
-          const ing = all_ingredients.find((a) => a.id === ri.ingredient_id);
+          const ing = allIngredients.find((a) => a.id === ri.ingredient_id);
           const name = ing?.name ?? ri.ingredient_id;
           return (
             <div key={ri.id} className="re-ing-row" role="group" aria-label={`Ingredient: ${name}`}>
@@ -819,7 +805,7 @@ function RecipeIngredientsEditor({
         aria-label="Add ingredient to recipe"
       >
         <option value="">+ Add ingredient…</option>
-        {all_ingredients
+        {allIngredients
           .filter((ing) => !ingredients.some((ri) => ri.ingredient_id === ing.id))
           .map((ing) => (
             <option key={ing.id} value={ing.id}>
@@ -1001,7 +987,7 @@ export interface RecipeEditorProps {
 export function RecipeEditor({ recipe, userName, versionId, onSave, onCancel }: RecipeEditorProps) {
   const { create, save, copy } = useRecipeStore(userName);
   const { flatFolders, folders } = useRecipeFolderStore();
-  const { ingredients: all_ingredients } = useIngredientStore();
+  const { ingredients } = useIngredientStore();
   const [form, setForm] = useState<EditorState>(() => makeInitialState(recipe, versionId));
   const [showCopyDialog, setShowCopyDialog] = useState(false);
 
@@ -1161,7 +1147,7 @@ export function RecipeEditor({ recipe, userName, versionId, onSave, onCancel }: 
       {/* Top-level ingredients */}
       <RecipeIngredientsEditor
         ingredients={form.ingredients}
-        all_ingredients={all_ingredients}
+        allIngredients={ingredients}
         onChange={(ingredients) => patch("ingredients", ingredients)}
       />
 
@@ -1171,10 +1157,10 @@ export function RecipeEditor({ recipe, userName, versionId, onSave, onCancel }: 
         {form.sections.map((sec, i) => (
           <SectionEditor
             key={sec.id}
-            section={sec}
+            item={sec}
             depth={1}
-            top_ingredients={form.ingredients}
-            all_ingredients={all_ingredients}
+            topIngredients={form.ingredients}
+            allIngredients={ingredients}
             onChange={(updated) =>
               patch(
                 "sections",

@@ -20,19 +20,22 @@ export interface RecipeFolderStore {
 }
 
 export function useRecipeFolderStore(): RecipeFolderStore {
-  const doc = useRecipeBookDoc();
+  const { doc, whenSynced } = useRecipeBookDoc();
   const [folders, setFolders] = useState<RecipeFolder[]>(() => getRecipeFolders(doc));
   const [flatFolders, setFlatFolders] = useState(() => getRecipeFoldersFlat(doc));
 
   useEffect(() => {
-    const map = getRecipeFolderYmap(doc);
-    function update() {
-      setFolders(getRecipeFolders(doc));
-      setFlatFolders(getRecipeFoldersFlat(doc));
-    }
-    map.observe(update);
-    return () => map.unobserve(update);
-  }, [doc]);
+    (async function syncRecipeFolder() {
+      await whenSynced;
+      const map = getRecipeFolderYmap(doc);
+      function update() {
+        setFolders(getRecipeFolders(doc));
+        setFlatFolders(getRecipeFoldersFlat(doc));
+      }
+      map.observe(update);
+      return () => map.unobserve(update);
+    })();
+  }, [doc, whenSynced]);
 
   return {
     folders,

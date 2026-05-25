@@ -14,7 +14,7 @@ import {
 import { loadId, randomId } from "@recipe-book/shared/src/types/ids.js";
 import { useEffect, useState } from "react";
 import * as Y from "yjs";
-import { useDoc } from "../contexts/docContext.js";
+import { useKitchenwareDoc } from "../contexts/docContext.js";
 
 export interface UseLabelStoreResult {
   readonly labels: readonly KitchenwareLabel[];
@@ -29,7 +29,7 @@ export interface UseLabelStoreResult {
 }
 
 export function useLabelStore(): UseLabelStoreResult {
-  const doc = useDoc();
+  const { doc, whenSynced } = useKitchenwareDoc();
   const [labels, setLabels] = useState<KitchenwareLabel[]>(() => getLabels(doc));
 
   useEffect(() => {
@@ -44,8 +44,10 @@ export function useLabelStore(): UseLabelStoreResult {
       setLabels(getLabels(doc));
     };
     map.observe(handler);
+    // Refresh labels once IndexedDB has finished loading existing data
+    whenSynced.then(() => setLabels(getLabels(doc)));
     return () => map.unobserve(handler);
-  }, [doc]);
+  }, [doc, whenSynced]);
 
   return {
     labels,

@@ -11,7 +11,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
-import { DocContext } from "../../contexts/docContext.js";
+import { KitchenwareDocContext } from "../../contexts/docContext.js";
 import { useIngredientStore } from "../useIngredientStore.js";
 
 const ingredientKinds: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
@@ -36,7 +36,7 @@ const BUTTER: Ingredient = {
 function makeWrapper(doc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
-      DocContext.Provider,
+      KitchenwareDocContext.Provider,
       { value: { doc, whenSynced: Promise.resolve() } },
       children,
     );
