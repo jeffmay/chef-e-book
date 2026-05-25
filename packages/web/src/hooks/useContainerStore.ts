@@ -32,13 +32,11 @@ export function useContainerStore(): UseContainerStoreResult {
   const [containers, setContainers] = useState<Container[]>(() => getContainers(doc));
 
   useEffect(() => {
-    (async function loadContainerStore() {
-      await whenSynced;
-      const map = getContainerYmap(doc);
-      const handler = () => setContainers(getContainers(doc));
-      map.observe(handler);
-      return () => map.unobserve(handler);
-    })();
+    const map = getContainerYmap(doc);
+    const handler = () => setContainers(getContainers(doc));
+    map.observe(handler);
+    whenSynced.then(() => setContainers(getContainers(doc)));
+    return () => map.unobserve(handler);
   }, [doc, whenSynced]);
 
   return {
