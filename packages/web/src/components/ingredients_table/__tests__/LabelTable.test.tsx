@@ -1,10 +1,12 @@
 import {
+  type Ingredient,
+  IngredientId,
   type KitchenwareKind,
   type KitchenwareLabel,
   KitchenwareLabelId,
   paddedId,
 } from "@recipe-book/shared";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReadonlyDeep } from "type-fest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -26,6 +28,24 @@ const BAKING: ReadonlyDeep<KitchenwareLabel> = {
   id: paddedId(KitchenwareLabelId, "baking"),
   name: "baking",
   kinds: KIND_INGREDIENT,
+};
+
+const DEFAULT_MEASUREMENT = { value: { numerator: 1, denominator: 1 }, unit: "cup" } as const;
+
+const BUTTER: ReadonlyDeep<Ingredient> = {
+  kind: "ingredient",
+  id: paddedId(IngredientId, "butter"),
+  name: "Butter",
+  default_measurement_value: DEFAULT_MEASUREMENT,
+  labels: new Set([paddedId(KitchenwareLabelId, "fat")]),
+};
+
+const FLOUR: ReadonlyDeep<Ingredient> = {
+  kind: "ingredient",
+  id: paddedId(IngredientId, "flour"),
+  name: "Flour",
+  default_measurement_value: DEFAULT_MEASUREMENT,
+  labels: new Set([paddedId(KitchenwareLabelId, "solid")]),
 };
 
 const onFilterAll = vi.fn();
@@ -218,6 +238,71 @@ describe("LabelTable — merge action", () => {
     await userEvent.click(screen.getByRole("button", { name: "Merge selected labels" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Merged label name" }), "{Escape}");
     expect(screen.queryByRole("textbox", { name: "Merged label name" })).not.toBeInTheDocument();
+  });
+});
+
+describe("LabelTable — delete confirmation dialog", () => {
+  async function openDeleteDialog(
+    ingredientsForTest: ReadonlyDeep<Ingredient[]> = [],
+  ): Promise<void> {
+    render(
+      <LabelTable
+        labels={[FAT, SOLID]}
+        ingredients={ingredientsForTest}
+        onFilterAll={onFilterAll}
+        onFilterAny={onFilterAny}
+        onDelete={onDelete}
+        onMerge={onMerge}
+        onRename={onRename}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select label fat" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete selected labels" }));
+  }
+
+  it("opens the confirmation dialog on Delete click", async () => {
+    await openDeleteDialog();
+    expect(screen.getByRole("dialog", { name: "Confirm delete labels" })).toBeInTheDocument();
+  });
+
+  it("shows affected ingredient names when labels are in use", async () => {
+    await openDeleteDialog([BUTTER, FLOUR]);
+    expect(screen.getByText("Butter")).toBeInTheDocument();
+    expect(screen.queryByText("Flour")).not.toBeInTheDocument();
+  });
+
+  it("shows no-ingredients message when labels are unused", async () => {
+    await openDeleteDialog([]);
+    expect(screen.getByText("No ingredients use these labels.")).toBeInTheDocument();
+  });
+
+  it("closes dialog without deleting on Cancel click", async () => {
+    await openDeleteDialog();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel delete" }));
+    expect(screen.queryByRole("dialog", { name: "Confirm delete labels" })).not.toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it("closes dialog without deleting on Escape key", async () => {
+    await openDeleteDialog();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Confirm delete labels" })).not.toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it("closes dialog without deleting when clicking the overlay background", async () => {
+    await openDeleteDialog();
+    fireEvent.click(screen.getByRole("dialog", { name: "Confirm delete labels" }));
+    expect(screen.queryByRole("dialog", { name: "Confirm delete labels" })).not.toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it("calls onDelete and closes dialog on Confirm click", async () => {
+    await openDeleteDialog();
+    await userEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
+    expect(onDelete).toHaveBeenCalledWith([FAT.id]);
+    expect(screen.queryByRole("dialog", { name: "Confirm delete labels" })).not.toBeInTheDocument();
   });
 });
 

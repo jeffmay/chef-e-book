@@ -1,6 +1,6 @@
 import type { Ingredient, KitchenwareLabel, KitchenwareLabelId } from "@recipe-book/shared";
 import { RadioButton } from "primereact/radiobutton";
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { ReadonlyDeep } from "type-fest";
 import "./LabelTable.css";
 
@@ -77,8 +77,9 @@ export function LabelTable({
     setShowDeleteConfirm(false);
   }
 
-  const affectedIngredients = ingredients.filter((ing) =>
-    selectedArray.some((id) => ing.labels.has(id)),
+  const affectedIngredients = useMemo(
+    () => ingredients.filter((ing) => [...selectedIds].some((id) => ing.labels.has(id))),
+    [ingredients, selectedIds],
   );
 
   function handleMergeSubmit(e: FormEvent): void {
@@ -240,8 +241,13 @@ export function LabelTable({
               role="dialog"
               aria-modal="true"
               aria-label="Confirm delete labels"
+              tabIndex={-1}
+              onClick={handleDeleteCancel}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") handleDeleteCancel();
+              }}
             >
-              <div className="lt-delete-dialog">
+              <div className="lt-delete-dialog" onClick={(e) => e.stopPropagation()}>
                 <p className="lt-delete-title">
                   Delete {selectedIds.size} label{selectedIds.size !== 1 ? "s" : ""}?
                 </p>
