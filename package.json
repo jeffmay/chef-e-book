@@ -16,7 +16,6 @@
     "prepare": "husky install || true # skip if devDependencies are not installed"
   },
   "devDependencies": {
-    "@esbuild/darwin-arm64": "^0.28.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "esbuild": "^0.28.0",
