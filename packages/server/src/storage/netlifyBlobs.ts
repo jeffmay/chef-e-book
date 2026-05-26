@@ -24,11 +24,15 @@ export class NetlifyBlobStore implements DocumentStore {
       type: "arrayBuffer",
     });
     if (blob == null) return null;
-    return new Uint8Array(blob as ArrayBuffer);
+    return new Uint8Array(blob);
   }
 
   async save(bookId: string, data: Uint8Array): Promise<void> {
-    await this.store().set(this.keyFor(bookId), new Blob([data.buffer as ArrayBuffer]));
+    const safelySlicedBuffer = new Uint8Array(data).buffer.slice(
+      data.byteOffset,
+      data.byteOffset + data.byteLength,
+    );
+    await this.store().set(this.keyFor(bookId), new Blob([safelySlicedBuffer]));
   }
 
   async delete(bookId: string): Promise<void> {

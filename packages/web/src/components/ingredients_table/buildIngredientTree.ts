@@ -4,10 +4,10 @@ import {
   KitchenwareLabel,
   KitchenwareLabelId,
   Measurement,
+  ScopedCompanion,
 } from "@recipe-book/shared";
 import { ReadonlyDeep, Simplify } from "type-fest";
 import { type } from "arktype";
-import { ScopedCompanion } from "@recipe-book/shared/src/types/companion";
 
 // Use scope syntax for the self-recursive `subRows` field — arktype's inline
 // `"this[]"` reference trips a "shallow resolution cycle" parse error at

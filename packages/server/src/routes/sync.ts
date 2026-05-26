@@ -5,7 +5,7 @@ import type { DocumentStore } from "../storage/types.js";
 
 const SyncRequestBody = type({
   book_id: "string > 0",
-  "update?": "string",
+  "update?": "string.base64",
 });
 
 export function createSyncRouter(store: DocumentStore): Router {
@@ -29,8 +29,14 @@ export function createSyncRouter(store: DocumentStore): Router {
 
     // Apply client update if provided
     if (typeof body.update === "string") {
-      const update = Buffer.from(body.update, "base64");
-      Y.applyUpdate(doc, update);
+      try {
+        const update = Buffer.from(body.update, "base64");
+        Y.applyUpdate(doc, update);
+      } catch (e) {
+        console.error(`Failed to apply client updates to book_id=${bookId}`, e);
+        res.status(400).json({ error: "Invalid base64 string in 'update' field." });
+        return;
+      }
     }
 
     // Persist after applying client update

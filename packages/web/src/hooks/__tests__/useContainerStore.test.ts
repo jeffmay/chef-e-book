@@ -4,8 +4,8 @@ import {
   ContainerId,
   getContainerYmap,
   KitchenwareLabelId,
+  paddedId,
 } from "@recipe-book/shared";
-import { paddedId } from "@recipe-book/shared/src/types/ids.js";
 import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
