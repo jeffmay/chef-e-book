@@ -1,7 +1,6 @@
-import { randomId, RecipeBookId } from "@recipe-book/shared";
-import { Companion } from "@recipe-book/shared/src/types/companion";
+import { Companion, randomId, RecipeBookId } from "@recipe-book/shared";
 import { type } from "arktype";
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 
 export const ACTIVE_BOOK_KEY = "ecookdeck_book" as const;
 

@@ -1,7 +1,6 @@
+import { Companion, EnumCompanion } from "@recipe-book/shared";
 import arkenv from "arkenv";
 import { type } from "arktype";
-import { Companion } from "@recipe-book/shared/src/types/companion";
-import { EnumCompanion } from "@recipe-book/shared/src/types/enums";
 
 export const StorageEngine = EnumCompanion("StorageEngine", [
   "local-memory",

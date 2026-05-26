@@ -1,4 +1,6 @@
 export * from "./types/ids.js";
+export * from "./types/companion.js";
+export * from "./types/enums.js";
 export * from "./types/measurement.js";
 export * from "./types/kitchenware.js";
 export * from "./types/recipe.js";

@@ -3,10 +3,11 @@ import {
   addIngredient,
   findOrCreateLabel,
   IngredientId,
+  loadId,
+  paddedId,
   type Ingredient,
   type KitchenwareKind,
 } from "@recipe-book/shared";
-import { loadId, paddedId } from "@recipe-book/shared/src/types/ids.js";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
