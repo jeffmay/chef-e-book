@@ -14,7 +14,7 @@ import { useRecipeBookDoc } from "../contexts/docContext.js";
 export interface RecipeFolderStore {
   readonly folders: RecipeFolder[];
   readonly flatFolders: Array<Omit<RecipeFolder, "children">>;
-  readonly createFolder: (name: string, parent_id?: RecipeFolderId) => RecipeFolder;
+  readonly createFolder: (name: string, parentId?: RecipeFolderId) => RecipeFolder;
   readonly updateFolder: (folder: RecipeFolder) => void;
   readonly deleteFolder: (id: RecipeFolderId) => void;
 }
@@ -41,7 +41,7 @@ export function useRecipeFolderStore(): RecipeFolderStore {
   return {
     folders,
     flatFolders,
-    createFolder: (name, parent_id) => createRecipeFolder(doc, name, parent_id),
+    createFolder: (name, parentId) => createRecipeFolder(doc, name, parentId),
     updateFolder: (folder) => updateRecipeFolder(doc, folder),
     deleteFolder: (id) => deleteRecipeFolder(doc, id),
   };

@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from "react";
-import "./SelectUserPage.css";
+import "./SelectBookPage.css";
 
-interface SelectUserPageProps {
+interface SelectBookPageProps {
   readonly onSelect: (name: string) => void;
 }
 
-export function SelectUserPage({ onSelect }: SelectUserPageProps) {
+export function SelectBookPage({ onSelect }: SelectBookPageProps) {
   const [name, setName] = useState("");
 
   function handleSubmit(e: FormEvent) {
@@ -16,11 +16,11 @@ export function SelectUserPage({ onSelect }: SelectUserPageProps) {
 
   return (
     <main className="select-user-page">
-      <h1 className="page-title">Recipe Book</h1>
-      <p className="select-user-subtitle">Enter your name to get started.</p>
+      <h1 className="page-title">{name || "Recipe Book"}</h1>
+      <p className="select-user-subtitle">Enter the name of your book to get started.</p>
       <form className="select-user-form" onSubmit={handleSubmit}>
         <label className="select-user-label" htmlFor="user-name-input">
-          Your name
+          Book name
         </label>
         <input
           id="user-name-input"
@@ -28,7 +28,7 @@ export function SelectUserPage({ onSelect }: SelectUserPageProps) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Alice"
+          placeholder="e.g. May Family Recipes"
           autoFocus
           autoComplete="name"
         />

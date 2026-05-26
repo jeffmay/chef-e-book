@@ -188,7 +188,7 @@ function validateRecipeVersion(raw: unknown): RecipeVersion | null {
     ingredients,
     sections,
     created_at: r["created_at"],
-    created_by: r["created_by"],
+    // created_by: r["created_by"],
   };
 }
 
@@ -237,7 +237,7 @@ export interface CreateRecipeInput {
   source_url?: string;
   parent_folder_id?: RecipeFolderId;
   description?: string;
-  created_by: string;
+  // created_by: string;
 }
 
 export function createRecipe(doc: Y.Doc, input: CreateRecipeInput): Recipe {
@@ -250,7 +250,7 @@ export function createRecipe(doc: Y.Doc, input: CreateRecipeInput): Recipe {
     ingredients: [],
     sections: [],
     created_at: now,
-    created_by: input.created_by,
+    // created_by: input.created_by,
   };
   const recipe: Recipe = {
     id: recipe_id,
@@ -275,7 +275,7 @@ export interface SaveRecipeInput {
   version: RecipeVersion;
   /** When true, adds the version as a new entry instead of replacing the latest. */
   create_new_version: boolean;
-  created_by: string;
+  // created_by: string;
 }
 
 export function saveRecipe(doc: Y.Doc, recipe_id: RecipeId, input: SaveRecipeInput): Recipe {
@@ -290,7 +290,7 @@ export function saveRecipe(doc: Y.Doc, recipe_id: RecipeId, input: SaveRecipeInp
       id: randomId(RecipeVersionId),
       recipe_id,
       created_at: now,
-      created_by: input.created_by,
+      // created_by: input.created_by,
     };
     versions = [...existing.versions, new_version];
   } else {
@@ -299,7 +299,7 @@ export function saveRecipe(doc: Y.Doc, recipe_id: RecipeId, input: SaveRecipeInp
       ...input.version,
       recipe_id,
       created_at: input.version.created_at,
-      created_by: input.version.created_by,
+      // created_by: input.version.created_by,
     };
     versions =
       existing.versions.length === 0
@@ -326,7 +326,7 @@ export function copyRecipe(
   recipe_id: RecipeId,
   new_title: string,
   new_folder_id: RecipeFolderId | undefined,
-  created_by: string,
+  // created_by: string,
 ): Recipe {
   const original = getRecipe(doc, recipe_id);
   if (original === null) throw new Error(`Recipe ${recipe_id} not found`);
@@ -337,7 +337,7 @@ export function copyRecipe(
     id: randomId(RecipeVersionId),
     recipe_id: new_recipe_id,
     created_at: now,
-    created_by,
+    // created_by,
   }));
   const copy: Recipe = {
     id: new_recipe_id,
