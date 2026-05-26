@@ -1,18 +1,18 @@
 import { type ReactNode } from "react";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useNavigate } from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.css";
 import "primeicons/primeicons.css";
 import "./styles/global.css";
-import { useUser } from "./hooks/useUser.js";
+import { ActiveBookMeta, useActiveBookMeta } from "./hooks/useActiveBookMeta.js";
 import { useKitchenwareDoc, useRecipeBookDoc } from "./hooks/useYjsDoc.js";
 import { KitchenwareDocContext, RecipeBookDocContext } from "./contexts/docContext.js";
 import { NavMenu } from "./components/NavMenu.js";
-import { UserMenu } from "./components/UserMenu.js";
-import { SelectUserPage } from "./pages/SelectUserPage.js";
+import { SelectBookPage } from "./pages/SelectBookPage.js";
+import { RecipeBookId } from "@recipe-book/shared";
 
 export interface RootContext {
-  readonly userName: string;
+  readonly bookId: RecipeBookId;
   readonly onRename: (name: string) => void;
 }
 
@@ -37,14 +37,14 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 interface AuthenticatedShellProps {
-  readonly userName: string;
+  readonly book: ActiveBookMeta;
   readonly onRename: (name: string) => void;
 }
 
-function AuthenticatedShell({ userName, onRename }: AuthenticatedShellProps) {
-  const kitchenwareDoc = useKitchenwareDoc(userName);
-  const recipeBookDoc = useRecipeBookDoc(userName);
-  const navigate = useNavigate();
+function AuthenticatedShell({ book, onRename }: AuthenticatedShellProps) {
+  const kitchenwareDoc = useKitchenwareDoc(book.id);
+  const recipeBookDoc = useRecipeBookDoc(book.id);
+  // const navigate = useNavigate();
 
   return (
     <KitchenwareDocContext.Provider value={kitchenwareDoc}>
@@ -52,15 +52,16 @@ function AuthenticatedShell({ userName, onRename }: AuthenticatedShellProps) {
         <div className="app">
           <header className="top-nav">
             <NavMenu />
-            <span className="app-title">Recipe Book</span>
+            <h1 className="book-name">{book.name}</h1>
             <div className="nav-right">
               <button className="undo-btn" aria-label="Undo">
                 ↩ Undo
               </button>
-              <UserMenu userName={userName} onProfile={() => navigate("/profile")} />
+              {/* TODO: Add this back once we have user authentication */}
+              {/* <UserMenu userName={unknown} onProfile={() => navigate("/profile")} /> */}
             </div>
           </header>
-          <Outlet context={{ userName, onRename } satisfies RootContext} />
+          <Outlet context={{ bookId: book.id, onRename } satisfies RootContext} />
         </div>
       </RecipeBookDocContext.Provider>
     </KitchenwareDocContext.Provider>
@@ -68,11 +69,17 @@ function AuthenticatedShell({ userName, onRename }: AuthenticatedShellProps) {
 }
 
 export default function Root() {
-  const { userName, setUserName } = useUser();
+  const { activeBookMeta, setActiveBookName } = useActiveBookMeta();
 
-  if (userName === null) {
-    return <SelectUserPage onSelect={setUserName} />;
+  if (activeBookMeta === null) {
+    return <SelectBookPage onSelect={setActiveBookName} />;
   }
 
-  return <AuthenticatedShell key={userName} userName={userName} onRename={setUserName} />;
+  return (
+    <AuthenticatedShell
+      key={activeBookMeta.id}
+      book={activeBookMeta}
+      onRename={setActiveBookName}
+    />
+  );
 }

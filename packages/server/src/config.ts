@@ -1,34 +1,22 @@
 import arkenv from "arkenv";
 import { type } from "arktype";
+import { Companion } from "@recipe-book/shared/src/types/companion";
+import { EnumCompanion } from "@recipe-book/shared/src/types/enums";
 
-export const StorageEngine = type.enumerated("local-memory", "local-file", "netlify-blobs");
-export type StorageEngine = typeof StorageEngine.infer;
+export const StorageEngine = EnumCompanion("StorageEngine", [
+  "local-memory",
+  "local-file",
+  "netlify-blobs",
+]);
+export type StorageEngine = typeof StorageEngine.type.infer;
 
-export interface ServerConfig {
-  readonly PORT: number;
-  readonly STORAGE_ENGINE: StorageEngine;
-  readonly NETLIFY_PROJECT_ID: string;
-}
+export const ServerConfigDef = {
+  PORT: "0 <= number.integer <= 65535 = 3001",
+  STORAGE_ENGINE: StorageEngine.type,
+  "NETLIFY_PROJECT_ID?": "string",
+} as const;
 
-const rawEnv = arkenv(
-  {
-    PORT: "string.numeric",
-    STORAGE_ENGINE: "'local-memory' | 'local-file' | 'netlify-blobs'",
-    NETLIFY_PROJECT_ID: "string",
-  },
-  {
-    env: {
-      PORT: process.env["PORT"] ?? "3001",
-      STORAGE_ENGINE: process.env["STORAGE_ENGINE"] ?? "local-memory",
-      NETLIFY_PROJECT_ID: process.env["NETLIFY_PROJECT_ID"] ?? "",
-    },
-  },
-);
+export const ServerConfig = Companion("ServerConfig", type(ServerConfigDef));
+export type ServerConfig = typeof ServerConfig.type.infer;
 
-const port = Number(rawEnv["PORT"]);
-
-export const serverConfig: ServerConfig = {
-  PORT: Number.isFinite(port) ? port : 3001,
-  STORAGE_ENGINE: rawEnv["STORAGE_ENGINE"] as StorageEngine,
-  NETLIFY_PROJECT_ID: rawEnv["NETLIFY_PROJECT_ID"],
-};
+export const serverConfig = arkenv(ServerConfigDef, { env: process.env });

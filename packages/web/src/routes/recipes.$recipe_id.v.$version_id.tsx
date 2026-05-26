@@ -1,13 +1,11 @@
-import { useOutletContext, useNavigate, useParams } from "react-router";
-import { RecipeEditor } from "../pages/RecipeEditorPage.js";
+import { useNavigate, useParams } from "react-router";
 import { useRecipeStore } from "../hooks/useRecipeStore.js";
-import type { RootContext } from "../root.js";
+import { RecipeEditor } from "../pages/RecipeEditorPage.js";
 
 export default function RecipeVersion() {
   const { recipe_id, version_id } = useParams();
-  const { userName } = useOutletContext<RootContext>();
   const navigate = useNavigate();
-  const { recipes } = useRecipeStore(userName);
+  const { recipes } = useRecipeStore();
 
   if (!recipe_id || !version_id) return null;
 
@@ -17,7 +15,6 @@ export default function RecipeVersion() {
     <RecipeEditor
       recipe={recipe}
       versionId={version_id}
-      userName={userName}
       onSave={() => navigate("/recipes")}
       onCancel={() => navigate("/recipes")}
     />

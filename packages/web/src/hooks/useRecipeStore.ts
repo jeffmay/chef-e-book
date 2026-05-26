@@ -19,11 +19,11 @@ export interface RecipeStore {
   readonly recipes: Recipe[];
   readonly create: (input: Omit<CreateRecipeInput, "created_by">) => Recipe;
   readonly save: (recipeId: RecipeId, input: Omit<SaveRecipeInput, "created_by">) => Recipe;
-  readonly copy: (recipeId: RecipeId, new_title: string, newFolderId?: RecipeFolderId) => Recipe;
+  readonly copy: (recipeId: RecipeId, newTitle: string, newFolderId?: RecipeFolderId) => Recipe;
   readonly remove: (recipeId: RecipeId) => void;
 }
 
-export function useRecipeStore(userName: string): RecipeStore {
+export function useRecipeStore(): RecipeStore {
   const { doc, whenSynced } = useRecipeBookDoc();
   const [recipes, setRecipes] = useState<Recipe[]>(() => getRecipes(doc));
 
@@ -39,10 +39,10 @@ export function useRecipeStore(userName: string): RecipeStore {
 
   return {
     recipes,
-    create: (input) => createRecipe(doc, { ...input, created_by: userName }),
-    save: (recipeId, input) => saveRecipe(doc, recipeId, { ...input, created_by: userName }),
-    copy: (recipeId, new_title, newFolderId) =>
-      copyRecipe(doc, recipeId, new_title, newFolderId, userName),
+    create: (input) => createRecipe(doc, { ...input /* created_by: userName */ }),
+    save: (recipeId, input) => saveRecipe(doc, recipeId, { ...input /* created_by: userName */ }),
+    copy: (recipeId, newTitle, newFolderId) =>
+      copyRecipe(doc, recipeId, newTitle, newFolderId /* userName */),
     remove: (recipeId) => deleteRecipe(doc, recipeId),
   };
 }

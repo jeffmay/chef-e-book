@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createElement, type ReactNode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.js";
 import { RecipeEditorPage } from "../RecipeEditorPage.js";
@@ -38,7 +38,7 @@ afterEach(() => {
 });
 
 function setup() {
-  return render(<RecipeEditorPage userName="test-user" />, { wrapper: makeWrapper(doc) });
+  return render(<RecipeEditorPage />, { wrapper: makeWrapper(doc) });
 }
 
 describe("RecipeEditorPage — list view", () => {

@@ -31,7 +31,7 @@ function validateLabel(id: string, raw: unknown): KitchenwareLabel | type.errors
     return result;
   }
   const labelId = KitchenwareLabelId.type(id);
-  if (isTypeError(labelId)) {
+  if (labelId instanceof type.errors) {
     return labelId;
   }
   return { id: labelId, name: result.name, kinds: result.kinds };

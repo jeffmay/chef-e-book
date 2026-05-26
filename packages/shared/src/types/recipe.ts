@@ -110,7 +110,7 @@ export const RecipeVersion = Companion(
     ingredients: RecipeIngredient.type.array(),
     sections: Section.type.array(),
     created_at: "number",
-    created_by: "string",
+    // created_by: "string",
   }),
 );
 export type RecipeVersion = typeof RecipeVersion.type.infer;

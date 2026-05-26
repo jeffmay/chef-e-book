@@ -351,13 +351,13 @@ function InstructionRow({
   function toggleIngredient(id: IngredientId) {
     const current = item.ingredient_ids ?? [];
     const exists = current.includes(id);
-    const new_ids = exists ? current.filter((x) => x !== id) : [...current, id];
+    const newIds = exists ? current.filter((x) => x !== id) : [...current, id];
     // If adding a new ingredient not in top-level list, add it there too
     if (!exists && !topIngredients.some((ti) => ti.ingredient_id === id)) {
       onAddTopIngredient(id);
     }
-    if (new_ids.length > 0) {
-      onChange({ ...item, ingredient_ids: new_ids });
+    if (newIds.length > 0) {
+      onChange({ ...item, ingredient_ids: newIds });
     } else {
       const { ingredient_ids: _, ...rest } = item;
       onChange(rest);
@@ -452,7 +452,7 @@ function InstructionRow({
               <input
                 type="checkbox"
                 checked={checked}
-                onChange={() => toggleIngredient(ing.id as IngredientItem["ingredient_id"])}
+                onChange={() => toggleIngredient(ing.id)}
                 aria-label={ing.name}
               />
               {ing.name}
@@ -841,7 +841,7 @@ function VersionHistoryTable({ versions }: VersionHistoryTableProps) {
             {sorted.map((v) => (
               <tr key={v.id}>
                 <td>{new Date(v.created_at).toLocaleDateString()}</td>
-                <td>{v.created_by}</td>
+                {/* <td>{v.created_by}</td> */}
                 <td>{v.description || <em>—</em>}</td>
               </tr>
             ))}
@@ -967,14 +967,13 @@ function makeInitialState(recipe: Recipe | null, versionId?: string): EditorStat
 
 export interface RecipeEditorProps {
   readonly recipe: Recipe | null;
-  readonly userName: string;
   readonly versionId?: string;
   readonly onSave: (recipe: Recipe) => void;
   readonly onCancel: () => void;
 }
 
-export function RecipeEditor({ recipe, userName, versionId, onSave, onCancel }: RecipeEditorProps) {
-  const { create, save, copy } = useRecipeStore(userName);
+export function RecipeEditor({ recipe, versionId, onSave, onCancel }: RecipeEditorProps) {
+  const { create, save, copy } = useRecipeStore();
   const { flatFolders, folders } = useRecipeFolderStore();
   const { ingredients } = useIngredientStore();
   const [form, setForm] = useState<EditorState>(() => makeInitialState(recipe, versionId));
@@ -1013,7 +1012,7 @@ export function RecipeEditor({ recipe, userName, versionId, onSave, onCancel }: 
         ingredients: form.ingredients,
         sections: form.sections,
         created_at: v?.created_at ?? Date.now(),
-        created_by: v?.created_by ?? userName,
+        // created_by: v?.created_by ?? userName,
       };
       const updated = save(recipe.id, {
         title: form.title,
@@ -1269,21 +1268,16 @@ function RecipeList({ recipes, onSelect, onNew }: RecipeListProps) {
 // RecipeEditorPage
 // ---------------------------------------------------------------------------
 
-interface RecipeEditorPageProps {
-  readonly userName: string;
-}
-
 type EditingState = { kind: "new" } | { kind: "edit"; recipe: Recipe } | null;
 
-export function RecipeEditorPage({ userName }: RecipeEditorPageProps) {
-  const { recipes } = useRecipeStore(userName);
+export function RecipeEditorPage() {
+  const { recipes } = useRecipeStore();
   const [editing, setEditing] = useState<EditingState>(null);
 
   if (editing !== null) {
     return (
       <RecipeEditor
         recipe={editing.kind === "new" ? null : editing.recipe}
-        userName={userName}
         onSave={() => setEditing(null)}
         onCancel={() => setEditing(null)}
       />

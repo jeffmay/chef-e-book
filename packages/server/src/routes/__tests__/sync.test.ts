@@ -60,13 +60,17 @@ describe("POST /sync", () => {
     const { app } = createTestApp();
     const res = await request(app).post("/sync").send({});
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty("error");
+    expect(res.body).toMatchObject({
+      error: "book_id must be a string (was missing)",
+    });
   });
 
   it("returns 400 when book_id is empty", async () => {
     const { app } = createTestApp();
     const res = await request(app).post("/sync").send({ book_id: "" });
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty("error");
+    expect(res.body).toMatchObject({
+      error: "book_id must be non-empty",
+    });
   });
 });

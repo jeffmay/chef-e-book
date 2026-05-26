@@ -15,7 +15,7 @@ export function createDocumentStore(engine?: StorageEngine): DocumentStore {
       return new LocalFileStore("./data");
     case "netlify-blobs": {
       const projectId = serverConfig.NETLIFY_PROJECT_ID;
-      if (projectId === "") {
+      if (!projectId) {
         throw new Error("NETLIFY_PROJECT_ID is required when STORAGE_ENGINE=netlify-blobs");
       }
       return new NetlifyBlobStore(projectId);
