@@ -10,7 +10,7 @@ export type StorageEngine = typeof StorageEngine.type.infer;
 
 export const ServerConfig = DefCompanion("ServerConfig", {
   PORT: "0 <= number.integer <= 65535 = 3001",
-  STORAGE_ENGINE: unionOf(StorageEngine.values),
+  STORAGE_ENGINE: `${unionOf(StorageEngine.values)} = 'local-file'`,
   "NETLIFY_PROJECT_ID?": "string",
 });
 export type ServerConfig = typeof ServerConfig.type.infer;
