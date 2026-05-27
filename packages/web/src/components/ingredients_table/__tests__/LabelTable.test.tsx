@@ -10,57 +10,72 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReadonlyDeep } from "type-fest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LabelTable } from "../LabelTable.js";
+import { LabelTable, LabelTableProps } from "../LabelTable.js";
 
 const KIND_INGREDIENT: Set<KitchenwareKind> = new Set(["ingredient"]);
 
-const FAT: ReadonlyDeep<KitchenwareLabel> = {
+const FAT = {
   id: paddedId(KitchenwareLabelId, "fat"),
   name: "fat",
   kinds: KIND_INGREDIENT,
-};
-const SOLID: ReadonlyDeep<KitchenwareLabel> = {
+} as const satisfies KitchenwareLabel;
+
+const SOLID = {
   id: paddedId(KitchenwareLabelId, "solid"),
   name: "solid",
   kinds: KIND_INGREDIENT,
-};
-const BAKING: ReadonlyDeep<KitchenwareLabel> = {
+} as const satisfies KitchenwareLabel;
+
+const BAKING = {
   id: paddedId(KitchenwareLabelId, "baking"),
   name: "baking",
   kinds: KIND_INGREDIENT,
-};
+} as const satisfies KitchenwareLabel;
 
 const DEFAULT_MEASUREMENT = { value: { numerator: 1, denominator: 1 }, unit: "cup" } as const;
 
-const BUTTER: ReadonlyDeep<Ingredient> = {
+const BUTTER = {
   kind: "ingredient",
   id: paddedId(IngredientId, "butter"),
   name: "Butter",
   default_measurement_value: DEFAULT_MEASUREMENT,
   labels: new Set([paddedId(KitchenwareLabelId, "fat")]),
-};
+} as const satisfies Ingredient;
 
-const FLOUR: ReadonlyDeep<Ingredient> = {
+const FLOUR = {
   kind: "ingredient",
   id: paddedId(IngredientId, "flour"),
   name: "Flour",
   default_measurement_value: DEFAULT_MEASUREMENT,
   labels: new Set([paddedId(KitchenwareLabelId, "solid")]),
-};
+} as const satisfies Ingredient;
 
-const onFilterAll = vi.fn();
-const onFilterAny = vi.fn();
-const onDelete = vi.fn();
-const onMerge = vi.fn();
-const onRename = vi.fn();
+const onFilterAllFn = vi.fn();
+const onFilterAnyFn = vi.fn();
+const onDeleteFn = vi.fn();
+const onMergeFn = vi.fn();
+const onRenameFn = vi.fn();
 
-function setup(labels: ReadonlyDeep<KitchenwareLabel[]> = [FAT, SOLID, BAKING]) {
+function setup({
+  labels = [FAT, SOLID, BAKING],
+  ingredients = [],
+  onFilterAll = onFilterAllFn,
+  onFilterAny = onFilterAnyFn,
+  onClearFilters,
+  onDelete = onDeleteFn,
+  onMerge = onMergeFn,
+  onRename = onRenameFn,
+}: Partial<LabelTableProps> = {}) {
+  if (onClearFilters) {
+    console.log("onClearFilters supplied!");
+  }
   return render(
     <LabelTable
       labels={labels}
-      ingredients={[]}
+      ingredients={ingredients}
       onFilterAll={onFilterAll}
       onFilterAny={onFilterAny}
+      {...(onClearFilters ? { onClearFilters } : [])}
       onDelete={onDelete}
       onMerge={onMerge}
       onRename={onRename}
@@ -73,193 +88,198 @@ beforeEach(() => {
 });
 
 describe("LabelTable — collapsed state", () => {
+  const labels = [FAT, SOLID, BAKING] as const;
+
   it("renders the toggle button", () => {
-    setup();
+    setup({ labels });
     expect(screen.getByRole("button", { name: /Labels/ })).toBeInTheDocument();
   });
 
   it("shows the label count on the toggle", () => {
-    setup();
-    expect(screen.getByText("3")).toBeInTheDocument();
+    setup({ labels });
+    expect(screen.getByText(`${labels.length}`)).toBeInTheDocument();
   });
 
   it("does not show label rows when collapsed", () => {
-    setup();
-    expect(screen.queryByText("fat")).not.toBeInTheDocument();
+    setup({ labels });
+    expect(screen.queryByText(labels[0].name)).not.toBeInTheDocument();
   });
 });
 
 describe("LabelTable — expanded state", () => {
-  async function expand() {
-    setup();
+  const defaultLabels = [FAT, SOLID, BAKING] as const;
+
+  async function expand(labels: ReadonlyDeep<KitchenwareLabel[]>) {
+    setup({ labels });
     await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
   }
 
   it("shows label names after expanding", async () => {
-    await expand();
+    await expand(defaultLabels);
     expect(screen.getByText("fat")).toBeInTheDocument();
     expect(screen.getByText("solid")).toBeInTheDocument();
     expect(screen.getByText("baking")).toBeInTheDocument();
   });
 
   it("shows empty message when no labels", async () => {
-    render(
-      <LabelTable
-        labels={[]}
-        ingredients={[]}
-        onFilterAll={onFilterAll}
-        onFilterAny={onFilterAny}
-        onDelete={onDelete}
-        onMerge={onMerge}
-        onRename={onRename}
-      />,
-    );
-    await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
+    await expand([]);
     expect(screen.getByText("No labels yet.")).toBeInTheDocument();
   });
 
   it("renders per-row checkboxes", async () => {
-    await expand();
+    await expand(defaultLabels);
     expect(screen.getByRole("checkbox", { name: "Select label fat" })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Select label solid" })).toBeInTheDocument();
   });
 
   it("renders a select-all checkbox in the header", async () => {
-    await expand();
+    await expand(defaultLabels);
     expect(screen.getByRole("checkbox", { name: "Select all labels" })).toBeInTheDocument();
   });
 });
 
 describe("LabelTable — selection and bulk actions", () => {
-  async function expand_and_select(labels: ReadonlyDeep<KitchenwareLabel[]> = [FAT, SOLID]) {
-    render(
-      <LabelTable
-        labels={labels}
-        ingredients={[]}
-        onFilterAll={onFilterAll}
-        onFilterAny={onFilterAny}
-        onDelete={onDelete}
-        onMerge={onMerge}
-        onRename={onRename}
-      />,
-    );
+  const defaultProps = { labels: [FAT, SOLID] } as const;
+
+  async function expand_and_select(
+    props: Partial<LabelTableProps>,
+    select: ReadonlyDeep<KitchenwareLabel>,
+  ) {
+    setup(props);
     await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select label fat" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: `Select label ${select.name}` }));
   }
 
   it("shows bulk action bar after selecting a label", async () => {
-    await expand_and_select();
+    await expand_and_select(defaultProps, FAT);
     expect(screen.getByRole("region", { name: "Label bulk actions" })).toBeInTheDocument();
     expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
 
   it("hides bulk bar after deselecting", async () => {
-    await expand_and_select();
+    await expand_and_select(defaultProps, FAT);
     await userEvent.click(screen.getByRole("checkbox", { name: "Select label fat" }));
     expect(screen.queryByRole("region", { name: "Label bulk actions" })).not.toBeInTheDocument();
   });
 
   it("calls onFilterAll with selected ids when All radio is clicked", async () => {
-    await expand_and_select();
+    await expand_and_select(defaultProps, FAT);
     await userEvent.click(screen.getByRole("radio", { name: "All" }));
-    expect(onFilterAll).toHaveBeenCalledWith([FAT.id]);
+    expect(onFilterAllFn).toHaveBeenCalledWith([FAT.id]);
   });
 
   it("calls onFilterAny with selected ids when Any radio is clicked", async () => {
-    await expand_and_select();
+    await expand_and_select(defaultProps, FAT);
     await userEvent.click(screen.getByRole("radio", { name: "Any" }));
-    expect(onFilterAny).toHaveBeenCalledWith([FAT.id]);
+    expect(onFilterAnyFn).toHaveBeenCalledWith([FAT.id]);
   });
 
   it("keeps All radio selected after clicking it", async () => {
-    await expand_and_select();
+    await expand_and_select(defaultProps, FAT);
     await userEvent.click(screen.getByRole("radio", { name: "All" }));
     expect(screen.getByRole("radio", { name: "All" })).toBeChecked();
   });
 
   it("calls onDelete with selected ids and clears selection", async () => {
-    await expand_and_select();
+    await expand_and_select(defaultProps, FAT);
     await userEvent.click(screen.getByRole("button", { name: "Delete selected labels" }));
     await userEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
-    expect(onDelete).toHaveBeenCalledWith([FAT.id]);
+    expect(onDeleteFn).toHaveBeenCalledWith([FAT.id]);
     expect(screen.queryByRole("region", { name: "Label bulk actions" })).not.toBeInTheDocument();
   });
 
   it("Clear button deselects all", async () => {
-    await expand_and_select();
+    await expand_and_select(defaultProps, FAT);
     await userEvent.click(screen.getByRole("button", { name: /Clear/ }));
     expect(screen.queryByRole("region", { name: "Label bulk actions" })).not.toBeInTheDocument();
   });
 
-  it("Clear button calls onFilterAll([]) to clear the ingredient filter when a filter was active", async () => {
-    await expand_and_select();
-    await userEvent.click(screen.getByRole("radio", { name: "All" }));
-    vi.clearAllMocks();
-    await userEvent.click(screen.getByRole("button", { name: /Clear/ }));
-    expect(onFilterAll).toHaveBeenCalledWith([]);
-  });
-
-  it("deselecting the last label via its checkbox clears the ingredient filter", async () => {
-    await expand_and_select();
+  it("Clear button calls onClearFilters to clear any ingredient filters", async () => {
+    const onClearFiltersFn = vi.fn();
+    await expand_and_select({ ...defaultProps, onClearFilters: onClearFiltersFn }, FAT);
     await userEvent.click(screen.getByRole("radio", { name: "Any" }));
     vi.clearAllMocks();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select label fat" }));
-    expect(onFilterAll).toHaveBeenCalledWith([]);
+    expect(onClearFiltersFn).toHaveBeenCalled();
+  });
+
+  it("Clear button calls onFilterAll([]) to clear any ingredient filters if onClearFilters is not provided", async () => {
+    await expand_and_select(defaultProps, FAT);
+    await userEvent.click(screen.getByRole("radio", { name: "Any" }));
+    vi.clearAllMocks();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select label fat" }));
+    expect(onFilterAllFn).toHaveBeenCalledWith([]);
+  });
+
+  it("deselecting the last label via its checkbox clears the ingredient filter", async () => {
+    await expand_and_select(defaultProps, FAT);
+    await userEvent.click(screen.getByRole("radio", { name: "Any" }));
+    vi.clearAllMocks();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select label fat" }));
+    expect(onFilterAllFn).toHaveBeenCalledWith([]);
   });
 
   it("deselect-all via header checkbox clears the ingredient filter", async () => {
-    await expand_and_select([FAT, SOLID]);
+    await expand_and_select(defaultProps, FAT);
     await userEvent.click(screen.getByRole("checkbox", { name: "Select all labels" }));
     await userEvent.click(screen.getByRole("radio", { name: "All" }));
     vi.clearAllMocks();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select all labels" }));
-    expect(onFilterAll).toHaveBeenCalledWith([]);
+    expect(onFilterAllFn).toHaveBeenCalledWith([]);
   });
 
   it("select-all selects all labels", async () => {
-    await expand_and_select([FAT, SOLID]);
+    await expand_and_select(defaultProps, FAT);
     await userEvent.click(screen.getByRole("checkbox", { name: "Select all labels" }));
     expect(screen.getByText("2 selected")).toBeInTheDocument();
   });
 });
 
 describe("LabelTable — merge action", () => {
-  async function expand_and_select_two() {
-    setup([FAT, SOLID, BAKING]);
+  const defaultLabels = [FAT, SOLID, BAKING] as const;
+
+  async function expand_and_select_two(
+    labels: ReadonlyDeep<KitchenwareLabel[]>,
+    select: ReadonlyDeep<[KitchenwareLabel, KitchenwareLabel]>,
+  ) {
+    setup({ labels });
     await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select label fat" }));
-    await userEvent.click(screen.getByRole("checkbox", { name: "Select label solid" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: `Select label ${select[0].name}` }));
+    await userEvent.click(screen.getByRole("checkbox", { name: `Select label ${select[1].name}` }));
   }
 
   it("shows Merge button when 2+ labels selected", async () => {
-    await expand_and_select_two();
+    await expand_and_select_two(defaultLabels, [FAT, SOLID]);
     expect(screen.getByRole("button", { name: "Merge selected labels" })).toBeInTheDocument();
   });
 
   it("shows name input after clicking Merge", async () => {
-    await expand_and_select_two();
+    await expand_and_select_two(defaultLabels, [FAT, SOLID]);
     await userEvent.click(screen.getByRole("button", { name: "Merge selected labels" }));
     expect(screen.getByRole("textbox", { name: "Merged label name" })).toBeInTheDocument();
   });
 
   it("calls onMerge with selected ids and new name on Confirm", async () => {
-    await expand_and_select_two();
+    await expand_and_select_two(defaultLabels, [FAT, SOLID]);
     await userEvent.click(screen.getByRole("button", { name: "Merge selected labels" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Merged label name" }), "fatty solid");
     await userEvent.click(screen.getByRole("button", { name: "Confirm merge" }));
-    expect(onMerge).toHaveBeenCalledWith(expect.arrayContaining([FAT.id, SOLID.id]), "fatty solid");
+    expect(onMergeFn).toHaveBeenCalledWith(
+      expect.arrayContaining([FAT.id, SOLID.id]),
+      "fatty solid",
+    );
   });
 
   it("hides merge form on Cancel", async () => {
-    await expand_and_select_two();
+    await expand_and_select_two(defaultLabels, [FAT, SOLID]);
     await userEvent.click(screen.getByRole("button", { name: "Merge selected labels" }));
     await userEvent.click(screen.getByRole("button", { name: "Cancel merge" }));
     expect(screen.queryByRole("textbox", { name: "Merged label name" })).not.toBeInTheDocument();
-    expect(onMerge).not.toHaveBeenCalled();
+    expect(onMergeFn).not.toHaveBeenCalled();
   });
 
   it("hides merge form on Escape key", async () => {
-    await expand_and_select_two();
+    await expand_and_select_two(defaultLabels, [FAT, SOLID]);
     await userEvent.click(screen.getByRole("button", { name: "Merge selected labels" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Merged label name" }), "{Escape}");
     expect(screen.queryByRole("textbox", { name: "Merged label name" })).not.toBeInTheDocument();
@@ -267,27 +287,15 @@ describe("LabelTable — merge action", () => {
 });
 
 describe("LabelTable — delete confirmation dialog", () => {
-  async function openDeleteDialog(
-    ingredientsForTest: ReadonlyDeep<Ingredient[]> = [],
-  ): Promise<void> {
-    render(
-      <LabelTable
-        labels={[FAT, SOLID]}
-        ingredients={ingredientsForTest}
-        onFilterAll={onFilterAll}
-        onFilterAny={onFilterAny}
-        onDelete={onDelete}
-        onMerge={onMerge}
-        onRename={onRename}
-      />,
-    );
+  async function openDeleteDialog(ingredients: ReadonlyDeep<Ingredient[]>): Promise<void> {
+    setup({ ingredients });
     await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
     await userEvent.click(screen.getByRole("checkbox", { name: "Select label fat" }));
     await userEvent.click(screen.getByRole("button", { name: "Delete selected labels" }));
   }
 
   it("opens the confirmation dialog on Delete click", async () => {
-    await openDeleteDialog();
+    await openDeleteDialog([]);
     expect(screen.getByRole("dialog", { name: "Confirm delete labels" })).toBeInTheDocument();
   });
 
@@ -303,97 +311,99 @@ describe("LabelTable — delete confirmation dialog", () => {
   });
 
   it("closes dialog without deleting on Cancel click", async () => {
-    await openDeleteDialog();
+    await openDeleteDialog([]);
     await userEvent.click(screen.getByRole("button", { name: "Cancel delete" }));
     expect(screen.queryByRole("dialog", { name: "Confirm delete labels" })).not.toBeInTheDocument();
-    expect(onDelete).not.toHaveBeenCalled();
+    expect(onDeleteFn).not.toHaveBeenCalled();
   });
 
   it("closes dialog without deleting on Escape key", async () => {
-    await openDeleteDialog();
+    await openDeleteDialog([]);
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog", { name: "Confirm delete labels" })).not.toBeInTheDocument();
-    expect(onDelete).not.toHaveBeenCalled();
+    expect(onDeleteFn).not.toHaveBeenCalled();
   });
 
   it("closes dialog without deleting when clicking the overlay background", async () => {
-    await openDeleteDialog();
+    await openDeleteDialog([]);
     // fireEvent fires directly on the overlay element (bypasses position-based dispatch),
     // exercising the overlay's own onClick={handleDeleteCancel} handler.
     fireEvent.click(screen.getByRole("dialog", { name: "Confirm delete labels" }));
     expect(screen.queryByRole("dialog", { name: "Confirm delete labels" })).not.toBeInTheDocument();
-    expect(onDelete).not.toHaveBeenCalled();
+    expect(onDeleteFn).not.toHaveBeenCalled();
   });
 
   it("does not close the dialog when clicking inside the dialog card", async () => {
-    await openDeleteDialog();
+    await openDeleteDialog([]);
     await userEvent.click(screen.getByTestId("lt-delete-dialog-card"));
     expect(screen.getByRole("dialog", { name: "Confirm delete labels" })).toBeInTheDocument();
   });
 
   it("restores focus to the Delete button after Cancel", async () => {
-    await openDeleteDialog();
+    await openDeleteDialog([]);
     await userEvent.click(screen.getByRole("button", { name: "Cancel delete" }));
     expect(screen.getByRole("button", { name: "Delete selected labels" })).toHaveFocus();
   });
 
   it("restores focus to the Delete button after Escape key", async () => {
-    await openDeleteDialog();
+    await openDeleteDialog([]);
     await userEvent.keyboard("{Escape}");
     expect(screen.getByRole("button", { name: "Delete selected labels" })).toHaveFocus();
   });
 
   it("calls onDelete and closes dialog on Confirm click", async () => {
-    await openDeleteDialog();
+    await openDeleteDialog([]);
     await userEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
-    expect(onDelete).toHaveBeenCalledWith([FAT.id]);
+    expect(onDeleteFn).toHaveBeenCalledWith([FAT.id]);
     expect(screen.queryByRole("dialog", { name: "Confirm delete labels" })).not.toBeInTheDocument();
   });
 });
 
 describe("LabelTable — inline rename", () => {
-  async function expand() {
-    setup([FAT, SOLID]);
+  const defaultLabels = [FAT, SOLID] as const;
+
+  async function expand(labels: ReadonlyDeep<KitchenwareLabel[]>) {
+    setup({ labels });
     await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
   }
 
   it("clicking label name shows rename input", async () => {
-    await expand();
+    await expand(defaultLabels);
     await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
     expect(screen.getByRole("textbox", { name: "Edit label name fat" })).toBeInTheDocument();
   });
 
   it("calls onRename on Enter", async () => {
-    await expand();
+    await expand(defaultLabels);
     await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
     const input = screen.getByRole("textbox", { name: "Edit label name fat" });
     await userEvent.clear(input);
     await userEvent.type(input, "saturated fat{Enter}");
-    expect(onRename).toHaveBeenCalledWith(FAT.id, "saturated fat");
+    expect(onRenameFn).toHaveBeenCalledWith(FAT.id, "saturated fat");
   });
 
   it("calls onRename on confirm button click", async () => {
-    await expand();
+    await expand(defaultLabels);
     await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
     const input = screen.getByRole("textbox", { name: "Edit label name fat" });
     await userEvent.clear(input);
     await userEvent.type(input, "new name");
     await userEvent.click(screen.getByRole("button", { name: "Confirm rename" }));
-    expect(onRename).toHaveBeenCalledWith(FAT.id, "new name");
+    expect(onRenameFn).toHaveBeenCalledWith(FAT.id, "new name");
   });
 
   it("cancels rename on Escape key", async () => {
-    await expand();
+    await expand(defaultLabels);
     await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Edit label name fat" }), "{Escape}");
-    expect(onRename).not.toHaveBeenCalled();
+    expect(onRenameFn).not.toHaveBeenCalled();
     expect(screen.queryByRole("textbox", { name: "Edit label name fat" })).not.toBeInTheDocument();
   });
 
   it("cancels rename on cancel button click", async () => {
-    await expand();
+    await expand(defaultLabels);
     await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
     await userEvent.click(screen.getByRole("button", { name: "Cancel rename" }));
-    expect(onRename).not.toHaveBeenCalled();
+    expect(onRenameFn).not.toHaveBeenCalled();
   });
 });

@@ -9,6 +9,8 @@ export interface LabelTableProps {
   readonly ingredients: ReadonlyDeep<Ingredient[]>;
   readonly onFilterAll: (label_ids: readonly KitchenwareLabelId[]) => void;
   readonly onFilterAny: (label_ids: readonly KitchenwareLabelId[]) => void;
+  /** @default calls onFilterAll([]) */
+  readonly onClearFilters?: () => void;
   readonly onDelete: (label_ids: readonly KitchenwareLabelId[]) => void;
   readonly onMerge: (label_ids: readonly KitchenwareLabelId[], new_name: string) => void;
   readonly onRename: (id: KitchenwareLabelId, name: string) => void;
@@ -19,6 +21,7 @@ export function LabelTable({
   ingredients,
   onFilterAll,
   onFilterAny,
+  onClearFilters = () => onFilterAll([]),
   onDelete,
   onMerge,
   onRename,
@@ -41,7 +44,7 @@ export function LabelTable({
     setSelectedIds(new Set());
     if (filterMode !== null) {
       setFilterMode(null);
-      onFilterAll([]);
+      onClearFilters();
     }
   }
 
