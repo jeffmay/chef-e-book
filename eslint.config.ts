@@ -1,3 +1,4 @@
+import type { ConfigObject, Plugin } from "@eslint/core";
 import js from "@eslint/js";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
@@ -6,7 +7,7 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import globals from "globals";
 
-export default [
+const config: ConfigObject[] = [
   js.configs.recommended,
   {
     files: ["packages/*/src/**/*.{ts,tsx}"],
@@ -22,10 +23,10 @@ export default [
       },
     },
     plugins: {
-      "@typescript-eslint": tsPlugin,
-      "import-x": importX,
-      react: reactPlugin,
-      "react-hooks": reactHooksPlugin,
+      "@typescript-eslint": tsPlugin as unknown as Plugin,
+      "import-x": importX as unknown as Plugin,
+      "react-hooks": reactHooksPlugin as unknown as Plugin,
+      react: reactPlugin as unknown as Plugin,
     },
     settings: {
       "import-x/resolver": {
@@ -34,7 +35,7 @@ export default [
       },
     },
     rules: {
-      ...tsPlugin.configs.recommended.rules,
+      ...tsPlugin.configs.recommended!.rules,
       "@typescript-eslint/consistent-type-imports": [
         "error",
         {
@@ -67,3 +68,5 @@ export default [
     ignores: ["**/build/**", "**/dist/**", "**/node_modules/**"],
   },
 ];
+
+export default config;
