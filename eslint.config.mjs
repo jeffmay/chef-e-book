@@ -64,6 +64,6 @@ export default [
     },
   },
   {
-    ignores: ["**/build/**", "**/dist/**", "**/node_modules/**", "**/*.config.*"],
+    ignores: ["**/build/**", "**/dist/**", "**/node_modules/**"],
   },
 ];

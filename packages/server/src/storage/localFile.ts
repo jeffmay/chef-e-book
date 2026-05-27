@@ -19,7 +19,7 @@ export class LocalFileStore implements DocumentStore {
     return join(this.dir, `${bookId}${FILE_SUFFIX}`);
   }
 
-  async load(bookId: string): Promise<Uint8Array<ArrayBuffer> | null> {
+  async load(bookId: string): Promise<Uint8Array | null> {
     try {
       return await readFile(this.pathFor(bookId));
     } catch {
