@@ -12,7 +12,7 @@
     "typecheck": "tsc && npm run typecheck --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "format": "prettier --write .",
+    "format": "eslint --fix && prettier --write .",
     "prepare": "husky install || true # skip if devDependencies are not installed"
   },
   "devDependencies": {
