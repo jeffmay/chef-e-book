@@ -1,4 +1,4 @@
-import { type } from "arktype";
+import { distill, type } from "arktype";
 
 /**
  * A {@link type.Any} reified as `AnyType<T>` — a Type with the given output type,
@@ -98,3 +98,28 @@ export function extend<C extends AnyCompanion, const R extends C>(
  * or for use as a base Companion type when you don't want to specify the lower bounds.
  */
 export type AnyCompanion<T = unknown> = Companion<string, T>;
+
+/**
+ * Validate the given value, warn on type errors, and return the value alongside a boolean of whether there was an error.
+ *
+ * @note This is useful in cases where you would otherwise just cast the value with the `as` keyword because you would
+ *       prefer to allow the runtime to throw errors on invalid values or undefined properties.
+ * @note The errors part of the tuple is useful in cases where you want to apply some kind of recovery logic when the
+ *       object fails to validate.
+ *
+ * @param companion the companion object used to get the arktype information and type name
+ * @param value the value to validate and cast
+ * @returns a tuple of the expected value and any validation errors (or the sentinel value of 'valid')
+ */
+export function validateAndPassthrough<T>(
+  companion: AnyCompanion<T>,
+  value: unknown,
+): [value: distill.Out<T>, errors: "valid" | type.errors] {
+  const result = companion.type(value);
+  if (result instanceof type.errors) {
+    console.warn(`Invalid ${companion.name}: ${result.summary}. Value: `, value);
+    // pass the cast through and allow runtime errors as the function describes.
+    return [value as distill.Out<T>, result];
+  }
+  return [result, "valid"];
+}

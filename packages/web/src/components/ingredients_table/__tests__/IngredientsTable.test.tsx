@@ -439,3 +439,73 @@ describe("IngredientsTable — bulk actions", () => {
     expect(screen.getByRole("button", { name: "Apply add labels" })).toBeDisabled();
   });
 });
+
+describe("IngredientsTable — external label filter", () => {
+  function setupWithFilter(filter: {
+    label_ids: readonly KitchenwareLabelId[];
+    mode: "all" | "any";
+  }) {
+    return render(
+      <IngredientsTable
+        ingredients={[DAIRY, BUTTER, FLOUR, CHEESE]}
+        labels={[FAT_LABEL, SOLID_LABEL]}
+        external_label_filter={filter}
+        onRename={onRename}
+        onSetMeasurementValue={onSetMeasurementValue}
+        onSetLabels={onSetLabels}
+        onSetParent={onSetParent}
+        onAddLabels={onAddLabels}
+        onRemoveLabels={onRemoveLabels}
+        onBulkSetMeasurementValue={onBulkSetMeasurementValue}
+        onBulkSetParent={onBulkSetParent}
+      />,
+    );
+  }
+
+  it("mode=any shows ingredients matching any of the given label ids", async () => {
+    setupWithFilter({ label_ids: [FAT_LABEL.id], mode: "any" });
+    // BUTTER has fat label; DAIRY is parent (shown via lenient), FLOUR has no fat label
+    expect(await screen.findByText("Butter")).toBeInTheDocument();
+    expect(screen.queryByText("Flour")).not.toBeInTheDocument();
+  });
+
+  it("mode=all shows only ingredients matching all of the given label ids", async () => {
+    setupWithFilter({ label_ids: [FAT_LABEL.id, SOLID_LABEL.id], mode: "all" });
+    // BUTTER has both fat+solid; CHEESE has only solid
+    expect(await screen.findByText("Butter")).toBeInTheDocument();
+    expect(screen.queryByText("Cheese")).not.toBeInTheDocument();
+    expect(screen.queryByText("Flour")).not.toBeInTheDocument();
+  });
+});
+
+describe("IngredientsTable — select all", () => {
+  it("renders the Select all button", () => {
+    setup([FLOUR, CHEESE]);
+    expect(screen.getByRole("button", { name: "Select all" })).toBeInTheDocument();
+  });
+
+  it("clicking Select all selects all rows when no filter is active", async () => {
+    setup([FLOUR, CHEESE]);
+    await screen.findByText("Flour");
+    await userEvent.click(screen.getByRole("button", { name: "Select all" }));
+    expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
+    expect(screen.getByText("2 selected")).toBeInTheDocument();
+  });
+
+  it("clicking Select all after name filter selects only visible rows", async () => {
+    setup([FLOUR, CHEESE]);
+    await screen.findByText("Flour");
+    await userEvent.type(screen.getByLabelText("Filter by name"), "Fl");
+    await userEvent.click(screen.getByRole("button", { name: "Select all" }));
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+
+  it("Clear selection button deselects all rows", async () => {
+    setup([FLOUR, CHEESE]);
+    await screen.findByText("Flour");
+    await userEvent.click(screen.getByRole("button", { name: "Select all" }));
+    expect(screen.getByRole("button", { name: "Clear selection" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+    expect(screen.queryByRole("region", { name: "Bulk actions" })).not.toBeInTheDocument();
+  });
+});

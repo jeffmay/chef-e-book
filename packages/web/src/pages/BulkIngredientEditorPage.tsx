@@ -230,7 +230,7 @@ export function BulkIngredientEditorPage() {
       <IngredientsTable
         ingredients={ingredients}
         labels={labels}
-        {...(externalLabelFilter !== undefined && { externalLabelFilter })}
+        {...(externalLabelFilter !== undefined && { external_label_filter: externalLabelFilter })}
         onRename={renameIngredient}
         onSetMeasurementValue={(id, value) => setMeasurementValue([id], value)}
         onSetLabels={handleSetLabels}

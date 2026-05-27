@@ -9,6 +9,8 @@ export interface LabelTableProps {
   readonly ingredients: ReadonlyDeep<Ingredient[]>;
   readonly onFilterAll: (label_ids: readonly KitchenwareLabelId[]) => void;
   readonly onFilterAny: (label_ids: readonly KitchenwareLabelId[]) => void;
+  /** @default calls onFilterAll([]) */
+  readonly onClearFilters?: () => void;
   readonly onDelete: (label_ids: readonly KitchenwareLabelId[]) => void;
   readonly onMerge: (label_ids: readonly KitchenwareLabelId[], new_name: string) => void;
   readonly onRename: (id: KitchenwareLabelId, name: string) => void;
@@ -19,6 +21,7 @@ export function LabelTable({
   ingredients,
   onFilterAll,
   onFilterAny,
+  onClearFilters = () => onFilterAll([]),
   onDelete,
   onMerge,
   onRename,
@@ -37,7 +40,20 @@ export function LabelTable({
   const allSelected = labels.length > 0 && labels.every((l) => selectedIds.has(l.id));
   const someSelected = labels.some((l) => selectedIds.has(l.id));
 
+  function clearSelection(): void {
+    setSelectedIds(new Set());
+    if (filterMode !== null) {
+      setFilterMode(null);
+      onClearFilters();
+    }
+  }
+
   function toggle(id: KitchenwareLabelId): void {
+    const isLastSelected = selectedIds.size === 1 && selectedIds.has(id);
+    if (isLastSelected) {
+      clearSelection();
+      return;
+    }
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -48,7 +64,7 @@ export function LabelTable({
 
   function toggleAll(): void {
     if (allSelected) {
-      setSelectedIds(new Set());
+      clearSelection();
     } else {
       setSelectedIds(new Set(labels.map((l) => l.id)));
     }
@@ -70,7 +86,7 @@ export function LabelTable({
 
   function handleDeleteConfirm(): void {
     onDelete(selectedArray);
-    setSelectedIds(new Set());
+    clearSelection();
     setShowDeleteConfirm(false);
   }
 
@@ -91,7 +107,7 @@ export function LabelTable({
     onMerge(selectedArray, name);
     setMergeName("");
     setShowMergeInput(false);
-    setSelectedIds(new Set());
+    clearSelection();
   }
 
   function beginEdit(label: ReadonlyDeep<KitchenwareLabel>): void {
@@ -138,11 +154,7 @@ export function LabelTable({
           {/* Bulk action bar */}
           {someSelected && (
             <div className="lt-bulk-bar" role="region" aria-label="Label bulk actions">
-              <button
-                type="button"
-                className="lt-bulk-clear"
-                onClick={() => setSelectedIds(new Set())}
-              >
+              <button type="button" className="lt-bulk-clear" onClick={clearSelection}>
                 Clear
               </button>
               <span className="lt-bulk-count">{selectedIds.size} selected</span>

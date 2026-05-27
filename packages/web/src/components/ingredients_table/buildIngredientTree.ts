@@ -1,4 +1,5 @@
 import {
+  Companion,
   Ingredient,
   IngredientId,
   KitchenwareLabel,
@@ -35,6 +36,9 @@ export type IngredientRow = Simplify<
     readonly subRows: IngredientRow[];
   }
 >;
+
+export const IngredientRows = Companion("IngredientRow[]", IngredientRow.type.array());
+export type IngredientRows = typeof IngredientRows.type.infer;
 
 export function buildIngredientTree(
   ingredients: ReadonlyDeep<Ingredient[]>,

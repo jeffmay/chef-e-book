@@ -2,6 +2,7 @@ import {
   IngredientId,
   loadId,
   unitType,
+  validateAndPassthrough,
   type Ingredient,
   type KitchenwareLabel,
   type KitchenwareLabelId,
@@ -20,7 +21,7 @@ import {
 } from "primereact/treetable";
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { MeasurementEditor } from "../measurement/MeasurementEditor.js";
-import { buildIngredientTree, type IngredientRow } from "./buildIngredientTree.js";
+import { buildIngredientTree, IngredientRow, IngredientRows } from "./buildIngredientTree.js";
 import { IngredientSelector } from "./IngredientSelector.js";
 import "./IngredientsTable.css";
 import { LabelEditor } from "./LabelEditor.js";
@@ -123,6 +124,42 @@ function extractSelectedIds(keys: TreeTableSelectionKeysType): IngredientId[] {
     }
   }
   return ids;
+}
+
+// Returns true if the node itself matches all active filters (not via child).
+function nodeMatchesFilters(
+  row: IngredientRow,
+  nameFilter: string,
+  typeFilter: readonly string[],
+  labelFilter: readonly string[],
+): boolean {
+  if (nameFilter !== "" && !row.name.toLowerCase().includes(nameFilter.toLowerCase())) return false;
+  if (typeFilter.length > 0 && !typeFilterFunction(row.default_measurement_value, typeFilter))
+    return false;
+  if (labelFilter.length > 0 && !labelsFilterFunction(row.labels, labelFilter)) return false;
+  return true;
+}
+
+// Collects selection keys for all nodes visible under lenient filtering:
+// a node is included if it or any descendant matches. Returns checked=true
+// for directly-matching nodes, partialChecked=true for ancestor-only matches.
+function collectVisibleKeys(
+  nodes: IngredientRow[],
+  nameFilter: string,
+  typeFilter: readonly string[],
+  labelFilter: readonly string[],
+  result: TreeTableSelectionKeysType,
+): boolean {
+  let anyMatch = false;
+  for (const row of nodes) {
+    const selfMatch = nodeMatchesFilters(row, nameFilter, typeFilter, labelFilter);
+    const childMatch = collectVisibleKeys(row.subRows, nameFilter, typeFilter, labelFilter, result);
+    if (selfMatch || childMatch) {
+      result[row.id] = { checked: selfMatch, partialChecked: !selfMatch && childMatch };
+      anyMatch = true;
+    }
+  }
+  return anyMatch;
 }
 
 // ---------------------------------------------------------------------------
@@ -282,7 +319,7 @@ export function IngredientsTable({
   // ---------------------------------------------------------------------------
 
   function nameBody(node: TreeNode) {
-    const row = node.data as IngredientRow;
+    const [row] = validateAndPassthrough(IngredientRow, node.data);
     const pending = pendingEdits.get(pkey(row.id, "name"));
     if (pending !== undefined) {
       return (
@@ -335,7 +372,7 @@ export function IngredientsTable({
   }
 
   function measurementBody(node: TreeNode) {
-    const row = node.data as IngredientRow;
+    const [row] = validateAndPassthrough(IngredientRow, node.data);
     if (editingMeasurementFor === row.id) {
       return (
         <MeasurementEditor
@@ -366,7 +403,7 @@ export function IngredientsTable({
   }
 
   function labelsBody(node: TreeNode) {
-    const row = node.data as IngredientRow;
+    const [row] = validateAndPassthrough(IngredientRow, node.data);
     const pending = pendingEdits.get(pkey(row.id, "labels"));
     const display = row.labels.join(", ");
     if (pending !== undefined) {
@@ -399,7 +436,7 @@ export function IngredientsTable({
   }
 
   function parentBody(node: TreeNode) {
-    const row = node.data as IngredientRow;
+    const [row] = validateAndPassthrough(IngredientRow, node.data);
     const pending = pendingEdits.get(pkey(row.id, "parent_name"));
     const display = row.parent_name || "— None —";
     if (pending !== undefined) {
@@ -456,6 +493,16 @@ export function IngredientsTable({
 
   const selectedIds = useMemo(() => extractSelectedIds(selectionKeys), [selectionKeys]);
 
+  function selectAllVisible(): void {
+    const result: TreeTableSelectionKeysType = {};
+    const [rows] = validateAndPassthrough(
+      IngredientRows,
+      treeNodes.map((n) => n.data),
+    );
+    collectVisibleKeys(rows, nameFilter, typeFilter, labelFilter, result);
+    setSelectionKeys(result);
+  }
+
   function applyAddLabels(): void {
     if (bulkAddLabels.length > 0) {
       onAddLabels(selectedIds, bulkAddLabels);
@@ -483,6 +530,21 @@ export function IngredientsTable({
 
   return (
     <div className="it-wrapper" role="region" aria-label="Ingredient list">
+      <div className="it-toolbar">
+        <button type="button" className="it-select-all-btn" onClick={selectAllVisible}>
+          Select all
+        </button>
+        {selectedIds.length > 0 && (
+          <button
+            type="button"
+            className="it-clear-sel-btn"
+            onClick={() => setSelectionKeys({})}
+            aria-label="Clear selection"
+          >
+            Clear selection
+          </button>
+        )}
+      </div>
       {selectedIds.length > 0 && (
         <div className="it-bulk-bar" role="region" aria-label="Bulk actions">
           <span className="it-bulk-count">{selectedIds.length} selected</span>

@@ -5,7 +5,6 @@ import {
   type IngredientItem,
   type Instruction,
   type Recipe,
-  type RecipeFolderId,
   type RecipeIngredient,
   type RecipeVersion,
   type Section,
@@ -16,7 +15,7 @@ import {
   randomId,
   ContainerId,
   EquipmentId,
-  RecipeFolderId as RecipeFolderIdCompanion,
+  RecipeFolderId,
   RecipeIngredientId,
   RecipeVersionId,
   SectionItemId,
@@ -444,9 +443,7 @@ function InstructionRow({
       <div className="re-instruction-ingredients">
         <span className="re-instruction-ing-label">Ingredients:</span>
         {allIngredients.map((ing) => {
-          const checked = (item.ingredient_ids ?? []).includes(
-            ing.id as IngredientItem["ingredient_id"],
-          );
+          const checked = (item.ingredient_ids ?? []).includes(ing.id);
           return (
             <label key={ing.id} className="re-instruction-ing-option">
               <input
@@ -886,9 +883,7 @@ function CopyRecipeDialog({ recipe, flatFolders, onCopy, onCancel }: CopyRecipeD
             className="re-field-select"
             value={folder_id ?? ""}
             onChange={(e) =>
-              setFolderId(
-                e.target.value ? loadId(RecipeFolderIdCompanion, e.target.value) : undefined,
-              )
+              setFolderId(e.target.value ? loadId(RecipeFolderId, e.target.value) : undefined)
             }
             aria-label="Parent folder for copy"
           >
@@ -1110,7 +1105,7 @@ export function RecipeEditor({ recipe, versionId, onSave, onCancel }: RecipeEdit
             onChange={(e) =>
               patch(
                 "parent_folder_id",
-                e.target.value ? loadId(RecipeFolderIdCompanion, e.target.value) : undefined,
+                e.target.value ? loadId(RecipeFolderId, e.target.value) : undefined,
               )
             }
             aria-label="Parent folder"
