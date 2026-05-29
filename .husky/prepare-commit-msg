@@ -66,12 +66,3 @@ if [ -n "$MESSAGE" ]; then
   ORIGINAL="$(cat "$COMMIT_MSG_FILE")"
   printf "%s\n\n%s" "$MESSAGE" "$ORIGINAL" > "$COMMIT_MSG_FILE"
 fi
-
-# WORKAROUND: opencode appears to stage files even with bash/edit/write denied
-# when run inside a git hook (but not when run manually with the same command).
-# This corrupts the git index, causing "invalid object" errors.
-# Nuclear fix: rebuild the index from HEAD to unstage any files opencode touched.
-# 
-# 🚨 I've isolated this to **ONLY HAPPEN WHEN OPENCODE EXECUTES INSIDE THE GIT HOOK**
-rm -f .git/index
-git reset --quiet 2>/dev/null || true
