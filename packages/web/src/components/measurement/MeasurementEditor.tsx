@@ -6,6 +6,7 @@ import {
   largestWholeVolumeUnit,
   largestWholeWeightUnit,
   unitType,
+  clampToZero,
   type Fraction,
   type Measurement,
   type MeasurementType,
@@ -13,7 +14,7 @@ import {
   type VolumeUnit,
   type WeightUnit,
 } from "@recipe-book/shared";
-import { FractionDisplay, OP_MODES, OP_ROWS, type OpMode } from "./FractionEditor.tsx";
+import { FractionDisplay, OpMode, OP_ROWS } from "./FractionEditor.tsx";
 import "./MeasurementEditor.css";
 
 // ---------------------------------------------------------------------------
@@ -106,7 +107,7 @@ export function MeasurementEditor({
   const [editing, setEditing] = useState(initiallyOpen);
   const [original, setOriginal] = useState<Fraction>(value.value);
   const [current, setCurrent] = useState<Fraction>(value.value);
-  const [opMode, setOpMode] = useState<OpMode>("÷");
+  const [opMode, setOpMode] = useState<OpMode>("=");
   const [mtype, setMtype] = useState<MeasurementType>(() => inferType(value.unit));
   const [unit, setUnit] = useState<MeasurementUnit>(value.unit);
   const rootRef = useRef<HTMLSpanElement>(null);
@@ -134,7 +135,7 @@ export function MeasurementEditor({
 
   function applyOpButton(label: string) {
     const op = OP_ROWS[opMode].find((o) => o.label === label);
-    if (op) setCurrent(simplify(op.apply(current)));
+    if (op) setCurrent(clampToZero(simplify(op.apply(current))));
   }
 
   function handleTypeChange(new_type: MeasurementType) {
@@ -189,7 +190,7 @@ export function MeasurementEditor({
       </span>
 
       <span className="fe-op-modes" role="group" aria-label="Operation type">
-        {OP_MODES.map((mode) => (
+        {OpMode.values.map((mode) => (
           <label key={mode} className="fe-mode-label">
             <input
               type="radio"

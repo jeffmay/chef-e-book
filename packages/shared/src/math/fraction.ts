@@ -38,6 +38,12 @@ export function addFractions(a: ReadonlyDeep<Fraction>, b: ReadonlyDeep<Fraction
   );
 }
 
+export function clampToZero(f: ReadonlyDeep<Fraction>): Fraction {
+  return f.numerator < 0
+    ? { numerator: 0, denominator: 1 }
+    : { numerator: f.numerator, denominator: f.denominator };
+}
+
 export function subtractFractions(a: ReadonlyDeep<Fraction>, b: ReadonlyDeep<Fraction>): Fraction {
   return makeFraction(
     a.numerator * b.denominator - b.numerator * a.denominator,

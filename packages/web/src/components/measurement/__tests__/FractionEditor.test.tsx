@@ -57,26 +57,35 @@ describe("FractionEditor — opening the editor", () => {
     expect(screen.getByRole("group", { name: "Operation type" })).toBeInTheDocument();
   });
 
-  it("defaults to the ÷ mode button row", async () => {
+  it("defaults to the = mode button row", async () => {
     await openEditor();
-    expect(screen.getByRole("button", { name: "÷2" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "÷3" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "÷5" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "3" })).toBeInTheDocument();
   });
 });
 
 describe("FractionEditor — operation mode switching", () => {
-  it("switching to × shows multiply buttons", async () => {
+  it("switching to = shows constant buttons", async () => {
     await openEditor();
-    await userEvent.click(screen.getByRole("radio", { name: "×" }));
-    expect(screen.getByRole("button", { name: "×2" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: "=" }));
+    expect(screen.getByRole("button", { name: "1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "3" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "÷2" })).not.toBeInTheDocument();
   });
 
-  it("switching to − shows subtract buttons", async () => {
+  it("switching to ✕ shows multiply buttons", async () => {
     await openEditor();
-    await userEvent.click(screen.getByRole("radio", { name: "−" }));
-    expect(screen.getByRole("button", { name: "−1" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: "✕" }));
+    expect(screen.getByRole("button", { name: "x2" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "÷2" })).not.toBeInTheDocument();
+  });
+
+  it("switching to - shows subtract buttons", async () => {
+    await openEditor();
+    await userEvent.click(screen.getByRole("radio", { name: "-" }));
+    expect(screen.getByRole("button", { name: "-1" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "−½" })).toBeInTheDocument();
   });
 
@@ -91,14 +100,15 @@ describe("FractionEditor — operation mode switching", () => {
 describe("FractionEditor — applying operations", () => {
   it("÷2 halves the current value", async () => {
     await openEditor(ONE);
+    await userEvent.click(screen.getByRole("radio", { name: "÷" }));
     await userEvent.click(screen.getByRole("button", { name: "÷2" }));
     expect(screen.getByLabelText("1/2")).toBeInTheDocument();
   });
 
-  it("×3 triples the current value", async () => {
+  it("✕3 triples the current value", async () => {
     await openEditor(ONE);
-    await userEvent.click(screen.getByRole("radio", { name: "×" }));
-    await userEvent.click(screen.getByRole("button", { name: "×3" }));
+    await userEvent.click(screen.getByRole("radio", { name: "✕" }));
+    await userEvent.click(screen.getByRole("button", { name: "x3" }));
     expect(screen.getByLabelText("3")).toBeInTheDocument();
   });
 
@@ -109,24 +119,62 @@ describe("FractionEditor — applying operations", () => {
     expect(screen.getByLabelText("2")).toBeInTheDocument();
   });
 
-  it("−½ subtracts one half", async () => {
+  it("-½ subtracts one half", async () => {
     await openEditor(ONE);
-    await userEvent.click(screen.getByRole("radio", { name: "−" }));
+    await userEvent.click(screen.getByRole("radio", { name: "-" }));
     await userEvent.click(screen.getByRole("button", { name: "−½" }));
     expect(screen.getByLabelText("1/2")).toBeInTheDocument();
   });
 
   it("chains multiple operations", async () => {
     await openEditor(THREE);
+    await userEvent.click(screen.getByRole("radio", { name: "÷" }));
     await userEvent.click(screen.getByRole("button", { name: "÷3" }));
     // 3 ÷ 3 = 1
     expect(screen.getByLabelText("1")).toBeInTheDocument();
+  });
+
+  it("= button sets value to 1", async () => {
+    await openEditor(THREE);
+    await userEvent.click(screen.getByRole("radio", { name: "=" }));
+    await userEvent.click(screen.getByRole("button", { name: "1" }));
+    expect(screen.getByLabelText("1")).toBeInTheDocument();
+  });
+
+  it("= button sets value to 2", async () => {
+    await openEditor(ONE);
+    await userEvent.click(screen.getByRole("radio", { name: "=" }));
+    await userEvent.click(screen.getByRole("button", { name: "2" }));
+    expect(screen.getByLabelText("2")).toBeInTheDocument();
+  });
+
+  it("= button sets value to 3", async () => {
+    await openEditor(ONE_HALF);
+    await userEvent.click(screen.getByRole("radio", { name: "=" }));
+    await userEvent.click(screen.getByRole("button", { name: "3" }));
+    expect(screen.getByLabelText("3")).toBeInTheDocument();
+  });
+
+  it("clamps to zero when subtracting below zero", async () => {
+    await openEditor(ONE_HALF);
+    await userEvent.click(screen.getByRole("radio", { name: "-" }));
+    await userEvent.click(screen.getByRole("button", { name: "-1" }));
+    expect(screen.getByLabelText("0")).toBeInTheDocument();
+  });
+
+  it("clamps to zero when repeatedly subtracting", async () => {
+    await openEditor(ONE);
+    await userEvent.click(screen.getByRole("radio", { name: "-" }));
+    await userEvent.click(screen.getByRole("button", { name: "-1" }));
+    await userEvent.click(screen.getByRole("button", { name: "-1" }));
+    expect(screen.getByLabelText("0")).toBeInTheDocument();
   });
 });
 
 describe("FractionEditor — reset", () => {
   it("< resets the display to the original value", async () => {
     await openEditor(ONE);
+    await userEvent.click(screen.getByRole("radio", { name: "÷" }));
     await userEvent.click(screen.getByRole("button", { name: "÷2" }));
     expect(screen.getByLabelText("1/2")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Cancel changes" }));
@@ -143,6 +191,7 @@ describe("FractionEditor — reset", () => {
 describe("FractionEditor — OK", () => {
   it("calls onCommit with the current fraction", async () => {
     const { onCommit } = await openEditor(ONE);
+    await userEvent.click(screen.getByRole("radio", { name: "÷" }));
     await userEvent.click(screen.getByRole("button", { name: "÷2" }));
     await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onCommit).toHaveBeenCalledWith(simplify(ONE_HALF));

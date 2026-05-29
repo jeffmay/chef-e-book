@@ -9,7 +9,10 @@ import {
   subtractFractions,
   multiplyFractions,
   divideFractions,
+  clampToZero,
   type Fraction,
+  EnumCompanion,
+  extend,
 } from "@recipe-book/shared";
 import "./FractionEditor.css";
 
@@ -17,39 +20,56 @@ import "./FractionEditor.css";
 // Shared display + op constants (also used by MeasurementEditor)
 // ---------------------------------------------------------------------------
 
-export type OpMode = "÷" | "×" | "−" | "+";
-
 export interface OpButton {
   readonly label: string;
   readonly apply: (f: Fraction) => Fraction;
 }
 
-export const OP_MODES: readonly OpMode[] = ["÷", "×", "−", "+"];
+export const OpMode = extend(EnumCompanion("OpMode", ["=", "+", "-", "✕", "÷"]), (init) => {
+  const alphaEnum = {
+    SET: "=",
+    ADD: "+",
+    SUB: "-",
+    MUL: "✕",
+    DIV: "÷",
+  } as const satisfies Record<string, (typeof init.values)[number]>;
+  return {
+    ...init,
+    enum: alphaEnum,
+    default: alphaEnum.SET,
+  };
+});
+export type OpMode = typeof OpMode.type.infer;
 
 export const OP_ROWS: Record<OpMode, readonly OpButton[]> = {
-  "÷": [
-    { label: "÷2", apply: (f) => divideFractions(f, makeFraction(2, 1)) },
-    { label: "÷3", apply: (f) => divideFractions(f, makeFraction(3, 1)) },
-    { label: "÷5", apply: (f) => divideFractions(f, makeFraction(5, 1)) },
+  "=": [
+    { label: "1", apply: () => makeFraction(1, 1) },
+    { label: "2", apply: () => makeFraction(2, 1) },
+    { label: "3", apply: () => makeFraction(3, 1) },
   ],
-  "×": [
-    { label: "×2", apply: (f) => multiplyFractions(f, makeFraction(2, 1)) },
-    { label: "×3", apply: (f) => multiplyFractions(f, makeFraction(3, 1)) },
-    { label: "×5", apply: (f) => multiplyFractions(f, makeFraction(5, 1)) },
+  "+": [
+    { label: "+1", apply: (f) => addFractions(f, makeFraction(1, 1)) },
+    { label: "+½", apply: (f) => addFractions(f, makeFraction(1, 2)) },
+    { label: "+⅓", apply: (f) => addFractions(f, makeFraction(1, 3)) },
+    { label: "+⅕", apply: (f) => addFractions(f, makeFraction(1, 5)) },
+    { label: "+⅛", apply: (f) => addFractions(f, makeFraction(1, 8)) },
   ],
-  "−": [
-    { label: "−1", apply: (f) => subtractFractions(f, makeFraction(1, 1)) },
+  "-": [
+    { label: "-1", apply: (f) => subtractFractions(f, makeFraction(1, 1)) },
     { label: "−½", apply: (f) => subtractFractions(f, makeFraction(1, 2)) },
     { label: "−⅓", apply: (f) => subtractFractions(f, makeFraction(1, 3)) },
     { label: "−⅕", apply: (f) => subtractFractions(f, makeFraction(1, 5)) },
     { label: "−⅛", apply: (f) => subtractFractions(f, makeFraction(1, 8)) },
   ],
-  "+": [
-    { label: "+⅛", apply: (f) => addFractions(f, makeFraction(1, 8)) },
-    { label: "+⅕", apply: (f) => addFractions(f, makeFraction(1, 5)) },
-    { label: "+⅓", apply: (f) => addFractions(f, makeFraction(1, 3)) },
-    { label: "+½", apply: (f) => addFractions(f, makeFraction(1, 2)) },
-    { label: "+1", apply: (f) => addFractions(f, makeFraction(1, 1)) },
+  "✕": [
+    { label: "x2", apply: (f) => multiplyFractions(f, makeFraction(2, 1)) },
+    { label: "x3", apply: (f) => multiplyFractions(f, makeFraction(3, 1)) },
+    { label: "x5", apply: (f) => multiplyFractions(f, makeFraction(5, 1)) },
+  ],
+  "÷": [
+    { label: "÷2", apply: (f) => divideFractions(f, makeFraction(2, 1)) },
+    { label: "÷3", apply: (f) => divideFractions(f, makeFraction(3, 1)) },
+    { label: "÷5", apply: (f) => divideFractions(f, makeFraction(5, 1)) },
   ],
 };
 
@@ -102,7 +122,7 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
   function openEditor() {
     setOriginal(value);
     setCurrent(value);
-    setOpMode("÷");
+    setOpMode(OpMode.default);
     setEditing(true);
   }
 
@@ -111,7 +131,7 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
   }
 
   function applyOp(op: OpButton) {
-    setCurrent(simplify(op.apply(current)));
+    setCurrent(clampToZero(simplify(op.apply(current))));
   }
 
   function commit() {
@@ -145,7 +165,7 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
       </span>
 
       <span className="fe-op-modes" role="group" aria-label="Operation type">
-        {OP_MODES.map((mode) => (
+        {OpMode.values.map((mode) => (
           <label key={mode} className="fe-mode-label">
             <input
               type="radio"

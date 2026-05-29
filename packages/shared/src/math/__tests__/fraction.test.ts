@@ -11,6 +11,7 @@ import {
   fractionalPart,
   formatFraction,
   fractionFromInteger,
+  clampToZero,
 } from "../fraction.ts";
 
 describe("makeFraction", () => {
@@ -89,6 +90,33 @@ describe("integerPart and fractionalPart", () => {
     const f = makeFraction(4, 2);
     expect(integerPart(f)).toBe(2);
     expect(fractionalPart(f)).toEqual(makeFraction(0, 1));
+  });
+});
+
+describe("clampToZero", () => {
+  it("returns the same fraction for a positive value", () => {
+    expect(clampToZero(makeFraction(3, 4))).toEqual(makeFraction(3, 4));
+  });
+
+  it("returns the same fraction for zero", () => {
+    expect(clampToZero(makeFraction(0, 1))).toEqual(makeFraction(0, 1));
+  });
+
+  it("returns zero for a negative fraction", () => {
+    expect(clampToZero(makeFraction(-3, 4))).toEqual(makeFraction(0, 1));
+  });
+
+  it("returns zero for a negative whole number", () => {
+    expect(clampToZero(makeFraction(-5, 1))).toEqual(makeFraction(0, 1));
+  });
+
+  it("returns zero for a negative improper fraction", () => {
+    expect(clampToZero(makeFraction(-7, 3))).toEqual(makeFraction(0, 1));
+  });
+
+  it("passes through an already-simplified positive fraction unchanged", () => {
+    const f = { numerator: 5, denominator: 8 };
+    expect(clampToZero(f)).toEqual(f);
   });
 });
 

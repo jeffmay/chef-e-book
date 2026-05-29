@@ -85,7 +85,7 @@ export function ScopedCompanion<
 /**
  * A helper function for extending a companion object with additional properties before it is assigned to a const.
  */
-export function extend<C extends AnyCompanion, const R extends C>(
+export function extend<C extends AnyCompanion<T>, const R extends AnyCompanion<T>, T>(
   companion: C,
   fn: (self: C) => R,
 ): R {
