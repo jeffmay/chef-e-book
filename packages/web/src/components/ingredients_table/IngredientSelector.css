@@ -18,29 +18,31 @@
   border-radius: 0;
 }
 
-.is-selector .p_treeselect_label_container {
+.is-selector .p-treeselect-label-container {
+  display: flex;
+  align-items: center;
   padding: 2px var(--spacing-xs);
 }
 
-.is-selector .p_treeselect_label {
+.is-selector .p-treeselect-label {
   font-family: var(--font-body);
   font-size: 1em;
   color: var(--color-fg);
   padding: 0;
 }
 
-.is-selector.p_treeselect:not(.p_disabled):hover {
+.is-selector.p-treeselect:not(.p-disabled):hover {
   border-color: var(--color-fg);
 }
 
-.is-selector.p_treeselect.p_focus {
+.is-selector.p-treeselect.p-focus {
   outline: 2px solid var(--color-fg);
   outline-offset: 1px;
   box-shadow: none;
 }
 
 /* Trigger icon */
-.is-selector .p_treeselect_trigger {
+.is-selector .p-treeselect-trigger {
   color: var(--color-fg);
   width: 1.8em;
 }
@@ -55,7 +57,7 @@
 }
 
 /* Panel header — compact, no rounded corners, no tinted background */
-.is-panel .p_treeselect_header {
+.is-panel .p-treeselect-header {
   padding: var(--spacing-xs) var(--spacing-sm);
   border-bottom: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
@@ -64,13 +66,13 @@
 }
 
 /* Filter container fills the header row */
-.is-panel .p_treeselect_header .p_treeselect_filter_container {
+.is-panel .p-treeselect-header .p-treeselect-filter-container {
   flex: 1 1 auto;
   margin: 0;
 }
 
 /* Filter input inside panel — room on right for search icon */
-.is-panel .p_treeselect_header .p_treeselect_filter_container input {
+.is-panel .p-treeselect-header .p-treeselect-filter-container input {
   font-family: var(--font-body);
   font-size: 0.9em;
   border: var(--border-width) solid var(--color-border);
@@ -82,16 +84,20 @@
   width: 100%;
 }
 
+.p-treeselect-label {
+  text-align: center;
+}
+
 /* All panel icons are SVGs sized 1rem by the theme — pin them to the
    surrounding text size and stop flex containers from squishing them. */
-.is-panel .p_icon {
+.is-panel .p-icon {
   width: 0.9em;
   height: 0.9em;
   flex-shrink: 0;
 }
 
 /* Search icon — vertically centred inside the input, off the right edge */
-.is-panel .p_treeselect_filter_icon {
+.is-panel .p-treeselect-filter-icon {
   width: 0.95em;
   height: 0.95em;
   top: 50%;
@@ -101,7 +107,7 @@
 }
 
 /* Close button — override the circular 2rem theme default */
-.is-panel .p_treeselect_header .p_treeselect_close {
+.is-panel .p-treeselect-header .p-treeselect-close {
   width: 1.7em !important;
   height: 1.7em !important;
   border-radius: 0 !important;
@@ -111,60 +117,59 @@
   flex-shrink: 0;
 }
 
-.is-panel .p_treeselect_header .p_treeselect_close .p_treeselect_close_icon {
+.is-panel .p-treeselect-header .p-treeselect-close .p-treeselect-close_icon {
   width: 0.9em;
   height: 0.9em;
 }
 
-.is-panel .p_treeselect_header .p_treeselect_close:hover {
+.is-panel .p-treeselect-header .p-treeselect-close:hover {
   background: var(--color-fg) !important;
   color: var(--color-bg) !important;
 }
 
 /* Tree nodes */
-.is-panel .p_tree .p_treenode_content {
+.is-panel .p-tree .p-treenode-content {
   padding: 2px var(--spacing-xs);
   font-family: var(--font-body);
   border-radius: 0;
 }
 
-.is-panel .p_tree .p_treenode_content:hover {
+.is-panel .p-tree .p-treenode-content:hover {
   background: #f8f8f8;
 }
 
-.is-panel .p_tree .p_treenode_content.p_highlight {
+.is-panel .p-tree .p-treenode-content.p-highlight {
   background: var(--color-fg) !important;
   color: var(--color-bg) !important;
 }
 
 /* Child node indentation */
-.is-panel .p_tree .p_treenode_children {
+.is-panel .p-tree .p-treenode-children {
   padding-left: 1.2em;
 }
 
 /* Toggler inside tree — larger, square, matches table style */
-.is-panel .p_tree .p_tree_toggler {
+.is-panel .p-tree .p-tree-toggler {
   width: 1.5em;
   height: 1.5em;
-  border-radius: 0 !important;
-  border: var(--border-width) solid var(--color-border) !important;
+  border: 0;
   background: var(--color-bg);
   color: var(--color-fg);
   margin-right: var(--spacing-sm);
 }
 
 /* Toggler chevron — bigger than the default 1rem icon */
-.is-panel .p_tree .p_tree_toggler .p_tree_toggler_icon {
+.is-panel .p-tree .p-tree-toggler .p-tree-toggler-icon {
   width: 0.95em;
   height: 0.95em;
 }
 
-.is-panel .p_tree .p_tree_toggler:hover {
+.is-panel .p-tree .p-tree-toggler:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
 /* Leaf rows have no toggler — reserve the same width so labels line up */
-.is-panel .p_tree .p_treenode_leaf > .p_treenode_content .p_tree_toggler {
+.is-panel .p-tree .p-treenode_leaf > .p-treenode_content .p-tree-toggler {
   visibility: hidden;
 }

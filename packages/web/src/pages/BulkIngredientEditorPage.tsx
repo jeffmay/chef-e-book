@@ -19,7 +19,10 @@ const ingredientKinds: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 // Add-ingredient form state
 // ---------------------------------------------------------------------------
 
-const DEFAULT_MEASUREMENT: Measurement = { value: { numerator: 1, denominator: 1 }, unit: "cup" };
+const DEFAULT_MEASUREMENT = {
+  value: { numerator: 1, denominator: 1 },
+  unit: "cup",
+} as const satisfies Measurement;
 
 interface AddFormState {
   name: string;
@@ -28,12 +31,12 @@ interface AddFormState {
   parent_id: string;
 }
 
-const EMPTY_ADD_FORM: AddFormState = {
+const EMPTY_ADD_FORM = {
   name: "",
   measurement_value: DEFAULT_MEASUREMENT,
   labels: [],
   parent_id: "",
-};
+} as const satisfies AddFormState;
 
 // ---------------------------------------------------------------------------
 // Component
@@ -212,7 +215,7 @@ export function BulkIngredientEditorPage() {
         ingredients={ingredients}
         onFilterAll={handleFilterAll}
         onFilterAny={handleFilterAny}
-        onDelete={(ids) => deleteLabels([...ids])}
+        onDelete={(ids) => deleteLabels(ids)}
         onMerge={mergeLabels}
         onRename={renameLabel}
       />

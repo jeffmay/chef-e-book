@@ -105,22 +105,29 @@ export function LabelEditor({
           }
         }}
       />
-      {onCancel !== undefined && (
-        <button type="button" className="it-cancel-btn" onClick={onCancel} aria-label="Cancel edit">
-          ↩
-        </button>
-      )}
-      {onCommit !== undefined && (
-        <button
-          type="button"
-          className="it-confirm-btn"
-          onClick={onCommit}
-          disabled={commitDisabled}
-          aria-label={commitAriaLabel ?? "Confirm edit"}
-        >
-          ✔︎
-        </button>
-      )}
+      <div className="it-edit-buttons">
+        {onCancel !== undefined && (
+          <button
+            type="button"
+            className="it-cancel-btn"
+            onClick={onCancel}
+            aria-label="Cancel edit"
+          >
+            ↩
+          </button>
+        )}
+        {onCommit !== undefined && (
+          <button
+            type="button"
+            className="it-confirm-btn"
+            onClick={onCommit}
+            disabled={commitDisabled}
+            aria-label={commitAriaLabel ?? "Confirm edit"}
+          >
+            ✔︎
+          </button>
+        )}
+      </div>
     </span>
   );
 }

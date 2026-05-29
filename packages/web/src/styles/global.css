@@ -10,7 +10,17 @@
   --font-body: "Courier New", Courier, monospace;
   --font-display: Georgia, serif;
 
-  --border-width: 2px;
+  --background-highlight: var(--color-accent);
+
+  --background-danger: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(0, 0, 0, 0.12) 4px,
+    rgba(0, 0, 0, 0.12) 8px
+  );
+
+  --border-width: 1px;
   --radius: 0px;
   --spacing-xs: 0.25em;
   --spacing-sm: 0.5em;

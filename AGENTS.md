@@ -2,13 +2,14 @@
 
 ## Project Description
 
-A local-first single-page web app for creating and managing recipes, with optional cloud sync. Built on Yjs for real-time collaborative state, with an e-ink inspired aesthetic (2D wireframe, handwritten style) and touch/click-first interactions.
+A local-first single-page web app for creating and managing recipes, with optional cloud sync. Built on Yjs for real-time collaborative state, with an e-ink compatible UI and aesthetic (2D wireframe, handwritten style), optimized for 880×528 pixel screen, focused on touch/click interactions.
 
 ## Code Conventions
 
 - Prettier for formatting
 - ESLint for linting
 - Functional components with hooks for React
+- Optimize for 880×528 pixel e-ink screen
 - 2-space indentation
 - TitleCase for components, classes, and enum type names
 - camelCase for function names (including hooks, event handlers, and utility functions)
@@ -57,9 +58,9 @@ recipe-book/
 │   ├── shared/        # Yjs models, types, operations — shared by web & server
 │   ├── web/           # Vite + React Router (Framework mode) SPA
 │   │   ├── react-router.config.ts   # appDirectory: "src", ssr: false
-│   │   ├── e2e/       # E2E tests + PlayWright
+│   │   ├── e2e/                     # E2E tests + PlayWright
 │   │   └── public/
-│   │       └── kitchenware.csv   # Static asset: default kitchenware (served by Vite)
+│   │       └── kitchenware.csv      # Static asset: default kitchenware (served by Vite)
 │   │   └── src/
 │   │       ├── entry.client.tsx  # Client bootstrap (HydratedRouter)
 │   │       ├── root.tsx          # Root layout (HTML shell) + auth gate + nav shell
@@ -298,8 +299,8 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 
 ## Design System
 
-- **Aesthetic:** 2D wireframe / handwritten style, e-ink white background
-- **Interactions:** Touch/click first
+- **Aesthetic:** 2D wireframe / handwritten style, e-ink white background, optimized for 880×528 pixel screen
+- **Interactions:** Optimized for touch / click, but also supports keyboard accessibility
 - **Layout:** Responsive — no horizontal scrolling; maximize horizontal space at all screen sizes
 - **Styling:** CSS-only (no JS layout), `vw` units for widths (except relative font sizes use `em`)
 - **Fractions:** Always simplified; displayed as integer + proper fraction superscript/subscript
@@ -308,6 +309,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 
 - **Unit tests:** Vitest — all models, operations, and utility functions
 - **Component tests:** Vitest + React Testing Library — all view components
+- **End-to-end tests:** Playwright - browser-dependent interaction testing and defect detection
 - **Typecheck:** `tsc --noEmit`
 - **Lint:** ESLint + Prettier
 
@@ -325,7 +327,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 | Object / interface fields (Yjs-backed)         | snake_case                    | `recipe_id`, `created_at`, `parent_folder_id`         |
 | Yjs map keys                                   | snake_case                    | `"recipe_folders"`, `recipe_store.ts`                 |
 | String discriminator values (enum)             | snake_case                    | `"measurement_type"`, `"ingredient_item"`, `"volume"` |
-| CSS classes                                    | kebab-case                    | `.re-editor`                                          |
+| CSS classes (unless defined by 3rd party)      | kebab-case                    | `.re-editor`, `le__multi-value__remove`               |
 | CSS file names                                 | TitleCase (matches component) | `DurationEditor.css` for `DurationEditor.tsx`         |
 
 Run order before every commit:

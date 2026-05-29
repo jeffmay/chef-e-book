@@ -11,31 +11,35 @@
   border-color: var(--color-fg) !important;
 }
 
-.le__value_container {
-  padding: 1px 4px !important;
-  gap: 2px;
+.le__value-container {
+  padding: 1px 2px !important;
+  gap: 2px !important;
 }
 
-.le__multi_value {
+.le__multi-value {
   color: var(--color-fg);
   border: 1px solid var(--color-border);
   background-color: var(--color-bg) !important;
   margin: 1px !important;
 }
 
-.le__multi_value__label {
+.le__multi-value__label {
   font-size: 0.85em !important;
   padding: 1px 3px !important;
 }
 
-.le__multi_value__remove {
+.le__multi-value__remove {
   color: var(--color-fg) !important;
   border-left: 1px dashed var(--color-border);
   padding: 0 3px !important;
 }
 
-.le__multi_value__remove:hover {
-  background: var(--color-fg) !important;
+.le__multi-value__remove > svg {
+  fill: var(--color-fg) !important;
+}
+
+.le__multi-value__remove:hover {
+  background-color: var(--color-fg) !important;
   color: var(--color-bg) !important;
 }
 
@@ -58,32 +62,39 @@
 
 .le__option {
   color: var(--color-fg) !important;
-  background: var(--color-bg) !important;
   padding: 4px 8px !important;
 }
 
-.le__option--is_focused {
+.le__option--is-focused {
   background: #ebebeb !important;
 }
 
-.le__option--is_focused:active,
+.le__option--is-focused:active,
 .le__option:active {
   background: #c4c4c4 !important;
 }
 
-.le__option--is_selected {
+.le__option--is-selected {
   background: var(--color-fg) !important;
   color: var(--color-bg) !important;
 }
 
-.le__dropdown_indicator {
-  padding: 2px 4px !important;
+@media (max-width: 1000px) {
+  .le__indicators {
+    width: 1.2em;
+    flex-direction: column !important;
+    align-self: center !important;
+  }
+
+  .le__indicator-separator {
+    --webkit-align-self: center !important;
+    align-self: center !important;
+    margin: 0 !important;
+    height: 1px;
+    width: 1em !important;
+  }
 }
 
-.le__indicator_separator {
-  display: none;
-}
-
-.le__clear_indicator {
-  padding: 2px 4px !important;
+.le__clear-indicator {
+  padding: 4px !important;
 }

@@ -18,9 +18,8 @@
 /* ± / < toggle button */
 .fe-toggle-btn {
   font-size: 1em;
-  padding: 0 var(--spacing-xs);
+  padding: 2px var(--spacing-md);
   border: var(--border-width) solid var(--color-border);
-  line-height: 1.4;
 }
 
 /* Header row: < button + fraction display */
@@ -86,7 +85,6 @@
 
 /* OK button */
 .fe-ok-btn {
-  font-size: 0.95em;
   padding: 2px var(--spacing-md);
   font-weight: bold;
   align-self: flex-start;
