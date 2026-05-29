@@ -86,10 +86,10 @@ describe("MeasurementEditor — operation buttons", () => {
     expect(screen.getByLabelText("1/2")).toBeInTheDocument();
   });
 
-  it("×2 doubles the displayed fraction", async () => {
+  it("✕2 doubles the displayed fraction", async () => {
     await openEditor(ONE_CUP);
-    await userEvent.click(screen.getByRole("radio", { name: "×" }));
-    await userEvent.click(screen.getByRole("button", { name: "×2" }));
+    await userEvent.click(screen.getByRole("radio", { name: "✕" }));
+    await userEvent.click(screen.getByRole("button", { name: "x2" }));
     expect(screen.getByLabelText("2")).toBeInTheDocument();
   });
 
@@ -190,17 +190,17 @@ describe("MeasurementEditor — OK with best unit conversion", () => {
   it("OK on weight value converts to largest whole unit (16 oz → 1 lb)", async () => {
     const { onCommit } = setup(ONE_OZ, vi.fn());
     await userEvent.click(screen.getByRole("button", { name: "Edit measurement" }));
-    await userEvent.click(screen.getByRole("radio", { name: "×" }));
-    await userEvent.click(screen.getByRole("button", { name: "×2" }));
+    await userEvent.click(screen.getByRole("radio", { name: "✕" }));
+    await userEvent.click(screen.getByRole("button", { name: "x2" }));
     // now 2 oz
-    await userEvent.click(screen.getByRole("radio", { name: "×" }));
-    await userEvent.click(screen.getByRole("button", { name: "×2" }));
+    await userEvent.click(screen.getByRole("radio", { name: "✕" }));
+    await userEvent.click(screen.getByRole("button", { name: "x2" }));
     // now 4 oz
-    await userEvent.click(screen.getByRole("radio", { name: "×" }));
-    await userEvent.click(screen.getByRole("button", { name: "×2" }));
+    await userEvent.click(screen.getByRole("radio", { name: "✕" }));
+    await userEvent.click(screen.getByRole("button", { name: "x2" }));
     // now 8 oz
-    await userEvent.click(screen.getByRole("radio", { name: "×" }));
-    await userEvent.click(screen.getByRole("button", { name: "×2" }));
+    await userEvent.click(screen.getByRole("radio", { name: "✕" }));
+    await userEvent.click(screen.getByRole("button", { name: "x2" }));
     // now 16 oz = 1 lb
     await userEvent.click(screen.getByRole("button", { name: "Accept changes" }));
     expect(onCommit).toHaveBeenCalledWith(
