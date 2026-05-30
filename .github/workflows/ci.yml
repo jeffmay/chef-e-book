@@ -1,18 +1,8 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
-    paths:
-      - ".github/workflows/*"
-      - "**/eslint*"
-      - "**/*.ts"
-      - "**/*.tsx"
-      - "**/*.css"
-      - "**/*.html"
-      - "**/*.json"
+  # no need to run on push because Netlify does this automatically
 
 permissions:
   contents: write
@@ -21,17 +11,11 @@ permissions:
   statuses: write
 
 jobs:
-  test-and-lint:
-    name: Test and Lint
-    uses: ./.github/workflows/test-and-lint.yml
-
   deploy-web-preview:
     name: Web
-    needs:
-      - test-and-lint
     runs-on: ubuntu-latest
     outputs:
-      deployed: ${{ steps.check-web-code.outputs.changed }}
+      deployed: ${{ steps.check-code-changes.outputs.web }}
       web_url: ${{ steps.deploy-web-preview.outputs.deploy-url || 'https://ecookbook.netlify.app' }}
     steps:
       - name: Checkout repository
@@ -39,25 +23,75 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check for Web App changes
-        id: check-web-code
+      - name: Check for code changes
+        id: check-code-changes
         run: |
-          echo "Checking for Web App changes..."
+          echo "Checking for code changes..."
           git fetch origin main
+          if git diff --name-only origin/main...HEAD | grep -E '^.*\.(css|html|[cm]?js|json|tsx?|ya?ml)'; then
+            echo "Source code changes detected."
+            echo "src=true" >> $GITHUB_OUTPUT
+          else
+            echo "No source code changes detected."
+            echo "src=false" >> $GITHUB_OUTPUT
+          fi
           if git diff --name-only origin/main...HEAD | grep -E '^packages/(shared|web)/' | grep -v '.*\.test\.tsx?'; then
             echo "Web App changes detected."
-            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "web=true" >> $GITHUB_OUTPUT
           else
             echo "No Web App changes detected."
-            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "web=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build the app
-        if: steps.check-web-code.outputs.changed == 'true'
-        run: npm ci --workspace=packages/web && npm run build --workspace=packages/web
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        if: steps.check-code-changes.outputs.src == 'true'
+        run: |
+          echo "::add-matcher::.github/problem-matchers/tsc.json"
+          npm run typecheck
+          echo "::remove-matcher owner=tsc::"
+
+      - name: Test
+        if: steps.check-code-changes.outputs.src == 'true'
+        run: CI=true npm test
+
+      - name: Lint
+        if: steps.check-code-changes.outputs.src == 'true'
+        run: |
+          echo "::add-matcher::.github/problem-matchers/eslint.json"
+          npm run lint
+          echo "::remove-matcher owner=eslint::"
+
+      - name: Check formatting
+        # always run formatting on changed files
+        run: |
+          if git diff --name-only --diff-filter=d origin/main...HEAD | grep -F 'prettier.config.ts'; then
+            # if the config file has changed, then run prettier on all files
+            npm run format
+          else
+            # only run prettier on the files that have changed
+            npx prettier -u --write $(git diff --name-only --diff-filter=d origin/main...HEAD | xargs)
+          fi
+          if ! git diff --exit-code --quiet; then
+            echo "::error::Code is not formatted. Run 'npm run format' locally and commit the changes."
+            git diff --name-only
+            exit 1
+          fi
+
+      - name: Build the Web App
+        if: steps.check-code-changes.outputs.web == 'true'
+        run: npm run build --workspace=packages/web
 
       - name: Deploy to Netlify
-        if: steps.check-web-code.outputs.changed == 'true'
+        if: steps.check-code-changes.outputs.web == 'true'
         id: deploy-web-preview
         uses: nwtgck/actions-netlify@v3.0
         with:
