@@ -1,8 +1,9 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
-  # no need to run on push because Netlify does this automatically
 
 permissions:
   contents: write
@@ -11,12 +12,12 @@ permissions:
   statuses: write
 
 jobs:
-  deploy-web-preview:
-    name: Web
+  build:
+    name: Lint and Test
     runs-on: ubuntu-latest
     outputs:
-      deployed: ${{ steps.check-code-changes.outputs.web }}
-      web_url: ${{ steps.deploy-web-preview.outputs.deploy-url || 'https://ecookbook.netlify.app' }}
+      source-code-changed: ${{ steps.check-code-changes.outputs.src }}
+      deploy-web: ${{ steps.check-code-changes.outputs.web }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -26,6 +27,12 @@ jobs:
       - name: Check for code changes
         id: check-code-changes
         run: |
+          if [ '${{ github.ref }}' = 'refs/heads/main' ]; then
+            echo "On main branch. Running all checks."
+            echo "src=true" >> $GITHUB_OUTPUT
+            echo "web=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
           echo "Checking for code changes..."
           git fetch origin main
           if git diff --name-only origin/main...HEAD | grep -E '^.*\.(css|html|[cm]?js|json|tsx?|ya?ml)'; then
@@ -71,7 +78,9 @@ jobs:
           echo "::remove-matcher owner=eslint::"
 
       - name: Check formatting
-        # always run formatting on changed files
+        # skip formatting check on main branch to avoid failing main branch status checks on formatting rule changes
+        # (i.e. a PR could be merged that is not on the latest prettier config and we don't want this workflow to fail on main).
+        if: github.ref != 'refs/heads/main'
         run: |
           if git diff --name-only --diff-filter=d origin/main...HEAD | grep -F 'prettier.config.ts'; then
             # if the config file has changed, then run prettier on all files
@@ -86,12 +95,23 @@ jobs:
             exit 1
           fi
 
+  deploy-web-preview:
+    name: Web Preview
+    runs-on: ubuntu-latest
+    # skip deploys on the main branch because Netlify does this automatically
+    if: github.ref != 'refs/heads/main' && needs.build.outputs.deploy-web == 'true'
+    needs:
+      - build
+    outputs:
+      web_url: ${{ steps.deploy-web-preview.outputs.deploy-url || 'https://ecookbook.netlify.app' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
       - name: Build the Web App
-        if: steps.check-code-changes.outputs.web == 'true'
         run: npm run build --workspace=packages/web
 
       - name: Deploy to Netlify
-        if: steps.check-code-changes.outputs.web == 'true'
         id: deploy-web-preview
         uses: nwtgck/actions-netlify@v3.0
         with:
