@@ -1,6 +1,6 @@
 import type { Ingredient, KitchenwareKind, KitchenwareLabel } from "@recipe-book/shared";
 import { IngredientId, KitchenwareLabelId, paddedId } from "@recipe-book/shared";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReadonlyDeep } from "type-fest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -362,8 +362,16 @@ describe("LabelTable — inline rename", () => {
   it("single click on label name selects the label (does not open rename)", async () => {
     await expand(defaultLabels);
     await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
+    // Selection is debounced — not immediate, so a rapid second click can be
+    // recognised as a double-click (rename) rather than two separate selections.
     expect(screen.queryByRole("textbox", { name: "Edit label name fat" })).not.toBeInTheDocument();
-    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getByText("1 selected")).toBeInTheDocument();
+      },
+      { timeout: 500 },
+    );
   });
 
   it("double-clicking label name shows rename input", async () => {
@@ -439,7 +447,12 @@ describe("LabelTable — inline rename", () => {
   it("clicking a button inside the row (Cancel rename) does not toggle selection", async () => {
     await expand(defaultLabels);
     await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
-    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getByText("1 selected")).toBeInTheDocument();
+      },
+      { timeout: 500 },
+    );
     await userEvent.dblClick(screen.getByRole("button", { name: "Rename label fat" }));
     await userEvent.click(screen.getByRole("button", { name: "Cancel rename" }));
     expect(screen.getByText("1 selected")).toBeInTheDocument();

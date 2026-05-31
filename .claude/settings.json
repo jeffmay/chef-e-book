@@ -25,7 +25,9 @@
       "Bash(npm view:*)",
       "Bash(npx tsc *)",
       "Bash(npx vitest *)",
-      "Bash(npx playwright *)"
+      "Bash(npx playwright *)",
+      "Bash(gh pr view *)",
+      "Bash(gh api */comments)"
     ]
   }
 }

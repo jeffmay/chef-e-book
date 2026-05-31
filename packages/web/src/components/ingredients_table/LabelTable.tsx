@@ -1,6 +1,6 @@
 import type { Ingredient, KitchenwareLabel, KitchenwareLabelId } from "@recipe-book/shared";
 import { RadioButton } from "primereact/radiobutton";
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import "./LabelTable.css";
 
@@ -35,6 +35,15 @@ export function LabelTable({
   const [editingName, setEditingName] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const deleteBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Per-label timers used to debounce name-cell clicks so that a single click
+  // (select) and a double-click (rename) are distinguishable.  Using a Map lets
+  // rapid clicks on *different* labels each keep their own pending timer.
+  const clickTimersRef = useRef<Map<KitchenwareLabelId, ReturnType<typeof setTimeout>>>(new Map());
+  useEffect(() => {
+    const timers = clickTimersRef.current;
+    return () => timers.forEach((t) => clearTimeout(t));
+  }, []);
 
   const selectedArray = [...selectedIds];
   const allSelected = labels.length > 0 && labels.every((l) => selectedIds.has(l.id));
@@ -391,14 +400,32 @@ export function LabelTable({
                           aria-label={`Rename label ${label.name}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggle(label.id);
+                            // Delay the selection action so a rapid second click can cancel it.
+                            // A dblclick fires two click events before the dblclick event; without
+                            // this debounce the row would toggle twice (net no-op) and the editor
+                            // would open in an unintentionally modified selection state.
+                            const timers = clickTimersRef.current;
+                            const existing = timers.get(label.id);
+                            if (existing !== undefined) clearTimeout(existing);
+                            timers.set(
+                              label.id,
+                              setTimeout(() => {
+                                timers.delete(label.id);
+                                toggle(label.id);
+                              }, 250),
+                            );
                           }}
                           onDoubleClick={(e) => {
                             e.stopPropagation();
-                            // dblClick is preceded by two click events that toggle selection twice
-                            // (net no change), so explicitly select here so editing always starts
-                            // with the row selected.
-                            setSelectedIds((prev) => new Set([...prev, label.id]));
+                            // Cancel the pending single-click selection so the row is not
+                            // inadvertently toggled.  Selecting and editing are separate
+                            // operations; opening the editor does not implicitly select the row.
+                            const timers = clickTimersRef.current;
+                            const existing = timers.get(label.id);
+                            if (existing !== undefined) {
+                              clearTimeout(existing);
+                              timers.delete(label.id);
+                            }
                             beginEdit(label);
                           }}
                           onKeyDown={(e) => {

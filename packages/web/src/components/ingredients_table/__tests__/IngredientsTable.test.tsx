@@ -6,7 +6,7 @@ import {
   type KitchenwareKind,
   type KitchenwareLabel,
 } from "@recipe-book/shared";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TreeNode } from "primereact/treenode";
 import type { TreeSelectChangeEvent } from "primereact/treeselect";
@@ -275,8 +275,16 @@ describe("IngredientsTable — editable cells", () => {
     setup([FLOUR]);
     await screen.findByRole("button", { name: "Edit name for Flour" });
     await userEvent.click(screen.getByRole("button", { name: "Edit name for Flour" }));
+    // Selection is debounced — not immediate, so a rapid second click can be
+    // recognised as a double-click (edit) rather than two separate selections.
     expect(screen.queryByRole("textbox", { name: "Edit name for Flour" })).not.toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Bulk actions" })).not.toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
+      },
+      { timeout: 500 },
+    );
     expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
 
@@ -397,7 +405,12 @@ describe("IngredientsTable — editable cells", () => {
     setup([FLOUR]);
     const nameBtn = await screen.findByRole("button", { name: "Edit name for Flour" });
     await userEvent.click(nameBtn);
-    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getByText("1 selected")).toBeInTheDocument();
+      },
+      { timeout: 500 },
+    );
     await userEvent.dblClick(nameBtn);
     const input = screen.getByRole("textbox", { name: "Edit name for Flour" });
     const editArea = input.closest("[data-editing]") as HTMLElement;

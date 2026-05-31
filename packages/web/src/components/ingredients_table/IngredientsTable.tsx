@@ -20,7 +20,7 @@ import {
   type TreeTableFilterMeta,
   type TreeTableSelectionKeysType,
 } from "primereact/treetable";
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { MeasurementEditor } from "../measurement/MeasurementEditor.tsx";
 import { buildIngredientTree, IngredientRow, IngredientRows } from "./buildIngredientTree.ts";
 import { IngredientSelector } from "./IngredientSelector.tsx";
@@ -213,6 +213,15 @@ export function IngredientsTable({
   const [bulkParentId, setBulkParentId] = useState("");
   const [editingMeasurementFor, setEditingMeasurementFor] = useState<IngredientId | null>(null);
 
+  // Per-row timers used to debounce name-cell clicks so that a single click
+  // (select) and a double-click (edit) are distinguishable.  Using a Map lets
+  // rapid clicks on *different* rows each keep their own pending timer.
+  const clickTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  useEffect(() => {
+    const timers = clickTimersRef.current;
+    return () => timers.forEach((t) => clearTimeout(t));
+  }, []);
+
   const allLabelNames = useMemo(() => labels.map((l) => l.name).sort(), [labels]);
 
   const filteredIngredients = useMemo(() => {
@@ -288,7 +297,11 @@ export function IngredientsTable({
   }
 
   function handleRowClick(event: TreeTableEvent): void {
-    if (!event.node) return;
+    const key = event.node?.key;
+    if (key == null) {
+      console.warn("Missing event.node.key property from row click event", event);
+      return;
+    }
     const target = event.originalEvent.target as HTMLElement;
     if (
       target.closest("input") !== null ||
@@ -298,7 +311,7 @@ export function IngredientsTable({
     ) {
       return;
     }
-    toggleRowSelection(String(event.node.key));
+    toggleRowSelection(String(key));
   }
 
   // ---------------------------------------------------------------------------
@@ -401,16 +414,32 @@ export function IngredientsTable({
         aria-label={`Edit name for ${row.name}`}
         onClick={(e) => {
           e.stopPropagation();
-          toggleRowSelection(row.id);
+          // Delay the selection action so a rapid second click can cancel it.
+          // A dblclick fires two click events before the dblclick event; without
+          // this debounce the row would toggle twice (net no-op) and the editor
+          // would open in an unintentionally modified selection state.
+          const timers = clickTimersRef.current;
+          const existing = timers.get(row.id);
+          if (existing !== undefined) clearTimeout(existing);
+          timers.set(
+            row.id,
+            setTimeout(() => {
+              timers.delete(row.id);
+              toggleRowSelection(row.id);
+            }, 250),
+          );
         }}
         onDoubleClick={(e) => {
           e.stopPropagation();
-          // dblClick is preceded by two click events that toggle selection twice (net no change),
-          // so explicitly select the row here so editing always starts with the row selected.
-          setSelectionKeys((prev) => ({
-            ...prev,
-            [row.id]: { checked: true, partialChecked: false },
-          }));
+          // Cancel the pending single-click selection so the row is not
+          // inadvertently toggled.  Selecting and editing are separate
+          // operations; opening the editor does not implicitly select the row.
+          const timers = clickTimersRef.current;
+          const existing = timers.get(row.id);
+          if (existing !== undefined) {
+            clearTimeout(existing);
+            timers.delete(row.id);
+          }
           onBeginEdit(row.id, "name", row.name);
         }}
         onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
