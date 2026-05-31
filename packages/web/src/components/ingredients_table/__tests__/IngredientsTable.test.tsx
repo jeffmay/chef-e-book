@@ -271,10 +271,19 @@ describe("IngredientsTable — sorting", () => {
 });
 
 describe("IngredientsTable — editable cells", () => {
-  it("clicking name cell enters edit mode", async () => {
+  it("single click on ingredient name selects the row (does not enter edit mode)", async () => {
     setup([FLOUR]);
     await screen.findByRole("button", { name: "Edit name for Flour" });
     await userEvent.click(screen.getByRole("button", { name: "Edit name for Flour" }));
+    expect(screen.queryByRole("textbox", { name: "Edit name for Flour" })).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+
+  it("double-clicking name cell enters edit mode", async () => {
+    setup([FLOUR]);
+    await screen.findByRole("button", { name: "Edit name for Flour" });
+    await userEvent.dblClick(screen.getByRole("button", { name: "Edit name for Flour" }));
     expect(screen.getByRole("textbox", { name: "Edit name for Flour" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Confirm edit" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel edit" })).toBeInTheDocument();
@@ -283,7 +292,7 @@ describe("IngredientsTable — editable cells", () => {
   it("confirms name edit on ✔︎ button click", async () => {
     setup([FLOUR]);
     await screen.findByRole("button", { name: "Edit name for Flour" });
-    await userEvent.click(screen.getByRole("button", { name: "Edit name for Flour" }));
+    await userEvent.dblClick(screen.getByRole("button", { name: "Edit name for Flour" }));
     const input = screen.getByRole("textbox", { name: "Edit name for Flour" });
     await userEvent.clear(input);
     await userEvent.type(input, "Bread Flour");
@@ -294,7 +303,7 @@ describe("IngredientsTable — editable cells", () => {
   it("confirms name edit on Enter key", async () => {
     setup([FLOUR]);
     await screen.findByRole("button", { name: "Edit name for Flour" });
-    await userEvent.click(screen.getByRole("button", { name: "Edit name for Flour" }));
+    await userEvent.dblClick(screen.getByRole("button", { name: "Edit name for Flour" }));
     const input = screen.getByRole("textbox", { name: "Edit name for Flour" });
     await userEvent.clear(input);
     await userEvent.type(input, "Rice Flour{Enter}");
@@ -304,7 +313,7 @@ describe("IngredientsTable — editable cells", () => {
   it("cancels edit on ↩ button click without calling callback", async () => {
     setup([FLOUR]);
     await screen.findByRole("button", { name: "Edit name for Flour" });
-    await userEvent.click(screen.getByRole("button", { name: "Edit name for Flour" }));
+    await userEvent.dblClick(screen.getByRole("button", { name: "Edit name for Flour" }));
     const input = screen.getByRole("textbox", { name: "Edit name for Flour" });
     await userEvent.clear(input);
     await userEvent.type(input, "Changed");
@@ -316,7 +325,7 @@ describe("IngredientsTable — editable cells", () => {
   it("cancels edit on Escape key", async () => {
     setup([FLOUR]);
     await screen.findByRole("button", { name: "Edit name for Flour" });
-    await userEvent.click(screen.getByRole("button", { name: "Edit name for Flour" }));
+    await userEvent.dblClick(screen.getByRole("button", { name: "Edit name for Flour" }));
     const input = screen.getByRole("textbox", { name: "Edit name for Flour" });
     await userEvent.type(input, "{Escape}");
     expect(onRename).not.toHaveBeenCalled();

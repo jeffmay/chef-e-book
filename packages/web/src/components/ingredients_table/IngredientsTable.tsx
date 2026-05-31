@@ -15,6 +15,7 @@ import { Column } from "primereact/column";
 import type { TreeNode } from "primereact/treenode";
 import {
   TreeTable,
+  type TreeTableEvent,
   type TreeTableExpandedKeysType,
   type TreeTableFilterMeta,
   type TreeTableSelectionKeysType,
@@ -270,6 +271,36 @@ export function IngredientsTable({
   }, [hasActiveFilter, treeNodes]);
 
   // ---------------------------------------------------------------------------
+  // Selection helpers
+  // ---------------------------------------------------------------------------
+
+  function toggleRowSelection(nodeKey: string): void {
+    setSelectionKeys((prev) => {
+      const next: TreeTableSelectionKeysType = { ...prev };
+      const current = next[nodeKey];
+      if (typeof current === "object" && current !== null && current.checked) {
+        delete next[nodeKey];
+      } else {
+        next[nodeKey] = { checked: true, partialChecked: false };
+      }
+      return next;
+    });
+  }
+
+  function handleRowClick(event: TreeTableEvent): void {
+    const target = event.originalEvent.target as HTMLElement;
+    if (
+      target.closest("input") !== null ||
+      target.closest("button") !== null ||
+      target.closest(".it-editable") !== null ||
+      target.closest(".it-editing") !== null
+    ) {
+      return;
+    }
+    toggleRowSelection(String(event.node.key));
+  }
+
+  // ---------------------------------------------------------------------------
   // Edit handlers
   // ---------------------------------------------------------------------------
 
@@ -363,9 +394,20 @@ export function IngredientsTable({
         role="button"
         tabIndex={0}
         aria-label={`Edit name for ${row.name}`}
-        onClick={() => onBeginEdit(row.id, "name", row.name)}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleRowSelection(row.id);
+        }}
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          onBeginEdit(row.id, "name", row.name);
+        }}
         onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
-          if (e.key === "Enter" || e.key === " ") onBeginEdit(row.id, "name", row.name);
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggleRowSelection(row.id);
+          }
+          if (e.key === "F2") onBeginEdit(row.id, "name", row.name);
         }}
       >
         {row.name}
@@ -638,6 +680,7 @@ export function IngredientsTable({
             setSelectionKeys(e.value as TreeTableSelectionKeysType);
           }
         }}
+        onRowClick={handleRowClick}
         filters={treeFilters}
         filterMode="lenient"
         onFilter={noopFilter}

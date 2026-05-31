@@ -336,7 +336,12 @@ export function LabelTable({
                 {labels.map((label) => (
                   <tr
                     key={label.id}
-                    className={selectedIds.has(label.id) ? "lt-row--selected" : ""}
+                    className={`lt-row${selectedIds.has(label.id) ? " lt-row--selected" : ""}`}
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement;
+                      if (target.tagName === "INPUT" || target.closest("button") !== null) return;
+                      toggle(label.id);
+                    }}
                   >
                     <td className="lt-td lt-td--select">
                       <input
@@ -384,9 +389,20 @@ export function LabelTable({
                           role="button"
                           tabIndex={0}
                           aria-label={`Rename label ${label.name}`}
-                          onClick={() => beginEdit(label)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggle(label.id);
+                          }}
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            beginEdit(label);
+                          }}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") beginEdit(label);
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              toggle(label.id);
+                            }
+                            if (e.key === "F2") beginEdit(label);
                           }}
                         >
                           {label.name}

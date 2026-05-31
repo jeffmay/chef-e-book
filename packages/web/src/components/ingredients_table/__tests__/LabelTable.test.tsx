@@ -362,15 +362,22 @@ describe("LabelTable — inline rename", () => {
     await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
   }
 
-  it("clicking label name shows rename input", async () => {
+  it("single click on label name selects the label (does not open rename)", async () => {
     await expand(defaultLabels);
     await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
+    expect(screen.queryByRole("textbox", { name: "Edit label name fat" })).not.toBeInTheDocument();
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+
+  it("double-clicking label name shows rename input", async () => {
+    await expand(defaultLabels);
+    await userEvent.dblClick(screen.getByRole("button", { name: "Rename label fat" }));
     expect(screen.getByRole("textbox", { name: "Edit label name fat" })).toBeInTheDocument();
   });
 
   it("calls onRename on Enter", async () => {
     await expand(defaultLabels);
-    await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
+    await userEvent.dblClick(screen.getByRole("button", { name: "Rename label fat" }));
     const input = screen.getByRole("textbox", { name: "Edit label name fat" });
     await userEvent.clear(input);
     await userEvent.type(input, "saturated fat{Enter}");
@@ -379,7 +386,7 @@ describe("LabelTable — inline rename", () => {
 
   it("calls onRename on confirm button click", async () => {
     await expand(defaultLabels);
-    await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
+    await userEvent.dblClick(screen.getByRole("button", { name: "Rename label fat" }));
     const input = screen.getByRole("textbox", { name: "Edit label name fat" });
     await userEvent.clear(input);
     await userEvent.type(input, "new name");
@@ -389,7 +396,7 @@ describe("LabelTable — inline rename", () => {
 
   it("cancels rename on Escape key", async () => {
     await expand(defaultLabels);
-    await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
+    await userEvent.dblClick(screen.getByRole("button", { name: "Rename label fat" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Edit label name fat" }), "{Escape}");
     expect(onRenameFn).not.toHaveBeenCalled();
     expect(screen.queryByRole("textbox", { name: "Edit label name fat" })).not.toBeInTheDocument();
@@ -397,7 +404,7 @@ describe("LabelTable — inline rename", () => {
 
   it("cancels rename on cancel button click", async () => {
     await expand(defaultLabels);
-    await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
+    await userEvent.dblClick(screen.getByRole("button", { name: "Rename label fat" }));
     await userEvent.click(screen.getByRole("button", { name: "Cancel rename" }));
     expect(onRenameFn).not.toHaveBeenCalled();
   });

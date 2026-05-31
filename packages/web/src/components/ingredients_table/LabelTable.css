@@ -279,8 +279,20 @@
   font-size: 0.85em;
 }
 
+.lt-row {
+  cursor: pointer;
+}
+
+.lt-row:hover > .lt-td {
+  background: #fafafa;
+}
+
 .lt-row--selected > .lt-td {
   background: #f0f0f0;
+}
+
+.lt-row--selected:hover > .lt-td {
+  background: #e8e8e8;
 }
 
 /* Inline name editing */
