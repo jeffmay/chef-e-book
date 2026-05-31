@@ -395,6 +395,10 @@ export function LabelTable({
                           }}
                           onDoubleClick={(e) => {
                             e.stopPropagation();
+                            // dblClick is preceded by two click events that toggle selection twice
+                            // (net no change), so explicitly select here so editing always starts
+                            // with the row selected.
+                            setSelectedIds((prev) => new Set([...prev, label.id]));
                             beginEdit(label);
                           }}
                           onKeyDown={(e) => {

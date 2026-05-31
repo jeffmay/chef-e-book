@@ -288,12 +288,13 @@ export function IngredientsTable({
   }
 
   function handleRowClick(event: TreeTableEvent): void {
+    if (!event.node) return;
     const target = event.originalEvent.target as HTMLElement;
     if (
       target.closest("input") !== null ||
       target.closest("button") !== null ||
-      target.closest(".it-editable") !== null ||
-      target.closest(".it-editing") !== null
+      target.closest("[data-editable]") !== null ||
+      target.closest("[data-editing]") !== null
     ) {
       return;
     }
@@ -348,13 +349,16 @@ export function IngredientsTable({
   // ---------------------------------------------------------------------------
   // Column body templates
   // ---------------------------------------------------------------------------
+  // The name column uses single-click to select and double-click to edit to avoid
+  // accidental renames. Other columns (measurement, labels, parent) retain single-click
+  // edit because their specialized inline editors are harder to trigger accidentally.
 
   function nameBody(node: TreeNode) {
     const [row] = validateAndPassthrough(IngredientRow, node.data);
     const pending = pendingEdits.get(pkey(row.id, "name"));
     if (pending !== undefined) {
       return (
-        <span className="it-editing">
+        <span className="it-editing" data-editing>
           <input
             type="text"
             value={pending}
@@ -391,6 +395,7 @@ export function IngredientsTable({
     return (
       <span
         className="it-editable"
+        data-editable
         role="button"
         tabIndex={0}
         aria-label={`Edit name for ${row.name}`}
@@ -400,6 +405,12 @@ export function IngredientsTable({
         }}
         onDoubleClick={(e) => {
           e.stopPropagation();
+          // dblClick is preceded by two click events that toggle selection twice (net no change),
+          // so explicitly select the row here so editing always starts with the row selected.
+          setSelectionKeys((prev) => ({
+            ...prev,
+            [row.id]: { checked: true, partialChecked: false },
+          }));
           onBeginEdit(row.id, "name", row.name);
         }}
         onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
@@ -433,6 +444,7 @@ export function IngredientsTable({
     return (
       <span
         className="it-editable"
+        data-editable
         role="button"
         tabIndex={0}
         aria-label={`Edit default measurement for ${row.name}`}
@@ -466,6 +478,7 @@ export function IngredientsTable({
     return (
       <span
         className="it-editable"
+        data-editable
         role="button"
         tabIndex={0}
         aria-label={`Edit labels for ${row.name}`}
@@ -486,7 +499,7 @@ export function IngredientsTable({
     if (pending !== undefined) {
       const pending_id = pending !== "" ? loadId(IngredientId, pending) : undefined;
       return (
-        <span className="it-editing">
+        <span className="it-editing" data-editing>
           <IngredientSelector
             value={pending_id}
             options={ingredients.filter((i) => i.id !== row.id)}
@@ -519,6 +532,7 @@ export function IngredientsTable({
     return (
       <span
         className="it-editable"
+        data-editable
         role="button"
         tabIndex={0}
         aria-label={`Edit parent for ${row.name}`}
