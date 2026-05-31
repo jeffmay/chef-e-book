@@ -284,9 +284,11 @@ describe("IngredientsTable — editable cells", () => {
     setup([FLOUR]);
     await screen.findByRole("button", { name: "Edit name for Flour" });
     await userEvent.dblClick(screen.getByRole("button", { name: "Edit name for Flour" }));
-    expect(screen.getByRole("textbox", { name: "Edit name for Flour" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Confirm edit" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cancel edit" })).toBeInTheDocument();
+    const textbox = screen.getByRole("textbox", { name: "Edit name for Flour" });
+    expect(textbox).toBeInTheDocument();
+    const editArea = textbox.closest("[data-editing]") as HTMLElement;
+    expect(within(editArea).getByRole("button", { name: "Confirm edit" })).toBeInTheDocument();
+    expect(within(editArea).getByRole("button", { name: "Cancel edit" })).toBeInTheDocument();
   });
 
   it("confirms name edit on ✔︎ button click", async () => {
@@ -315,9 +317,10 @@ describe("IngredientsTable — editable cells", () => {
     await screen.findByRole("button", { name: "Edit name for Flour" });
     await userEvent.dblClick(screen.getByRole("button", { name: "Edit name for Flour" }));
     const input = screen.getByRole("textbox", { name: "Edit name for Flour" });
+    const editArea = input.closest("[data-editing]") as HTMLElement;
     await userEvent.clear(input);
     await userEvent.type(input, "Changed");
-    await userEvent.click(screen.getByRole("button", { name: "Cancel edit" }));
+    await userEvent.click(within(editArea).getByRole("button", { name: "Cancel edit" }));
     expect(onRename).not.toHaveBeenCalled();
     expect(screen.queryByRole("textbox", { name: "Edit name for Flour" })).not.toBeInTheDocument();
   });
@@ -353,6 +356,53 @@ describe("IngredientsTable — editable cells", () => {
     await userEvent.click(await screen.findByText(/Create "baking"/));
     await userEvent.click(screen.getByRole("button", { name: "Confirm edit" }));
     expect(onSetLabels).toHaveBeenCalledWith(DAIRY.id, ["baking"]);
+  });
+
+  it("Enter key on ingredient name toggles selection", async () => {
+    setup([FLOUR]);
+    const nameBtn = await screen.findByRole("button", { name: "Edit name for Flour" });
+    nameBtn.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+
+  it("Space key on ingredient name toggles selection", async () => {
+    setup([FLOUR]);
+    const nameBtn = await screen.findByRole("button", { name: "Edit name for Flour" });
+    nameBtn.focus();
+    await userEvent.keyboard(" ");
+    expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+
+  it("F2 key on ingredient name enters edit mode", async () => {
+    setup([FLOUR]);
+    const nameBtn = await screen.findByRole("button", { name: "Edit name for Flour" });
+    nameBtn.focus();
+    await userEvent.keyboard("{F2}");
+    expect(screen.getByRole("textbox", { name: "Edit name for Flour" })).toBeInTheDocument();
+  });
+
+  it("clicking the row checkbox does not double-toggle selection", async () => {
+    setup([FLOUR]);
+    await screen.findByText("Flour");
+    const flour_row = screen.getByText("Flour").closest("tr")!;
+    const checkbox = within(flour_row).getAllByRole("checkbox")[0]!;
+    await userEvent.click(checkbox);
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+
+  it("clicking the Cancel edit button does not toggle selection", async () => {
+    setup([FLOUR]);
+    const nameBtn = await screen.findByRole("button", { name: "Edit name for Flour" });
+    await userEvent.click(nameBtn);
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    await userEvent.dblClick(nameBtn);
+    const input = screen.getByRole("textbox", { name: "Edit name for Flour" });
+    const editArea = input.closest("[data-editing]") as HTMLElement;
+    await userEvent.click(within(editArea).getByRole("button", { name: "Cancel edit" }));
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
 });
 

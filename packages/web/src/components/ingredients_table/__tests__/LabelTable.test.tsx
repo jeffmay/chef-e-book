@@ -61,9 +61,6 @@ function setup({
   onMerge = onMergeFn,
   onRename = onRenameFn,
 }: Partial<LabelTableProps> = {}) {
-  if (onClearFilters) {
-    console.log("onClearFilters supplied!");
-  }
   return render(
     <LabelTable
       labels={labels}
@@ -407,5 +404,44 @@ describe("LabelTable — inline rename", () => {
     await userEvent.dblClick(screen.getByRole("button", { name: "Rename label fat" }));
     await userEvent.click(screen.getByRole("button", { name: "Cancel rename" }));
     expect(onRenameFn).not.toHaveBeenCalled();
+  });
+
+  it("Enter key on label name toggles selection", async () => {
+    await expand(defaultLabels);
+    const nameBtn = screen.getByRole("button", { name: "Rename label fat" });
+    nameBtn.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+
+  it("Space key on label name toggles selection", async () => {
+    await expand(defaultLabels);
+    const nameBtn = screen.getByRole("button", { name: "Rename label fat" });
+    nameBtn.focus();
+    await userEvent.keyboard(" ");
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+
+  it("F2 key on label name opens rename input", async () => {
+    await expand(defaultLabels);
+    const nameBtn = screen.getByRole("button", { name: "Rename label fat" });
+    nameBtn.focus();
+    await userEvent.keyboard("{F2}");
+    expect(screen.getByRole("textbox", { name: "Edit label name fat" })).toBeInTheDocument();
+  });
+
+  it("clicking the checkbox does not double-toggle selection", async () => {
+    await expand(defaultLabels);
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select label fat" }));
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+
+  it("clicking a button inside the row (Cancel rename) does not toggle selection", async () => {
+    await expand(defaultLabels);
+    await userEvent.click(screen.getByRole("button", { name: "Rename label fat" }));
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    await userEvent.dblClick(screen.getByRole("button", { name: "Rename label fat" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel rename" }));
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
 });
