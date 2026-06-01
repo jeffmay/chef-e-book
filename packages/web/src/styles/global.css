@@ -47,7 +47,6 @@ html {
 body {
   font-family: var(--font-body);
   min-height: 100dvh;
-  overflow-x: hidden;
 }
 
 button {
@@ -81,6 +80,7 @@ select {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  overflow-x: hidden;
 }
 
 .top-nav {

@@ -1,9 +1,10 @@
+import { IngredientId, RecipeFolderId, createRecipe, createRecipeFolder, paddedId } from "@recipe-book/shared";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
-import { RecipeFolderId, createRecipe, createRecipeFolder, paddedId } from "@recipe-book/shared";
+import type { IngredientSelectorProps } from "../../components/ingredients_table/IngredientSelector.tsx";
 import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
 import { RecipeEditor } from "../RecipeEditorPage.tsx";
 
@@ -11,6 +12,33 @@ const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------butter,ingredient,Butter,volume,fat+solid
 ------flour,ingredient,Flour,volume,dry
 `;
+
+// Mock IngredientSelector so PrimeReact's TreeSelect doesn't run in jsdom.
+vi.mock("../../components/ingredients_table/IngredientSelector.tsx", () => ({
+  IngredientSelector: ({
+    value,
+    options,
+    onChange,
+    ariaLabel,
+    placeholder,
+  }: IngredientSelectorProps) => (
+    <select
+      aria-label={ariaLabel}
+      value={value ?? ""}
+      onChange={(e) => {
+        const v = e.target.value;
+        onChange(v ? (v as IngredientId) : undefined);
+      }}
+    >
+      <option value="">{placeholder ?? "— None —"}</option>
+      {options.map((ing) => (
+        <option key={ing.id} value={ing.id}>
+          {ing.name}
+        </option>
+      ))}
+    </select>
+  ),
+}));
 
 function makeWrapper(kitchenwareDoc: Y.Doc, recipeBookDoc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -164,6 +192,32 @@ describe("RecipeEditor — ingredients section", () => {
     setupNewRecipeEditor();
     expect(screen.getByRole("region", { name: "Ingredients" })).toBeInTheDocument();
   });
+
+  it("shows empty state message when no sections have ingredients", () => {
+    setupNewRecipeEditor();
+    expect(
+      screen.getByText(/Add ingredients to sections to see them listed here/i),
+    ).toBeInTheDocument();
+  });
+
+  it("shows computed ingredient totals after adding an ingredient to a section", async () => {
+    setupNewRecipeEditor();
+    await userEvent.click(screen.getByRole("button", { name: "Add section" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add ingredient to section" }));
+
+    const newIngredientGroup = screen.getByRole("group", { name: "New ingredient" });
+    const selector = within(newIngredientGroup).getByRole("combobox", {
+      name: "Select new ingredient",
+    });
+    await userEvent.selectOptions(selector, paddedId(IngredientId, "------butter"));
+
+    await userEvent.click(
+      within(newIngredientGroup).getByRole("button", { name: /Add Butter to section/i }),
+    );
+
+    const ingredientsSection = screen.getByRole("region", { name: "Ingredients" });
+    expect(within(ingredientsSection).getByText("Butter")).toBeInTheDocument();
+  });
 });
 
 describe("RecipeEditor — sections editor", () => {
@@ -181,6 +235,69 @@ describe("RecipeEditor — sections editor", () => {
     setupNewRecipeEditor();
     await userEvent.click(screen.getByRole("button", { name: "Add section" }));
     expect(screen.getByRole("group", { name: /Section:/ })).toBeInTheDocument();
+  });
+
+  it("shows IngredientSelector draft row when Add ingredient is clicked", async () => {
+    setupNewRecipeEditor();
+    await userEvent.click(screen.getByRole("button", { name: "Add section" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add ingredient to section" }));
+    expect(screen.getByRole("group", { name: "New ingredient" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Select new ingredient" })).toBeInTheDocument();
+  });
+
+  it("Add button in draft row is disabled until an ingredient is selected", async () => {
+    setupNewRecipeEditor();
+    await userEvent.click(screen.getByRole("button", { name: "Add section" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add ingredient to section" }));
+    expect(screen.getByRole("button", { name: "Confirm add ingredient" })).toBeDisabled();
+  });
+
+  it("can add an ingredient to a section via the selector", async () => {
+    setupNewRecipeEditor();
+    await userEvent.click(screen.getByRole("button", { name: "Add section" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add ingredient to section" }));
+
+    const newIngredientGroup = screen.getByRole("group", { name: "New ingredient" });
+    await userEvent.selectOptions(
+      within(newIngredientGroup).getByRole("combobox", { name: "Select new ingredient" }),
+      paddedId(IngredientId, "------butter"),
+    );
+    await userEvent.click(
+      within(newIngredientGroup).getByRole("button", { name: /Add Butter to section/i }),
+    );
+
+    expect(screen.getByRole("group", { name: /Ingredient: Butter/i })).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "New ingredient" })).not.toBeInTheDocument();
+  });
+
+  it("can cancel adding a new ingredient", async () => {
+    setupNewRecipeEditor();
+    await userEvent.click(screen.getByRole("button", { name: "Add section" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add ingredient to section" }));
+    expect(screen.getByRole("group", { name: "New ingredient" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Cancel adding ingredient" }));
+    expect(screen.queryByRole("group", { name: "New ingredient" })).not.toBeInTheDocument();
+  });
+
+  it("double-clicking an ingredient label opens the IngredientSelector", async () => {
+    setupNewRecipeEditor();
+    await userEvent.click(screen.getByRole("button", { name: "Add section" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add ingredient to section" }));
+
+    const newIngredientGroup = screen.getByRole("group", { name: "New ingredient" });
+    await userEvent.selectOptions(
+      within(newIngredientGroup).getByRole("combobox", { name: "Select new ingredient" }),
+      paddedId(IngredientId, "------butter"),
+    );
+    await userEvent.click(within(newIngredientGroup).getByRole("button", { name: /Add Butter/i }));
+
+    const ingredientGroup = screen.getByRole("group", { name: /Ingredient: Butter/i });
+    await userEvent.dblClick(within(ingredientGroup).getByText("Butter"));
+
+    expect(
+      within(ingredientGroup).getByRole("combobox", { name: /Change ingredient/i }),
+    ).toBeInTheDocument();
   });
 
   it("can add an instruction to a section", async () => {
@@ -202,6 +319,11 @@ describe("RecipeEditor — sections editor", () => {
     await userEvent.click(screen.getByRole("button", { name: "Add section" }));
     await userEvent.click(screen.getByRole("button", { name: "Remove section" }));
     expect(screen.queryByRole("group", { name: /Section:/ })).not.toBeInTheDocument();
+  });
+
+  it("does not show notes panel anywhere in the editor", () => {
+    setupNewRecipeEditor();
+    expect(screen.queryByRole("complementary", { name: "Notes" })).not.toBeInTheDocument();
   });
 });
 

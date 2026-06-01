@@ -143,14 +143,19 @@
 }
 
 /* ============================================================
-   Top-level Ingredients Editor
+   Computed Ingredients Display (read-only)
    ============================================================ */
+
+.re-ing-empty {
+  color: var(--color-muted);
+  font-style: italic;
+  font-size: 0.9em;
+}
 
 .re-ing-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-sm);
 }
 
 .re-ing-row {
@@ -167,35 +172,13 @@
   min-width: 8em;
 }
 
-.re-ing-amount {
+.re-ing-amounts {
   flex: 1;
-}
-
-.re-ing-amount-calc {
-  color: var(--color-muted);
-  font-style: italic;
-  font-size: 0.85em;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.re-ing-add-amount {
-  font-size: 0.8em;
-}
-
-.re-ing-remove {
-  margin-left: auto;
-}
-
-.re-ing-add-select {
-  font-family: var(--font-body);
   font-size: 0.9em;
-  padding: var(--spacing-xs);
-  border: var(--border-width) solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-fg);
-  max-width: 30vw;
+}
+
+.re-ing-no-amount {
+  color: var(--color-muted);
 }
 
 /* ============================================================
@@ -272,20 +255,18 @@
    ============================================================ */
 
 .re-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-xs) var(--spacing-sm);
   padding: var(--spacing-xs) var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
-  align-items: start;
-}
-
-.re-item--ingredient {
-  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
 }
 
 .re-item-label {
   font-weight: bold;
+  cursor: default;
+  user-select: none;
 }
 
 .re-item-remove {
@@ -295,6 +276,7 @@
   border: var(--border-width) solid var(--color-border);
   color: var(--color-muted);
   cursor: pointer;
+  margin-left: auto;
 }
 
 .re-item-header {
@@ -302,7 +284,24 @@
   flex-wrap: wrap;
   gap: var(--spacing-xs);
   align-items: center;
-  grid-column: 1 / -1;
+  width: 100%;
+}
+
+/* New ingredient draft row */
+.re-item--new-ingredient {
+  border-style: dashed;
+  background: var(--color-bg);
+}
+
+.re-new-ingredient-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.re-new-ingredient-add,
+.re-new-ingredient-cancel {
+  font-size: 0.85em;
+  padding: 2px var(--spacing-xs);
 }
 
 /* Container item */
@@ -329,7 +328,7 @@
 }
 
 .re-container-contents {
-  grid-column: 1 / -1;
+  width: 100%;
   padding-left: 2vw;
   border-left: var(--border-width) solid var(--color-border);
   margin-left: var(--spacing-sm);
@@ -338,15 +337,11 @@
   gap: var(--spacing-xs);
 }
 
-.re-container-add-ingredient {
-  font-family: var(--font-body);
+.re-container-add-ingredient-btn {
   font-size: 0.85em;
   padding: 2px var(--spacing-xs);
-  border: var(--border-width) solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-fg);
-  max-width: 25vw;
   margin-top: var(--spacing-xs);
+  align-self: flex-start;
 }
 
 /* Instruction item */
@@ -371,7 +366,7 @@
 }
 
 .re-instruction-duration {
-  grid-column: 1 / -1;
+  width: 100%;
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -390,7 +385,7 @@
 }
 
 .re-instruction-ingredients {
-  grid-column: 1 / -1;
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs);
@@ -425,73 +420,6 @@
   color: var(--color-fg);
   width: 100%;
   resize: vertical;
-}
-
-/* ============================================================
-   Notes panel (post-it style)
-   ============================================================ */
-
-.re-notes-panel {
-  background: #fffde7;
-  border: var(--border-width) solid #e0d700;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  min-width: 8em;
-  max-width: 20vw;
-  font-size: 0.8em;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.re-notes-list {
-  list-style: disc;
-  padding-left: var(--spacing-md);
-  margin-bottom: 2px;
-}
-
-.re-note-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.re-note-text {
-  flex: 1;
-  word-break: break-word;
-}
-
-.re-note-remove {
-  border: none;
-  background: none;
-  color: var(--color-muted);
-  cursor: pointer;
-  padding: 0;
-  font-size: 0.9em;
-  line-height: 1;
-}
-
-.re-notes-add-row {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.re-notes-input {
-  font-family: var(--font-body);
-  font-size: 0.85em;
-  padding: 1px 4px;
-  border: 1px solid #e0d700;
-  background: #fffde7;
-  flex: 1;
-}
-
-.re-notes-add-btn {
-  border: none;
-  background: none;
-  color: var(--color-muted);
-  font-size: 0.8em;
-  cursor: pointer;
-  padding: 2px;
 }
 
 /* ============================================================
