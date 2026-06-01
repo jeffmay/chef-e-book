@@ -27,7 +27,8 @@
       "Bash(npx vitest *)",
       "Bash(npx playwright *)",
       "Bash(gh pr view *)",
-      "Bash(gh api repos/jeffmay/ecookdeck/*/comments/*)"
+      "Bash(gh api repos/jeffmay/ecookdeck/*/comments/*)",
+      "Bash(xargs:*)"
     ]
   }
 }
