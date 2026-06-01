@@ -107,10 +107,10 @@ export const RecipeVersion = Companion(
   type({
     id: RecipeVersionId.type,
     recipe_id: RecipeId.type,
-    description: "string",
+    description: "string > 0",
     ingredients: RecipeIngredient.type.array(),
     sections: Section.type.array(),
-    created_at: "number",
+    created_at: "number.epoch",
     // created_by: "string",
   }),
 );
@@ -125,8 +125,8 @@ export const Recipe = Companion(
     "source_url?": "string.url",
     "parent_folder_id?": RecipeFolderId.type,
     versions: RecipeVersion.type.array(),
-    created_at: "number",
-    updated_at: "number",
+    created_at: "number.epoch",
+    updated_at: "number.epoch",
   }),
 );
 export type Recipe = typeof Recipe.type.infer;
