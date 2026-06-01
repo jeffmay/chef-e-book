@@ -536,29 +536,38 @@
    Save actions
    ============================================================ */
 
-.re-actions {
+.re-actions > div {
+  margin: var(--spacing-sm) 0;
+}
+
+.re-version-options {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-sm) 0;
-  border-top: var(--border-width) solid var(--color-border);
 }
 
 .re-new-version-label {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  font-size: 0.9em;
+  padding: var(--spacing-xs);
+  gap: var(--spacing-sm);
+}
+
+.re-new-version-label > input {
+  width: unset;
+  margin-right: var(--spacing-xs);
+}
+
+.re-new-version-input {
+  flex-grow: 1;
+}
+
+.re-save-actions {
+  display: flex;
+  justify-content: end;
+  gap: var(--spacing-sm);
 }
 
 .re-save-btn {
-  font-size: 1em;
-  padding: var(--spacing-xs) var(--spacing-md);
-}
-
-.re-cancel-btn {
-  font-size: 0.9em;
+  padding: var(--spacing-xs);
 }
 
 /* ============================================================

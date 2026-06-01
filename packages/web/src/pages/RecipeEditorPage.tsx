@@ -1041,6 +1041,8 @@ export function RecipeEditor({
     onSave(copied);
   }
 
+  const createNewVersion = !recipe || form.create_new_version;
+
   return (
     <main className="re-editor" aria-label="Recipe editor">
       <div className="re-editor-header">
@@ -1065,18 +1067,6 @@ export function RecipeEditor({
         <h2 className="re-section-title">Recipe Info</h2>
 
         <label className="re-field-label">
-          Source URL
-          <input
-            className="re-field-input"
-            type="url"
-            value={form.source_url}
-            onChange={(e) => patch("source_url", e.target.value)}
-            placeholder="Recipe Source URL"
-            aria-label="Source URL"
-          />
-        </label>
-
-        <label className="re-field-label">
           Title
           <input
             className="re-field-input re-field-input--title"
@@ -1096,17 +1086,6 @@ export function RecipeEditor({
             onChange={(e) => patch("subtitle", e.target.value)}
             placeholder="Subtitle"
             aria-label="Recipe subtitle"
-          />
-        </label>
-
-        <label className="re-field-label">
-          Version note
-          <input
-            className="re-field-input"
-            value={form.description}
-            onChange={(e) => patch("description", e.target.value)}
-            placeholder='ex: "Untested" or "Final Version"'
-            aria-label="Version description"
           />
         </label>
 
@@ -1186,30 +1165,41 @@ export function RecipeEditor({
       {recipe && <VersionHistoryTable versions={recipe.versions} />}
 
       {/* Save actions */}
-      <section className="re-actions" aria-label="Save actions">
-        {recipe && (
+      <section className="re-actions">
+        <div className="re-version-options">
           <label className="re-new-version-label">
             <input
               type="checkbox"
-              checked={form.create_new_version}
+              contentEditable={!!recipe}
+              checked={createNewVersion}
               onChange={(e) => patch("create_new_version", e.target.checked)}
-              aria-label="Create a new version from changes"
+              aria-label="Create new version"
             />
-            Create a new version from changes
+            Create new version
           </label>
-        )}
-        <button
-          type="button"
-          className="re-save-btn"
-          onClick={handleSave}
-          disabled={form.title.trim() === ""}
-          aria-label="Save recipe"
-        >
-          Save updates
-        </button>
-        <button type="button" className="re-cancel-btn" onClick={onCancel}>
-          Cancel
-        </button>
+          <input
+            className="re-new-version-input"
+            value={form.description}
+            contentEditable={false}
+            onChange={(e) => patch("description", e.target.value)}
+            placeholder='ex: "Untested" or "Final Version"'
+            aria-label="Version description"
+          />
+        </div>
+        <div className="re-save-actions" aria-label="Save actions">
+          <button type="button" className="re-cancel-btn" onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="re-save-btn"
+            onClick={handleSave}
+            disabled={form.title.trim() === ""}
+            aria-label="Save recipe"
+          >
+            Save updates
+          </button>
+        </div>
       </section>
 
       {/* Copy dialog */}
