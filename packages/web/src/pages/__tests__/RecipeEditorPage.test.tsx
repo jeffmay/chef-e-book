@@ -3,16 +3,16 @@ import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
+import { createRecipe } from "@recipe-book/shared";
 import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
-import { RecipeEditorPage } from "../RecipeEditorPage.tsx";
+import { RecipeEditor } from "../RecipeEditorPage.tsx";
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------butter,ingredient,Butter,volume,fat+solid
 ------flour,ingredient,Flour,volume,dry
 `;
 
-function makeWrapper(kitchenwareDoc: Y.Doc) {
-  const recipeBookDoc = new Y.Doc();
+function makeWrapper(kitchenwareDoc: Y.Doc, recipeBookDoc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
       KitchenwareDocContext.Provider,
@@ -26,10 +26,12 @@ function makeWrapper(kitchenwareDoc: Y.Doc) {
   };
 }
 
-let doc: Y.Doc;
+let kitchenwareDoc: Y.Doc;
+let recipeBookDoc: Y.Doc;
 
 beforeEach(() => {
-  doc = new Y.Doc();
+  kitchenwareDoc = new Y.Doc();
+  recipeBookDoc = new Y.Doc();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }));
 });
 
@@ -37,38 +39,33 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function setup() {
-  return render(<RecipeEditorPage />, { wrapper: makeWrapper(doc) });
+function setupNewRecipeEditor() {
+  const onSave = vi.fn();
+  const onCancel = vi.fn();
+  render(<RecipeEditor recipe={null} onSave={onSave} onCancel={onCancel} />, {
+    wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc),
+  });
+  return { onSave, onCancel };
 }
 
-describe("RecipeEditorPage — list view", () => {
-  it("renders the Recipes heading", () => {
-    setup();
-    expect(screen.getByRole("heading", { name: "Recipes" })).toBeInTheDocument();
+function setupExistingRecipeEditor(title: string) {
+  const recipe = createRecipe(recipeBookDoc, { title });
+  const onSave = vi.fn();
+  const onCancel = vi.fn();
+  render(<RecipeEditor recipe={recipe} onSave={onSave} onCancel={onCancel} />, {
+    wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc),
   });
+  return { recipe, onSave, onCancel };
+}
 
-  it("shows the + New recipe button", () => {
-    setup();
-    expect(screen.getByRole("button", { name: "New recipe" })).toBeInTheDocument();
-  });
-
-  it("shows empty state when no recipes exist", () => {
-    setup();
-    expect(screen.getByText(/No recipes yet/i)).toBeInTheDocument();
-  });
-});
-
-describe("RecipeEditorPage — new recipe form", () => {
-  it("opens the recipe editor when + New recipe is clicked", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
-    expect(screen.getByRole("main", { name: "Recipe editor" })).toBeInTheDocument();
+describe("RecipeEditor — new recipe form", () => {
+  it("shows the New Recipe heading", () => {
+    setupNewRecipeEditor();
     expect(screen.getByRole("heading", { name: "New Recipe" })).toBeInTheDocument();
   });
 
-  it("shows all required fields in the editor", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+  it("shows all required fields", () => {
+    setupNewRecipeEditor();
     expect(screen.getByRole("textbox", { name: "Recipe title" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Recipe subtitle" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Source URL" })).toBeInTheDocument();
@@ -76,147 +73,116 @@ describe("RecipeEditorPage — new recipe form", () => {
     expect(screen.getByRole("combobox", { name: "Parent folder" })).toBeInTheDocument();
   });
 
-  it("Save button is disabled when title is empty", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+  it("Save button is disabled when title is empty", () => {
+    setupNewRecipeEditor();
     expect(screen.getByRole("button", { name: "Save recipe" })).toBeDisabled();
   });
 
   it("Save button is enabled when title is filled in", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+    setupNewRecipeEditor();
     await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Chocolate Cake");
     expect(screen.getByRole("button", { name: "Save recipe" })).not.toBeDisabled();
   });
 
-  it("creates a recipe and returns to the list", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+  it("calls onSave after saving", async () => {
+    const { onSave } = setupNewRecipeEditor();
     await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Chocolate Cake");
     await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
-    expect(screen.getByRole("heading", { name: "Recipes" })).toBeInTheDocument();
-    expect(screen.getByText("Chocolate Cake")).toBeInTheDocument();
+    expect(onSave).toHaveBeenCalledOnce();
   });
 
-  it("Cancel returns to the list without saving", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
-    await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Draft Recipe");
+  it("calls onCancel when Cancel is clicked", async () => {
+    const { onCancel } = setupNewRecipeEditor();
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(screen.getByRole("heading", { name: "Recipes" })).toBeInTheDocument();
-    expect(screen.queryByText("Draft Recipe")).not.toBeInTheDocument();
+    expect(onCancel).toHaveBeenCalledOnce();
   });
 
-  it("← Back returns to the list without saving", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+  it("calls onCancel when ← Back is clicked", async () => {
+    const { onCancel } = setupNewRecipeEditor();
     await userEvent.click(screen.getByRole("button", { name: "Back to recipe list" }));
-    expect(screen.getByRole("heading", { name: "Recipes" })).toBeInTheDocument();
+    expect(onCancel).toHaveBeenCalledOnce();
   });
 });
 
-describe("RecipeEditorPage — editing existing recipe", () => {
-  async function create_and_edit(title: string) {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
-    await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), title);
-    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
-    await userEvent.click(screen.getByRole("button", { name: `Edit recipe: ${title}` }));
-  }
-
-  it("opens the editor for an existing recipe", async () => {
-    await create_and_edit("Banana Bread");
+describe("RecipeEditor — editing existing recipe", () => {
+  it("shows the edit heading with recipe title", () => {
+    setupExistingRecipeEditor("Banana Bread");
     expect(screen.getByRole("heading", { name: "Edit: Banana Bread" })).toBeInTheDocument();
   });
 
-  it("shows version history for existing recipe", async () => {
-    await create_and_edit("Banana Bread");
+  it("shows version history for existing recipe", () => {
+    setupExistingRecipeEditor("Banana Bread");
     expect(screen.getByText(/Version history/i)).toBeInTheDocument();
   });
 
-  it("shows the 'Create a new version' checkbox when editing", async () => {
-    await create_and_edit("Banana Bread");
+  it("shows the 'Create a new version' checkbox when editing", () => {
+    setupExistingRecipeEditor("Banana Bread");
     expect(
       screen.getByRole("checkbox", { name: "Create a new version from changes" }),
     ).toBeInTheDocument();
   });
 
-  it("shows Copy recipe button when editing", async () => {
-    await create_and_edit("Banana Bread");
+  it("shows Copy recipe button when editing", () => {
+    setupExistingRecipeEditor("Banana Bread");
     expect(screen.getByRole("button", { name: "Copy recipe" })).toBeInTheDocument();
   });
 });
 
-describe("RecipeEditorPage — ingredients section", () => {
-  it("shows the Ingredients section in the editor", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+describe("RecipeEditor — ingredients section", () => {
+  it("shows the Ingredients section", () => {
+    setupNewRecipeEditor();
     expect(screen.getByRole("region", { name: "Ingredients" })).toBeInTheDocument();
   });
 });
 
-describe("RecipeEditorPage — sections editor", () => {
-  it("shows the Instructions section in the editor", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+describe("RecipeEditor — sections editor", () => {
+  it("shows the Instructions section", () => {
+    setupNewRecipeEditor();
     expect(screen.getByRole("region", { name: "Instructions" })).toBeInTheDocument();
   });
 
-  it("shows Add section button", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+  it("shows Add section button", () => {
+    setupNewRecipeEditor();
     expect(screen.getByRole("button", { name: "Add section" })).toBeInTheDocument();
   });
 
   it("adds a section when Add section is clicked", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+    setupNewRecipeEditor();
     await userEvent.click(screen.getByRole("button", { name: "Add section" }));
     expect(screen.getByRole("group", { name: /Section:/ })).toBeInTheDocument();
   });
 
   it("can add an instruction to a section", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+    setupNewRecipeEditor();
     await userEvent.click(screen.getByRole("button", { name: "Add section" }));
     await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
     expect(screen.getByRole("textbox", { name: "Instruction text" })).toBeInTheDocument();
   });
 
   it("can add a text block to a section", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+    setupNewRecipeEditor();
     await userEvent.click(screen.getByRole("button", { name: "Add section" }));
     await userEvent.click(screen.getByRole("button", { name: "Add text block to section" }));
     expect(screen.getByRole("textbox", { name: "Text block content" })).toBeInTheDocument();
   });
 
   it("can remove a section", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+    setupNewRecipeEditor();
     await userEvent.click(screen.getByRole("button", { name: "Add section" }));
     await userEvent.click(screen.getByRole("button", { name: "Remove section" }));
     expect(screen.queryByRole("group", { name: /Section:/ })).not.toBeInTheDocument();
   });
 });
 
-describe("RecipeEditorPage — copy recipe", () => {
+describe("RecipeEditor — copy recipe", () => {
   it("opens the copy dialog when Copy recipe is clicked", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
-    await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Soup");
-    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
-    await userEvent.click(screen.getByRole("button", { name: "Edit recipe: Soup" }));
+    setupExistingRecipeEditor("Soup");
     await userEvent.click(screen.getByRole("button", { name: "Copy recipe" }));
     expect(screen.getByRole("dialog", { name: "Copy recipe" })).toBeInTheDocument();
   });
 
   it("copy dialog pre-fills the title", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
-    await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Soup");
-    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
-    await userEvent.click(screen.getByRole("button", { name: "Edit recipe: Soup" }));
+    setupExistingRecipeEditor("Soup");
     await userEvent.click(screen.getByRole("button", { name: "Copy recipe" }));
     const dialog = screen.getByRole("dialog", { name: "Copy recipe" });
     expect(within(dialog).getByRole("textbox", { name: "New recipe title" })).toHaveValue(
@@ -225,11 +191,7 @@ describe("RecipeEditorPage — copy recipe", () => {
   });
 
   it("cancel closes the copy dialog", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
-    await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Soup");
-    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
-    await userEvent.click(screen.getByRole("button", { name: "Edit recipe: Soup" }));
+    setupExistingRecipeEditor("Soup");
     await userEvent.click(screen.getByRole("button", { name: "Copy recipe" }));
     const dialog = screen.getByRole("dialog", { name: "Copy recipe" });
     await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));

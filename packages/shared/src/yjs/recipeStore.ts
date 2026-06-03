@@ -162,8 +162,7 @@ function validateRecipeVersion(raw: unknown): RecipeVersion | null {
     typeof r["id"] !== "string" ||
     typeof r["recipe_id"] !== "string" ||
     typeof r["description"] !== "string" ||
-    typeof r["created_at"] !== "number" ||
-    typeof r["created_by"] !== "string"
+    typeof r["created_at"] !== "number"
   )
     return null;
 
@@ -355,4 +354,48 @@ export function copyRecipe(
 
 export function deleteRecipe(doc: Y.Doc, id: RecipeId): void {
   getRecipeYmap(doc).delete(id);
+}
+
+export function mergeRecipes(
+  doc: Y.Doc,
+  recipe_ids: RecipeId[],
+  new_title: string,
+  new_folder_id?: RecipeFolderId,
+): Recipe {
+  if (recipe_ids.length < 2) {
+    throw new Error(`mergeRecipes requires at least 2 recipes, received: ${recipe_ids.length}`);
+  }
+
+  const recipes = recipe_ids.map((id) => {
+    const r = getRecipe(doc, id);
+    if (r === null) throw new Error(`Recipe ${id} not found`);
+    return r;
+  });
+
+  const now = Date.now();
+  const new_recipe_id = randomId(RecipeId);
+
+  const all_versions: RecipeVersion[] = recipes
+    .flatMap((r) => r.versions)
+    .sort((a, b) => a.created_at - b.created_at)
+    .map((v) => ({ ...v, id: randomId(RecipeVersionId), recipe_id: new_recipe_id }));
+
+  const merged: Recipe = {
+    id: new_recipe_id,
+    title: new_title,
+    versions: all_versions,
+    created_at: Math.min(...recipes.map((r) => r.created_at)),
+    updated_at: now,
+    ...(new_folder_id !== undefined && { parent_folder_id: new_folder_id }),
+  };
+
+  const map = getRecipeYmap(doc);
+  doc.transact(() => {
+    map.set(new_recipe_id, merged);
+    for (const id of recipe_ids) {
+      map.delete(id);
+    }
+  });
+
+  return merged;
 }
