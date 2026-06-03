@@ -1,5 +1,5 @@
-import { RecipeEditorPage } from "../pages/RecipeEditorPage.tsx";
+import { BulkRecipeEditorPage } from "../pages/BulkRecipeEditorPage.tsx";
 
 export default function Recipes() {
-  return <RecipeEditorPage />;
+  return <BulkRecipeEditorPage />;
 }

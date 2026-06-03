@@ -1,0 +1,307 @@
+/* ============================================================
+   BulkRecipeEditorPage
+   ============================================================ */
+
+.bre-page {
+  padding: var(--spacing-md);
+  max-width: 100%;
+}
+
+.bre-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border-bottom: var(--border-width) solid var(--color-border);
+  padding-bottom: var(--spacing-sm);
+}
+
+.bre-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.1em, 2.5vw, 1.6em);
+  flex: 1;
+}
+
+.bre-new-btn {
+  font-size: 0.95em;
+}
+
+.bre-empty {
+  color: var(--color-muted);
+  font-style: italic;
+  margin-top: var(--spacing-md);
+}
+
+/* ============================================================
+   Bulk action bar
+   ============================================================ */
+
+.bre-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: var(--border-width) solid var(--color-border);
+  margin-bottom: var(--spacing-sm);
+  background: var(--color-bg);
+}
+
+.bre-bulk-clear {
+  font-size: 0.85em;
+}
+
+.bre-bulk-count {
+  font-size: 0.9em;
+  color: var(--color-muted);
+}
+
+.bre-bulk-btn {
+  font-size: 0.85em;
+  padding: 2px var(--spacing-sm);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
+.bre-merge-form {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.bre-merge-input {
+  font-family: var(--font-body);
+  font-size: 0.9em;
+  padding: 2px var(--spacing-xs);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  min-width: 20vw;
+}
+
+.bre-merge-error {
+  font-size: 0.85em;
+  color: var(--color-fg);
+  border: var(--border-width) solid var(--color-fg);
+  padding: 1px var(--spacing-xs);
+}
+
+/* ============================================================
+   Delete confirmation dialog
+   ============================================================ */
+
+.bre-delete-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.bre-delete-dialog {
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-md);
+  min-width: 25vw;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.bre-delete-title {
+  font-family: var(--font-display);
+  font-size: 1.1em;
+}
+
+.bre-delete-subtitle {
+  font-size: 0.9em;
+  color: var(--color-muted);
+}
+
+.bre-delete-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.bre-delete-btn {
+  font-size: 0.9em;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
+.bre-delete-btn--accept {
+  font-weight: bold;
+}
+
+/* ============================================================
+   Tree table
+   ============================================================ */
+
+.bre-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.bre-th {
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  text-align: left;
+  background: var(--color-fg);
+  color: var(--color-bg);
+  font-family: var(--font-display);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.bre-th--select {
+  width: 2em;
+  text-align: center;
+}
+
+.bre-th--date {
+  width: 10vw;
+  min-width: 6em;
+}
+
+.bre-th--actions {
+  width: 6em;
+  text-align: center;
+}
+
+.bre-td {
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  vertical-align: middle;
+}
+
+.bre-td--select {
+  text-align: center;
+  width: 2em;
+}
+
+.bre-td--date {
+  font-size: 0.85em;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.bre-td--actions {
+  text-align: center;
+}
+
+/* Depth-based name cell indentation */
+.bre-td--name {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding-left: var(--spacing-sm);
+}
+
+.bre-td--name[data-depth="1"] {
+  padding-left: calc(var(--spacing-sm) + 2em);
+}
+
+.bre-td--name[data-depth="2"] {
+  padding-left: calc(var(--spacing-sm) + 4em);
+}
+
+.bre-td--name[data-depth="3"] {
+  padding-left: calc(var(--spacing-sm) + 6em);
+}
+
+/* ============================================================
+   Row types
+   ============================================================ */
+
+.bre-row--folder {
+  background: var(--color-bg);
+}
+
+.bre-row--folder .bre-td {
+  font-style: italic;
+  color: var(--color-muted);
+}
+
+.bre-row--folder .bre-name {
+  font-style: normal;
+  font-family: var(--font-display);
+  color: var(--color-fg);
+}
+
+.bre-row--recipe {
+  background: var(--color-bg);
+}
+
+.bre-row--selected {
+  background: color-mix(in srgb, var(--color-checked) 10%, var(--color-bg));
+}
+
+.bre-row--version .bre-td {
+  background: color-mix(in srgb, var(--color-fg) 3%, var(--color-bg));
+  font-size: 0.85em;
+  color: var(--color-muted);
+}
+
+/* ============================================================
+   Name cell internals
+   ============================================================ */
+
+.bre-expand-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.75em;
+  color: var(--color-muted);
+  display: inline-flex;
+  align-items: center;
+  min-width: 1.2em;
+}
+
+.bre-expand-spacer {
+  display: inline-block;
+  min-width: 1.2em;
+}
+
+.bre-folder-icon {
+  font-size: 0.9em;
+}
+
+.bre-name {
+  font-weight: 500;
+}
+
+.bre-subtitle {
+  font-size: 0.85em;
+  color: var(--color-muted);
+  margin-left: var(--spacing-xs);
+}
+
+.bre-version-desc {
+  font-style: italic;
+}
+
+/* ============================================================
+   Edit button
+   ============================================================ */
+
+.bre-edit-btn {
+  font-size: 0.8em;
+  padding: 2px var(--spacing-sm);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+  white-space: nowrap;
+}

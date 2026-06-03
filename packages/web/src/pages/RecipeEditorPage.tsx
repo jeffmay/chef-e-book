@@ -1,32 +1,32 @@
-import { useState } from "react";
 import {
+  ContainerId,
   type ContainerItem,
+  EquipmentId,
   type Ingredient,
+  IngredientId,
   type IngredientItem,
   type Instruction,
   type Recipe,
+  RecipeFolderId,
   type RecipeIngredient,
+  RecipeIngredientId,
   type RecipeVersion,
+  RecipeVersionId,
   type Section,
   type SectionItem,
+  SectionItemId,
   type TextBlock,
   loadId,
   paddedId,
   randomId,
-  ContainerId,
-  EquipmentId,
-  RecipeFolderId,
-  RecipeIngredientId,
-  RecipeVersionId,
-  SectionItemId,
-  IngredientId,
 } from "@recipe-book/shared";
+import { useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
-import { MeasurementEditor } from "../components/measurement/MeasurementEditor.tsx";
 import { DurationEditor } from "../components/duration/DurationEditor.tsx";
+import { MeasurementEditor } from "../components/measurement/MeasurementEditor.tsx";
 import { useIngredientStore } from "../hooks/useIngredientStore.ts";
 import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.ts";
-import { useRecipeStore, latestVersion } from "../hooks/useRecipeStore.ts";
+import { latestVersion, useRecipeStore } from "../hooks/useRecipeStore.ts";
 import "./RecipeEditorPage.css";
 
 // ---------------------------------------------------------------------------
@@ -1209,81 +1209,5 @@ export function RecipeEditor({ recipe, versionId, onSave, onCancel }: RecipeEdit
         />
       )}
     </main>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// RecipeList
-// ---------------------------------------------------------------------------
-
-interface RecipeListProps {
-  readonly recipes: Recipe[];
-  readonly onSelect: (recipe: Recipe) => void;
-  readonly onNew: () => void;
-}
-
-function RecipeList({ recipes, onSelect, onNew }: RecipeListProps) {
-  return (
-    <main className="re-list-page" aria-label="Recipe list">
-      <h1 className="page-title">Recipes</h1>
-      <button type="button" className="re-new-btn" onClick={onNew} aria-label="New recipe">
-        + New recipe
-      </button>
-      {recipes.length === 0 ? (
-        <p className="re-list-empty">No recipes yet. Create your first one!</p>
-      ) : (
-        <ul className="re-list">
-          {recipes.map((r) => {
-            const v = latestVersion(r);
-            return (
-              <li key={r.id} className="re-list-item">
-                <button
-                  type="button"
-                  className="re-list-item-btn"
-                  onClick={() => onSelect(r)}
-                  aria-label={`Edit recipe: ${r.title}`}
-                >
-                  <span className="re-list-item-title">{r.title}</span>
-                  {r.subtitle && <span className="re-list-item-subtitle">{r.subtitle}</span>}
-                  {v?.description && <span className="re-list-item-desc">{v.description}</span>}
-                  <span className="re-list-item-date">
-                    {new Date(r.updated_at).toLocaleDateString()}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </main>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// RecipeEditorPage
-// ---------------------------------------------------------------------------
-
-type EditingState = { kind: "new" } | { kind: "edit"; recipe: Recipe } | null;
-
-export function RecipeEditorPage() {
-  const { recipes } = useRecipeStore();
-  const [editing, setEditing] = useState<EditingState>(null);
-
-  if (editing !== null) {
-    return (
-      <RecipeEditor
-        recipe={editing.kind === "new" ? null : editing.recipe}
-        onSave={() => setEditing(null)}
-        onCancel={() => setEditing(null)}
-      />
-    );
-  }
-
-  return (
-    <RecipeList
-      recipes={recipes}
-      onSelect={(r) => setEditing({ kind: "edit", recipe: r })}
-      onNew={() => setEditing({ kind: "new" })}
-    />
   );
 }

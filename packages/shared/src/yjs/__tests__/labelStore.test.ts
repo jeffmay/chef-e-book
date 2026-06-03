@@ -1,14 +1,15 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
+import { KitchenwareLabelId } from "../../types/kitchenware.ts";
 import {
-  getLabels,
   addLabel,
+  deleteLabels,
   findLabelByName,
   findOrCreateLabel,
-  deleteLabels,
+  getLabels,
   renameLabel,
 } from "../labelStore.ts";
-import type { KitchenwareLabelId } from "../../types/kitchenware.ts";
+import { paddedId } from "../../types/ids.ts";
 
 let doc: Y.Doc;
 
@@ -134,6 +135,8 @@ describe("renameLabel", () => {
   });
 
   it("silently skips unknown id", () => {
-    expect(() => renameLabel(doc, "nonexist" as KitchenwareLabelId, "new name")).not.toThrow();
+    expect(() =>
+      renameLabel(doc, paddedId(KitchenwareLabelId, "nonexistent"), "new name"),
+    ).not.toThrow();
   });
 });
