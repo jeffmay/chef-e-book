@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
-import { createRecipe } from "@recipe-book/shared";
+import { createRecipe, createRecipeFolder } from "@recipe-book/shared";
 import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
 import { RecipeEditor } from "../RecipeEditorPage.tsx";
 
@@ -101,6 +101,27 @@ describe("RecipeEditor — new recipe form", () => {
     const { onCancel } = setupNewRecipeEditor();
     await userEvent.click(screen.getByRole("button", { name: "Back to recipe list" }));
     expect(onCancel).toHaveBeenCalledOnce();
+  });
+});
+
+describe("RecipeEditor — initialFolderId", () => {
+  it("pre-selects the folder when initialFolderId is provided", () => {
+    const folder = createRecipeFolder(recipeBookDoc, "Desserts");
+    const onSave = vi.fn();
+    const onCancel = vi.fn();
+    render(
+      <RecipeEditor
+        recipe={null}
+        initialFolderId={folder.id}
+        onSave={onSave}
+        onCancel={onCancel}
+      />,
+      {
+        wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc),
+      },
+    );
+    const select = screen.getByRole("combobox", { name: "Parent folder" }) as HTMLSelectElement;
+    expect(select.value).toBe(folder.id);
   });
 });
 

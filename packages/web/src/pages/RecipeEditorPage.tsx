@@ -927,13 +927,17 @@ interface EditorState {
   create_new_version: boolean;
 }
 
-function makeInitialState(recipe: Recipe | null, versionId?: string): EditorState {
+function makeInitialState(
+  recipe: Recipe | null,
+  versionId?: string,
+  initialFolderId?: RecipeFolderId,
+): EditorState {
   if (recipe === null) {
     return {
       title: "",
       subtitle: "",
       source_url: "",
-      parent_folder_id: undefined,
+      parent_folder_id: initialFolderId,
       description: "",
       ingredients: [],
       sections: [],
@@ -963,15 +967,24 @@ function makeInitialState(recipe: Recipe | null, versionId?: string): EditorStat
 export interface RecipeEditorProps {
   readonly recipe: Recipe | null;
   readonly versionId?: string;
+  readonly initialFolderId?: RecipeFolderId;
   readonly onSave: (recipe: Recipe) => void;
   readonly onCancel: () => void;
 }
 
-export function RecipeEditor({ recipe, versionId, onSave, onCancel }: RecipeEditorProps) {
+export function RecipeEditor({
+  recipe,
+  versionId,
+  initialFolderId,
+  onSave,
+  onCancel,
+}: RecipeEditorProps) {
   const { create, save, copy } = useRecipeStore();
   const { flatFolders, folders } = useRecipeFolderStore();
   const { ingredients } = useIngredientStore();
-  const [form, setForm] = useState<EditorState>(() => makeInitialState(recipe, versionId));
+  const [form, setForm] = useState<EditorState>(() =>
+    makeInitialState(recipe, versionId, initialFolderId),
+  );
   const [showCopyDialog, setShowCopyDialog] = useState(false);
 
   const flat = flattenFolders(folders);
