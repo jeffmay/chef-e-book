@@ -293,6 +293,25 @@
   background: var(--color-bg);
 }
 
+/* Ingredient row with missing amount */
+.re-item--amount-required {
+  border-color: #c00;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(200, 0, 0, 0.04) 4px,
+    rgba(200, 0, 0, 0.04) 8px
+  );
+}
+
+.re-item-amount-warning {
+  font-size: 0.75em;
+  color: #c00;
+  font-style: italic;
+  white-space: nowrap;
+}
+
 .re-new-ingredient-actions {
   display: flex;
   gap: var(--spacing-xs);
@@ -470,7 +489,32 @@
 
 .re-version-options {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-sm);
+  align-items: flex-start;
+}
+
+.re-version-description {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.re-field-input--error {
+  border-color: #c00;
+  outline-color: #c00;
+}
+
+.re-field-error {
+  font-size: 0.8em;
+  color: #c00;
+}
+
+.re-validation-error {
+  font-size: 0.85em;
+  color: #c00;
+  margin-bottom: var(--spacing-xs);
 }
 
 .re-new-version-label {

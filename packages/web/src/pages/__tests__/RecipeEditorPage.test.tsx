@@ -1,4 +1,11 @@
-import { IngredientId, RecipeFolderId, createRecipe, createRecipeFolder, paddedId } from "@recipe-book/shared";
+import type { Ingredient } from "@recipe-book/shared";
+import {
+  createRecipe,
+  createRecipeFolder,
+  IngredientId,
+  paddedId,
+  RecipeFolderId,
+} from "@recipe-book/shared";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
@@ -6,7 +13,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import type { IngredientSelectorProps } from "../../components/ingredients_table/IngredientSelector.tsx";
 import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
-import { RecipeEditor } from "../RecipeEditorPage.tsx";
+import {
+  isSameMeasurementCategory,
+  RecipeEditor,
+  resolveAmountOnIngredientChange,
+} from "../RecipeEditorPage.tsx";
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------butter,ingredient,Butter,volume,fat+solid
@@ -86,6 +97,140 @@ function setupExistingRecipeEditor(title: string) {
   return { recipe, onSave, onCancel };
 }
 
+// ---------------------------------------------------------------------------
+// Pure helper unit tests
+// ---------------------------------------------------------------------------
+
+describe("isSameMeasurementCategory", () => {
+  it("returns true for two volume units", () => {
+    expect(isSameMeasurementCategory("cup", "tsp")).toBe(true);
+  });
+
+  it("returns true for two weight units", () => {
+    expect(isSameMeasurementCategory("oz", "lb")).toBe(true);
+  });
+
+  it("returns false for volume vs weight", () => {
+    expect(isSameMeasurementCategory("cup", "oz")).toBe(false);
+  });
+
+  it("returns true for identical count units", () => {
+    expect(isSameMeasurementCategory("whole", "whole")).toBe(true);
+  });
+
+  it("returns false for different count units (each count unit is its own category)", () => {
+    expect(isSameMeasurementCategory("whole", "pinch")).toBe(false);
+  });
+
+  it("returns false for count vs volume", () => {
+    expect(isSameMeasurementCategory("whole", "cup")).toBe(false);
+  });
+});
+
+describe("resolveAmountOnIngredientChange", () => {
+  const DAIRY: Ingredient = {
+    kind: "ingredient",
+    id: paddedId(IngredientId, "dairy"),
+    name: "Dairy",
+    default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
+    labels: new Set(),
+  };
+  const SKIM_MILK: Ingredient = {
+    kind: "ingredient",
+    id: paddedId(IngredientId, "skim-milk"),
+    name: "Skim Milk",
+    default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
+    labels: new Set(),
+    parent_id: paddedId(IngredientId, "dairy"),
+  };
+  // child of Dairy but different measurement type
+  const BUTTER: Ingredient = {
+    kind: "ingredient",
+    id: paddedId(IngredientId, "butter"),
+    name: "Butter",
+    default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "oz" },
+    labels: new Set(),
+    parent_id: paddedId(IngredientId, "dairy"),
+  };
+  // unrelated ingredient
+  const FLOUR: Ingredient = {
+    kind: "ingredient",
+    id: paddedId(IngredientId, "flour"),
+    name: "Flour",
+    default_measurement_value: { value: { numerator: 2, denominator: 1 }, unit: "cup" },
+    labels: new Set(),
+  };
+  // count-unit parent and child
+  const EGGS: Ingredient = {
+    kind: "ingredient",
+    id: paddedId(IngredientId, "eggs"),
+    name: "Eggs",
+    default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "whole" },
+    labels: new Set(),
+  };
+  const LARGE_EGGS: Ingredient = {
+    kind: "ingredient",
+    id: paddedId(IngredientId, "large-eggs"),
+    name: "Large Eggs",
+    default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "whole" },
+    labels: new Set(),
+    parent_id: paddedId(IngredientId, "eggs"),
+  };
+  const PINCH_SALT: Ingredient = {
+    kind: "ingredient",
+    id: paddedId(IngredientId, "pinch-salt"),
+    name: "Salt (pinch)",
+    default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "pinch" },
+    labels: new Set(),
+    parent_id: paddedId(IngredientId, "eggs"),
+  };
+
+  const allIngredients = [DAIRY, SKIM_MILK, BUTTER, FLOUR, EGGS, LARGE_EGGS, PINCH_SALT];
+  const currentAmount = { value: { numerator: 3, denominator: 2 }, unit: "cup" as const };
+
+  it("preserves current amount when switching to a child ingredient with same measurement type", () => {
+    expect(
+      resolveAmountOnIngredientChange(DAIRY.id, SKIM_MILK.id, currentAmount, allIngredients),
+    ).toEqual(currentAmount);
+  });
+
+  it("resets to default when switching to a child ingredient with a different measurement type", () => {
+    expect(
+      resolveAmountOnIngredientChange(DAIRY.id, BUTTER.id, currentAmount, allIngredients),
+    ).toEqual(BUTTER.default_measurement_value);
+  });
+
+  it("resets to default when switching to an unrelated (non-child) ingredient", () => {
+    expect(
+      resolveAmountOnIngredientChange(DAIRY.id, FLOUR.id, currentAmount, allIngredients),
+    ).toEqual(FLOUR.default_measurement_value);
+  });
+
+  it("resets to default when there is no previous ingredient", () => {
+    expect(
+      resolveAmountOnIngredientChange(undefined, FLOUR.id, currentAmount, allIngredients),
+    ).toEqual(FLOUR.default_measurement_value);
+  });
+
+  it("preserves current amount when switching to a child with the exact same count unit", () => {
+    const eggAmount = { value: { numerator: 3, denominator: 1 }, unit: "whole" as const };
+    expect(
+      resolveAmountOnIngredientChange(EGGS.id, LARGE_EGGS.id, eggAmount, allIngredients),
+    ).toEqual(eggAmount);
+  });
+
+  it("resets to default when switching to a child with a different count unit", () => {
+    const eggAmount = { value: { numerator: 3, denominator: 1 }, unit: "whole" as const };
+    expect(
+      resolveAmountOnIngredientChange(EGGS.id, PINCH_SALT.id, eggAmount, allIngredients),
+    ).toEqual(PINCH_SALT.default_measurement_value);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Component tests
+// ---------------------------------------------------------------------------
+
 describe("RecipeEditor — new recipe form", () => {
   it("shows the New Recipe heading", () => {
     setupNewRecipeEditor();
@@ -106,15 +251,29 @@ describe("RecipeEditor — new recipe form", () => {
     expect(screen.getByRole("button", { name: "Save recipe" })).toBeDisabled();
   });
 
-  it("Save button is enabled when title is filled in", async () => {
+  it("Save button is still disabled when title is filled but description is empty", async () => {
     setupNewRecipeEditor();
     await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Chocolate Cake");
+    expect(screen.getByRole("button", { name: "Save recipe" })).toBeDisabled();
+  });
+
+  it("shows a description error when description is empty", async () => {
+    setupNewRecipeEditor();
+    await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Chocolate Cake");
+    expect(screen.getByRole("alert")).toHaveTextContent("Version description is required");
+  });
+
+  it("Save button is enabled when title and description are filled", async () => {
+    setupNewRecipeEditor();
+    await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Chocolate Cake");
+    await userEvent.type(screen.getByRole("textbox", { name: "Version description" }), "First try");
     expect(screen.getByRole("button", { name: "Save recipe" })).not.toBeDisabled();
   });
 
-  it("calls onSave after saving", async () => {
+  it("calls onSave after filling title and description then saving", async () => {
     const { onSave } = setupNewRecipeEditor();
     await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Chocolate Cake");
+    await userEvent.type(screen.getByRole("textbox", { name: "Version description" }), "First try");
     await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
     expect(onSave).toHaveBeenCalledOnce();
   });
@@ -184,6 +343,36 @@ describe("RecipeEditor — editing existing recipe", () => {
   it("shows Copy recipe button when editing", () => {
     setupExistingRecipeEditor("Banana Bread");
     expect(screen.getByRole("button", { name: "Copy recipe" })).toBeInTheDocument();
+  });
+});
+
+describe("RecipeEditor — description validation", () => {
+  it("shows a description required error alert when the description is empty", () => {
+    setupExistingRecipeEditor("Banana Bread");
+    expect(screen.getByRole("alert")).toHaveTextContent("Version description is required");
+  });
+
+  it("hides the description error when a description is typed", async () => {
+    setupExistingRecipeEditor("Banana Bread");
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Version description" }),
+      "Initial version",
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("disables Save when the description is empty", () => {
+    setupExistingRecipeEditor("Banana Bread");
+    expect(screen.getByRole("button", { name: "Save recipe" })).toBeDisabled();
+  });
+
+  it("enables Save once description is filled", async () => {
+    setupExistingRecipeEditor("Banana Bread");
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Version description" }),
+      "Initial version",
+    );
+    expect(screen.getByRole("button", { name: "Save recipe" })).not.toBeDisabled();
   });
 });
 

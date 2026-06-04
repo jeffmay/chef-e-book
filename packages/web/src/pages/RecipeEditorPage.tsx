@@ -9,7 +9,7 @@ import {
   type Instruction,
   type KitchenwareLabel,
   type Measurement,
-  type MeasurementUnit,
+  MeasurementUnit,
   type Recipe,
   RecipeFolderId,
   type RecipeIngredient,
@@ -25,6 +25,7 @@ import {
   loadId,
   paddedId,
   randomId,
+  unitType,
 } from "@recipe-book/shared";
 import { useMemo, useState } from "react";
 import { DurationEditor } from "../components/duration/DurationEditor.tsx";
@@ -169,27 +170,8 @@ function computeTopIngredients(sections: readonly Section[]): RecipeIngredient[]
 // Unit display labels
 // ---------------------------------------------------------------------------
 
-const UNIT_DISPLAY: Record<MeasurementUnit, string> = {
-  tsp: "tsp",
-  tbsp: "tbsp",
-  fl_oz: "fl oz",
-  cup: "cup",
-  pint: "pint",
-  quart: "quart",
-  gallon: "gallon",
-  ml: "ml",
-  l: "L",
-  oz: "oz",
-  lb: "lb",
-  g: "g",
-  kg: "kg",
-  whole: "whole",
-  pinch: "pinch",
-  dash: "dash",
-};
-
 function formatAmount(value: Fraction, unit: MeasurementUnit): string {
-  return `${formatFraction(value)} ${UNIT_DISPLAY[unit]}`;
+  return `${formatFraction(value)} ${MeasurementUnit.display[unit]}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -197,6 +179,50 @@ function formatAmount(value: Fraction, unit: MeasurementUnit): string {
 // ---------------------------------------------------------------------------
 
 const DEFAULT_AMOUNT: Measurement = { value: { numerator: 1, denominator: 1 }, unit: "cup" };
+
+// ---------------------------------------------------------------------------
+// Exported helpers (also tested directly)
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true when unitA and unitB belong to the same "measurement category":
+ * - volume and weight: any unit of the same type qualifies
+ * - count: unit names must match exactly because each count unit (whole, pinch,
+ *   dash, or a future custom name) represents a semantically distinct category
+ */
+export function isSameMeasurementCategory(unitA: MeasurementUnit, unitB: MeasurementUnit): boolean {
+  const typeA = unitType(unitA);
+  const typeB = unitType(unitB);
+  if (typeA !== typeB) return false;
+  if (typeA === "count") return unitA === unitB;
+  return true;
+}
+
+/**
+ * Returns the amount to use after an ingredient selection change.
+ * Preserves the current amount when the new ingredient is a direct child of
+ * the old ingredient and shares the same measurement category; otherwise
+ * resets to the new ingredient's default measurement value.
+ */
+export function resolveAmountOnIngredientChange(
+  oldIngredientId: IngredientId | undefined,
+  newIngredientId: IngredientId,
+  currentAmount: Measurement,
+  allIngredients: readonly Ingredient[],
+): Measurement {
+  const newIngredient = allIngredients.find((i) => i.id === newIngredientId);
+  if (newIngredient === undefined) return currentAmount;
+
+  if (
+    oldIngredientId !== undefined &&
+    newIngredient.parent_id === oldIngredientId &&
+    isSameMeasurementCategory(currentAmount.unit, newIngredient.default_measurement_value.unit)
+  ) {
+    return currentAmount;
+  }
+
+  return newIngredient.default_measurement_value;
+}
 
 // ---------------------------------------------------------------------------
 // Shared prop interfaces
@@ -218,7 +244,7 @@ interface WithIngredients {
 // ---------------------------------------------------------------------------
 
 interface IngredientItemRowProps
-  extends RecipeSectionItemRowProps<IngredientItem>, WithIngredients { }
+  extends RecipeSectionItemRowProps<IngredientItem>, WithIngredients {}
 
 function IngredientItemRow({
   item,
@@ -230,21 +256,33 @@ function IngredientItemRow({
   const [isEditingIngredient, setIsEditingIngredient] = useState(false);
   const ingredient = allIngredients.find((i) => i.id === item.ingredient_id);
   const name = ingredient?.name ?? item.ingredient_id;
-  const amount = item.amount ?? DEFAULT_AMOUNT;
+  const amountMissing = item.amount === undefined;
+
+  function handleIngredientChange(id: IngredientId | undefined) {
+    if (id !== undefined) {
+      const newAmount = resolveAmountOnIngredientChange(
+        item.ingredient_id,
+        id,
+        item.amount ?? DEFAULT_AMOUNT,
+        allIngredients,
+      );
+      onChange({ ...item, ingredient_id: id, amount: newAmount });
+    }
+    setIsEditingIngredient(false);
+  }
 
   return (
-    <div className="re-item re-item--ingredient" role="group" aria-label={`Ingredient: ${name}`}>
+    <div
+      className={`re-item re-item--ingredient${amountMissing ? " re-item--amount-required" : ""}`}
+      role="group"
+      aria-label={`Ingredient: ${name}`}
+    >
       {isEditingIngredient ? (
         <IngredientSelector
           value={item.ingredient_id}
           options={allIngredients}
           labels={allLabels}
-          onChange={(id) => {
-            if (id !== undefined) {
-              onChange({ ...item, ingredient_id: id });
-            }
-            setIsEditingIngredient(false);
-          }}
+          onChange={handleIngredientChange}
           ariaLabel={`Change ingredient (currently ${name})`}
         />
       ) : (
@@ -257,9 +295,15 @@ function IngredientItemRow({
         </span>
       )}
       <MeasurementEditor
-        value={amount}
+        value={item.amount ?? DEFAULT_AMOUNT}
+        initiallyOpen={amountMissing}
         onCommit={(newAmount) => onChange({ ...item, amount: newAmount })}
       />
+      {amountMissing && (
+        <span className="re-item-amount-warning" role="alert" aria-label="Amount required">
+          Amount required
+        </span>
+      )}
       <button
         type="button"
         className="re-item-remove"
@@ -289,13 +333,10 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
     ingredient_id !== undefined ? allIngredients.find((i) => i.id === ingredient_id) : undefined;
 
   function handleSelectIngredient(id: IngredientId | undefined) {
-    setIngredientId(id);
     if (id !== undefined) {
-      const ing = allIngredients.find((i) => i.id === id);
-      if (ing !== undefined) {
-        setAmount(ing.default_measurement_value);
-      }
+      setAmount(resolveAmountOnIngredientChange(ingredient_id, id, amount, allIngredients));
     }
+    setIngredientId(id);
   }
 
   function handleAdd() {
@@ -359,7 +400,7 @@ const COMMON_CONTAINERS = [
   { id: paddedId(ContainerId, "plate"), name: "Plate" },
 ] as const;
 
-interface ContainerItemRowProps extends RecipeSectionItemRowProps<ContainerItem>, WithIngredients { }
+interface ContainerItemRowProps extends RecipeSectionItemRowProps<ContainerItem>, WithIngredients {}
 
 function ContainerItemRow({
   item,
@@ -472,7 +513,7 @@ const COMMON_EQUIPMENT = [
   { id: paddedId(EquipmentId, "skillet"), name: "Skillet" },
 ] as const;
 
-interface InstructionRowProps extends RecipeSectionItemRowProps<Instruction>, WithIngredients { }
+interface InstructionRowProps extends RecipeSectionItemRowProps<Instruction>, WithIngredients {}
 
 function InstructionRow({ item, allIngredients, onChange, onRemove }: InstructionRowProps) {
   function toggleIngredient(id: IngredientId) {
@@ -1090,6 +1131,14 @@ export function RecipeEditor({
 
   const createNewVersion = !recipe || form.create_new_version;
 
+  const missingAmountCount = useMemo(
+    () => collectIngredientItems(form.sections).filter((i) => i.amount === undefined).length,
+    [form.sections],
+  );
+  const descriptionError =
+    form.description.trim() === "" ? "Version description is required" : null;
+  const canSave = form.title.trim() !== "" && descriptionError === null && missingAmountCount === 0;
+
   return (
     <main className="re-editor" aria-label="Recipe editor">
       <div className="re-editor-header">
@@ -1231,14 +1280,28 @@ export function RecipeEditor({
             />
             Create new version
           </label>
-          <input
-            className="re-new-version-input"
-            value={form.description}
-            onChange={(e) => patch("description", e.target.value)}
-            placeholder='ex: "Untested" or "Final Version"'
-            aria-label="Version description"
-          />
+          <div className="re-version-description">
+            <input
+              className={`re-new-version-input${descriptionError !== null ? " re-field-input--error" : ""}`}
+              value={form.description}
+              onChange={(e) => patch("description", e.target.value)}
+              placeholder='ex: "Untested" or "Final Version"'
+              aria-label="Version description"
+              aria-describedby={descriptionError !== null ? "re-description-error" : undefined}
+            />
+            {descriptionError !== null && (
+              <span id="re-description-error" className="re-field-error" role="alert">
+                {descriptionError}
+              </span>
+            )}
+          </div>
         </div>
+        {missingAmountCount > 0 && (
+          <p className="re-validation-error" role="alert">
+            {missingAmountCount} ingredient{missingAmountCount !== 1 ? "s are" : " is"} missing an
+            amount. Set all amounts or remove the ingredient.
+          </p>
+        )}
         <div className="re-save-actions" aria-label="Save actions">
           <button type="button" className="re-cancel-btn" onClick={onCancel}>
             Cancel
@@ -1247,7 +1310,7 @@ export function RecipeEditor({
             type="button"
             className="re-save-btn"
             onClick={handleSave}
-            disabled={form.title.trim() === ""}
+            disabled={!canSave}
             aria-label="Save recipe"
           >
             Save updates
