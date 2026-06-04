@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
-import { createRecipe, createRecipeFolder } from "@recipe-book/shared";
+import { RecipeFolderId, createRecipe, createRecipeFolder, paddedId } from "@recipe-book/shared";
 import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
 import { RecipeEditor } from "../RecipeEditorPage.tsx";
 
@@ -105,6 +105,16 @@ describe("RecipeEditor — new recipe form", () => {
 });
 
 describe("RecipeEditor — initialFolderId", () => {
+  it("gracefully degrades to no folder when initialFolderId references a non-existent folder", () => {
+    const ghostId = paddedId(RecipeFolderId, "ghost");
+    render(
+      <RecipeEditor recipe={null} initialFolderId={ghostId} onSave={vi.fn()} onCancel={vi.fn()} />,
+      { wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc) },
+    );
+    const select = screen.getByRole("combobox", { name: "Parent folder" }) as HTMLSelectElement;
+    expect(select.value).toBe("");
+  });
+
   it("pre-selects the folder when initialFolderId is provided", () => {
     const folder = createRecipeFolder(recipeBookDoc, "Desserts");
     const onSave = vi.fn();

@@ -430,6 +430,15 @@ describe("BulkRecipeEditorPage — New menu on folder rows", () => {
     expect(screen.getByRole("textbox", { name: "New folder name" })).toBeInTheDocument();
   });
 
+  it("cancelling the new sub-folder form hides the form", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in folder Mains" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel new folder" }));
+    expect(screen.queryByRole("textbox", { name: "New folder name" })).not.toBeInTheDocument();
+  });
+
   it("submitting the new sub-folder creates it and hides the form", async () => {
     createRecipeFolder(recipeBookDoc, "Mains");
     setup();

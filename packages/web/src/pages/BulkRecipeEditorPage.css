@@ -293,10 +293,11 @@
 }
 
 /* ============================================================
-   Edit button
+   Table action buttons (Edit, New ▾) — shared base style
    ============================================================ */
 
-.bre-edit-btn {
+.bre-edit-btn,
+.bre-new-menu-btn {
   font-size: 0.8em;
   padding: 2px var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
@@ -320,16 +321,6 @@
 .bre-new-menu-wrap {
   position: relative;
   display: inline-block;
-}
-
-.bre-new-menu-btn {
-  font-size: 0.8em;
-  padding: 2px var(--spacing-sm);
-  border: var(--border-width) solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-fg);
-  cursor: pointer;
-  white-space: nowrap;
 }
 
 .bre-new-menu-dropdown {

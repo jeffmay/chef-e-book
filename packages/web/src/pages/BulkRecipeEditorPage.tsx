@@ -5,7 +5,7 @@ import type {
   RecipeId,
   RecipeVersion,
 } from "@recipe-book/shared";
-import { Fragment, type FormEvent, useRef, useState } from "react";
+import { Fragment, type FormEvent, type KeyboardEvent, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.ts";
 import { latestVersion, useRecipeStore } from "../hooks/useRecipeStore.ts";
@@ -43,6 +43,122 @@ type TreeRow = FolderRow | RecipeRow | VersionRow;
 type NewMenuTarget =
   | { readonly kind: "root" }
   | { readonly kind: "folder"; readonly folderId: RecipeFolderId };
+
+// ---------------------------------------------------------------------------
+// CreatingFolderState — discriminated union replacing the null/undefined sentinel
+// ---------------------------------------------------------------------------
+
+type CreatingFolderState =
+  | { readonly kind: "idle" }
+  | { readonly kind: "creating"; readonly parentId: RecipeFolderId | undefined };
+
+const FOLDER_IDLE: CreatingFolderState = { kind: "idle" };
+
+// ---------------------------------------------------------------------------
+// NewFolderRow
+// ---------------------------------------------------------------------------
+
+interface NewFolderRowProps {
+  readonly depth: number;
+  readonly name: string;
+  readonly onNameChange: (name: string) => void;
+  readonly onSubmit: (e: FormEvent) => void;
+  readonly onCancel: () => void;
+}
+
+function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFolderRowProps) {
+  return (
+    <tr className="bre-row bre-row--new-folder">
+      <td className="bre-td bre-td--select" />
+      <td className="bre-td bre-td--name" data-depth={depth}>
+        <form className="bre-new-folder-form" onSubmit={onSubmit}>
+          <input
+            type="text"
+            className="bre-new-folder-input"
+            value={name}
+            onChange={(e) => onNameChange(e.target.value)}
+            placeholder="Folder name…"
+            aria-label="New folder name"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Escape") onCancel();
+            }}
+          />
+          <button
+            type="submit"
+            className="bre-new-folder-confirm"
+            disabled={name.trim() === ""}
+            aria-label="Confirm new folder"
+          >
+            ✔︎
+          </button>
+          <button
+            type="button"
+            className="bre-new-folder-cancel"
+            onClick={onCancel}
+            aria-label="Cancel new folder"
+          >
+            ↩
+          </button>
+        </form>
+      </td>
+      <td className="bre-td bre-td--date" />
+      <td className="bre-td bre-td--date" />
+      <td className="bre-td bre-td--actions" />
+    </tr>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// NewItemMenuDropdown — shared dropdown with keyboard navigation
+// ---------------------------------------------------------------------------
+
+interface NewItemMenuDropdownProps {
+  readonly onRecipe: () => void;
+  readonly onFolder: () => void;
+  readonly onClose: () => void;
+}
+
+function NewItemMenuDropdown({ onRecipe, onFolder, onClose }: NewItemMenuDropdownProps) {
+  function handleKeyDown(e: KeyboardEvent<HTMLDivElement>): void {
+    const items = Array.from(
+      e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'),
+    );
+    const idx = items.findIndex((item) => item === document.activeElement);
+
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      const btn = e.currentTarget
+        .closest<HTMLElement>(".bre-new-menu-wrap")
+        ?.querySelector<HTMLButtonElement>(".bre-new-menu-btn");
+      onClose();
+      btn?.focus();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      items[(idx + 1) % items.length]?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      items[(idx - 1 + items.length) % items.length]?.focus();
+    }
+  }
+
+  return (
+    <div className="bre-new-menu-dropdown" role="menu" onKeyDown={handleKeyDown}>
+      <button
+        type="button"
+        role="menuitem"
+        className="bre-new-menu-item"
+        onClick={onRecipe}
+        autoFocus
+      >
+        Recipe
+      </button>
+      <button type="button" role="menuitem" className="bre-new-menu-item" onClick={onFolder}>
+        Folder
+      </button>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Tree building
@@ -116,10 +232,8 @@ export function BulkRecipeEditorPage() {
   // Which folder's New ▾ menu is open. null = none.
   const [newMenuTarget, setNewMenuTarget] = useState<NewMenuTarget | null>(null);
 
-  // Inline folder-creation parent: null = not creating, undefined = root level, RecipeFolderId = that folder.
-  const [creatingFolderParentId, setCreatingFolderParentId] = useState<
-    RecipeFolderId | undefined | null
-  >(null);
+  // Inline folder-creation state.
+  const [creatingFolder, setCreatingFolder] = useState<CreatingFolderState>(FOLDER_IDLE);
   const [newFolderName, setNewFolderName] = useState("");
 
   const deleteBtnRef = useRef<HTMLButtonElement>(null);
@@ -223,71 +337,26 @@ export function BulkRecipeEditorPage() {
 
   function handleStartNewFolder(parentId: RecipeFolderId | undefined): void {
     setNewMenuTarget(null);
-    // undefined → creating at root; RecipeFolderId → creating under that folder
-    setCreatingFolderParentId(parentId);
+    setCreatingFolder({ kind: "creating", parentId });
     setNewFolderName("");
   }
 
   function handleNewFolderSubmit(e: FormEvent): void {
     e.preventDefault();
     const name = newFolderName.trim();
-    if (name === "") return;
-    createFolder(name, creatingFolderParentId ?? undefined);
-    setCreatingFolderParentId(null);
+    if (name === "" || creatingFolder.kind !== "creating") return;
+    createFolder(name, creatingFolder.parentId);
+    setCreatingFolder(FOLDER_IDLE);
     setNewFolderName("");
   }
 
   function handleNewFolderCancel(): void {
-    setCreatingFolderParentId(null);
+    setCreatingFolder(FOLDER_IDLE);
     setNewFolderName("");
   }
 
-  // Shared inline folder-creation row, rendered after the relevant folder row.
-  function renderNewFolderRow(depth: number) {
-    return (
-      <tr className="bre-row bre-row--new-folder">
-        <td className="bre-td bre-td--select" />
-        <td className="bre-td bre-td--name" data-depth={depth}>
-          <form className="bre-new-folder-form" onSubmit={handleNewFolderSubmit}>
-            <input
-              type="text"
-              className="bre-new-folder-input"
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              placeholder="Folder name…"
-              aria-label="New folder name"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Escape") handleNewFolderCancel();
-              }}
-            />
-            <button
-              type="submit"
-              className="bre-new-folder-confirm"
-              disabled={newFolderName.trim() === ""}
-              aria-label="Confirm new folder"
-            >
-              ✔︎
-            </button>
-            <button
-              type="button"
-              className="bre-new-folder-cancel"
-              onClick={handleNewFolderCancel}
-              aria-label="Cancel new folder"
-            >
-              ↩
-            </button>
-          </form>
-        </td>
-        <td className="bre-td bre-td--date" />
-        <td className="bre-td bre-td--date" />
-        <td className="bre-td bre-td--actions" />
-      </tr>
-    );
-  }
-
-  // creatingFolderParentId === undefined means "form is open at root level"
-  const isCreatingAtRoot = creatingFolderParentId === undefined;
+  const isCreatingAtRoot =
+    creatingFolder.kind === "creating" && creatingFolder.parentId === undefined;
 
   return (
     <main className="bre-page" aria-label="Recipes">
@@ -497,31 +566,26 @@ export function BulkRecipeEditorPage() {
                   New ▾
                 </button>
                 {newMenuTarget?.kind === "root" && (
-                  <div className="bre-new-menu-dropdown" role="menu">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="bre-new-menu-item"
-                      onClick={() => handleNewRecipe(undefined)}
-                    >
-                      Recipe
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="bre-new-menu-item"
-                      onClick={() => handleStartNewFolder(undefined)}
-                    >
-                      Folder
-                    </button>
-                  </div>
+                  <NewItemMenuDropdown
+                    onRecipe={() => handleNewRecipe(undefined)}
+                    onFolder={() => handleStartNewFolder(undefined)}
+                    onClose={() => setNewMenuTarget(null)}
+                  />
                 )}
               </div>
             </td>
           </tr>
 
           {/* Inline folder-creation row at root level (depth 1) */}
-          {isCreatingAtRoot && renderNewFolderRow(1)}
+          {isCreatingAtRoot && (
+            <NewFolderRow
+              depth={1}
+              name={newFolderName}
+              onNameChange={setNewFolderName}
+              onSubmit={handleNewFolderSubmit}
+              onCancel={handleNewFolderCancel}
+            />
+          )}
 
           {/* Content rows — shown only when root is expanded */}
           {rootExpanded &&
@@ -536,7 +600,8 @@ export function BulkRecipeEditorPage() {
                 if (row.kind === "folder") {
                   const { folder, depth } = row;
                   const isExpanded = expandedFolders.has(folder.id);
-                  const isCreatingHere = creatingFolderParentId === folder.id;
+                  const isCreatingHere =
+                    creatingFolder.kind === "creating" && creatingFolder.parentId === folder.id;
                   const isMenuOpen =
                     newMenuTarget?.kind === "folder" && newMenuTarget.folderId === folder.id;
                   return (
@@ -582,29 +647,24 @@ export function BulkRecipeEditorPage() {
                               New ▾
                             </button>
                             {isMenuOpen && (
-                              <div className="bre-new-menu-dropdown" role="menu">
-                                <button
-                                  type="button"
-                                  role="menuitem"
-                                  className="bre-new-menu-item"
-                                  onClick={() => handleNewRecipe(folder.id)}
-                                >
-                                  Recipe
-                                </button>
-                                <button
-                                  type="button"
-                                  role="menuitem"
-                                  className="bre-new-menu-item"
-                                  onClick={() => handleStartNewFolder(folder.id)}
-                                >
-                                  Folder
-                                </button>
-                              </div>
+                              <NewItemMenuDropdown
+                                onRecipe={() => handleNewRecipe(folder.id)}
+                                onFolder={() => handleStartNewFolder(folder.id)}
+                                onClose={() => setNewMenuTarget(null)}
+                              />
                             )}
                           </div>
                         </td>
                       </tr>
-                      {isCreatingHere && renderNewFolderRow(depth + 1)}
+                      {isCreatingHere && (
+                        <NewFolderRow
+                          depth={depth + 1}
+                          name={newFolderName}
+                          onNameChange={setNewFolderName}
+                          onSubmit={handleNewFolderSubmit}
+                          onCancel={handleNewFolderCancel}
+                        />
+                      )}
                     </Fragment>
                   );
                 }
