@@ -1,10 +1,13 @@
 import type { Ingredient } from "@recipe-book/shared";
 import {
+  ContainerId,
   createRecipe,
   createRecipeFolder,
   IngredientId,
   paddedId,
+  randomId,
   RecipeFolderId,
+  SectionItemId,
 } from "@recipe-book/shared";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -14,6 +17,7 @@ import * as Y from "yjs";
 import type { IngredientSelectorProps } from "../../components/ingredients_table/IngredientSelector.tsx";
 import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
 import {
+  computeTopIngredients,
   isSameMeasurementCategory,
   RecipeEditor,
   resolveAmountOnIngredientChange,
@@ -224,6 +228,94 @@ describe("resolveAmountOnIngredientChange", () => {
     expect(
       resolveAmountOnIngredientChange(EGGS.id, PINCH_SALT.id, eggAmount, allIngredients),
     ).toEqual(PINCH_SALT.default_measurement_value);
+  });
+
+  it("resets to new ingredient's default when current amount is undefined (no prior amount set)", () => {
+    expect(
+      resolveAmountOnIngredientChange(DAIRY.id, SKIM_MILK.id, undefined, allIngredients),
+    ).toEqual(SKIM_MILK.default_measurement_value);
+  });
+});
+
+describe("computeTopIngredients", () => {
+  const BUTTER_ID = paddedId(IngredientId, "------butter");
+  const FLOUR_ID = paddedId(IngredientId, "-------flour");
+  const BOWL_ID = paddedId(ContainerId, "--------bowl");
+
+  it("creates one entry per unique ingredient, using the first occurrence's amount", () => {
+    const sections = [
+      {
+        kind: "section" as const,
+        id: randomId(SectionItemId),
+        contents: [
+          {
+            kind: "ingredient" as const,
+            id: randomId(SectionItemId),
+            ingredient_id: BUTTER_ID,
+            amount: { value: { numerator: 2, denominator: 1 }, unit: "cup" as const },
+          },
+          {
+            kind: "ingredient" as const,
+            id: randomId(SectionItemId),
+            ingredient_id: BUTTER_ID,
+            amount: { value: { numerator: 1, denominator: 1 }, unit: "tsp" as const },
+          },
+          {
+            kind: "ingredient" as const,
+            id: randomId(SectionItemId),
+            ingredient_id: FLOUR_ID,
+          },
+        ],
+      },
+    ];
+    const result = computeTopIngredients(sections);
+    expect(result).toHaveLength(2);
+    expect(result.find((r) => r.ingredient_id === BUTTER_ID)?.amount).toEqual({
+      value: { numerator: 2, denominator: 1 },
+      unit: "cup",
+    });
+    expect(result.find((r) => r.ingredient_id === FLOUR_ID)?.amount).toBeUndefined();
+  });
+
+  it("includes ingredients from container contents and nested sections", () => {
+    const sections = [
+      {
+        kind: "section" as const,
+        id: randomId(SectionItemId),
+        contents: [
+          {
+            kind: "container" as const,
+            id: randomId(SectionItemId),
+            container_id: BOWL_ID,
+            descriptor: "mixing",
+            contents: [
+              {
+                kind: "ingredient" as const,
+                id: randomId(SectionItemId),
+                ingredient_id: BUTTER_ID,
+                amount: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
+              },
+            ],
+          },
+          {
+            kind: "section" as const,
+            id: randomId(SectionItemId),
+            contents: [
+              {
+                kind: "ingredient" as const,
+                id: randomId(SectionItemId),
+                ingredient_id: FLOUR_ID,
+                amount: { value: { numerator: 2, denominator: 1 }, unit: "cup" as const },
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const result = computeTopIngredients(sections);
+    expect(result).toHaveLength(2);
+    expect(result.some((r) => r.ingredient_id === BUTTER_ID)).toBe(true);
+    expect(result.some((r) => r.ingredient_id === FLOUR_ID)).toBe(true);
   });
 });
 
@@ -513,6 +605,28 @@ describe("RecipeEditor — sections editor", () => {
   it("does not show notes panel anywhere in the editor", () => {
     setupNewRecipeEditor();
     expect(screen.queryByRole("complementary", { name: "Notes" })).not.toBeInTheDocument();
+  });
+
+  it("does not show the Create new version checkbox for a new recipe", () => {
+    setupNewRecipeEditor();
+    expect(
+      screen.queryByRole("checkbox", { name: "Create a new version from changes" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("can toggle an ingredient checkbox in an instruction row", async () => {
+    setupNewRecipeEditor();
+    await userEvent.click(screen.getByRole("button", { name: "Add section" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
+
+    const butterCheckbox = await screen.findByRole("checkbox", { name: "Butter" });
+    expect(butterCheckbox).not.toBeChecked();
+
+    await userEvent.click(butterCheckbox);
+    expect(butterCheckbox).toBeChecked();
+
+    await userEvent.click(butterCheckbox);
+    expect(butterCheckbox).not.toBeChecked();
   });
 });
 

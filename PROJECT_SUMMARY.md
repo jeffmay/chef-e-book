@@ -28,7 +28,7 @@
 - [x] `Recipe` type overhaul — `RecipeId`, `RecipeVersionId`, `RecipeIngredientId` branded IDs; `RecipeIngredient` (id + ingredient_id + optional amount); `RecipeVersion` with `ingredients[]`, `sections[]`, `created_by`; `Recipe` with `title`, `subtitle?`, `source_url?`, `parent_folder_id?`; explicit TypeScript interfaces ensure branded-ID types survive cross-package inference
 - [x] `recipe_store.ts` Yjs store — CRUD for recipes with structural validators; `createRecipe`, `saveRecipe` (in-place or new version), `copyRecipe`, `deleteRecipe`; all optional fields use conditional spread for `exactOptionalPropertyTypes` compatibility
 - [x] `DurationEditor` component — text input with humanized display (`humanize-duration`), min/sec unit toggle, ±delta buttons (−5/−1/+1/+5 min or −15/−5/+5/+15 sec), revert `<` and commit `OK`; parse input via `parse-duration`; 24 component tests
-- [x] `RecipeEditorPage` — full recipe CRUD UI; list view with `+ New recipe`; editor with title/subtitle/source URL/folder/version-description fields; top-level `RecipeIngredientsEditor`; `SectionEditor` (recursive, depth 1–5) with add/remove/edit for instruction/text-block/ingredient/container/sub-section items; version history table; `CopyRecipeDialog`; `DurationEditor` per instruction; `MeasurementEditor` per ingredient; NavMenu wired; 33 component tests
+- [x] `RecipeEditorPage` — full recipe CRUD UI; editor with title/subtitle/source URL/folder/version-description fields; `SectionEditor` (recursive, depth 1–5) with `IngredientSelector`-gated add for ingredients (both ingredient and measurement required), add/remove/edit for instruction/text-block/container/sub-section items; computed read-only ingredient totals derived from sections; version history table; `CopyRecipeDialog`; `DurationEditor` per instruction; `MeasurementEditor` per ingredient; description and amount validation with save guard; 33+ component tests. **Note: per-item notes (attach notes to sections/ingredients/instructions) are temporarily removed and will be re-implemented in a future branch.**
 - [x] `useRecipeStore` and `useRecipeFolderStore` React hooks — Yjs-reactive stores for recipes and folders
 - [x] ESLint config updated — `varsIgnorePattern: "^_"`, `ignoreRestSiblings: true` for destructure-discard patterns; removed `rules-of-hooks` override for hooks/contexts (now that hooks are camelCase)
 - [x] All snake_case function names renamed to camelCase — `randomId`, `loadId`, `addFractions`, `getIngredients`, `useIngredientStore`, `buildFolderTree`, etc.; callback props renamed to camelCase (`onChange`, `onSave`, `onCancel`); file names remain snake_case
@@ -72,6 +72,7 @@ _(none)_
 
 ## Future Development Goals
 
+- Re-implement per-item notes (attach notes to sections, ingredients, instructions, text blocks) — temporarily removed; see `recipe-editor-ingredient-selector` branch
 - Offline-first PWA support (service worker)
 - Hardware display target: Waveshare 7.5" e-paper + Raspberry Pi Pico 2
 - Multi-user collaboration (shared Yjs documents)

@@ -1,4 +1,4 @@
-import type { IngredientId } from "@recipe-book/shared";
+import type { IngredientId, RecipeFolder } from "@recipe-book/shared";
 import {
   ContainerId,
   type ContainerItem,
@@ -46,20 +46,12 @@ interface FlatFolder {
   label: string;
 }
 
-function flattenFolders(
-  folders: Array<{ id: RecipeFolderId; name: string; children?: unknown[] }>,
-  depth = 0,
-): FlatFolder[] {
+function flattenFolders(folders: RecipeFolder[], depth = 0): FlatFolder[] {
   const result: FlatFolder[] = [];
   for (const f of folders) {
     result.push({ id: f.id, label: " ".repeat(depth * 2) + f.name });
-    if (Array.isArray(f.children) && f.children.length > 0) {
-      result.push(
-        ...flattenFolders(
-          f.children as Array<{ id: RecipeFolderId; name: string; children?: unknown[] }>,
-          depth + 1,
-        ),
-      );
+    if (f.children !== undefined && f.children.length > 0) {
+      result.push(...flattenFolders(f.children, depth + 1));
     }
   }
   return result;
@@ -147,7 +139,7 @@ function computeIngredientTotals(
 // Helper: compute top-level RecipeIngredient[] from sections (for saving)
 // ---------------------------------------------------------------------------
 
-function computeTopIngredients(sections: readonly Section[]): RecipeIngredient[] {
+export function computeTopIngredients(sections: readonly Section[]): RecipeIngredient[] {
   const items = collectIngredientItems(sections);
   const seen = new Set<IngredientId>();
   const result: RecipeIngredient[] = [];
@@ -207,13 +199,14 @@ export function isSameMeasurementCategory(unitA: MeasurementUnit, unitB: Measure
 export function resolveAmountOnIngredientChange(
   oldIngredientId: IngredientId | undefined,
   newIngredientId: IngredientId,
-  currentAmount: Measurement,
+  currentAmount: Measurement | undefined,
   allIngredients: readonly Ingredient[],
 ): Measurement {
   const newIngredient = allIngredients.find((i) => i.id === newIngredientId);
-  if (newIngredient === undefined) return currentAmount;
+  if (newIngredient === undefined) return currentAmount ?? DEFAULT_AMOUNT;
 
   if (
+    currentAmount !== undefined &&
     oldIngredientId !== undefined &&
     newIngredient.parent_id === oldIngredientId &&
     isSameMeasurementCategory(currentAmount.unit, newIngredient.default_measurement_value.unit)
@@ -263,7 +256,7 @@ function IngredientItemRow({
       const newAmount = resolveAmountOnIngredientChange(
         item.ingredient_id,
         id,
-        item.amount ?? DEFAULT_AMOUNT,
+        item.amount,
         allIngredients,
       );
       onChange({ ...item, ingredient_id: id, amount: newAmount });
@@ -1074,7 +1067,7 @@ export function RecipeEditor({
   onCancel,
 }: RecipeEditorProps) {
   const { create, save, copy } = useRecipeStore();
-  const { flatFolders, folders } = useRecipeFolderStore();
+  const { folders } = useRecipeFolderStore();
   const { ingredients } = useIngredientStore();
   const { labels } = useLabelStore();
   const [form, setForm] = useState<EditorState>(() =>
@@ -1128,8 +1121,6 @@ export function RecipeEditor({
     setShowCopyDialog(false);
     onSave(copied);
   }
-
-  const createNewVersion = !recipe || form.create_new_version;
 
   const missingAmountCount = useMemo(
     () => collectIngredientItems(form.sections).filter((i) => i.amount === undefined).length,
@@ -1270,16 +1261,17 @@ export function RecipeEditor({
       {/* Save actions */}
       <section className="re-actions">
         <div className="re-version-options">
-          <label className="re-new-version-label">
-            <input
-              type="checkbox"
-              checked={createNewVersion}
-              disabled={!recipe}
-              onChange={(e) => patch("create_new_version", e.target.checked)}
-              aria-label="Create a new version from changes"
-            />
-            Create new version
-          </label>
+          {recipe !== null && (
+            <label className="re-new-version-label">
+              <input
+                type="checkbox"
+                checked={form.create_new_version}
+                onChange={(e) => patch("create_new_version", e.target.checked)}
+                aria-label="Create a new version from changes"
+              />
+              Create new version
+            </label>
+          )}
           <div className="re-version-description">
             <input
               className={`re-new-version-input${descriptionError !== null ? " re-field-input--error" : ""}`}
@@ -1322,7 +1314,7 @@ export function RecipeEditor({
       {showCopyDialog && recipe && (
         <CopyRecipeDialog
           recipe={recipe}
-          flatFolders={flatFolders.map((f) => ({ id: f.id, label: f.name }))}
+          flatFolders={flat}
           onCopy={handleCopy}
           onCancel={() => setShowCopyDialog(false)}
         />
