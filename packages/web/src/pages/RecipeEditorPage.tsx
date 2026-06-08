@@ -27,6 +27,7 @@ import {
   randomId,
   unitType,
 } from "@recipe-book/shared";
+import { assertDefined } from "@recipe-book/shared/src/assertions/index.ts";
 import { useMemo, useState } from "react";
 import { DurationEditor } from "../components/duration/DurationEditor.tsx";
 import { IngredientSelector } from "../components/ingredients_table/IngredientSelector.tsx";
@@ -167,12 +168,6 @@ function formatAmount(value: Fraction, unit: MeasurementUnit): string {
 }
 
 // ---------------------------------------------------------------------------
-// Default measurement
-// ---------------------------------------------------------------------------
-
-const DEFAULT_AMOUNT: Measurement = { value: { numerator: 1, denominator: 1 }, unit: "cup" };
-
-// ---------------------------------------------------------------------------
 // Exported helpers (also tested directly)
 // ---------------------------------------------------------------------------
 
@@ -203,7 +198,7 @@ export function resolveAmountOnIngredientChange(
   allIngredients: readonly Ingredient[],
 ): Measurement {
   const newIngredient = allIngredients.find((i) => i.id === newIngredientId);
-  if (newIngredient === undefined) return currentAmount ?? DEFAULT_AMOUNT;
+  assertDefined(newIngredient);
 
   if (
     currentAmount !== undefined &&
@@ -249,7 +244,6 @@ function IngredientItemRow({
   const [isEditingIngredient, setIsEditingIngredient] = useState(false);
   const ingredient = allIngredients.find((i) => i.id === item.ingredient_id);
   const name = ingredient?.name ?? item.ingredient_id;
-  const amountMissing = item.amount === undefined;
 
   function handleIngredientChange(id: IngredientId | undefined) {
     if (id !== undefined) {
@@ -265,11 +259,7 @@ function IngredientItemRow({
   }
 
   return (
-    <div
-      className={`re-item re-item--ingredient${amountMissing ? " re-item--amount-required" : ""}`}
-      role="group"
-      aria-label={`Ingredient: ${name}`}
-    >
+    <div className={"re-item re-item--ingredients"} role="group" aria-label={`Ingredient: ${name}`}>
       {isEditingIngredient ? (
         <IngredientSelector
           value={item.ingredient_id}
@@ -287,16 +277,17 @@ function IngredientItemRow({
           {name}
         </span>
       )}
-      <MeasurementEditor
-        value={item.amount ?? DEFAULT_AMOUNT}
-        initiallyOpen={amountMissing}
-        onCommit={(newAmount) => onChange({ ...item, amount: newAmount })}
-      />
-      {amountMissing && (
+      {ingredient && (
+        <MeasurementEditor
+          value={ingredient.default_measurement_value}
+          onCommit={(newAmount) => onChange({ ...item, amount: newAmount })}
+        />
+      )}
+      {/* {amountMissing && (
         <span className="re-item-amount-warning" role="alert" aria-label="Amount required">
           Amount required
         </span>
-      )}
+      )} */}
       <button
         type="button"
         className="re-item-remove"
@@ -320,10 +311,11 @@ interface NewIngredientRowProps extends WithIngredients {
 
 function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIngredientRowProps) {
   const [ingredient_id, setIngredientId] = useState<IngredientId | undefined>(undefined);
-  const [amount, setAmount] = useState<Measurement>(DEFAULT_AMOUNT);
+  const [amount, setAmount] = useState<Measurement | undefined>(undefined);
 
   const selectedIngredient =
     ingredient_id !== undefined ? allIngredients.find((i) => i.id === ingredient_id) : undefined;
+  const selectedIngredientAmount = amount ?? selectedIngredient?.default_measurement_value;
 
   function handleSelectIngredient(id: IngredientId | undefined) {
     if (id !== undefined) {
@@ -333,12 +325,12 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
   }
 
   function handleAdd() {
-    if (ingredient_id === undefined) return;
+    if (!selectedIngredient) return;
     onAdd({
       kind: "ingredient",
       id: randomId(SectionItemId),
-      ingredient_id,
-      amount,
+      ingredient_id: selectedIngredient.id,
+      amount: amount ?? selectedIngredient.default_measurement_value,
     });
   }
 
@@ -352,7 +344,9 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
         ariaLabel="Select new ingredient"
         placeholder="— Choose ingredient —"
       />
-      <MeasurementEditor value={amount} onCommit={setAmount} />
+      {selectedIngredientAmount && (
+        <MeasurementEditor value={selectedIngredientAmount} onCommit={setAmount} />
+      )}
       <div className="re-new-ingredient-actions">
         <button
           type="button"
