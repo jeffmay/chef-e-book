@@ -1,6 +1,6 @@
 import { Companion, randomId, RecipeBookId } from "@recipe-book/shared";
 import { type } from "arktype";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export const ACTIVE_BOOK_KEY = "ecookdeck_book" as const;
 
@@ -20,27 +20,29 @@ export const ActiveBookMeta = Companion(
 
 export type ActiveBookMeta = typeof ActiveBookMeta.type.infer;
 
+function loadActiveBookMeta(): ActiveBookMeta | null {
+  const bookStr = localStorage.getItem(ACTIVE_BOOK_KEY);
+  if (!bookStr) {
+    return null;
+  }
+  const book = ActiveBookMeta.type(JSON.parse(bookStr));
+  if (book instanceof type.errors) {
+    console.error(
+      `Failed to load active book from localStorage, key='${ACTIVE_BOOK_KEY}': ${book.summary}`,
+    );
+    return null;
+  }
+  return book;
+}
+
 export function useActiveBookMeta(): UseActiveBookMetaResult {
-  const [activeBookMeta, setState] = useState<ActiveBookMeta | null>(() => {
-    if (typeof localStorage === "undefined") {
-      // if server-side rendering the page
-      return null;
-    }
-    const bookStr = localStorage.getItem(ACTIVE_BOOK_KEY);
-    if (!bookStr) {
-      // if no book has been created
-      return null;
-    }
-    const book = ActiveBookMeta.type(JSON.parse(bookStr));
-    if (book instanceof type.errors) {
-      // the stored book metadata is incompatible
-      console.error(
-        `Failed to load active book from localStorage, key='${ACTIVE_BOOK_KEY}': ${book.summary}`,
-      );
-      return null;
-    }
-    return book;
-  });
+  // Start with null so server pre-render and hydration pass both match.
+  // The real localStorage value is read in useEffect (client-only).
+  const [activeBookMeta, setState] = useState<ActiveBookMeta | null>(null);
+
+  useEffect(() => {
+    setState(loadActiveBookMeta());
+  }, []);
 
   const setActiveBookName = useCallback((name: string) => {
     const id = randomId(RecipeBookId);
