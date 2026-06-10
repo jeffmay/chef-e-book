@@ -5,7 +5,14 @@ import type {
   RecipeId,
   RecipeVersion,
 } from "@recipe-book/shared";
-import { Fragment, type FormEvent, type KeyboardEvent, useRef, useState } from "react";
+import {
+  Fragment,
+  type FormEvent,
+  type KeyboardEvent,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router";
 import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.ts";
 import { latestVersion, useRecipeStore } from "../hooks/useRecipeStore.ts";
@@ -53,6 +60,16 @@ type CreatingFolderState =
   | { readonly kind: "creating"; readonly parentId: RecipeFolderId | undefined };
 
 const FOLDER_IDLE: CreatingFolderState = { kind: "idle" };
+
+// ---------------------------------------------------------------------------
+// EditingFolderState — inline rename state for existing folders
+// ---------------------------------------------------------------------------
+
+type EditingFolderState =
+  | { readonly kind: "idle" }
+  | { readonly kind: "editing"; readonly folderId: RecipeFolderId; readonly name: string };
+
+const FOLDER_EDIT_IDLE: EditingFolderState = { kind: "idle" };
 
 // ---------------------------------------------------------------------------
 // NewFolderRow
@@ -224,7 +241,7 @@ function buildRows(
 export function BulkRecipeEditorPage() {
   const navigate = useNavigate();
   const { recipes, removeAll, merge } = useRecipeStore();
-  const { folders, createFolder } = useRecipeFolderStore();
+  const { folders, createFolder, updateFolder } = useRecipeFolderStore();
 
   const [rootExpanded, setRootExpanded] = useState(true);
   const [expandedFolders, setExpandedFolders] = useState<ReadonlySet<RecipeFolderId>>(new Set());
@@ -242,7 +259,22 @@ export function BulkRecipeEditorPage() {
   const [creatingFolder, setCreatingFolder] = useState<CreatingFolderState>(FOLDER_IDLE);
   const [newFolderName, setNewFolderName] = useState("");
 
+  // Inline folder-rename state.
+  const [editingFolder, setEditingFolder] = useState<EditingFolderState>(FOLDER_EDIT_IDLE);
+
   const deleteBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Keyed by folder id — lets us restore focus to a specific name span after rename.
+  const folderNameRefs = useRef<Map<string, HTMLElement | null>>(new Map());
+  // Set before calling setEditingFolder(idle); cleared by useLayoutEffect after the render.
+  const pendingFocusFolderRef = useRef<string | undefined>(undefined);
+
+  useLayoutEffect(() => {
+    if (pendingFocusFolderRef.current !== undefined) {
+      folderNameRefs.current.get(pendingFocusFolderRef.current)?.focus();
+      pendingFocusFolderRef.current = undefined;
+    }
+  });
 
   // Rows start at depth 1; depth 0 is reserved for the virtual root "Recipes" row.
   const visibleRows = buildRows(folders, recipes, undefined, expandedFolders, expandedRecipes, 1);
@@ -359,6 +391,33 @@ export function BulkRecipeEditorPage() {
   function handleNewFolderCancel(): void {
     setCreatingFolder(FOLDER_IDLE);
     setNewFolderName("");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rename-folder helpers
+  // ---------------------------------------------------------------------------
+
+  function handleStartRenameFolder(folder: RecipeFolder): void {
+    setEditingFolder({ kind: "editing", folderId: folder.id, name: folder.name });
+  }
+
+  function handleRenameFolderSubmit(e: FormEvent, folder: RecipeFolder): void {
+    e.preventDefault();
+    if (editingFolder.kind !== "editing") return;
+    const name = editingFolder.name.trim();
+    if (name === "") return;
+    updateFolder({ ...folder, name });
+    pendingFocusFolderRef.current = editingFolder.folderId;
+    setEditingFolder(FOLDER_EDIT_IDLE);
+  }
+
+  // restoreFocus=true for explicit keyboard/button cancel; false for blur-triggered cancel
+  // (where focus has already moved to the element the user clicked).
+  function handleRenameFolderCancel(restoreFocus = true): void {
+    if (restoreFocus && editingFolder.kind === "editing") {
+      pendingFocusFolderRef.current = editingFolder.folderId;
+    }
+    setEditingFolder(FOLDER_EDIT_IDLE);
   }
 
   const isCreatingAtRoot =
@@ -632,7 +691,75 @@ export function BulkRecipeEditorPage() {
                             <span className="bre-folder-icon" aria-hidden>
                               📁
                             </span>
-                            <span className="bre-name">{folder.name}</span>
+                            {editingFolder.kind === "editing" &&
+                            editingFolder.folderId === folder.id ? (
+                              <form
+                                className="bre-rename-folder-form"
+                                onSubmit={(e) => handleRenameFolderSubmit(e, folder)}
+                                onBlur={(e) => {
+                                  const related = e.relatedTarget;
+                                  if (
+                                    !(related instanceof Node) ||
+                                    !e.currentTarget.contains(related)
+                                  ) {
+                                    handleRenameFolderCancel(false);
+                                  }
+                                }}
+                              >
+                                <input
+                                  type="text"
+                                  className="bre-rename-folder-input"
+                                  value={editingFolder.name}
+                                  onChange={(e) =>
+                                    setEditingFolder({
+                                      kind: "editing",
+                                      folderId: folder.id,
+                                      name: e.target.value,
+                                    })
+                                  }
+                                  aria-label={`Rename folder ${folder.name}`}
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Escape") handleRenameFolderCancel();
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  className="bre-rename-folder-cancel"
+                                  onClick={() => handleRenameFolderCancel()}
+                                  aria-label="Cancel rename folder"
+                                >
+                                  ↩
+                                </button>
+                                <button
+                                  type="submit"
+                                  className="bre-rename-folder-confirm"
+                                  disabled={editingFolder.name.trim() === ""}
+                                  aria-label="Confirm rename folder"
+                                >
+                                  ✔︎
+                                </button>
+                              </form>
+                            ) : (
+                              <span
+                                className="bre-name bre-name--editable"
+                                tabIndex={0}
+                                title="Double-click or press Enter to rename"
+                                ref={(el) => {
+                                  if (el) folderNameRefs.current.set(folder.id, el);
+                                  else folderNameRefs.current.delete(folder.id);
+                                }}
+                                onDoubleClick={() => handleStartRenameFolder(folder)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === "F2") {
+                                    e.preventDefault();
+                                    handleStartRenameFolder(folder);
+                                  }
+                                }}
+                              >
+                                {folder.name}
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="bre-td bre-td--date">—</td>

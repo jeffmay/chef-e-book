@@ -364,16 +364,28 @@
 }
 
 /* ============================================================
-   Inline new-folder row
+   Inline new-folder row / inline rename-folder form
    ============================================================ */
 
-.bre-new-folder-form {
+.bre-name--editable {
+  cursor: text;
+}
+
+.bre-name--editable:focus-visible {
+  outline: var(--border-width) solid var(--color-fg);
+  outline-offset: 2px;
+}
+
+.bre-new-folder-form,
+.bre-rename-folder-form {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+  flex: 1;
 }
 
-.bre-new-folder-input {
+.bre-new-folder-input,
+.bre-rename-folder-input {
   font-family: var(--font-body);
   font-size: 0.9em;
   padding: 2px var(--spacing-xs);
@@ -381,10 +393,13 @@
   background: var(--color-bg);
   color: var(--color-fg);
   min-width: 14em;
+  flex: 1;
 }
 
 .bre-new-folder-confirm,
-.bre-new-folder-cancel {
+.bre-new-folder-cancel,
+.bre-rename-folder-confirm,
+.bre-rename-folder-cancel {
   font-size: 0.85em;
   padding: 2px var(--spacing-xs);
   border: var(--border-width) solid var(--color-border);
