@@ -7,6 +7,12 @@ const config: Config = {
   trailingComma: "all",
   printWidth: 100,
   arrowParens: "always",
+  overrides: [
+    {
+      files: ["*.json"],
+      excludeFiles: ["graphify-out/**"],
+    },
+  ],
 };
 
 export default config;

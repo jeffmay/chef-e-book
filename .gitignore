@@ -43,3 +43,6 @@ server/node_modules/
 
 # Local Netlify folder
 .netlify
+
+# graphify — generated knowledge graph artifacts (run `graphify update .` after clone)
+graphify-out/
