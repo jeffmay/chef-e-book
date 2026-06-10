@@ -536,6 +536,40 @@ describe("BulkRecipeEditorPage — inline folder rename", () => {
     await userEvent.clear(screen.getByRole("textbox", { name: "Rename folder Mains" }));
     expect(screen.getByRole("button", { name: "Confirm rename folder" })).toBeDisabled();
   });
+
+  it("pressing Enter on the folder name span starts the rename", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    screen.getByText("Mains").focus();
+    await userEvent.keyboard("{Enter}");
+    expect(screen.getByRole("textbox", { name: "Rename folder Mains" })).toBeInTheDocument();
+  });
+
+  it("clicking outside the rename form cancels it", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.dblClick(screen.getByText("Mains"));
+    await userEvent.click(screen.getByRole("heading", { name: "Recipes" }));
+    expect(screen.queryByRole("textbox", { name: "Rename folder Mains" })).not.toBeInTheDocument();
+  });
+
+  it("Escape returns focus to the folder name span", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.dblClick(screen.getByText("Mains"));
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByText("Mains")).toHaveFocus();
+  });
+
+  it("after submitting a rename focus returns to the updated folder name span", async () => {
+    createRecipeFolder(recipeBookDoc, "Mains");
+    setup();
+    await userEvent.dblClick(screen.getByText("Mains"));
+    await userEvent.clear(screen.getByRole("textbox", { name: "Rename folder Mains" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Rename folder Mains" }), "Dinners");
+    await userEvent.keyboard("{Enter}");
+    expect(screen.getByText("Dinners")).toHaveFocus();
+  });
 });
 
 describe("BulkRecipeEditorPage — edit navigation", () => {
