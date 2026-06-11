@@ -1,1 +1,4 @@
+# run pre-commit hooks on the staged files
 npx lint-staged
+# update the graph
+graphify update .

@@ -24,9 +24,9 @@ const config: ConfigObject[] = [
     },
     plugins: {
       "@typescript-eslint": tsPlugin as unknown as Plugin,
-      "import-x": importX as unknown as Plugin,
-      "react-hooks": reactHooksPlugin as unknown as Plugin,
-      react: reactPlugin as unknown as Plugin,
+      "import-x": importX,
+      "react-hooks": reactHooksPlugin,
+      react: reactPlugin,
     },
     settings: {
       "import-x/resolver": {
@@ -65,7 +65,7 @@ const config: ConfigObject[] = [
     },
   },
   {
-    ignores: ["**/build/**", "**/dist/**", "**/node_modules/**"],
+    ignores: ["**/build/**", "**/dist/**", "**/node_modules/**", "graphify-out/**"],
   },
 ];
 
