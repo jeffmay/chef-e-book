@@ -67,7 +67,7 @@ function setup({
       ingredients={ingredients}
       onFilterAll={onFilterAll}
       onFilterAny={onFilterAny}
-      {...(onClearFilters ? { onClearFilters } : [])}
+      {...(onClearFilters && { onClearFilters })}
       onDelete={onDelete}
       onMerge={onMerge}
       onRename={onRename}
@@ -154,6 +154,11 @@ describe("LabelTable — selection and bulk actions", () => {
     expect(screen.queryByRole("region", { name: "Label bulk actions" })).not.toBeInTheDocument();
   });
 
+  it("Off radio is selected by default when bulk bar appears", async () => {
+    await expand_and_select(defaultProps, FAT);
+    expect(screen.getByRole("radio", { name: "Off" })).toBeChecked();
+  });
+
   it("calls onFilterAll with selected ids when All radio is clicked", async () => {
     await expand_and_select(defaultProps, FAT);
     await userEvent.click(screen.getByRole("radio", { name: "All" }));
@@ -170,6 +175,17 @@ describe("LabelTable — selection and bulk actions", () => {
     await expand_and_select(defaultProps, FAT);
     await userEvent.click(screen.getByRole("radio", { name: "All" }));
     expect(screen.getByRole("radio", { name: "All" })).toBeChecked();
+  });
+
+  it("clicking Off radio calls onClearFilters and deselects All/Any", async () => {
+    const onClearFiltersFn = vi.fn();
+    await expand_and_select({ ...defaultProps, onClearFilters: onClearFiltersFn }, FAT);
+    await userEvent.click(screen.getByRole("radio", { name: "All" }));
+    vi.clearAllMocks();
+    await userEvent.click(screen.getByRole("radio", { name: "Off" }));
+    expect(onClearFiltersFn).toHaveBeenCalled();
+    expect(screen.getByRole("radio", { name: "Off" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "All" })).not.toBeChecked();
   });
 
   it("calls onDelete with selected ids and clears selection", async () => {

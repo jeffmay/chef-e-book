@@ -105,7 +105,7 @@ export function LabelEditor({
           }
         }}
       />
-      <div className="it-edit-buttons">
+      <div className="it-label-edit-buttons">
         {onCancel !== undefined && (
           <button
             type="button"

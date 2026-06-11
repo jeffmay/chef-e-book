@@ -242,7 +242,8 @@
 }
 
 /* container for edit and revert buttons can swap vertical to horizontal layout based on width */
-.it-edit-buttons {
+.it-edit-buttons,
+.it-label-edit-buttons {
   display: inline-flex;
   gap: 2px;
 }

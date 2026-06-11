@@ -79,6 +79,11 @@ export function LabelTable({
     }
   }
 
+  function handleFilterOff(): void {
+    setFilterMode(null);
+    onClearFilters();
+  }
+
   function handleFilterAll(): void {
     setFilterMode("all");
     onFilterAll(selectedArray);
@@ -169,6 +174,19 @@ export function LabelTable({
               <span className="lt-bulk-count">{selectedIds.size} selected</span>
               <span className="lt-filter-label">Filter:</span>
               <div className="lt-filter-group" role="group" aria-label="Filter mode">
+                <label
+                  htmlFor="lt-filter-off"
+                  className={`lt-filter-btn${filterMode === null ? " lt-filter-btn--active" : ""}`}
+                >
+                  <RadioButton
+                    inputId="lt-filter-off"
+                    name="lt_filter_mode"
+                    value="off"
+                    checked={filterMode === null}
+                    onChange={handleFilterOff}
+                  />
+                  Off
+                </label>
                 <label
                   htmlFor="lt-filter-all"
                   className={`lt-filter-btn${filterMode === "all" ? " lt-filter-btn--active" : ""}`}
