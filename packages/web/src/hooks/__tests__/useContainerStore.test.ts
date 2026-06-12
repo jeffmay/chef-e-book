@@ -90,25 +90,25 @@ describe("useContainerStore — setLabels", () => {
 describe("useContainerStore — setParent", () => {
   it("sets parent_id on a container", () => {
     const { result } = renderHook(() => useContainerStore(), { wrapper: makeWrapper(doc) });
-    let pot_id: ContainerId | undefined;
+    let potId: ContainerId | undefined;
     act(() => {
       const pot = result.current.addContainer({ name: "Pot" });
-      pot_id = pot.id;
+      potId = pot.id;
     });
-    if (pot_id === undefined) throw new Error("pot not found");
-    act(() => result.current.setParent(BOWL_ID, pot_id));
-    expect(result.current.containers.find((c) => c.id === BOWL_ID)?.parent_id).toBe(pot_id);
+    if (potId === undefined) throw new Error("pot not found");
+    act(() => result.current.setParent(BOWL_ID, potId));
+    expect(result.current.containers.find((c) => c.id === BOWL_ID)?.parent_id).toBe(potId);
   });
 
   it("clears parent_id when undefined passed", () => {
     const { result } = renderHook(() => useContainerStore(), { wrapper: makeWrapper(doc) });
-    let pot_id: ContainerId | undefined;
+    let potId: ContainerId | undefined;
     act(() => {
       const pot = result.current.addContainer({ name: "Pot" });
-      pot_id = pot.id;
+      potId = pot.id;
     });
-    if (pot_id === undefined) throw new Error("pot not found");
-    act(() => result.current.setParent(BOWL_ID, pot_id));
+    if (potId === undefined) throw new Error("pot not found");
+    act(() => result.current.setParent(BOWL_ID, potId));
     act(() => result.current.setParent(BOWL_ID, undefined));
     expect(result.current.containers.find((c) => c.id === BOWL_ID)?.parent_id).toBeUndefined();
   });

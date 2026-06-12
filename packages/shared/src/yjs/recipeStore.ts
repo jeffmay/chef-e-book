@@ -241,10 +241,10 @@ export interface CreateRecipeInput {
 
 export function createRecipe(doc: Y.Doc, input: CreateRecipeInput): Recipe {
   const now = Date.now();
-  const recipe_id = randomId(RecipeId);
-  const initial_version: RecipeVersion = {
+  const recipeId = randomId(RecipeId);
+  const initialVersion: RecipeVersion = {
     id: randomId(RecipeVersionId),
-    recipe_id,
+    recipe_id: recipeId,
     description: input.description ?? "",
     ingredients: [],
     sections: [],
@@ -252,16 +252,16 @@ export function createRecipe(doc: Y.Doc, input: CreateRecipeInput): Recipe {
     // created_by: input.created_by,
   };
   const recipe: Recipe = {
-    id: recipe_id,
+    id: recipeId,
     title: input.title,
-    versions: [initial_version],
+    versions: [initialVersion],
     created_at: now,
     updated_at: now,
     ...(input.subtitle !== undefined && { subtitle: input.subtitle }),
     ...(input.source_url !== undefined && { source_url: input.source_url }),
     ...(input.parent_folder_id !== undefined && { parent_folder_id: input.parent_folder_id }),
   };
-  getRecipeYmap(doc).set(recipe_id, recipe);
+  getRecipeYmap(doc).set(recipeId, recipe);
   return recipe;
 }
 
@@ -284,17 +284,17 @@ export function saveRecipe(doc: Y.Doc, recipe_id: RecipeId, input: SaveRecipeInp
   const now = Date.now();
   let versions: RecipeVersion[];
   if (input.create_new_version) {
-    const new_version: RecipeVersion = {
+    const newVersion: RecipeVersion = {
       ...input.version,
       id: randomId(RecipeVersionId),
       recipe_id,
       created_at: now,
       // created_by: input.created_by,
     };
-    versions = [...existing.versions, new_version];
+    versions = [...existing.versions, newVersion];
   } else {
     // Replace the last version in place
-    const updated_version: RecipeVersion = {
+    const updatedVersion: RecipeVersion = {
       ...input.version,
       recipe_id,
       created_at: input.version.created_at,
@@ -302,8 +302,8 @@ export function saveRecipe(doc: Y.Doc, recipe_id: RecipeId, input: SaveRecipeInp
     };
     versions =
       existing.versions.length === 0
-        ? [updated_version]
-        : [...existing.versions.slice(0, -1), updated_version];
+        ? [updatedVersion]
+        : [...existing.versions.slice(0, -1), updatedVersion];
   }
 
   const updated: Recipe = {
@@ -330,25 +330,25 @@ export function copyRecipe(
   const original = getRecipe(doc, recipe_id);
   if (original === null) throw new Error(`Recipe ${recipe_id} not found`);
   const now = Date.now();
-  const new_recipe_id = randomId(RecipeId);
-  const copied_versions: RecipeVersion[] = original.versions.map((v) => ({
+  const newRecipeId = randomId(RecipeId);
+  const copiedVersions: RecipeVersion[] = original.versions.map((v) => ({
     ...v,
     id: randomId(RecipeVersionId),
-    recipe_id: new_recipe_id,
+    recipe_id: newRecipeId,
     created_at: now,
     // created_by,
   }));
   const copy: Recipe = {
-    id: new_recipe_id,
+    id: newRecipeId,
     title: new_title,
-    versions: copied_versions,
+    versions: copiedVersions,
     created_at: now,
     updated_at: now,
     ...(original.subtitle !== undefined && { subtitle: original.subtitle }),
     ...(original.source_url !== undefined && { source_url: original.source_url }),
     ...(new_folder_id !== undefined && { parent_folder_id: new_folder_id }),
   };
-  getRecipeYmap(doc).set(new_recipe_id, copy);
+  getRecipeYmap(doc).set(newRecipeId, copy);
   return copy;
 }
 
@@ -382,17 +382,17 @@ export function mergeRecipes(
   });
 
   const now = Date.now();
-  const new_recipe_id = randomId(RecipeId);
+  const newRecipeId = randomId(RecipeId);
 
-  const all_versions: RecipeVersion[] = recipes
+  const allVersions: RecipeVersion[] = recipes
     .flatMap((r) => r.versions)
     .sort((a, b) => a.created_at - b.created_at)
-    .map((v) => ({ ...v, id: randomId(RecipeVersionId), recipe_id: new_recipe_id }));
+    .map((v) => ({ ...v, id: randomId(RecipeVersionId), recipe_id: newRecipeId }));
 
   const merged: Recipe = {
-    id: new_recipe_id,
+    id: newRecipeId,
     title: new_title,
-    versions: all_versions,
+    versions: allVersions,
     created_at: Math.min(...recipes.map((r) => r.created_at)),
     updated_at: now,
     ...(new_folder_id !== undefined && { parent_folder_id: new_folder_id }),
@@ -400,7 +400,7 @@ export function mergeRecipes(
 
   const map = getRecipeYmap(doc);
   doc.transact(() => {
-    map.set(new_recipe_id, merged);
+    map.set(newRecipeId, merged);
     for (const id of recipe_ids) {
       map.delete(id);
     }

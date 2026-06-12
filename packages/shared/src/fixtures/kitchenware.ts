@@ -86,35 +86,35 @@ export function parseKitchenwareCsv(csv: string): KitchenwareTemplate[] {
   if (errors.length > 0) throw new Error(`CSV parse error: ${errors[0]!.message}`);
 
   const results: KitchenwareTemplate[] = [];
-  for (const raw_row of data) {
-    const type_val = (raw_row["Type"] ?? "").trim();
-    const raw_id = (raw_row["Unique ID"] ?? "unknown").trim();
-    const row_id = validOrThrow(KitchenwareId.type(paddedId(KitchenwareId, raw_id)));
+  for (const rawRow of data) {
+    const typeVal = (rawRow["Type"] ?? "").trim();
+    const rawId = (rawRow["Unique ID"] ?? "unknown").trim();
+    const rowId = validOrThrow(KitchenwareId.type(paddedId(KitchenwareId, rawId)));
 
-    if (type_val === "ingredient") {
-      const mtype = (raw_row["Default Measurement Type"] ?? "").trim();
-      if (mtype !== "volume" && mtype !== "weight" && mtype !== "count") {
-        throw new Error(`Unknown measurement type "${mtype}" for kitchenware "${row_id}"`);
+    if (typeVal === "ingredient") {
+      const mType = (rawRow["Default Measurement Type"] ?? "").trim();
+      if (mType !== "volume" && mType !== "weight" && mType !== "count") {
+        throw new Error(`Unknown measurement type "${mType}" for kitchenware "${rowId}"`);
       }
-      const result = IngredientRow(raw_row);
+      const result = IngredientRow(rawRow);
       if (result instanceof type.errors) {
-        throw new Error(`Malformed ingredient CSV row for "${row_id}": ${result.summary}`);
-      }
-      results.push(result);
-    } else if (type_val === "container") {
-      const result = ContainerRow(raw_row);
-      if (result instanceof type.errors) {
-        throw new Error(`Malformed container CSV row for "${row_id}": ${result.summary}`);
+        throw new Error(`Malformed ingredient CSV row for "${rowId}": ${result.summary}`);
       }
       results.push(result);
-    } else if (type_val === "equipment") {
-      const result = EquipmentRow(raw_row);
+    } else if (typeVal === "container") {
+      const result = ContainerRow(rawRow);
       if (result instanceof type.errors) {
-        throw new Error(`Malformed equipment CSV row for "${row_id}": ${result.summary}`);
+        throw new Error(`Malformed container CSV row for "${rowId}": ${result.summary}`);
+      }
+      results.push(result);
+    } else if (typeVal === "equipment") {
+      const result = EquipmentRow(rawRow);
+      if (result instanceof type.errors) {
+        throw new Error(`Malformed equipment CSV row for "${rowId}": ${result.summary}`);
       }
       results.push(result);
     } else {
-      throw new Error(`Unknown kitchenware type "${type_val}" for id "${row_id}"`);
+      throw new Error(`Unknown kitchenware type "${typeVal}" for id "${rowId}"`);
     }
   }
   return results;

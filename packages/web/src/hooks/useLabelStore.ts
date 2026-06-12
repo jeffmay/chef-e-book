@@ -63,15 +63,15 @@ export function useLabelStore(): UseLabelStoreResult {
     deleteLabels(ids) {
       deleteLabelsInDoc(doc, ids);
     },
-    mergeLabels(idsToMerge, new_name) {
-      const new_id = randomId(KitchenwareLabelId);
+    mergeLabels(idsToMerge, newName) {
+      const newId = randomId(KitchenwareLabelId);
 
       // Collect kinds from all merging labels
       const mergedKinds = new Set<KitchenwareKind>();
       const labelsMap = getLabelsYmap(doc);
       labelsMap.forEach((value, id) => {
-        const label_id = loadId(KitchenwareLabelId, id);
-        if (!idsToMerge.includes(label_id)) return;
+        const labelId = loadId(KitchenwareLabelId, id);
+        if (!idsToMerge.includes(labelId)) return;
         if (typeof value === "object" && value !== null) {
           const obj = value as Record<string, unknown>;
           const kinds = obj["kinds"];
@@ -87,16 +87,16 @@ export function useLabelStore(): UseLabelStoreResult {
 
       doc.transact(() => {
         // Create new merged label
-        labelsMap.set(new_id, { name: new_name, kinds: [...mergedKinds] });
+        labelsMap.set(newId, { name: newName, kinds: [...mergedKinds] });
         // Update all ingredient references before deleting old labels
-        replaceLabelInAllIngredients(doc, idsToMerge, new_id);
+        replaceLabelInAllIngredients(doc, idsToMerge, newId);
         // Delete old labels (cascade delete observer is a no-op since refs are already updated)
         for (const id of idsToMerge) {
           labelsMap.delete(id);
         }
       });
 
-      return new_id;
+      return newId;
     },
   };
 }

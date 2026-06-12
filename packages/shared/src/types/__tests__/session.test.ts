@@ -3,7 +3,7 @@ import { paddedId } from "../ids.ts";
 import { isActiveSession, isCompletedSession, SessionId, type Session } from "../session.ts";
 
 describe("session type guards", () => {
-  const active_session: Session = {
+  const activeSession: Session = {
     id: paddedId(SessionId, "sess-1"),
     recipe_id: "recipe-1",
     recipe_version_id: "ver-1",
@@ -12,7 +12,7 @@ describe("session type guards", () => {
     item_states: {},
   };
 
-  const completed_session: Session = {
+  const completedSession: Session = {
     id: paddedId(SessionId, "sess-2"),
     recipe_id: "recipe-1",
     recipe_version_id: "ver-1",
@@ -23,12 +23,12 @@ describe("session type guards", () => {
   };
 
   it("isActiveSession identifies active sessions", () => {
-    expect(isActiveSession(active_session)).toBe(true);
-    expect(isActiveSession(completed_session)).toBe(false);
+    expect(isActiveSession(activeSession)).toBe(true);
+    expect(isActiveSession(completedSession)).toBe(false);
   });
 
   it("isCompletedSession identifies completed sessions", () => {
-    expect(isCompletedSession(active_session)).toBe(false);
-    expect(isCompletedSession(completed_session)).toBe(true);
+    expect(isCompletedSession(activeSession)).toBe(false);
+    expect(isCompletedSession(completedSession)).toBe(true);
   });
 });

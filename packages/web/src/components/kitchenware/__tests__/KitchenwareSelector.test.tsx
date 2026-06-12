@@ -134,9 +134,9 @@ describe("KitchenwareSelector — creating a new container", () => {
     setup();
     const input = screen.getByRole("combobox", { name: "Container" });
     await userEvent.type(input, "Mixing Bowl");
-    const create_option = await screen.findByText(/Create "Mixing Bowl"/);
+    const createOption = await screen.findByText(/Create "Mixing Bowl"/);
     onCreateContainer.mockReturnValue(makeNewContainer("Mixing Bowl"));
-    await userEvent.click(create_option);
+    await userEvent.click(createOption);
     await screen.findByRole("dialog", { name: "New container" });
     await userEvent.click(screen.getByRole("button", { name: "Create" }));
     expect(onUpdateContainer).toHaveBeenCalledWith(
@@ -151,9 +151,9 @@ describe("KitchenwareSelector — creating a new container", () => {
     setup();
     const input = screen.getByRole("combobox", { name: "Container" });
     await userEvent.type(input, "Temp Bowl");
-    const create_option = await screen.findByText(/Create "Temp Bowl"/);
+    const createOption = await screen.findByText(/Create "Temp Bowl"/);
     onCreateContainer.mockReturnValue(makeNewContainer("Temp Bowl"));
-    await userEvent.click(create_option);
+    await userEvent.click(createOption);
     await screen.findByRole("dialog", { name: "New container" });
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     await waitFor(() =>

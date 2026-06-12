@@ -33,10 +33,10 @@ describe("POST /sync", () => {
     const res = await request(app).post("/sync").send({ book_id: "test-book-2", update });
     expect(res.status).toBe(200);
 
-    const server_state = Buffer.from(res.body.update as string, "base64");
-    const server_doc = new Y.Doc();
-    Y.applyUpdate(server_doc, server_state);
-    expect(server_doc.getText("test").toString()).toBe("hello");
+    const serverState = Buffer.from(res.body.update as string, "base64");
+    const serverDoc = new Y.Doc();
+    Y.applyUpdate(serverDoc, serverState);
+    expect(serverDoc.getText("test").toString()).toBe("hello");
   });
 
   it("persists state across sync calls", async () => {

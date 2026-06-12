@@ -54,15 +54,15 @@ export function convertVolume(
   to: VolumeUnit,
 ): Fraction {
   if (from === to) return value;
-  const from_tsp = TSP_PER[from];
-  const to_tsp = TSP_PER[to];
-  if (from_tsp !== null && to_tsp !== null) {
-    return divideFractions(multiplyFractions(value, from_tsp), to_tsp);
+  const fromTsp = TSP_PER[from];
+  const toTsp = TSP_PER[to];
+  if (fromTsp !== null && toTsp !== null) {
+    return divideFractions(multiplyFractions(value, fromTsp), toTsp);
   }
-  const from_ml = ML_PER[from];
-  const to_ml = ML_PER[to];
-  if (from_ml !== null && to_ml !== null) {
-    return divideFractions(multiplyFractions(value, from_ml), to_ml);
+  const fromMl = ML_PER[from];
+  const toMl = ML_PER[to];
+  if (fromMl !== null && toMl !== null) {
+    return divideFractions(multiplyFractions(value, fromMl), toMl);
   }
   throw new Error(`Cannot convert between ${from} and ${to}: different unit systems`);
 }
@@ -73,15 +73,15 @@ export function convertWeight(
   to: WeightUnit,
 ): Fraction {
   if (from === to) return value;
-  const from_oz = OZ_PER[from];
-  const to_oz = OZ_PER[to];
-  if (from_oz !== null && to_oz !== null) {
-    return divideFractions(multiplyFractions(value, from_oz), to_oz);
+  const fromOz = OZ_PER[from];
+  const toOz = OZ_PER[to];
+  if (fromOz !== null && toOz !== null) {
+    return divideFractions(multiplyFractions(value, fromOz), toOz);
   }
-  const from_g = G_PER[from];
-  const to_g = G_PER[to];
-  if (from_g !== null && to_g !== null) {
-    return divideFractions(multiplyFractions(value, from_g), to_g);
+  const fromG = G_PER[from];
+  const toG = G_PER[to];
+  if (fromG !== null && toG !== null) {
+    return divideFractions(multiplyFractions(value, fromG), toG);
   }
   throw new Error(`Cannot convert between ${from} and ${to}: different unit systems`);
 }
@@ -90,9 +90,9 @@ export function largestWholeVolumeUnit(
   value: ReadonlyDeep<Fraction>,
   base: VolumeUnit,
 ): VolumeUnit {
-  const us_order: VolumeUnit[] = ["gallon", "quart", "pint", "cup", "fl_oz", "tbsp", "tsp"];
-  const metric_order: VolumeUnit[] = ["l", "ml"];
-  const candidates = sameSystemVolume(base, "tsp") ? us_order : metric_order;
+  const usOrder: VolumeUnit[] = ["gallon", "quart", "pint", "cup", "fl_oz", "tbsp", "tsp"];
+  const metricOrder: VolumeUnit[] = ["l", "ml"];
+  const candidates = sameSystemVolume(base, "tsp") ? usOrder : metricOrder;
   for (const candidate of candidates) {
     if (!sameSystemVolume(base, candidate)) continue;
     const converted = convertVolume(value, base, candidate);
@@ -112,9 +112,9 @@ export function largestWholeWeightUnit(
   value: ReadonlyDeep<Fraction>,
   base: WeightUnit,
 ): WeightUnit {
-  const us_order: WeightUnit[] = ["lb", "oz"];
-  const metric_order: WeightUnit[] = ["kg", "g"];
-  const candidates = OZ_PER[base] !== null ? us_order : metric_order;
+  const usOrder: WeightUnit[] = ["lb", "oz"];
+  const metricOrder: WeightUnit[] = ["kg", "g"];
+  const candidates = OZ_PER[base] !== null ? usOrder : metricOrder;
   for (const candidate of candidates) {
     const converted = convertWeight(value, base, candidate);
     if (

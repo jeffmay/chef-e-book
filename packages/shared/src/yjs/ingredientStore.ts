@@ -54,11 +54,11 @@ function validateStored(id: IngredientId, raw: unknown): Ingredient | null {
       r["default_measurement_type"] !== undefined &&
       r["default_measurement_value"] === undefined
     ) {
-      const old_type = r["default_measurement_type"] as string;
-      const valid_type = MeasurementType.type(old_type);
-      r["default_measurement_value"] = isTypeError(valid_type)
+      const oldType = r["default_measurement_type"] as string;
+      const validType = MeasurementType.type(oldType);
+      r["default_measurement_value"] = isTypeError(validType)
         ? DEFAULT_MEASUREMENT_BY_TYPE.volume
-        : DEFAULT_MEASUREMENT_BY_TYPE[valid_type];
+        : DEFAULT_MEASUREMENT_BY_TYPE[validType];
       delete r["default_measurement_type"];
     }
   }
@@ -95,29 +95,29 @@ export function initFromKitchenwareTemplates(
   doc: Y.Doc,
   templates: readonly KitchenwareTemplate[],
 ): void {
-  const ingredient_map = getIngredientYmap(doc);
-  const labels_map = getLabelsYmap(doc);
-  if (ingredient_map.size > 0 || labels_map.size > 0) return;
+  const ingredientMap = getIngredientYmap(doc);
+  const labelsMap = getLabelsYmap(doc);
+  if (ingredientMap.size > 0 || labelsMap.size > 0) return;
 
-  const all_label_names = new Set<string>();
+  const allLabelNames = new Set<string>();
   for (const item of templates) {
-    for (const label_name of item.label_names) {
-      all_label_names.add(label_name);
+    for (const labelName of item.label_names) {
+      allLabelNames.add(labelName);
     }
   }
 
   doc.transact(() => {
-    const label_name_to_id = new Map<string, KitchenwareLabelId>();
-    for (const label_name of all_label_names) {
-      const id = findOrCreateLabel(doc, label_name, DEFAULT_INGREDIENT_KINDS);
-      label_name_to_id.set(label_name, id);
+    const labelNameToId = new Map<string, KitchenwareLabelId>();
+    for (const labelName of allLabelNames) {
+      const id = findOrCreateLabel(doc, labelName, DEFAULT_INGREDIENT_KINDS);
+      labelNameToId.set(labelName, id);
     }
 
     for (const item of templates) {
       if (item.kind !== "ingredient") continue;
-      const label_ids = new Set<KitchenwareLabelId>(
+      const labelIds = new Set<KitchenwareLabelId>(
         item.label_names
-          .map((name) => label_name_to_id.get(name))
+          .map((name) => labelNameToId.get(name))
           .filter((id): id is KitchenwareLabelId => id != null),
       );
       const ingredient: Ingredient = {
@@ -125,9 +125,9 @@ export function initFromKitchenwareTemplates(
         id: loadId(IngredientId, item.id),
         name: item.name,
         default_measurement_value: DEFAULT_MEASUREMENT_BY_TYPE[item.default_measurement_type],
-        labels: label_ids,
+        labels: labelIds,
       };
-      ingredient_map.set(ingredient.id, toStored(ingredient));
+      ingredientMap.set(ingredient.id, toStored(ingredient));
     }
   });
 }
@@ -139,15 +139,15 @@ export function addIngredient(doc: Y.Doc, ingredient: Ingredient): void {
 export function addLabelsToIngredients(
   doc: Y.Doc,
   ids: readonly IngredientId[],
-  label_ids: readonly KitchenwareLabelId[],
+  labelIds: readonly KitchenwareLabelId[],
 ): void {
   const map = getIngredientYmap(doc);
   doc.transact(() => {
     for (const id of ids) {
       const ingredient = validateStored(id, map.get(id));
       if (ingredient === null) continue;
-      const new_labels = new Set([...ingredient.labels, ...label_ids]);
-      map.set(id, toStored({ ...ingredient, labels: new_labels }));
+      const newLabels = new Set([...ingredient.labels, ...labelIds]);
+      map.set(id, toStored({ ...ingredient, labels: newLabels }));
     }
   });
 }
@@ -155,51 +155,51 @@ export function addLabelsToIngredients(
 export function removeLabelsFromIngredients(
   doc: Y.Doc,
   ids: readonly IngredientId[],
-  label_ids: readonly KitchenwareLabelId[],
+  labelIds: readonly KitchenwareLabelId[],
 ): void {
-  const remove_set = new Set<string>(label_ids);
+  const removeSet = new Set<string>(labelIds);
   const map = getIngredientYmap(doc);
   doc.transact(() => {
     for (const id of ids) {
       const ingredient = validateStored(id, map.get(id));
       if (ingredient === null) continue;
-      const new_labels = new Set([...ingredient.labels].filter((l) => !remove_set.has(l)));
-      if (new_labels.size === ingredient.labels.size) continue;
-      map.set(id, toStored({ ...ingredient, labels: new_labels }));
+      const newLabels = new Set([...ingredient.labels].filter((l) => !removeSet.has(l)));
+      if (newLabels.size === ingredient.labels.size) continue;
+      map.set(id, toStored({ ...ingredient, labels: newLabels }));
     }
   });
 }
 
-export function removeLabelFromAllIngredients(doc: Y.Doc, label_id: KitchenwareLabelId): void {
+export function removeLabelFromAllIngredients(doc: Y.Doc, labelId: KitchenwareLabelId): void {
   const map = getIngredientYmap(doc);
   doc.transact(() => {
     map.forEach((value, id) => {
       const ingredient = validateStored(loadId(IngredientId, id), value);
       if (ingredient === null) return;
-      if (!ingredient.labels.has(label_id)) return;
-      const new_labels = new Set(ingredient.labels);
-      new_labels.delete(label_id);
-      map.set(id, toStored({ ...ingredient, labels: new_labels }));
+      if (!ingredient.labels.has(labelId)) return;
+      const newLabels = new Set(ingredient.labels);
+      newLabels.delete(labelId);
+      map.set(id, toStored({ ...ingredient, labels: newLabels }));
     });
   });
 }
 
 export function replaceLabelInAllIngredients(
   doc: Y.Doc,
-  old_label_ids: readonly KitchenwareLabelId[],
-  new_label_id: KitchenwareLabelId,
+  oldLabelIds: readonly KitchenwareLabelId[],
+  newLabelId: KitchenwareLabelId,
 ): void {
-  const old_set = new Set<string>(old_label_ids);
+  const oldSet = new Set<string>(oldLabelIds);
   const map = getIngredientYmap(doc);
   doc.transact(() => {
     map.forEach((value, id) => {
       const ingredient = validateStored(loadId(IngredientId, id), value);
       if (ingredient === null) return;
-      const has_any_old = [...ingredient.labels].some((l) => old_set.has(l));
-      if (!has_any_old) return;
-      const new_labels = new Set([...ingredient.labels].filter((l) => !old_set.has(l)));
-      new_labels.add(new_label_id);
-      map.set(id, toStored({ ...ingredient, labels: new_labels }));
+      const hasAnyOld = [...ingredient.labels].some((l) => oldSet.has(l));
+      if (!hasAnyOld) return;
+      const newLabels = new Set([...ingredient.labels].filter((l) => !oldSet.has(l)));
+      newLabels.add(newLabelId);
+      map.set(id, toStored({ ...ingredient, labels: newLabels }));
     });
   });
 }
@@ -222,7 +222,7 @@ export function setMeasurementValueForIngredients(
 export function setParentForIngredients(
   doc: Y.Doc,
   ids: readonly IngredientId[],
-  parent_id: IngredientId | undefined,
+  parentId: IngredientId | undefined,
 ): void {
   const map = getIngredientYmap(doc);
   doc.transact(() => {
@@ -235,7 +235,7 @@ export function setParentForIngredients(
         name: ingredient.name,
         default_measurement_value: ingredient.default_measurement_value,
         labels: ingredient.labels,
-        ...(parent_id !== undefined && { parent_id }),
+        ...(parentId !== undefined && { parent_id: parentId }),
       };
       map.set(id, toStored(updated));
     }
@@ -252,10 +252,10 @@ export function renameIngredient(doc: Y.Doc, id: IngredientId, name: string): vo
 export function setLabelsForIngredient(
   doc: Y.Doc,
   id: IngredientId,
-  label_ids: readonly KitchenwareLabelId[],
+  labelIds: readonly KitchenwareLabelId[],
 ): void {
   const map = getIngredientYmap(doc);
   const ingredient = validateStored(id, map.get(id));
   if (ingredient === null) return;
-  map.set(id, toStored({ ...ingredient, labels: new Set(label_ids) }));
+  map.set(id, toStored({ ...ingredient, labels: new Set(labelIds) }));
 }

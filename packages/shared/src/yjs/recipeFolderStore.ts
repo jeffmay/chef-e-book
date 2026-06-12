@@ -61,14 +61,14 @@ export function getRecipeFoldersFlat(doc: Y.Doc): Array<Omit<RecipeFolder, "chil
 
 /** Builds the folder hierarchy from a flat list. Returns root-level folders. */
 export function buildFolderTree(flat: Array<Omit<RecipeFolder, "children">>): RecipeFolder[] {
-  const by_id = new Map<string, RecipeFolder>();
+  const byId = new Map<string, RecipeFolder>();
   for (const f of flat) {
-    by_id.set(f.id, { ...f, children: [] });
+    byId.set(f.id, { ...f, children: [] });
   }
   const roots: RecipeFolder[] = [];
-  for (const folder of by_id.values()) {
+  for (const folder of byId.values()) {
     if (folder.parent_folder_id !== undefined) {
-      const parent = by_id.get(folder.parent_folder_id);
+      const parent = byId.get(folder.parent_folder_id);
       if (parent !== undefined) {
         (parent.children ??= []).push(folder);
         continue;

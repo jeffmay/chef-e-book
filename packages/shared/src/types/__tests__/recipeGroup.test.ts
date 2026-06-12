@@ -61,12 +61,12 @@ describe("RecipeFolder", () => {
   });
 
   it("accepts all sort order values", () => {
-    for (const sort_order of SortOrder.values) {
+    for (const sortOrder of SortOrder.values) {
       const folder: RecipeFolder = {
         id: ROOT_ID,
         name: "Folder",
         tags: [],
-        sort_order,
+        sort_order: sortOrder,
       };
       const result = RecipeFolder.type(folder);
       expect(result instanceof type.errors).toBe(false);

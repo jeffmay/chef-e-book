@@ -126,10 +126,10 @@ describe("MeasurementEditor — type selector", () => {
       screen.getByRole("combobox", { name: "Measurement type" }),
       "count",
     );
-    const unit_select = screen.getByRole("combobox", { name: "Measurement unit" });
-    expect(unit_select).toContainElement(screen.getByRole("option", { name: "whole" }));
-    expect(unit_select).toContainElement(screen.getByRole("option", { name: "pinch" }));
-    expect(unit_select).toContainElement(screen.getByRole("option", { name: "dash" }));
+    const unitSelect = screen.getByRole("combobox", { name: "Measurement unit" });
+    expect(unitSelect).toContainElement(screen.getByRole("option", { name: "whole" }));
+    expect(unitSelect).toContainElement(screen.getByRole("option", { name: "pinch" }));
+    expect(unitSelect).toContainElement(screen.getByRole("option", { name: "dash" }));
   });
 });
 
@@ -152,8 +152,8 @@ describe("MeasurementEditor — unit selector conversion", () => {
   });
 
   it("switching from oz to lb converts the fraction (16 oz → 1 lb)", async () => {
-    const sixteen_oz: Measurement = { value: makeFraction(16, 1), unit: "oz" };
-    await openEditor(sixteen_oz);
+    const sixteenOz: Measurement = { value: makeFraction(16, 1), unit: "oz" };
+    await openEditor(sixteenOz);
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Measurement unit" }), "lb");
     expect(screen.getByLabelText("1")).toBeInTheDocument();
   });

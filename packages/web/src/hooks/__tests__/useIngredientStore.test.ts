@@ -60,9 +60,9 @@ afterEach(() => {
 
 describe("useIngredientStore — async default loading", () => {
   it("initialises from the CSV when the store is empty", async () => {
-    const empty_doc = new Y.Doc();
+    const emptyDoc = new Y.Doc();
     const { result } = renderHook(() => useIngredientStore(), {
-      wrapper: makeWrapper(empty_doc),
+      wrapper: makeWrapper(emptyDoc),
     });
     expect(result.current.ingredients).toHaveLength(0);
     await waitFor(() => expect(result.current.ingredients).toHaveLength(1));
@@ -109,12 +109,12 @@ describe("useIngredientStore — addLabels / removeLabels", () => {
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing")?.id;
     if (id === undefined) throw new Error("ingredient not found");
-    const b_id = findOrCreateLabel(doc, "b", ingredientKinds);
-    const c_id = findOrCreateLabel(doc, "c", ingredientKinds);
-    act(() => result.current.addLabels([id], [b_id, c_id]));
+    const bId = findOrCreateLabel(doc, "b", ingredientKinds);
+    const cId = findOrCreateLabel(doc, "c", ingredientKinds);
+    act(() => result.current.addLabels([id], [bId, cId]));
     const updated = result.current.ingredients.find((i) => i.id === id);
-    expect(updated?.labels.has(b_id)).toBe(true);
-    expect(updated?.labels.has(c_id)).toBe(true);
+    expect(updated?.labels.has(bId)).toBe(true);
+    expect(updated?.labels.has(cId)).toBe(true);
   });
 
   it("removes labels from selected ingredients", () => {
@@ -130,12 +130,12 @@ describe("useIngredientStore — addLabels / removeLabels", () => {
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing 2")?.id;
     if (id === undefined) throw new Error("ingredient not found");
-    const x_id = findOrCreateLabel(doc, "x", ingredientKinds);
-    const y_id = findOrCreateLabel(doc, "y", ingredientKinds);
-    act(() => result.current.removeLabels([id], [x_id]));
+    const xId = findOrCreateLabel(doc, "x", ingredientKinds);
+    const yId = findOrCreateLabel(doc, "y", ingredientKinds);
+    act(() => result.current.removeLabels([id], [xId]));
     const updated = result.current.ingredients.find((i) => i.id === id);
-    expect(updated?.labels.has(x_id)).toBe(false);
-    expect(updated?.labels.has(y_id)).toBe(true);
+    expect(updated?.labels.has(xId)).toBe(false);
+    expect(updated?.labels.has(yId)).toBe(true);
   });
 });
 
@@ -146,11 +146,11 @@ describe("useIngredientStore — setMeasurementValue", () => {
     });
     const butter = result.current.ingredients.find((i) => i.id === BUTTER_ID);
     if (butter === undefined) throw new Error("butter not found");
-    const weight_measurement = { value: { numerator: 1, denominator: 1 }, unit: "oz" as const };
-    act(() => result.current.setMeasurementValue([butter.id], weight_measurement));
+    const weightMeasurement = { value: { numerator: 1, denominator: 1 }, unit: "oz" as const };
+    act(() => result.current.setMeasurementValue([butter.id], weightMeasurement));
     expect(
       result.current.ingredients.find((i) => i.id === BUTTER_ID)?.default_measurement_value,
-    ).toEqual(weight_measurement);
+    ).toEqual(weightMeasurement);
   });
 });
 
@@ -180,12 +180,12 @@ describe("useIngredientStore — setLabels", () => {
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing Labels")?.id;
     if (id === undefined) throw new Error("ingredient not found");
-    const x_id = findOrCreateLabel(doc, "x", ingredientKinds);
-    const y_id = findOrCreateLabel(doc, "y", ingredientKinds);
-    const z_id = findOrCreateLabel(doc, "z", ingredientKinds);
-    act(() => result.current.setLabels(id, [x_id, y_id, z_id]));
+    const xId = findOrCreateLabel(doc, "x", ingredientKinds);
+    const yId = findOrCreateLabel(doc, "y", ingredientKinds);
+    const zId = findOrCreateLabel(doc, "z", ingredientKinds);
+    act(() => result.current.setLabels(id, [xId, yId, zId]));
     const updated = result.current.ingredients.find((i) => i.id === id);
-    expect(updated?.labels).toEqual(new Set<KitchenwareLabelId>([x_id, y_id, z_id]));
+    expect(updated?.labels).toEqual(new Set<KitchenwareLabelId>([xId, yId, zId]));
   });
 });
 
@@ -196,9 +196,9 @@ describe("useIngredientStore — setParent", () => {
     });
     const butter = result.current.ingredients.find((i) => i.id === BUTTER_ID);
     if (butter === undefined) throw new Error("butter not found");
-    const dairy_id = paddedId(IngredientId, "dairy");
-    act(() => result.current.setParent([butter.id], dairy_id));
-    expect(result.current.ingredients.find((i) => i.id === BUTTER_ID)?.parent_id).toBe(dairy_id);
+    const dairyId = paddedId(IngredientId, "dairy");
+    act(() => result.current.setParent([butter.id], dairyId));
+    expect(result.current.ingredients.find((i) => i.id === BUTTER_ID)?.parent_id).toBe(dairyId);
     act(() => result.current.setParent([butter.id], undefined));
     expect(result.current.ingredients.find((i) => i.id === BUTTER_ID)?.parent_id).toBeUndefined();
   });

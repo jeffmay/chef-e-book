@@ -43,7 +43,7 @@ export function buildIngredientTree(
   const rowMap = new Map<IngredientId, IngredientRow>();
 
   for (const i of ingredients) {
-    const label_names = [...i.labels]
+    const labelNames = [...i.labels]
       .map((id) => labelNameById.get(id) ?? id)
       .sort((a, b) => a.localeCompare(b));
     const row: IngredientRow = {
@@ -51,7 +51,7 @@ export function buildIngredientTree(
       id: i.id,
       name: i.name,
       default_measurement_value: i.default_measurement_value,
-      labels: label_names,
+      labels: labelNames,
       parent_name:
         i.parent_id !== undefined ? (ingredientNameById.get(i.parent_id) ?? i.parent_id) : "",
       subRows: [],

@@ -87,7 +87,7 @@ export function useIngredientStore(): UseIngredientStoreResult {
     ingredients,
     createIngredient(input) {
       const id = randomId(IngredientId);
-      const label_ids = new Set(
+      const labelIds = new Set(
         input.labelNames.map((name) => findOrCreateLabel(doc, name, ingredientKinds)),
       );
       const ingredient: Ingredient = {
@@ -95,8 +95,8 @@ export function useIngredientStore(): UseIngredientStoreResult {
         id,
         name: input.name,
         default_measurement_value: input.default_measurement_value,
-        labels: label_ids,
-        ...(input.parent_id !== undefined && { parent_id: input.parent_id }),
+        labels: labelIds,
+        ...(input.parent_id && { parent_id: input.parent_id }),
       };
       addIngredient(doc, ingredient);
       return id;

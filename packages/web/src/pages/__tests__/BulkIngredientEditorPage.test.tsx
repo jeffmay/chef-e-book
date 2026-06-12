@@ -125,9 +125,9 @@ describe("BulkIngredientEditorPage — add ingredient form", () => {
 async function selectButterRow() {
   await setupAndWait();
   // Find the row containing "Butter" and click its checkbox
-  const butter_cell = screen.getByText("Butter");
-  const butter_row = butter_cell.closest("tr")!;
-  const checkbox = within(butter_row).getAllByRole("checkbox")[0]!;
+  const butterCell = screen.getByText("Butter");
+  const butterRow = butterCell.closest("tr")!;
+  const checkbox = within(butterRow).getAllByRole("checkbox")[0]!;
   await userEvent.click(checkbox);
 }
 

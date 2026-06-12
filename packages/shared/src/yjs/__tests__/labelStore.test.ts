@@ -84,18 +84,18 @@ describe("findOrCreateLabel", () => {
   });
 
   it("returns the existing id when a label with that name already exists", () => {
-    const first_id = addLabel(doc, "baking", INGREDIENT_KINDS);
-    const second_id = findOrCreateLabel(doc, "baking", INGREDIENT_KINDS);
-    expect(second_id).toBe(first_id);
+    const firstId = addLabel(doc, "baking", INGREDIENT_KINDS);
+    const secondId = findOrCreateLabel(doc, "baking", INGREDIENT_KINDS);
+    expect(secondId).toBe(firstId);
     expect(getLabels(doc)).toHaveLength(1);
   });
 });
 
 describe("deleteLabels", () => {
   it("removes specified labels", () => {
-    const fat_id = addLabel(doc, "fat", INGREDIENT_KINDS);
+    const fatId = addLabel(doc, "fat", INGREDIENT_KINDS);
     addLabel(doc, "solid", INGREDIENT_KINDS);
-    deleteLabels(doc, [fat_id]);
+    deleteLabels(doc, [fatId]);
     const remaining = getLabels(doc);
     expect(remaining).toHaveLength(1);
     expect(remaining[0]!.name).toBe("solid");
@@ -108,10 +108,10 @@ describe("deleteLabels", () => {
   });
 
   it("deletes multiple labels atomically", () => {
-    const a_id = addLabel(doc, "a", INGREDIENT_KINDS);
-    const b_id = addLabel(doc, "b", INGREDIENT_KINDS);
+    const aId = addLabel(doc, "a", INGREDIENT_KINDS);
+    const bId = addLabel(doc, "b", INGREDIENT_KINDS);
     addLabel(doc, "c", INGREDIENT_KINDS);
-    deleteLabels(doc, [a_id, b_id]);
+    deleteLabels(doc, [aId, bId]);
     const remaining = getLabels(doc);
     expect(remaining).toHaveLength(1);
     expect(remaining[0]!.name).toBe("c");

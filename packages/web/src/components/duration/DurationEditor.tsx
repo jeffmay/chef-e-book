@@ -54,19 +54,19 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
       setInputError(false);
       return;
     }
-    const parsed_ms = parse(text);
-    if (parsed_ms != null && parsed_ms >= 0) {
-      setCurrent(Math.round(parsed_ms / 1000));
+    const parsedMs = parse(text);
+    if (parsedMs != null && parsedMs >= 0) {
+      setCurrent(Math.round(parsedMs / 1000));
       setInputError(false);
     } else {
       setInputError(true);
     }
   }
 
-  function adjust(delta_seconds: number) {
-    const new_value = Math.max(0, current + delta_seconds);
-    setCurrent(new_value);
-    setInputText(humanizeSeconds(new_value));
+  function adjust(deltaSeconds: number) {
+    const newValue = Math.max(0, current + deltaSeconds);
+    setCurrent(newValue);
+    setInputText(humanizeSeconds(newValue));
     setInputError(false);
   }
 

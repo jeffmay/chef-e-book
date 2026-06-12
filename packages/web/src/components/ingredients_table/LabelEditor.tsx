@@ -73,8 +73,8 @@ export function LabelEditor({
     [allLabelNames],
   );
 
-  function handleChange(new_value: MultiValue<LabelOption>): void {
-    onChange(new_value.map((opt) => opt.value));
+  function handleChange(newValue: MultiValue<LabelOption>): void {
+    onChange(newValue.map((opt) => opt.value));
   }
 
   return (

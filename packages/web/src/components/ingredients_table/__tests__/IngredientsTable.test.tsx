@@ -226,8 +226,8 @@ describe("IngredientsTable — multi-select filter (type)", () => {
   it("filters by measurement type via MultiSelectFilter", async () => {
     setup();
     await screen.findByText("Flour");
-    const type_filter_input = screen.getByLabelText("Filter by type");
-    await userEvent.click(type_filter_input);
+    const typeFilterInput = screen.getByLabelText("Filter by type");
+    await userEvent.click(typeFilterInput);
     await userEvent.click(screen.getByRole("checkbox", { name: "weight" }));
     await userEvent.click(screen.getByRole("button", { name: "Accept filter" }));
     expect(screen.getByText("Cheese")).toBeInTheDocument();
@@ -395,8 +395,8 @@ describe("IngredientsTable — editable cells", () => {
   it("clicking the row checkbox does not double-toggle selection", async () => {
     setup([FLOUR]);
     await screen.findByText("Flour");
-    const flour_row = screen.getByText("Flour").closest("tr")!;
-    const checkbox = within(flour_row).getAllByRole("checkbox")[0]!;
+    const flourRow = screen.getByText("Flour").closest("tr")!;
+    const checkbox = within(flourRow).getAllByRole("checkbox")[0]!;
     await userEvent.click(checkbox);
     expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
@@ -439,10 +439,10 @@ describe("IngredientsTable — row selection", () => {
     setup([FLOUR]);
     await screen.findByText("Flour");
     const checkboxes = screen.getAllByRole("checkbox");
-    const row_checkbox = checkboxes[checkboxes.length - 1]!;
-    await userEvent.click(row_checkbox);
+    const rowCheckbox = checkboxes[checkboxes.length - 1]!;
+    await userEvent.click(rowCheckbox);
     expect(screen.getByRole("region", { name: "Bulk actions" })).toBeInTheDocument();
-    await userEvent.click(row_checkbox);
+    await userEvent.click(rowCheckbox);
     expect(screen.queryByRole("region", { name: "Bulk actions" })).not.toBeInTheDocument();
   });
 
@@ -461,8 +461,8 @@ describe("IngredientsTable — bulk actions", () => {
     setup([FLOUR, CHEESE]);
     await screen.findByText("Flour");
     // Find the Flour row and click its checkbox
-    const flour_row = screen.getByText("Flour").closest("tr")!;
-    await userEvent.click(within(flour_row).getAllByRole("checkbox")[0]!);
+    const flourRow = screen.getByText("Flour").closest("tr")!;
+    await userEvent.click(within(flourRow).getAllByRole("checkbox")[0]!);
   }
 
   it("calls onAddLabels with selected ids and created labels", async () => {

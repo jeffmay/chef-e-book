@@ -100,11 +100,11 @@ export function BulkIngredientEditorPage() {
   }
 
   function handleRemoveLabels(ids: readonly IngredientId[], labelNames: readonly string[]): void {
-    const remove_ids = labelNames
+    const removeIds = labelNames
       .map((name) => labels.find((l) => l.name === name)?.id)
       .filter((id) => id !== undefined);
-    if (remove_ids.length > 0) {
-      removeLabels(ids, remove_ids);
+    if (removeIds.length > 0) {
+      removeLabels(ids, removeIds);
     }
   }
 
@@ -112,19 +112,19 @@ export function BulkIngredientEditorPage() {
     setParent([id], parent_id);
   }
 
-  function handleFilterAll(label_ids: readonly KitchenwareLabelId[]): void {
-    if (label_ids.length === 0) {
+  function handleFilterAll(labelIds: readonly KitchenwareLabelId[]): void {
+    if (labelIds.length === 0) {
       setExternalLabelFilter(undefined);
     } else {
-      setExternalLabelFilter({ label_ids, mode: "all" });
+      setExternalLabelFilter({ label_ids: labelIds, mode: "all" });
     }
   }
 
-  function handleFilterAny(label_ids: readonly KitchenwareLabelId[]): void {
-    if (label_ids.length === 0) {
+  function handleFilterAny(labelIds: readonly KitchenwareLabelId[]): void {
+    if (labelIds.length === 0) {
       setExternalLabelFilter(undefined);
     } else {
-      setExternalLabelFilter({ label_ids, mode: "any" });
+      setExternalLabelFilter({ label_ids: labelIds, mode: "any" });
     }
   }
 

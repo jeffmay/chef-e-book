@@ -63,12 +63,12 @@ describe("MultiSelectFilter — opening the dropdown", () => {
     setup({ initial: ["dairy", "fat"] });
     await userEvent.click(screen.getByRole("textbox", { name: "Filter by labels" }));
     const dropdown = screen.getByRole("listbox");
-    const dairy_cb = within(dropdown).getByRole("checkbox", { name: "dairy" });
-    const fat_cb = within(dropdown).getByRole("checkbox", { name: "fat" });
-    const solid_cb = within(dropdown).getByRole("checkbox", { name: "solid" });
-    expect(dairy_cb).toBeChecked();
-    expect(fat_cb).toBeChecked();
-    expect(solid_cb).not.toBeChecked();
+    const dairyCb = within(dropdown).getByRole("checkbox", { name: "dairy" });
+    const fatCb = within(dropdown).getByRole("checkbox", { name: "fat" });
+    const solidCb = within(dropdown).getByRole("checkbox", { name: "solid" });
+    expect(dairyCb).toBeChecked();
+    expect(fatCb).toBeChecked();
+    expect(solidCb).not.toBeChecked();
   });
 });
 

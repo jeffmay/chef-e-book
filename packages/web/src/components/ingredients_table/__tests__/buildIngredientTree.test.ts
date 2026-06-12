@@ -79,19 +79,19 @@ describe("buildIngredientTree", () => {
   it("nests children under their parent", () => {
     const rows = buildIngredientTree([DAIRY, BUTTER, MILK], ALL_LABELS);
     expect(rows).toHaveLength(1);
-    const dairy_row = rows[0]!;
-    expect(dairy_row.id).toBe(paddedId(IngredientId, "dairy"));
-    expect(dairy_row.subRows).toHaveLength(2);
-    const child_ids = dairy_row.subRows.map((r) => r.id).sort();
-    expect(child_ids).toContain(paddedId(IngredientId, "butter"));
-    expect(child_ids).toContain(paddedId(IngredientId, "milk"));
+    const dairyRow = rows[0]!;
+    expect(dairyRow.id).toBe(paddedId(IngredientId, "dairy"));
+    expect(dairyRow.subRows).toHaveLength(2);
+    const childIds = dairyRow.subRows.map((r) => r.id).sort();
+    expect(childIds).toContain(paddedId(IngredientId, "butter"));
+    expect(childIds).toContain(paddedId(IngredientId, "milk"));
   });
 
   it("populates parent_name from sibling data", () => {
     const rows = buildIngredientTree([DAIRY, BUTTER], ALL_LABELS);
-    const dairy_row = rows[0]!;
-    const butter_row = dairy_row.subRows[0]!;
-    expect(butter_row.parent_name).toBe("Dairy");
+    const dairyRow = rows[0]!;
+    const butterRow = dairyRow.subRows[0]!;
+    expect(butterRow.parent_name).toBe("Dairy");
   });
 
   it("leaves parent_name empty when no parent_id", () => {
@@ -123,22 +123,22 @@ describe("buildIngredientTree", () => {
 
   it("resolves label IDs to names on each row", () => {
     const rows = buildIngredientTree([BUTTER, DAIRY], ALL_LABELS);
-    const dairy_row = rows.find((r) => r.id === paddedId(IngredientId, "dairy"))!;
-    const butter_row = dairy_row.subRows[0]!;
-    expect(butter_row.labels).toEqual(["fat", "solid"]);
+    const dairyRow = rows.find((r) => r.id === paddedId(IngredientId, "dairy"))!;
+    const butterRow = dairyRow.subRows[0]!;
+    expect(butterRow.labels).toEqual(["fat", "solid"]);
   });
 
   it("preserves all Ingredient fields on each row", () => {
     const rows = buildIngredientTree([BUTTER, DAIRY], ALL_LABELS);
-    const dairy_row = rows.find((r) => r.id === paddedId(IngredientId, "dairy"))!;
-    const butter_row = dairy_row.subRows[0]!;
-    expect(butter_row.name).toBe("Butter");
-    expect(butter_row.default_measurement_value).toEqual({
+    const dairyRow = rows.find((r) => r.id === paddedId(IngredientId, "dairy"))!;
+    const butterRow = dairyRow.subRows[0]!;
+    expect(butterRow.name).toBe("Butter");
+    expect(butterRow.default_measurement_value).toEqual({
       value: { numerator: 1, denominator: 1 },
       unit: "cup",
     });
-    expect(butter_row.labels).toEqual(["fat", "solid"]);
-    expect(butter_row.parent_id).toBe(paddedId(IngredientId, "dairy"));
-    expect(butter_row.kind).toBe("ingredient");
+    expect(butterRow.labels).toEqual(["fat", "solid"]);
+    expect(butterRow.parent_id).toBe(paddedId(IngredientId, "dairy"));
+    expect(butterRow.kind).toBe("ingredient");
   });
 });

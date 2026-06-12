@@ -79,8 +79,8 @@ function formatMeasurement(m: Measurement): string {
 
 type PKey = type.brand<string, "pkey">;
 
-function pkey(ingredient_id: IngredientId, col_id: string): PKey {
-  return `${ingredient_id}|${col_id}` as PKey;
+function pkey(ingredientId: IngredientId, colId: string): PKey {
+  return `${ingredientId}|${colId}` as PKey;
 }
 
 function parseLabels(raw: string): string[] {
@@ -263,17 +263,17 @@ export function IngredientsTable({
   // (which the table keeps via lenient mode) are actually visible.
   useEffect(() => {
     if (hasActiveFilter) {
-      const all_keys: TreeTableExpandedKeysType = {};
+      const allKeys: TreeTableExpandedKeysType = {};
       function collectKeys(nodes: TreeNode[]) {
         for (const n of nodes) {
           if (n.children && n.children.length > 0) {
-            all_keys[String(n.key)] = true;
+            allKeys[String(n.key)] = true;
             collectKeys(n.children);
           }
         }
       }
       collectKeys(treeNodes);
-      setExpandedKeys(all_keys);
+      setExpandedKeys(allKeys);
     } else {
       setExpandedKeys({});
     }
@@ -318,30 +318,30 @@ export function IngredientsTable({
   // Edit handlers
   // ---------------------------------------------------------------------------
 
-  function onBeginEdit(ingredient_id: IngredientId, col_id: string, initial: string): void {
-    setPendingEdits((prev) => new Map(prev).set(pkey(ingredient_id, col_id), initial));
+  function onBeginEdit(ingredientId: IngredientId, colId: string, initial: string): void {
+    setPendingEdits((prev) => new Map(prev).set(pkey(ingredientId, colId), initial));
   }
 
-  function onUpdateEdit(ingredient_id: IngredientId, col_id: string, value: string): void {
-    const key = pkey(ingredient_id, col_id);
+  function onUpdateEdit(ingredientId: IngredientId, colId: string, value: string): void {
+    const key = pkey(ingredientId, colId);
     setPendingEdits((prev) => {
       if (!prev.has(key)) return prev;
       return new Map(prev).set(key, value);
     });
   }
 
-  function onCommitEdit(ingredient_id: IngredientId, col_id: string): void {
-    const key = pkey(ingredient_id, col_id);
+  function onCommitEdit(ingredientId: IngredientId, colId: string): void {
+    const key = pkey(ingredientId, colId);
     const value = pendingEdits.get(key);
     if (value === undefined) return;
 
-    if (col_id === "name") {
+    if (colId === "name") {
       const trimmed = value.trim();
-      if (trimmed !== "") onRename(ingredient_id, trimmed);
-    } else if (col_id === "labels") {
-      onSetLabels(ingredient_id, parseLabels(value));
-    } else if (col_id === "parent_name") {
-      onSetParent(ingredient_id, value !== "" ? loadId(IngredientId, value) : undefined);
+      if (trimmed !== "") onRename(ingredientId, trimmed);
+    } else if (colId === "labels") {
+      onSetLabels(ingredientId, parseLabels(value));
+    } else if (colId === "parent_name") {
+      onSetParent(ingredientId, value !== "" ? loadId(IngredientId, value) : undefined);
     }
 
     setPendingEdits((prev) => {
@@ -351,10 +351,10 @@ export function IngredientsTable({
     });
   }
 
-  function onCancelEdit(ingredient_id: IngredientId, col_id: string): void {
+  function onCancelEdit(ingredientId: IngredientId, colId: string): void {
     setPendingEdits((prev) => {
       const next = new Map(prev);
-      next.delete(pkey(ingredient_id, col_id));
+      next.delete(pkey(ingredientId, colId));
       return next;
     });
   }
@@ -526,11 +526,11 @@ export function IngredientsTable({
     const pending = pendingEdits.get(pkey(row.id, "parent_name"));
     const display = row.parent_name || "— None —";
     if (pending !== undefined) {
-      const pending_id = pending !== "" ? loadId(IngredientId, pending) : undefined;
+      const pendingId = pending !== "" ? loadId(IngredientId, pending) : undefined;
       return (
         <span className="it-editing" data-editing>
           <IngredientSelector
-            value={pending_id}
+            value={pendingId}
             options={ingredients.filter((i) => i.id !== row.id)}
             labels={labels}
             onChange={(id) => onUpdateEdit(row.id, "parent_name", id ?? "")}

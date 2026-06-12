@@ -19,14 +19,14 @@ import {
 } from "../recipe.ts";
 
 describe("recipe item type guards", () => {
-  const ingredient_item: IngredientItem = {
+  const ingredientItem: IngredientItem = {
     kind: "ingredient",
     id: paddedId(SectionItemId, "item-1"),
     ingredient_id: paddedId(IngredientId, "butter"),
     customAmount: { value: { numerator: 1, denominator: 2 }, unit: "cup" },
   };
 
-  const container_item: ContainerItem = {
+  const containerItem: ContainerItem = {
     kind: "container",
     id: paddedId(SectionItemId, "item-2"),
     container_id: paddedId(ContainerId, "bowl"),
@@ -41,7 +41,7 @@ describe("recipe item type guards", () => {
     contents: [],
   };
 
-  const text_block: TextBlock = {
+  const textBlock: TextBlock = {
     kind: "text_block",
     id: paddedId(SectionItemId, "item-4"),
     text: "Whisk until combined.",
@@ -55,32 +55,26 @@ describe("recipe item type guards", () => {
     duration_seconds: 1200,
   };
 
-  const all_items: SectionItem[] = [
-    ingredient_item,
-    container_item,
-    section,
-    text_block,
-    instruction,
-  ];
+  const allItems: SectionItem[] = [ingredientItem, containerItem, section, textBlock, instruction];
 
   it("isIngredientItem identifies only ingredient items", () => {
-    expect(all_items.filter(isIngredientItem)).toEqual([ingredient_item]);
+    expect(allItems.filter(isIngredientItem)).toEqual([ingredientItem]);
   });
 
   it("isContainerItem identifies only container items", () => {
-    expect(all_items.filter(isContainerItem)).toEqual([container_item]);
+    expect(allItems.filter(isContainerItem)).toEqual([containerItem]);
   });
 
   it("is_section_label identifies only section labels", () => {
-    expect(all_items.filter(isSection)).toEqual([section]);
+    expect(allItems.filter(isSection)).toEqual([section]);
   });
 
   it("is_instruction_block identifies only instruction blocks", () => {
-    expect(all_items.filter(isTextBlock)).toEqual([text_block]);
+    expect(allItems.filter(isTextBlock)).toEqual([textBlock]);
   });
 
   it("is_equipment_instruction identifies only equipment instructions", () => {
-    expect(all_items.filter(isInstruction)).toEqual([instruction]);
+    expect(allItems.filter(isInstruction)).toEqual([instruction]);
   });
 });
 

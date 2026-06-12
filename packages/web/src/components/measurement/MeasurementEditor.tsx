@@ -138,15 +138,15 @@ export function MeasurementEditor({
     if (op) setCurrent(clampToZero(simplify(op.apply(current))));
   }
 
-  function handleTypeChange(new_type: MeasurementType) {
-    setMtype(new_type);
-    setUnit(DEFAULT_UNIT[new_type]);
+  function handleTypeChange(newType: MeasurementType) {
+    setMtype(newType);
+    setUnit(DEFAULT_UNIT[newType]);
   }
 
-  function handleUnitChange(new_unit: MeasurementUnit) {
-    const converted = tryConvert(current, unit, new_unit);
+  function handleUnitChange(newUnit: MeasurementUnit) {
+    const converted = tryConvert(current, unit, newUnit);
     setCurrent(converted);
-    setUnit(new_unit);
+    setUnit(newUnit);
   }
 
   function commit() {

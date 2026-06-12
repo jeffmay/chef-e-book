@@ -419,14 +419,14 @@ function ContainerItemRow({
   onRemove,
 }: ContainerItemRowProps) {
   const [showingNewIngredient, setShowingNewIngredient] = useState(false);
-  const container_name =
+  const containerName =
     COMMON_CONTAINERS.find((c) => c.id === item.container_id)?.name ?? item.container_id;
 
   return (
     <div
       className="re-item re-item--container"
       role="group"
-      aria-label={`Container: ${container_name} — ${item.descriptor}`}
+      aria-label={`Container: ${containerName} — ${item.descriptor}`}
     >
       <div className="re-item-header">
         <select
@@ -463,7 +463,7 @@ function ContainerItemRow({
           type="button"
           className="re-item-remove"
           onClick={onRemove}
-          aria-label={`Remove container ${container_name}`}
+          aria-label={`Remove container ${containerName}`}
         >
           −
         </button>
@@ -476,8 +476,8 @@ function ContainerItemRow({
             allIngredients={allIngredients}
             allLabels={allLabels}
             onChange={(updated) => {
-              const new_contents = item.contents.map((c, j) => (j === i ? updated : c));
-              onChange({ ...item, contents: new_contents });
+              const newContents = item.contents.map((c, j) => (j === i ? updated : c));
+              onChange({ ...item, contents: newContents });
             }}
             onRemove={() =>
               onChange({ ...item, contents: item.contents.filter((_, j) => j !== i) })
@@ -499,7 +499,7 @@ function ContainerItemRow({
             type="button"
             className="re-container-add-ingredient-btn"
             onClick={() => setShowingNewIngredient(true)}
-            aria-label={`Add ingredient to ${container_name}`}
+            aria-label={`Add ingredient to ${containerName}`}
           >
             + Add ingredient
           </button>
@@ -686,8 +686,8 @@ function SectionEditor({
   const Heading = headingForDepth(depth);
 
   function updateItem(index: number, updated: SectionItem) {
-    const new_contents = section.contents.map((item, i) => (i === index ? updated : item));
-    onChange({ ...section, contents: new_contents });
+    const newContents = section.contents.map((item, i) => (i === index ? updated : item));
+    onChange({ ...section, contents: newContents });
   }
 
   function removeItem(index: number) {
@@ -699,25 +699,25 @@ function SectionEditor({
       setShowingNewIngredient(true);
       return;
     }
-    const new_id = randomId(SectionItemId);
-    let new_item: SectionItem;
+    const newId = randomId(SectionItemId);
+    let newItem: SectionItem;
     if (kind === "container") {
-      new_item = {
+      newItem = {
         kind: "container",
-        id: new_id,
+        id: newId,
         container_id: COMMON_CONTAINERS[0].id,
         descriptor: "",
         contents: [],
       };
     } else if (kind === "instruction") {
-      new_item = { kind: "instruction", id: new_id, instruction: "" };
+      newItem = { kind: "instruction", id: newId, instruction: "" };
     } else if (kind === "text_block") {
-      new_item = { kind: "text_block", id: new_id, text: "" };
+      newItem = { kind: "text_block", id: newId, text: "" };
     } else {
       if (depth >= 5) return;
-      new_item = { kind: "section", id: new_id, contents: [] };
+      newItem = { kind: "section", id: newId, contents: [] };
     }
-    onChange({ ...section, contents: [...section.contents, new_item] });
+    onChange({ ...section, contents: [...section.contents, newItem] });
   }
 
   return (
@@ -1258,12 +1258,12 @@ export function RecipeEditor({
           type="button"
           className="re-add-section-btn"
           onClick={() => {
-            const new_section: Section = {
+            const newSection: Section = {
               kind: "section",
               id: randomId(SectionItemId),
               contents: [],
             };
-            patch("sections", [...form.sections, new_section]);
+            patch("sections", [...form.sections, newSection]);
           }}
           aria-label="Add section"
         >
