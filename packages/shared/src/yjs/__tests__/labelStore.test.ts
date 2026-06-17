@@ -9,7 +9,7 @@ import {
   getLabels,
   renameLabel,
 } from "../labelStore.ts";
-import { paddedId } from "../../types/ids.ts";
+import { fixedId } from "../../types/ids.ts";
 
 let doc: Y.Doc;
 
@@ -136,7 +136,7 @@ describe("renameLabel", () => {
 
   it("silently skips unknown id", () => {
     expect(() =>
-      renameLabel(doc, paddedId(KitchenwareLabelId, "nonexistent"), "new name"),
+      renameLabel(doc, fixedId(KitchenwareLabelId, "nonexistent"), "new name"),
     ).not.toThrow();
   });
 });

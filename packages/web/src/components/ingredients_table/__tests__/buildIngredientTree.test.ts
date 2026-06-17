@@ -1,27 +1,27 @@
 import type { Ingredient, KitchenwareKind, KitchenwareLabel } from "@recipe-book/shared";
-import { IngredientId, KitchenwareLabelId, paddedId } from "@recipe-book/shared";
+import { IngredientId, KitchenwareLabelId, fixedId } from "@recipe-book/shared";
 import { describe, expect, it } from "vitest";
 import { buildIngredientTree } from "../buildIngredientTree.ts";
 import type { ReadonlyDeep } from "type-fest";
 
 // Label fixtures
 const FAT_LABEL: ReadonlyDeep<KitchenwareLabel> = {
-  id: paddedId(KitchenwareLabelId, "fat"),
+  id: fixedId(KitchenwareLabelId, "fat"),
   name: "fat",
   kinds: new Set<KitchenwareKind>(["ingredient"]),
 };
 const SOLID_LABEL: ReadonlyDeep<KitchenwareLabel> = {
-  id: paddedId(KitchenwareLabelId, "solid"),
+  id: fixedId(KitchenwareLabelId, "solid"),
   name: "solid",
   kinds: new Set<KitchenwareKind>(["ingredient"]),
 };
 const LIQUID_LABEL: ReadonlyDeep<KitchenwareLabel> = {
-  id: paddedId(KitchenwareLabelId, "liquid"),
+  id: fixedId(KitchenwareLabelId, "liquid"),
   name: "liquid",
   kinds: new Set<KitchenwareKind>(["ingredient"]),
 };
 const BAKING_LABEL: ReadonlyDeep<KitchenwareLabel> = {
-  id: paddedId(KitchenwareLabelId, "baking"),
+  id: fixedId(KitchenwareLabelId, "baking"),
   name: "baking",
   kinds: new Set<KitchenwareKind>(["ingredient"]),
 };
@@ -36,30 +36,30 @@ const ALL_LABELS: ReadonlyDeep<KitchenwareLabel[]> = [
 // Ingredient fixtures
 const DAIRY: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "dairy"),
+  id: fixedId(IngredientId, "dairy"),
   name: "Dairy",
   default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set<KitchenwareLabelId>(),
 };
 const BUTTER: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "butter"),
+  id: fixedId(IngredientId, "butter"),
   name: "Butter",
   default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set([FAT_LABEL.id, SOLID_LABEL.id]),
-  parent_id: paddedId(IngredientId, "dairy"),
+  parent_id: fixedId(IngredientId, "dairy"),
 };
 const MILK: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "milk"),
+  id: fixedId(IngredientId, "milk"),
   name: "Milk",
   default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set([LIQUID_LABEL.id]),
-  parent_id: paddedId(IngredientId, "dairy"),
+  parent_id: fixedId(IngredientId, "dairy"),
 };
 const FLOUR: ReadonlyDeep<Ingredient> = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "flour"),
+  id: fixedId(IngredientId, "flour"),
   name: "Flour",
   default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" as const },
   labels: new Set([BAKING_LABEL.id]),
@@ -80,11 +80,11 @@ describe("buildIngredientTree", () => {
     const rows = buildIngredientTree([DAIRY, BUTTER, MILK], ALL_LABELS);
     expect(rows).toHaveLength(1);
     const dairyRow = rows[0]!;
-    expect(dairyRow.id).toBe(paddedId(IngredientId, "dairy"));
+    expect(dairyRow.id).toBe(fixedId(IngredientId, "dairy"));
     expect(dairyRow.subRows).toHaveLength(2);
     const childIds = dairyRow.subRows.map((r) => r.id).sort();
-    expect(childIds).toContain(paddedId(IngredientId, "butter"));
-    expect(childIds).toContain(paddedId(IngredientId, "milk"));
+    expect(childIds).toContain(fixedId(IngredientId, "butter"));
+    expect(childIds).toContain(fixedId(IngredientId, "milk"));
   });
 
   it("populates parent_name from sibling data", () => {
@@ -102,12 +102,12 @@ describe("buildIngredientTree", () => {
   it("treats unknown parent_id as a root-level row and uses id as parent_name fallback", () => {
     const orphan: ReadonlyDeep<Ingredient> = {
       ...BUTTER,
-      id: paddedId(IngredientId, "salted_butter"),
-      parent_id: paddedId(IngredientId, "nonexistent"),
+      id: fixedId(IngredientId, "salted_butter"),
+      parent_id: fixedId(IngredientId, "nonexistent"),
     };
     const rows = buildIngredientTree([orphan], []);
     expect(rows).toHaveLength(1);
-    expect(rows[0]!.parent_name).toBe(paddedId(IngredientId, "nonexistent"));
+    expect(rows[0]!.parent_name).toBe(fixedId(IngredientId, "nonexistent"));
   });
 
   it("sorts root rows alphabetically by name", () => {
@@ -123,14 +123,14 @@ describe("buildIngredientTree", () => {
 
   it("resolves label IDs to names on each row", () => {
     const rows = buildIngredientTree([BUTTER, DAIRY], ALL_LABELS);
-    const dairyRow = rows.find((r) => r.id === paddedId(IngredientId, "dairy"))!;
+    const dairyRow = rows.find((r) => r.id === fixedId(IngredientId, "dairy"))!;
     const butterRow = dairyRow.subRows[0]!;
     expect(butterRow.labels).toEqual(["fat", "solid"]);
   });
 
   it("preserves all Ingredient fields on each row", () => {
     const rows = buildIngredientTree([BUTTER, DAIRY], ALL_LABELS);
-    const dairyRow = rows.find((r) => r.id === paddedId(IngredientId, "dairy"))!;
+    const dairyRow = rows.find((r) => r.id === fixedId(IngredientId, "dairy"))!;
     const butterRow = dairyRow.subRows[0]!;
     expect(butterRow.name).toBe("Butter");
     expect(butterRow.default_measurement_value).toEqual({
@@ -138,7 +138,7 @@ describe("buildIngredientTree", () => {
       unit: "cup",
     });
     expect(butterRow.labels).toEqual(["fat", "solid"]);
-    expect(butterRow.parent_id).toBe(paddedId(IngredientId, "dairy"));
+    expect(butterRow.parent_id).toBe(fixedId(IngredientId, "dairy"));
     expect(butterRow.kind).toBe("ingredient");
   });
 });

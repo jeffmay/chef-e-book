@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { paddedId } from "../ids.ts";
+import { fixedId } from "../ids.ts";
 import { ContainerId, EquipmentId, IngredientId } from "../kitchenware.ts";
 import {
   type ContainerItem,
@@ -19,38 +19,38 @@ import {
 } from "../recipe.ts";
 
 describe("recipe item type guards", () => {
-  const ingredientItem: IngredientItem = {
+  const ingredientItem = {
     kind: "ingredient",
-    id: paddedId(SectionItemId, "item-1"),
-    ingredient_id: paddedId(IngredientId, "butter"),
+    id: fixedId(SectionItemId, "item-1"),
+    ingredient_id: fixedId(IngredientId, "butter"),
     customAmount: { value: { numerator: 1, denominator: 2 }, unit: "cup" },
-  };
+  } as const satisfies IngredientItem;
 
-  const containerItem: ContainerItem = {
+  const containerItem = {
     kind: "container",
-    id: paddedId(SectionItemId, "item-2"),
-    container_id: paddedId(ContainerId, "bowl"),
+    id: fixedId(SectionItemId, "item-2"),
+    container_id: fixedId(ContainerId, "bowl"),
     descriptor: "large",
     contents: [],
-  };
+  } as const satisfies ContainerItem;
 
-  const section: Section = {
+  const section = {
     kind: "section",
-    id: paddedId(SectionItemId, "item-3"),
+    id: fixedId(SectionItemId, "item-3"),
     header: "Wet ingredients",
     contents: [],
-  };
+  } as const satisfies Section;
 
   const textBlock: TextBlock = {
     kind: "text_block",
-    id: paddedId(SectionItemId, "item-4"),
+    id: fixedId(SectionItemId, "item-4"),
     text: "Whisk until combined.",
   };
 
   const instruction: Instruction = {
     kind: "instruction",
-    id: paddedId(SectionItemId, "item-5"),
-    equipment_id: paddedId(EquipmentId, "oven"),
+    id: fixedId(SectionItemId, "item-5"),
+    equipment_id: fixedId(EquipmentId, "oven"),
     instruction: "Bake at 350°F",
     duration_seconds: 1200,
   };
@@ -84,8 +84,8 @@ describe("IngredientItem", () => {
   it("accepts an item without a custom amount", () => {
     const item: IngredientItem = {
       kind: "ingredient",
-      id: paddedId(SectionItemId, "item-1"),
-      ingredient_id: paddedId(IngredientId, "butter"),
+      id: fixedId(SectionItemId, "item-1"),
+      ingredient_id: fixedId(IngredientId, "butter"),
     };
     expect(item.customAmount).toBeUndefined();
   });
@@ -93,8 +93,8 @@ describe("IngredientItem", () => {
   it("accepts an item with notes", () => {
     const item: IngredientItem = {
       kind: "ingredient",
-      id: paddedId(SectionItemId, "item-1"),
-      ingredient_id: paddedId(IngredientId, "butter"),
+      id: fixedId(SectionItemId, "item-1"),
+      ingredient_id: fixedId(IngredientId, "butter"),
       customAmount: oneTbsp,
       notes: ["add more to taste", "better at room temp"],
     };
@@ -106,8 +106,8 @@ describe("ContainerItem", () => {
   it("requires a descriptor", () => {
     const item: ContainerItem = {
       kind: "container",
-      id: paddedId(SectionItemId, "item-2"),
-      container_id: paddedId(ContainerId, "bowl"),
+      id: fixedId(SectionItemId, "item-2"),
+      container_id: fixedId(ContainerId, "bowl"),
       descriptor: "wet ingredients",
       contents: [],
     };
@@ -117,8 +117,8 @@ describe("ContainerItem", () => {
   it("accepts an ordered container", () => {
     const item: ContainerItem = {
       kind: "container",
-      id: paddedId(SectionItemId, "item-2"),
-      container_id: paddedId(ContainerId, "bowl"),
+      id: fixedId(SectionItemId, "item-2"),
+      container_id: fixedId(ContainerId, "bowl"),
       descriptor: "large",
       ordered: true,
       contents: [],
@@ -131,9 +131,9 @@ describe("Instruction", () => {
   it("accepts ingredient_ids for referenced ingredients", () => {
     const instr: Instruction = {
       kind: "instruction",
-      id: paddedId(SectionItemId, "item-5"),
+      id: fixedId(SectionItemId, "item-5"),
       instruction: "Mix together",
-      ingredient_ids: [paddedId(IngredientId, "butter"), paddedId(IngredientId, "flour")],
+      ingredient_ids: [fixedId(IngredientId, "butter"), fixedId(IngredientId, "flour")],
     };
     expect(instr.ingredient_ids).toHaveLength(2);
   });
@@ -141,7 +141,7 @@ describe("Instruction", () => {
   it("accepts a duration in seconds", () => {
     const instr: Instruction = {
       kind: "instruction",
-      id: paddedId(SectionItemId, "item-5"),
+      id: fixedId(SectionItemId, "item-5"),
       instruction: "Bake",
       duration_seconds: 1800,
     };
@@ -152,16 +152,16 @@ describe("Instruction", () => {
 describe("RecipeIngredient", () => {
   it("accepts an ingredient without amount", () => {
     const ri: RecipeIngredient = {
-      id: paddedId(RecipeIngredientId, "ri-1"),
-      ingredient_id: paddedId(IngredientId, "butter"),
+      id: fixedId(RecipeIngredientId, "ri-1"),
+      ingredient_id: fixedId(IngredientId, "butter"),
     };
     expect(ri.amount).toBeUndefined();
   });
 
   it("accepts an ingredient with an amount", () => {
     const ri: RecipeIngredient = {
-      id: paddedId(RecipeIngredientId, "ri-1"),
-      ingredient_id: paddedId(IngredientId, "butter"),
+      id: fixedId(RecipeIngredientId, "ri-1"),
+      ingredient_id: fixedId(IngredientId, "butter"),
       amount: { value: { numerator: 1, denominator: 2 }, unit: "cup" },
     };
     expect(ri.amount?.unit).toBe("cup");
@@ -169,8 +169,8 @@ describe("RecipeIngredient", () => {
 
   it("validates via ArkType companion", () => {
     const ri = {
-      id: paddedId(RecipeIngredientId, "ri-1"),
-      ingredient_id: paddedId(IngredientId, "butter"),
+      id: fixedId(RecipeIngredientId, "ri-1"),
+      ingredient_id: fixedId(IngredientId, "butter"),
     };
     const result = RecipeIngredient.type(ri);
     expect(result instanceof Error).toBe(false);

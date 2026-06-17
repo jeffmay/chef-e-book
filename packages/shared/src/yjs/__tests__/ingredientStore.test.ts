@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
-import { paddedId } from "../../types/ids.ts";
+import { fixedId } from "../../types/ids.ts";
 import type { IngredientTemplate } from "../../fixtures/kitchenware.ts";
 import { IngredientId, KitchenwareLabelId, type Ingredient } from "../../types/kitchenware.ts";
 import type { Measurement } from "../../types/measurement.ts";
@@ -17,23 +17,23 @@ import {
 } from "../ingredientStore.ts";
 
 // Test label IDs formatted to the expected length
-const FAT_ID = paddedId(KitchenwareLabelId, "fat");
-const SOLID_ID = paddedId(KitchenwareLabelId, "solid");
-const BAKING_ID = paddedId(KitchenwareLabelId, "baking");
-const POWDER_ID = paddedId(KitchenwareLabelId, "powder");
+const FAT_ID = fixedId(KitchenwareLabelId, "fat");
+const SOLID_ID = fixedId(KitchenwareLabelId, "solid");
+const BAKING_ID = fixedId(KitchenwareLabelId, "baking");
+const POWDER_ID = fixedId(KitchenwareLabelId, "powder");
 
 const DEFAULT_MEASUREMENT: Measurement = { value: { numerator: 1, denominator: 1 }, unit: "cup" };
 
 const BUTTER: Ingredient = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "butter"),
+  id: fixedId(IngredientId, "butter"),
   name: "Butter",
   default_measurement_value: DEFAULT_MEASUREMENT,
   labels: new Set([FAT_ID, SOLID_ID]),
 };
 const FLOUR: Ingredient = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "flour"),
+  id: fixedId(IngredientId, "flour"),
   name: "Flour",
   default_measurement_value: DEFAULT_MEASUREMENT,
   labels: new Set([BAKING_ID, POWDER_ID, SOLID_ID]),
@@ -62,15 +62,15 @@ describe("addIngredient", () => {
   it("stores all fields including optional parent_id", () => {
     const child: Ingredient = {
       ...BUTTER,
-      id: paddedId(IngredientId, "salted_butter"),
-      parent_id: paddedId(IngredientId, "butter"),
+      id: fixedId(IngredientId, "salted_butter"),
+      parent_id: fixedId(IngredientId, "butter"),
     };
     addIngredient(doc, child);
     const result = getIngredients(doc);
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
-      id: paddedId(IngredientId, "salted_butter"),
-      parent_id: paddedId(IngredientId, "butter"),
+      id: fixedId(IngredientId, "salted_butter"),
+      parent_id: fixedId(IngredientId, "butter"),
     });
   });
 
@@ -82,12 +82,12 @@ describe("addIngredient", () => {
 });
 
 describe("addLabelsToIngredients", () => {
-  const DAIRY_ID = paddedId(KitchenwareLabelId, "dairy");
+  const DAIRY_ID = fixedId(KitchenwareLabelId, "dairy");
 
   it("adds new labels and deduplicates", () => {
     addIngredient(doc, BUTTER);
-    addLabelsToIngredients(doc, [paddedId(IngredientId, "butter")], [DAIRY_ID, SOLID_ID]);
-    const result = getIngredients(doc).find((i) => i.id === paddedId(IngredientId, "butter"));
+    addLabelsToIngredients(doc, [fixedId(IngredientId, "butter")], [DAIRY_ID, SOLID_ID]);
+    const result = getIngredients(doc).find((i) => i.id === fixedId(IngredientId, "butter"));
     expect(result?.labels.has(DAIRY_ID)).toBe(true);
     // Set deduplicates — SOLID_ID appears exactly once
     expect([...result!.labels].filter((l) => l === SOLID_ID)).toHaveLength(1);
@@ -96,7 +96,7 @@ describe("addLabelsToIngredients", () => {
   it("silently skips unknown ids", () => {
     addIngredient(doc, BUTTER);
     expect(() =>
-      addLabelsToIngredients(doc, [paddedId(IngredientId, "nonexistent")], [DAIRY_ID]),
+      addLabelsToIngredients(doc, [fixedId(IngredientId, "nonexistent")], [DAIRY_ID]),
     ).not.toThrow();
   });
 });
@@ -104,8 +104,8 @@ describe("addLabelsToIngredients", () => {
 describe("removeLabelsFromIngredients", () => {
   it("removes specified labels", () => {
     addIngredient(doc, BUTTER);
-    removeLabelsFromIngredients(doc, [paddedId(IngredientId, "butter")], [SOLID_ID]);
-    const result = getIngredients(doc).find((i) => i.id === paddedId(IngredientId, "butter"));
+    removeLabelsFromIngredients(doc, [fixedId(IngredientId, "butter")], [SOLID_ID]);
+    const result = getIngredients(doc).find((i) => i.id === fixedId(IngredientId, "butter"));
     expect(result?.labels.has(SOLID_ID)).toBe(false);
     expect(result?.labels.has(FAT_ID)).toBe(true);
   });
@@ -115,8 +115,8 @@ describe("removeLabelsFromIngredients", () => {
     expect(() =>
       removeLabelsFromIngredients(
         doc,
-        [paddedId(IngredientId, "butter")],
-        [paddedId(KitchenwareLabelId, "nonexist")],
+        [fixedId(IngredientId, "butter")],
+        [fixedId(KitchenwareLabelId, "nonexist")],
       ),
     ).not.toThrow();
   });
@@ -127,34 +127,34 @@ describe("setMeasurementValueForIngredients", () => {
 
   it("changes measurement value", () => {
     addIngredient(doc, BUTTER);
-    setMeasurementValueForIngredients(doc, [paddedId(IngredientId, "butter")], WEIGHT_MEASUREMENT);
-    const result = getIngredients(doc).find((i) => i.id === paddedId(IngredientId, "butter"));
+    setMeasurementValueForIngredients(doc, [fixedId(IngredientId, "butter")], WEIGHT_MEASUREMENT);
+    const result = getIngredients(doc).find((i) => i.id === fixedId(IngredientId, "butter"));
     expect(result?.default_measurement_value).toEqual(WEIGHT_MEASUREMENT);
   });
 
   it("ignores ingredients already at that value", () => {
     addIngredient(doc, BUTTER);
     const map = doc.getMap("ingredients");
-    const before = JSON.stringify(map.get(paddedId(IngredientId, "butter")));
-    setMeasurementValueForIngredients(doc, [paddedId(IngredientId, "butter")], DEFAULT_MEASUREMENT);
-    expect(JSON.stringify(map.get(paddedId(IngredientId, "butter")))).toBe(before);
+    const before = JSON.stringify(map.get(fixedId(IngredientId, "butter")));
+    setMeasurementValueForIngredients(doc, [fixedId(IngredientId, "butter")], DEFAULT_MEASUREMENT);
+    expect(JSON.stringify(map.get(fixedId(IngredientId, "butter")))).toBe(before);
   });
 });
 
 describe("setParentForIngredients", () => {
   it("sets parent_id", () => {
-    const DAIRY_ID = paddedId(IngredientId, "dairy");
+    const DAIRY_ID = fixedId(IngredientId, "dairy");
     addIngredient(doc, BUTTER);
-    setParentForIngredients(doc, [paddedId(IngredientId, "butter")], DAIRY_ID);
-    const result = getIngredients(doc).find((i) => i.id === paddedId(IngredientId, "butter"));
+    setParentForIngredients(doc, [fixedId(IngredientId, "butter")], DAIRY_ID);
+    const result = getIngredients(doc).find((i) => i.id === fixedId(IngredientId, "butter"));
     expect(result?.parent_id).toBe(DAIRY_ID);
   });
 
   it("clears parent_id when undefined passed", () => {
-    const child: Ingredient = { ...BUTTER, parent_id: paddedId(IngredientId, "dairy0000000") };
+    const child: Ingredient = { ...BUTTER, parent_id: fixedId(IngredientId, "dairy0000000") };
     addIngredient(doc, child);
-    setParentForIngredients(doc, [paddedId(IngredientId, "butter")], undefined);
-    const result = getIngredients(doc).find((i) => i.id === paddedId(IngredientId, "butter"));
+    setParentForIngredients(doc, [fixedId(IngredientId, "butter")], undefined);
+    const result = getIngredients(doc).find((i) => i.id === fixedId(IngredientId, "butter"));
     expect(result?.parent_id).toBeUndefined();
   });
 });
@@ -162,47 +162,47 @@ describe("setParentForIngredients", () => {
 describe("renameIngredient", () => {
   it("updates the ingredient name", () => {
     addIngredient(doc, BUTTER);
-    renameIngredient(doc, paddedId(IngredientId, "butter"), "Salted Butter");
-    const result = getIngredients(doc).find((i) => i.id === paddedId(IngredientId, "butter"));
+    renameIngredient(doc, fixedId(IngredientId, "butter"), "Salted Butter");
+    const result = getIngredients(doc).find((i) => i.id === fixedId(IngredientId, "butter"));
     expect(result?.name).toBe("Salted Butter");
   });
 
   it("preserves other fields when renaming", () => {
     addIngredient(doc, BUTTER);
-    renameIngredient(doc, paddedId(IngredientId, "butter"), "Salted Butter");
-    const result = getIngredients(doc).find((i) => i.id === paddedId(IngredientId, "butter"));
+    renameIngredient(doc, fixedId(IngredientId, "butter"), "Salted Butter");
+    const result = getIngredients(doc).find((i) => i.id === fixedId(IngredientId, "butter"));
     expect(result?.labels).toEqual(BUTTER.labels);
     expect(result?.default_measurement_value).toEqual(BUTTER.default_measurement_value);
   });
 
   it("silently skips unknown ids", () => {
     expect(() =>
-      renameIngredient(doc, paddedId(IngredientId, "nonexistent"), "New Name"),
+      renameIngredient(doc, fixedId(IngredientId, "nonexistent"), "New Name"),
     ).not.toThrow();
   });
 });
 
 describe("setLabelsForIngredient", () => {
-  const DAIRY_ID = paddedId(KitchenwareLabelId, "dairy");
-  const PREMIUM_ID = paddedId(KitchenwareLabelId, "pre0000");
+  const DAIRY_ID = fixedId(KitchenwareLabelId, "dairy");
+  const PREMIUM_ID = fixedId(KitchenwareLabelId, "pre0000");
 
   it("replaces all labels for the ingredient", () => {
     addIngredient(doc, BUTTER);
-    setLabelsForIngredient(doc, paddedId(IngredientId, "butter"), [DAIRY_ID, PREMIUM_ID]);
-    const result = getIngredients(doc).find((i) => i.id === paddedId(IngredientId, "butter"));
+    setLabelsForIngredient(doc, fixedId(IngredientId, "butter"), [DAIRY_ID, PREMIUM_ID]);
+    const result = getIngredients(doc).find((i) => i.id === fixedId(IngredientId, "butter"));
     expect(result?.labels).toEqual(new Set([DAIRY_ID, PREMIUM_ID]));
   });
 
   it("clears labels when empty array passed", () => {
     addIngredient(doc, BUTTER);
-    setLabelsForIngredient(doc, paddedId(IngredientId, "butter"), []);
-    const result = getIngredients(doc).find((i) => i.id === paddedId(IngredientId, "butter"));
+    setLabelsForIngredient(doc, fixedId(IngredientId, "butter"), []);
+    const result = getIngredients(doc).find((i) => i.id === fixedId(IngredientId, "butter"));
     expect(result?.labels).toEqual(new Set());
   });
 
   it("silently skips unknown ids", () => {
     expect(() =>
-      setLabelsForIngredient(doc, paddedId(IngredientId, "nonexistent"), [DAIRY_ID]),
+      setLabelsForIngredient(doc, fixedId(IngredientId, "nonexistent"), [DAIRY_ID]),
     ).not.toThrow();
   });
 });
@@ -226,7 +226,7 @@ describe("initFromKitchenwareTemplates", () => {
     const modified: Ingredient = { ...BUTTER, name: "My Custom Butter" };
     addIngredient(doc, modified);
     initFromKitchenwareTemplates(doc, [BUTTER_TEMPLATE]);
-    const result = getIngredients(doc).find((i) => i.id === paddedId(IngredientId, "butter"));
+    const result = getIngredients(doc).find((i) => i.id === fixedId(IngredientId, "butter"));
     expect(result?.name).toBe("My Custom Butter");
   });
 });

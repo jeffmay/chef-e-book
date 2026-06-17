@@ -1,7 +1,7 @@
 import {
   IngredientId,
   KitchenwareLabelId,
-  paddedId,
+  fixedId,
   type Ingredient,
   type KitchenwareKind,
   type KitchenwareLabel,
@@ -59,41 +59,41 @@ vi.mock("primereact/treeselect", () => ({
 
 const DAIRY = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "dairy"),
+  id: fixedId(IngredientId, "dairy"),
   name: "Dairy",
   default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
   labels: new Set<KitchenwareLabelId>(),
 } as const satisfies Ingredient;
 const BUTTER = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "butter"),
+  id: fixedId(IngredientId, "butter"),
   name: "Butter",
   default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
-  labels: new Set([paddedId(KitchenwareLabelId, "fat"), paddedId(KitchenwareLabelId, "sol")]),
-  parent_id: paddedId(IngredientId, "dairy"),
+  labels: new Set([fixedId(KitchenwareLabelId, "fat"), fixedId(KitchenwareLabelId, "sol")]),
+  parent_id: fixedId(IngredientId, "dairy"),
 } as const satisfies Ingredient;
 const FLOUR = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "flour"),
+  id: fixedId(IngredientId, "flour"),
   name: "Flour",
   default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
-  labels: new Set([paddedId(KitchenwareLabelId, "bak")]),
+  labels: new Set([fixedId(KitchenwareLabelId, "bak")]),
 } as const satisfies Ingredient;
 const CHEESE = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "cheese"),
+  id: fixedId(IngredientId, "cheese"),
   name: "Cheese",
   default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "oz" },
-  labels: new Set([paddedId(KitchenwareLabelId, "sol")]),
+  labels: new Set([fixedId(KitchenwareLabelId, "sol")]),
 } as const satisfies Ingredient;
 
 const FAT_LABEL = {
-  id: paddedId(KitchenwareLabelId, "fat"),
+  id: fixedId(KitchenwareLabelId, "fat"),
   name: "fat",
   kinds: new Set<KitchenwareKind>(["ingredient"]),
 } as const satisfies KitchenwareLabel;
 const SOLID_LABEL = {
-  id: paddedId(KitchenwareLabelId, "sol"),
+  id: fixedId(KitchenwareLabelId, "sol"),
   name: "solid",
   kinds: new Set<KitchenwareKind>(["ingredient"]),
 } as const satisfies KitchenwareLabel;

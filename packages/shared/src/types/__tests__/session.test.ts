@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { paddedId } from "../ids.ts";
+import { fixedId } from "../ids.ts";
 import { isActiveSession, isCompletedSession, SessionId, type Session } from "../session.ts";
 
 describe("session type guards", () => {
   const activeSession: Session = {
-    id: paddedId(SessionId, "sess-1"),
+    id: fixedId(SessionId, "sess-1"),
     recipe_id: "recipe-1",
     recipe_version_id: "ver-1",
     started_at: 1000,
@@ -13,7 +13,7 @@ describe("session type guards", () => {
   };
 
   const completedSession: Session = {
-    id: paddedId(SessionId, "sess-2"),
+    id: fixedId(SessionId, "sess-2"),
     recipe_id: "recipe-1",
     recipe_version_id: "ver-1",
     started_at: 1000,

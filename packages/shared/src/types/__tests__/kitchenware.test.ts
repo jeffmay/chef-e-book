@@ -1,6 +1,6 @@
 import { type } from "arktype";
 import { describe, expect, it } from "vitest";
-import { paddedId } from "../ids.ts";
+import { fixedId } from "../ids.ts";
 import {
   Container,
   ContainerId,
@@ -20,7 +20,7 @@ import { is } from "../enums.ts";
 describe("kitchenware type guards", () => {
   const ingredient: Kitchenware = {
     kind: "ingredient",
-    id: paddedId(IngredientId, "butter"),
+    id: fixedId(IngredientId, "butter"),
     name: "Butter",
     default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
     labels: new Set<KitchenwareLabelId>(),
@@ -28,14 +28,14 @@ describe("kitchenware type guards", () => {
 
   const container: Kitchenware = {
     kind: "container",
-    id: paddedId(ContainerId, "bowl"),
+    id: fixedId(ContainerId, "bowl"),
     name: "Bowl",
     labels: new Set<KitchenwareLabelId>(),
   };
 
   const equipment: Kitchenware = {
     kind: "equipment",
-    id: paddedId(EquipmentId, "oven"),
+    id: fixedId(EquipmentId, "oven"),
     name: "Oven",
     labels: new Set<KitchenwareLabelId>(),
   };
@@ -76,7 +76,7 @@ describe("Kitchenware constructors", () => {
   it("Ingredient accepts a valid ingredient", () => {
     const result = Ingredient.type({
       kind: "ingredient",
-      id: paddedId(IngredientId, "butter"),
+      id: fixedId(IngredientId, "butter"),
       name: "Butter",
       default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
       labels: [],
@@ -108,7 +108,7 @@ describe("Kitchenware constructors", () => {
   it("Equipment accepts a valid equipment", () => {
     const result = Equipment.type({
       kind: "equipment",
-      id: paddedId(EquipmentId, "oven"),
+      id: fixedId(EquipmentId, "oven"),
       name: "Oven",
       labels: new Set(),
     });

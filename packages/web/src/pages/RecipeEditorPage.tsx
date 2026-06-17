@@ -14,7 +14,7 @@ import {
   loadId,
   type Measurement,
   MeasurementUnit,
-  paddedId,
+  fixedId,
   randomId,
   type Recipe,
   RecipeFolderId,
@@ -401,12 +401,12 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
 // ---------------------------------------------------------------------------
 
 const COMMON_CONTAINERS = [
-  { id: paddedId(ContainerId, "bowl"), name: "Bowl" },
-  { id: paddedId(ContainerId, "pot"), name: "Pot" },
-  { id: paddedId(ContainerId, "steamer"), name: "Steamer" },
-  { id: paddedId(ContainerId, "foil"), name: "Foil" },
-  { id: paddedId(ContainerId, "pan"), name: "Pan" },
-  { id: paddedId(ContainerId, "plate"), name: "Plate" },
+  { id: fixedId(ContainerId, "bowl"), name: "Bowl" },
+  { id: fixedId(ContainerId, "pot"), name: "Pot" },
+  { id: fixedId(ContainerId, "steamer"), name: "Steamer" },
+  { id: fixedId(ContainerId, "foil"), name: "Foil" },
+  { id: fixedId(ContainerId, "pan"), name: "Pan" },
+  { id: fixedId(ContainerId, "plate"), name: "Plate" },
 ] as const;
 
 interface ContainerItemRowProps extends RecipeSectionItemRowProps<ContainerItem>, WithIngredients {}
@@ -514,12 +514,12 @@ function ContainerItemRow({
 // ---------------------------------------------------------------------------
 
 const COMMON_EQUIPMENT = [
-  { id: paddedId(EquipmentId, "oven"), name: "Oven" },
-  { id: paddedId(EquipmentId, "stove"), name: "Stove" },
-  { id: paddedId(EquipmentId, "mixer"), name: "Mixer" },
-  { id: paddedId(EquipmentId, "blender"), name: "Blender" },
-  { id: paddedId(EquipmentId, "knife"), name: "Knife" },
-  { id: paddedId(EquipmentId, "skillet"), name: "Skillet" },
+  { id: fixedId(EquipmentId, "oven"), name: "Oven" },
+  { id: fixedId(EquipmentId, "stove"), name: "Stove" },
+  { id: fixedId(EquipmentId, "mixer"), name: "Mixer" },
+  { id: fixedId(EquipmentId, "blender"), name: "Blender" },
+  { id: fixedId(EquipmentId, "knife"), name: "Knife" },
+  { id: fixedId(EquipmentId, "skillet"), name: "Skillet" },
 ] as const;
 
 interface InstructionRowProps extends RecipeSectionItemRowProps<Instruction>, WithIngredients {}

@@ -4,7 +4,7 @@ import {
   ContainerId,
   getContainerYmap,
   KitchenwareLabelId,
-  paddedId,
+  fixedId,
 } from "@recipe-book/shared";
 import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
@@ -14,8 +14,8 @@ import { KitchenwareDocContext } from "../../contexts/docContext.ts";
 import { flushAsyncEffects } from "../../testUtils.ts";
 import { useContainerStore } from "../useContainerStore.ts";
 
-const BOWL_ID = paddedId(ContainerId, "bowl");
-const LABEL_A = paddedId(KitchenwareLabelId, "aaa");
+const BOWL_ID = fixedId(ContainerId, "bowl");
+const LABEL_A = fixedId(KitchenwareLabelId, "aaa");
 
 const BOWL: Container = {
   kind: "container",

@@ -1,4 +1,4 @@
-import { type Container, ContainerId, paddedId } from "@recipe-book/shared";
+import { type Container, ContainerId, fixedId } from "@recipe-book/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TreeSelectChangeEvent } from "primereact/treeselect";
@@ -52,7 +52,7 @@ vi.mock("primereact/treeselect", () => ({
 
 const BOWL: Container = {
   kind: "container",
-  id: paddedId(ContainerId, "bowl00"),
+  id: fixedId(ContainerId, "bowl00"),
   name: "Bowl",
   labels: new Set(),
 };
@@ -64,7 +64,7 @@ const onUpdateContainer = vi.fn();
 function makeNewContainer(name: string): Container {
   return {
     kind: "container",
-    id: paddedId(ContainerId, "new000000"),
+    id: fixedId(ContainerId, "new000000"),
     name,
     labels: new Set(),
   };
@@ -114,7 +114,7 @@ describe("KitchenwareSelector — selecting existing container", () => {
     await userEvent.click(screen.getByRole("combobox", { name: "Container" }));
     const option = screen.getByRole("option", { name: "Bowl" });
     await userEvent.click(option);
-    expect(onChange).toHaveBeenCalledWith(paddedId(ContainerId, "bowl00"));
+    expect(onChange).toHaveBeenCalledWith(fixedId(ContainerId, "bowl00"));
   });
 });
 
@@ -140,11 +140,11 @@ describe("KitchenwareSelector — creating a new container", () => {
     await screen.findByRole("dialog", { name: "New container" });
     await userEvent.click(screen.getByRole("button", { name: "Create" }));
     expect(onUpdateContainer).toHaveBeenCalledWith(
-      paddedId(ContainerId, "new000000"),
+      fixedId(ContainerId, "new000000"),
       [],
       undefined,
     );
-    expect(onChange).toHaveBeenCalledWith(paddedId(ContainerId, "new000000"));
+    expect(onChange).toHaveBeenCalledWith(fixedId(ContainerId, "new000000"));
   });
 
   it("closes modal without saving when Cancel is clicked", async () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useActiveBookMeta, ACTIVE_BOOK_KEY } from "../useActiveBookMeta.ts";
-import { paddedId, RecipeBookId } from "@recipe-book/shared";
+import { fixedId, RecipeBookId } from "@recipe-book/shared";
 
 beforeEach(() => {
   localStorage.clear();
@@ -14,7 +14,7 @@ describe("useBook", () => {
   });
 
   it("reads an existing book from localStorage on mount", () => {
-    const bookId = paddedId(RecipeBookId, "alice");
+    const bookId = fixedId(RecipeBookId, "alice");
     localStorage.setItem(ACTIVE_BOOK_KEY, `{"id":"${bookId}","name":"Alice"}`);
     const { result } = renderHook(() => useActiveBookMeta());
     expect(result.current.activeBookMeta?.name).toBe("Alice");
@@ -28,7 +28,7 @@ describe("useBook", () => {
   });
 
   it("clearUser resets state and removes from localStorage", () => {
-    const bookId = paddedId(RecipeBookId, "alice");
+    const bookId = fixedId(RecipeBookId, "alice");
     localStorage.setItem(ACTIVE_BOOK_KEY, `{"id":"${bookId}","name":"Alice"}`);
     const { result } = renderHook(() => useActiveBookMeta());
     act(() => result.current.clearActiveBookMeta());

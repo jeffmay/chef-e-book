@@ -4,7 +4,7 @@ import {
   findOrCreateLabel,
   IngredientId,
   loadId,
-  paddedId,
+  fixedId,
   type Ingredient,
   type KitchenwareKind,
 } from "@recipe-book/shared";
@@ -190,7 +190,7 @@ describe("useIngredientStore — setParent", () => {
     const { result } = await renderStore(doc);
     const butter = result.current.ingredients.find((i) => i.id === BUTTER_ID);
     if (butter === undefined) throw new Error("butter not found");
-    const dairyId = paddedId(IngredientId, "dairy");
+    const dairyId = fixedId(IngredientId, "dairy");
     act(() => result.current.setParent([butter.id], dairyId));
     expect(result.current.ingredients.find((i) => i.id === BUTTER_ID)?.parent_id).toBe(dairyId);
     act(() => result.current.setParent([butter.id], undefined));

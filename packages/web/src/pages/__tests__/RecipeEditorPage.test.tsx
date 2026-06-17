@@ -4,7 +4,7 @@ import {
   createRecipe,
   createRecipeFolder,
   IngredientId,
-  paddedId,
+  fixedId,
   randomId,
   RecipeFolderId,
   SectionItemId,
@@ -135,32 +135,32 @@ describe("isSameMeasurementCategory", () => {
 describe("resolveAmountOnIngredientChange", () => {
   const DAIRY: Ingredient = {
     kind: "ingredient",
-    id: paddedId(IngredientId, "dairy"),
+    id: fixedId(IngredientId, "dairy"),
     name: "Dairy",
     default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
     labels: new Set(),
   };
   const SKIM_MILK: Ingredient = {
     kind: "ingredient",
-    id: paddedId(IngredientId, "skim-milk"),
+    id: fixedId(IngredientId, "skim-milk"),
     name: "Skim Milk",
     default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
     labels: new Set(),
-    parent_id: paddedId(IngredientId, "dairy"),
+    parent_id: fixedId(IngredientId, "dairy"),
   };
   // child of Dairy but different measurement type
   const BUTTER: Ingredient = {
     kind: "ingredient",
-    id: paddedId(IngredientId, "butter"),
+    id: fixedId(IngredientId, "butter"),
     name: "Butter",
     default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "oz" },
     labels: new Set(),
-    parent_id: paddedId(IngredientId, "dairy"),
+    parent_id: fixedId(IngredientId, "dairy"),
   };
   // unrelated ingredient
   const FLOUR: Ingredient = {
     kind: "ingredient",
-    id: paddedId(IngredientId, "flour"),
+    id: fixedId(IngredientId, "flour"),
     name: "Flour",
     default_measurement_value: { value: { numerator: 2, denominator: 1 }, unit: "cup" },
     labels: new Set(),
@@ -168,26 +168,26 @@ describe("resolveAmountOnIngredientChange", () => {
   // count-unit parent and child
   const EGGS: Ingredient = {
     kind: "ingredient",
-    id: paddedId(IngredientId, "eggs"),
+    id: fixedId(IngredientId, "eggs"),
     name: "Eggs",
     default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "whole" },
     labels: new Set(),
   };
   const LARGE_EGGS: Ingredient = {
     kind: "ingredient",
-    id: paddedId(IngredientId, "large-eggs"),
+    id: fixedId(IngredientId, "large-eggs"),
     name: "Large Eggs",
     default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "whole" },
     labels: new Set(),
-    parent_id: paddedId(IngredientId, "eggs"),
+    parent_id: fixedId(IngredientId, "eggs"),
   };
   const PINCH_SALT: Ingredient = {
     kind: "ingredient",
-    id: paddedId(IngredientId, "pinch-salt"),
+    id: fixedId(IngredientId, "pinch-salt"),
     name: "Salt (pinch)",
     default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "pinch" },
     labels: new Set(),
-    parent_id: paddedId(IngredientId, "eggs"),
+    parent_id: fixedId(IngredientId, "eggs"),
   };
 
   const allIngredients = [DAIRY, SKIM_MILK, BUTTER, FLOUR, EGGS, LARGE_EGGS, PINCH_SALT];
@@ -239,9 +239,9 @@ describe("resolveAmountOnIngredientChange", () => {
 });
 
 describe("computeTopIngredients", () => {
-  const BUTTER_ID = paddedId(IngredientId, "butter");
-  const FLOUR_ID = paddedId(IngredientId, "flour");
-  const BOWL_ID = paddedId(ContainerId, "bowl");
+  const BUTTER_ID = fixedId(IngredientId, "butter");
+  const FLOUR_ID = fixedId(IngredientId, "flour");
+  const BOWL_ID = fixedId(ContainerId, "bowl");
 
   const ONE_CUP = {
     value: { numerator: 1, denominator: 1 },
@@ -399,7 +399,7 @@ describe("RecipeEditor — new recipe form", () => {
 
 describe("RecipeEditor — initialFolderId", () => {
   it("gracefully degrades to no folder when initialFolderId references a non-existent folder", async () => {
-    const ghostId = paddedId(RecipeFolderId, "ghost");
+    const ghostId = fixedId(RecipeFolderId, "ghost");
     render(
       <RecipeEditor recipe={null} initialFolderId={ghostId} onSave={vi.fn()} onCancel={vi.fn()} />,
       { wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc) },
@@ -514,7 +514,7 @@ describe("RecipeEditor — ingredients section", () => {
     const selector = within(newIngredientGroup).getByRole("combobox", {
       name: "Select new ingredient",
     });
-    await userEvent.selectOptions(selector, paddedId(IngredientId, "------butter"));
+    await userEvent.selectOptions(selector, fixedId(IngredientId, "------butter"));
 
     await userEvent.click(
       within(newIngredientGroup).getByRole("button", { name: /Add Butter to section/i }),
@@ -567,7 +567,7 @@ describe("RecipeEditor — sections editor", () => {
     const newIngredientGroup = screen.getByRole("group", { name: "New ingredient" });
     await userEvent.selectOptions(
       within(newIngredientGroup).getByRole("combobox", { name: "Select new ingredient" }),
-      paddedId(IngredientId, "------butter"),
+      fixedId(IngredientId, "------butter"),
     );
     await userEvent.click(
       within(newIngredientGroup).getByRole("button", { name: /Add Butter to section/i }),
@@ -595,7 +595,7 @@ describe("RecipeEditor — sections editor", () => {
     const newIngredientGroup = screen.getByRole("group", { name: "New ingredient" });
     await userEvent.selectOptions(
       within(newIngredientGroup).getByRole("combobox", { name: "Select new ingredient" }),
-      paddedId(IngredientId, "------butter"),
+      fixedId(IngredientId, "------butter"),
     );
     await userEvent.click(within(newIngredientGroup).getByRole("button", { name: /Add Butter/i }));
 
