@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
-import { paddedId } from "../../types/ids.ts";
+import { fixedId } from "../../types/ids.ts";
 import { type Container, ContainerId, KitchenwareLabelId } from "../../types/kitchenware.ts";
 import {
   addContainer,
@@ -10,10 +10,10 @@ import {
   setParentForContainer,
 } from "../containerStore.ts";
 
-const BOWL_ID = paddedId(ContainerId, "bowl");
-const POT_ID = paddedId(ContainerId, "pot");
-const LABEL_A = paddedId(KitchenwareLabelId, "aaa");
-const LABEL_B = paddedId(KitchenwareLabelId, "bbb");
+const BOWL_ID = fixedId(ContainerId, "bowl");
+const POT_ID = fixedId(ContainerId, "pot");
+const LABEL_A = fixedId(KitchenwareLabelId, "aaa");
+const LABEL_B = fixedId(KitchenwareLabelId, "bbb");
 
 const BOWL: Container = {
   kind: "container",
@@ -56,7 +56,7 @@ describe("addContainer", () => {
   });
 
   it("stores parent_id when present", () => {
-    const child: Container = { ...BOWL, id: paddedId(ContainerId, "sml"), parent_id: POT_ID };
+    const child: Container = { ...BOWL, id: fixedId(ContainerId, "sml"), parent_id: POT_ID };
     addContainer(doc, child);
     const result = getContainers(doc);
     expect(result[0]?.parent_id).toBe(POT_ID);
@@ -78,7 +78,7 @@ describe("renameContainer", () => {
   });
 
   it("silently skips unknown ids", () => {
-    expect(() => renameContainer(doc, paddedId(ContainerId, "unk"), "Name")).not.toThrow();
+    expect(() => renameContainer(doc, fixedId(ContainerId, "unk"), "Name")).not.toThrow();
   });
 });
 
@@ -98,7 +98,7 @@ describe("setLabelsForContainer", () => {
   });
 
   it("silently skips unknown ids", () => {
-    expect(() => setLabelsForContainer(doc, paddedId(ContainerId, "unk"), [LABEL_A])).not.toThrow();
+    expect(() => setLabelsForContainer(doc, fixedId(ContainerId, "unk"), [LABEL_A])).not.toThrow();
   });
 });
 

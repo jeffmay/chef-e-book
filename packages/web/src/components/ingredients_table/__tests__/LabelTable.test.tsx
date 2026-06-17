@@ -1,5 +1,5 @@
 import type { Ingredient, KitchenwareKind, KitchenwareLabel } from "@recipe-book/shared";
-import { IngredientId, KitchenwareLabelId, paddedId } from "@recipe-book/shared";
+import { IngredientId, KitchenwareLabelId, fixedId } from "@recipe-book/shared";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReadonlyDeep } from "type-fest";
@@ -10,19 +10,19 @@ import { LabelTable } from "../LabelTable.tsx";
 const KIND_INGREDIENT: Set<KitchenwareKind> = new Set(["ingredient"]);
 
 const FAT = {
-  id: paddedId(KitchenwareLabelId, "fat"),
+  id: fixedId(KitchenwareLabelId, "fat"),
   name: "fat",
   kinds: KIND_INGREDIENT,
 } as const satisfies KitchenwareLabel;
 
 const SOLID = {
-  id: paddedId(KitchenwareLabelId, "solid"),
+  id: fixedId(KitchenwareLabelId, "solid"),
   name: "solid",
   kinds: KIND_INGREDIENT,
 } as const satisfies KitchenwareLabel;
 
 const BAKING = {
-  id: paddedId(KitchenwareLabelId, "baking"),
+  id: fixedId(KitchenwareLabelId, "baking"),
   name: "baking",
   kinds: KIND_INGREDIENT,
 } as const satisfies KitchenwareLabel;
@@ -31,18 +31,18 @@ const DEFAULT_MEASUREMENT = { value: { numerator: 1, denominator: 1 }, unit: "cu
 
 const BUTTER = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "butter"),
+  id: fixedId(IngredientId, "butter"),
   name: "Butter",
   default_measurement_value: DEFAULT_MEASUREMENT,
-  labels: new Set([paddedId(KitchenwareLabelId, "fat")]),
+  labels: new Set([fixedId(KitchenwareLabelId, "fat")]),
 } as const satisfies Ingredient;
 
 const FLOUR = {
   kind: "ingredient",
-  id: paddedId(IngredientId, "flour"),
+  id: fixedId(IngredientId, "flour"),
   name: "Flour",
   default_measurement_value: DEFAULT_MEASUREMENT,
-  labels: new Set([paddedId(KitchenwareLabelId, "solid")]),
+  labels: new Set([fixedId(KitchenwareLabelId, "solid")]),
 } as const satisfies Ingredient;
 
 const onFilterAllFn = vi.fn();

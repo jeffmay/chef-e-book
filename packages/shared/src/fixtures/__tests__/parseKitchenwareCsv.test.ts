@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseKitchenwareCsv } from "../kitchenware.ts";
-import { paddedId } from "../../types/ids.ts";
+import { fixedId } from "../../types/ids.ts";
 import { ContainerId, EquipmentId, IngredientId } from "../../types/kitchenware.ts";
 
 // IDs are left-padded to 12 characters with "-" by the parser
@@ -10,9 +10,9 @@ bowl,container,Bowl,count,vessel
 oven,equipment,Oven,count,heat
 `;
 
-const BUTTER_ID = paddedId(IngredientId, "butter");
-const BOWL_ID = paddedId(ContainerId, "bowl");
-const OVEN_ID = paddedId(EquipmentId, "oven");
+const BUTTER_ID = fixedId(IngredientId, "butter");
+const BOWL_ID = fixedId(ContainerId, "bowl");
+const OVEN_ID = fixedId(EquipmentId, "oven");
 
 describe("parseKitchenwareCsv", () => {
   it("parses ingredient rows", () => {
@@ -92,7 +92,7 @@ x,ingredient,X,units,
 water,ingredient,Water,volume,
 `;
     const result = parseKitchenwareCsv(csv);
-    const water = result.find((k) => k.id === paddedId(IngredientId, "water"));
+    const water = result.find((k) => k.id === fixedId(IngredientId, "water"));
     expect(water).toBeDefined();
     if (water === undefined) return;
     if (water.kind !== "ingredient") return;

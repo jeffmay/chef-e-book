@@ -1,7 +1,7 @@
 import { type } from "arktype";
 import Papa from "papaparse";
 import { validOrThrow } from "../assertions/index.ts";
-import { paddedId } from "../types/ids.ts";
+import { fixedId } from "../types/ids.ts";
 import { KitchenwareId } from "../types/kitchenware.ts";
 import { MeasurementType } from "../types/measurement.ts";
 
@@ -45,7 +45,7 @@ const IngredientRow = type({
 }).pipe(
   (row): IngredientTemplate => ({
     kind: "ingredient",
-    id: paddedId(KitchenwareId, row["Unique ID"].trim()),
+    id: fixedId(KitchenwareId, row["Unique ID"].trim()),
     name: row["Description"],
     default_measurement_type: row["Default Measurement Type"],
     label_names: row["Labels"],
@@ -59,7 +59,7 @@ const ContainerRow = type({
 }).pipe(
   (row): ContainerTemplate => ({
     kind: "container",
-    id: paddedId(KitchenwareId, row["Unique ID"].trim()),
+    id: fixedId(KitchenwareId, row["Unique ID"].trim()),
     name: row["Description"],
     label_names: row["Labels"],
   }),
@@ -72,7 +72,7 @@ const EquipmentRow = type({
 }).pipe(
   (row): EquipmentTemplate => ({
     kind: "equipment",
-    id: paddedId(KitchenwareId, row["Unique ID"].trim()),
+    id: fixedId(KitchenwareId, row["Unique ID"].trim()),
     name: row["Description"],
     label_names: row["Labels"],
   }),
@@ -89,7 +89,7 @@ export function parseKitchenwareCsv(csv: string): KitchenwareTemplate[] {
   for (const rawRow of data) {
     const typeVal = (rawRow["Type"] ?? "").trim();
     const rawId = (rawRow["Unique ID"] ?? "unknown").trim();
-    const rowId = validOrThrow(KitchenwareId.type(paddedId(KitchenwareId, rawId)));
+    const rowId = validOrThrow(KitchenwareId.type(fixedId(KitchenwareId, rawId)));
 
     if (typeVal === "ingredient") {
       const mType = (rawRow["Default Measurement Type"] ?? "").trim();

@@ -1,7 +1,8 @@
 import { type } from "arktype";
 import { nanoid } from "nanoid";
-import type { PadStart } from "string-ts";
-import { padStart } from "string-ts";
+import type { Length, PadStart, Truncate } from "string-ts";
+import { padStart, truncate } from "string-ts";
+import type { LessThan } from "type-fest";
 import { type Companion } from "./companion.ts";
 
 /**
@@ -37,6 +38,23 @@ export function IdCompanion<const N extends string, const L extends number>(
 }
 
 /**
+ * Produces a fixed-length string: pads with `Pad` on the left when shorter than `Len`,
+ * or truncates (no omission) when longer or equal.
+ */
+export type FixedLen<Start extends string, Len extends number, Pad extends string> =
+  LessThan<Length<Start>, Len> extends true ? PadStart<Start, Len, Pad> : Truncate<Start, Len, "">;
+
+/**
+ * A branded, fixed-length identifier type.
+ * Strings shorter than `Len` are left-padded with `"-"`;
+ * strings longer than `Len` are truncated with no omission marker.
+ */
+export type FixedId<Name extends string, Start extends string, Len extends number> = type.brand<
+  FixedLen<Start, Len, "-">,
+  Name
+>;
+
+/**
  * A simple no-op function that brands a string with a given IdCompanion's branding type.
  *
  * This is useful for avoid the `as` keyword and potentially getting the input string type wrong or losing the literal type information.
@@ -49,20 +67,25 @@ export function branded<const N extends string, const S extends string>(
 }
 
 /**
- * Generates a left-padded branded identifier from a short human-readable string.
- * Uses "-" as the padding character so that named IDs sort before random nanoid IDs.
+ * Generates a fixed-length branded identifier from a human-readable string.
+ * Strings shorter than the ID length are left-padded with "-" so named IDs sort before
+ * random nanoid IDs. Strings longer than the ID length are truncated with no omission marker.
  *
  * @param companion the IdCompanion object containing the length and type information
- * @param id the short string to pad (must not exceed companion.length)
- * @returns the left-padded and branded identifier
+ * @param id the string to fix to the companion's length
+ * @returns the fixed-length branded identifier
  *
  * @note use this for deterministic IDs (typically for fixtures/testing); use randomId for new production IDs.
  */
-export function paddedId<S extends string, N extends string, L extends number>(
+export function fixedId<const S extends string, const N extends string, const L extends number>(
   companion: IdCompanion<N, { length: L }>,
   id: S,
-): type.brand<PadStart<S, L, "-">, N> {
-  return branded(companion, padStart(id, companion.length, "-"));
+): FixedId<N, S, L> {
+  const fixed =
+    id.length < companion.length
+      ? padStart(id, companion.length, "-")
+      : truncate(id, companion.length, "");
+  return branded(companion, fixed);
 }
 
 /**

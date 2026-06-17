@@ -1,4 +1,4 @@
-import { type Container, ContainerId, paddedId } from "@recipe-book/shared";
+import { type Container, ContainerId, fixedId } from "@recipe-book/shared";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TreeSelectChangeEvent } from "primereact/treeselect";
@@ -52,7 +52,7 @@ vi.mock("primereact/treeselect", () => ({
 
 const POT: Container = {
   kind: "container",
-  id: paddedId(ContainerId, "pot000"),
+  id: fixedId(ContainerId, "pot000"),
   name: "Pot",
   labels: new Set(),
 };
@@ -116,13 +116,13 @@ describe("KitchenwareEditor — parent selection", () => {
     setup({ containers: [POT] });
     await userEvent.selectOptions(
       screen.getByRole("combobox", { name: "Parent container" }),
-      paddedId(ContainerId, "pot000"),
+      fixedId(ContainerId, "pot000"),
     );
-    expect(onChangeParent).toHaveBeenCalledWith(paddedId(ContainerId, "pot000"));
+    expect(onChangeParent).toHaveBeenCalledWith(fixedId(ContainerId, "pot000"));
   });
 
   it("calls onChangeParent with undefined when cleared", async () => {
-    setup({ parentId: paddedId(ContainerId, "pot000"), containers: [POT] });
+    setup({ parentId: fixedId(ContainerId, "pot000"), containers: [POT] });
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Parent container" }), "");
     expect(onChangeParent).toHaveBeenCalledWith(undefined);
   });

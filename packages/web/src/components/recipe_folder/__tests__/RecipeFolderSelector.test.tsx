@@ -1,4 +1,4 @@
-import { type RecipeFolder, RecipeFolderId, paddedId } from "@recipe-book/shared";
+import { type RecipeFolder, RecipeFolderId, fixedId } from "@recipe-book/shared";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TreeSelectChangeEvent } from "primereact/treeselect";
@@ -50,8 +50,8 @@ vi.mock("primereact/treeselect", () => ({
   },
 }));
 
-const MAIN_ID = paddedId(RecipeFolderId, "folder-main00");
-const SUB_ID = paddedId(RecipeFolderId, "folder-sub000");
+const MAIN_ID = fixedId(RecipeFolderId, "folder-main00");
+const SUB_ID = fixedId(RecipeFolderId, "folder-sub000");
 
 const MAIN_FOLDER: RecipeFolder = {
   id: MAIN_ID,
@@ -66,7 +66,7 @@ const onCreateFolder = vi.fn();
 
 function makeFolder(name: string): RecipeFolder {
   return {
-    id: paddedId(RecipeFolderId, "folder-new000"),
+    id: fixedId(RecipeFolderId, "folder-new000"),
     name,
     tags: [],
     sort_order: "alphabetical",
@@ -150,7 +150,7 @@ describe("RecipeFolderSelector — adding folders", () => {
     const input = screen.getByRole("textbox", { name: "New folder name" });
     await userEvent.type(input, "My Folder{Enter}");
     expect(onCreateFolder).toHaveBeenCalledWith("My Folder", undefined);
-    expect(onChange).toHaveBeenCalledWith("folder-new000");
+    expect(onChange).toHaveBeenCalledWith(fixedId(RecipeFolderId, "folder-new000"));
   });
 
   it("uses selected folder as parent when creating subfolder", async () => {

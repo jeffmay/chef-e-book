@@ -61,7 +61,7 @@ The app is running at http://localhost:5173, and you can use the Playwright MCP 
 - MUST ALWAYS use CSS over JavaScript for styling elements.
 - MUST ALWAYS use `vw` units unless the element is a horizontal line or when creating a font-size that is relative to a sibling or parent element, in which case, `em` is fine.
 - MUST ALWAYS use camelCase for React component props, local variables, and constant references. Keep snake_case for all fields stored in Yjs documents, and any string values such as discriminator fields (e.g. `"measurement_type"`).
-- MUST ALWAYS use `paddedId` for creating deterministic IDs in test files instead of string literals or casting.
+- MUST ALWAYS use `fixedId` for creating deterministic IDs in test files instead of string literals or casting.
 - MUST ALWAYS use `loadId` when loading existing IDs from stored data instead of using the `as` keyword to cast strings to branded ID types.
 
 ## Architecture
