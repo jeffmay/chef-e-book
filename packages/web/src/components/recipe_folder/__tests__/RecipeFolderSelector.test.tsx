@@ -132,21 +132,32 @@ describe("RecipeFolderSelector — selection", () => {
 });
 
 describe("RecipeFolderSelector — adding folders", () => {
-  it("shows + Folder button", () => {
+  it("shows a New subfolder checkbox", () => {
     setup();
-    expect(screen.getByRole("button", { name: "New subfolder" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Create new subfolder" })).toBeInTheDocument();
   });
 
-  it("clicking + Folder button shows the name input", async () => {
+  it("checking New subfolder shows the name input", async () => {
     setup();
-    await userEvent.click(screen.getByRole("button", { name: "New subfolder" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Create new subfolder" }));
     expect(screen.getByRole("textbox", { name: "New folder name" })).toBeInTheDocument();
+  });
+
+  it("requires a subfolder name: shows an error and disables ✓ until a name is typed", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Create new subfolder" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Subfolder name is required");
+    expect(screen.getByRole("button", { name: "Create folder" })).toBeDisabled();
+
+    await userEvent.type(screen.getByRole("textbox", { name: "New folder name" }), "Sauces");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create folder" })).not.toBeDisabled();
   });
 
   it("pressing Enter in the name input calls onCreateFolder and onChange", async () => {
     onCreateFolder.mockReturnValue(makeFolder("My Folder"));
     setup();
-    await userEvent.click(screen.getByRole("button", { name: "New subfolder" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Create new subfolder" }));
     const input = screen.getByRole("textbox", { name: "New folder name" });
     await userEvent.type(input, "My Folder{Enter}");
     expect(onCreateFolder).toHaveBeenCalledWith("My Folder", undefined);
@@ -156,7 +167,7 @@ describe("RecipeFolderSelector — adding folders", () => {
   it("uses selected folder as parent when creating subfolder", async () => {
     onCreateFolder.mockReturnValue(makeFolder("Child"));
     setup({ value: MAIN_ID });
-    await userEvent.click(screen.getByRole("button", { name: "New subfolder" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Create new subfolder" }));
     const input = screen.getByRole("textbox", { name: "New folder name" });
     await userEvent.type(input, "Child{Enter}");
     expect(onCreateFolder).toHaveBeenCalledWith("Child", MAIN_ID);
@@ -164,16 +175,24 @@ describe("RecipeFolderSelector — adding folders", () => {
 
   it("pressing Escape cancels the folder input", async () => {
     setup();
-    await userEvent.click(screen.getByRole("button", { name: "New subfolder" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Create new subfolder" }));
     const input = screen.getByRole("textbox", { name: "New folder name" });
     await userEvent.type(input, "{Escape}");
     expect(screen.queryByRole("textbox", { name: "New folder name" })).not.toBeInTheDocument();
     expect(onCreateFolder).not.toHaveBeenCalled();
   });
 
+  it("unchecking New subfolder cancels the folder input", async () => {
+    setup();
+    const checkbox = screen.getByRole("checkbox", { name: "Create new subfolder" });
+    await userEvent.click(checkbox);
+    await userEvent.click(checkbox);
+    expect(screen.queryByRole("textbox", { name: "New folder name" })).not.toBeInTheDocument();
+  });
+
   it("clicking ✕ cancels the folder input", async () => {
     setup();
-    await userEvent.click(screen.getByRole("button", { name: "New subfolder" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Create new subfolder" }));
     await userEvent.click(screen.getByRole("button", { name: "Cancel new folder" }));
     expect(screen.queryByRole("textbox", { name: "New folder name" })).not.toBeInTheDocument();
   });
@@ -181,7 +200,7 @@ describe("RecipeFolderSelector — adding folders", () => {
   it("clicking ✓ button submits the folder", async () => {
     onCreateFolder.mockReturnValue(makeFolder("Quick"));
     setup();
-    await userEvent.click(screen.getByRole("button", { name: "New subfolder" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Create new subfolder" }));
     const input = screen.getByRole("textbox", { name: "New folder name" });
     await userEvent.type(input, "Quick");
     await userEvent.click(screen.getByRole("button", { name: "Create folder" }));

@@ -398,18 +398,6 @@
   margin-right: var(--spacing-xs);
 }
 
-.re-instruction-ing-option {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px var(--spacing-xs);
-  border: var(--border-width) solid transparent;
-}
-
-.re-instruction-ing-option:has(input:checked) {
-  border-color: var(--color-border);
-}
-
 /* Text block item */
 .re-text-block-input {
   font-family: var(--font-body);
@@ -482,14 +470,9 @@
   flex: 1;
 }
 
-.re-field-input--error {
-  border-color: #c00;
-  outline-color: #c00;
-}
-
-.re-field-error {
-  font-size: 0.8em;
-  color: #c00;
+.re-version-description-label {
+  font-size: 0.85em;
+  color: var(--color-muted);
 }
 
 .re-validation-error {

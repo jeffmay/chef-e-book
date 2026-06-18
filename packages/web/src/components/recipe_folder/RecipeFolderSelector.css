@@ -24,20 +24,18 @@
   font-size: 0.9em;
 }
 
-.rfs-add-btn {
+.rfs-add-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
   font-family: var(--font-body);
   font-size: 0.85em;
-  padding: 2px 8px;
-  border: var(--border-width) solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-fg);
   cursor: pointer;
   white-space: nowrap;
 }
 
-.rfs-add-btn:hover {
-  background: var(--color-fg);
-  color: var(--color-bg);
+.rfs-add-toggle > input {
+  width: unset;
 }
 
 .rfs-path {
@@ -50,6 +48,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+  flex-wrap: wrap;
 }
 
 .rfs-add-input {

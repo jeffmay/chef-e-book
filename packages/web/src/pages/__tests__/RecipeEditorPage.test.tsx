@@ -1,9 +1,10 @@
-import type { Ingredient, Measurement, Section } from "@recipe-book/shared";
+import type { Ingredient, Measurement, RecipeFolder, Section } from "@recipe-book/shared";
 import {
   ContainerId,
   createRecipe,
   createRecipeFolder,
   IngredientId,
+  loadId,
   fixedId,
   randomId,
   RecipeFolderId,
@@ -11,10 +12,13 @@ import {
 } from "@recipe-book/shared";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { TreeNode } from "primereact/treenode";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import type { IngredientSelectorProps } from "../../components/ingredients_table/IngredientSelector.tsx";
+import type { InstructionIngredientSelectorProps } from "../../components/recipe_editor/InstructionIngredientSelector.tsx";
+import type { RecipeFolderSelectorProps } from "../../components/recipe_folder/RecipeFolderSelector.tsx";
 import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
 import { flushAsyncEffects } from "../../testUtils.ts";
 import {
@@ -43,7 +47,7 @@ vi.mock("../../components/ingredients_table/IngredientSelector.tsx", () => ({
       value={value ?? ""}
       onChange={(e) => {
         const v = e.target.value;
-        onChange(v ? (v as IngredientId) : undefined);
+        onChange(v ? loadId(IngredientId, v) : undefined);
       }}
     >
       <option value="">{placeholder ?? "— None —"}</option>
@@ -54,6 +58,90 @@ vi.mock("../../components/ingredients_table/IngredientSelector.tsx", () => ({
       ))}
     </select>
   ),
+}));
+
+// Mock RecipeFolderSelector down to a plain <select> so the editor's folder
+// field is a queryable combobox without PrimeReact's TreeSelect.
+vi.mock("../../components/recipe_folder/RecipeFolderSelector.tsx", () => ({
+  RecipeFolderSelector: ({ value, folders, onChange, ariaLabel }: RecipeFolderSelectorProps) => {
+    const flat: Array<{ id: string; label: string }> = [];
+    function collect(fs: readonly RecipeFolder[], depth: number) {
+      for (const f of fs) {
+        flat.push({ id: f.id, label: "  ".repeat(depth) + f.name });
+        if (f.children) collect(f.children, depth + 1);
+      }
+    }
+    collect(folders, 0);
+    return (
+      <select
+        aria-label={ariaLabel}
+        value={value ?? ""}
+        onChange={(e) =>
+          onChange(e.target.value ? loadId(RecipeFolderId, e.target.value) : undefined)
+        }
+      >
+        <option value="">— None —</option>
+        {flat.map((f) => (
+          <option key={f.id} value={f.id}>
+            {f.label}
+          </option>
+        ))}
+      </select>
+    );
+  },
+}));
+
+// Mock InstructionIngredientSelector to a flat list of checkboxes for each leaf
+// (ingredient) node, so instruction ingredient selection is testable in jsdom.
+vi.mock("../../components/recipe_editor/InstructionIngredientSelector.tsx", () => ({
+  InstructionIngredientSelector: ({
+    nodes,
+    selectedIds,
+    onChange,
+  }: InstructionIngredientSelectorProps) => {
+    const leaves: Array<{ id: IngredientId; label: string }> = [];
+    function collect(ns: TreeNode[]) {
+      for (const n of ns) {
+        const children = n.children;
+        if (children && children.length > 0) {
+          collect(children);
+          continue;
+        }
+        const data: unknown = n.data;
+        if (typeof data === "object" && data !== null && "ingredient_id" in data) {
+          const raw = Reflect.get(data, "ingredient_id");
+          if (typeof raw === "string") {
+            leaves.push({ id: loadId(IngredientId, raw), label: String(n.label ?? "") });
+          }
+        }
+      }
+    }
+    collect(nodes);
+    return (
+      <div role="group" aria-label="Instruction ingredients">
+        {leaves.map((leaf) => {
+          const checked = selectedIds.includes(leaf.id);
+          return (
+            <label key={leaf.id}>
+              <input
+                type="checkbox"
+                aria-label={leaf.label}
+                checked={checked}
+                onChange={() =>
+                  onChange(
+                    checked
+                      ? selectedIds.filter((id) => id !== leaf.id)
+                      : [...selectedIds, leaf.id],
+                  )
+                }
+              />
+              {leaf.label}
+            </label>
+          );
+        })}
+      </div>
+    );
+  },
 }));
 
 function makeWrapper(kitchenwareDoc: Y.Doc, recipeBookDoc: Y.Doc) {
@@ -490,6 +578,35 @@ describe("RecipeEditor — description validation", () => {
   });
 });
 
+describe("RecipeEditor — title validation", () => {
+  it("shows a required error when the title is empty", () => {
+    setupNewRecipeEditor();
+    expect(screen.getByText("Title is required")).toBeInTheDocument();
+  });
+
+  it("clears the title error once a title is entered", async () => {
+    setupNewRecipeEditor();
+    await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Apple Pie");
+    expect(screen.queryByText("Title is required")).not.toBeInTheDocument();
+  });
+});
+
+describe("RecipeEditor — create new version", () => {
+  it("clicking Create new version clears the description and focuses its input", async () => {
+    setupExistingRecipeEditor("Beef Stew");
+    const descInput = screen.getByRole("textbox", { name: "Version description" });
+    await userEvent.type(descInput, "Old description");
+    expect(descInput).toHaveValue("Old description");
+
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Create a new version from changes" }),
+    );
+
+    expect(descInput).toHaveValue("");
+    expect(descInput).toHaveFocus();
+  });
+});
+
 describe("RecipeEditor — ingredients section", () => {
   it("shows the Ingredients section", async () => {
     setupNewRecipeEditor();
@@ -642,9 +759,32 @@ describe("RecipeEditor — sections editor", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("can toggle an ingredient checkbox in an instruction row", async () => {
+  it("instruction ingredient selector offers only ingredients already in the recipe", async () => {
     setupNewRecipeEditor();
     await userEvent.click(screen.getByRole("button", { name: "Add section" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
+
+    // The store has Butter and Flour, but neither is in the recipe yet, so the
+    // instruction's ingredient selector offers nothing.
+    expect(screen.queryByRole("checkbox", { name: "Butter" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Flour" })).not.toBeInTheDocument();
+  });
+
+  it("can toggle an instruction ingredient once it has been added to the recipe", async () => {
+    setupNewRecipeEditor();
+    await userEvent.click(screen.getByRole("button", { name: "Add section" }));
+
+    // Add Butter to the section so it becomes available to instructions.
+    await userEvent.click(screen.getByRole("button", { name: "Add ingredient to section" }));
+    const newIngredientGroup = screen.getByRole("group", { name: "New ingredient" });
+    await userEvent.selectOptions(
+      within(newIngredientGroup).getByRole("combobox", { name: "Select new ingredient" }),
+      fixedId(IngredientId, "------butter"),
+    );
+    await userEvent.click(
+      within(newIngredientGroup).getByRole("button", { name: /Add Butter to section/i }),
+    );
+
     await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
 
     const butterCheckbox = await screen.findByRole("checkbox", { name: "Butter" });

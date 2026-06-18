@@ -29,6 +29,7 @@
       "Bash(gh pr view *)",
       "Bash(gh api repos/jeffmay/ecookdeck/*/comments/*)",
       "Bash(xargs:*)",
+      "Bash(graphify update *)",
       "Bash(graphify export *)",
       "Bash(graphify query *)"
     ]
