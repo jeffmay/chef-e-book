@@ -2,7 +2,6 @@ import type { AnyCompanion, IngredientId, RecipeFolder } from "@recipe-book/shar
 import {
   addFractions,
   assertDefined,
-  ContainerId,
   type ContainerItem,
   EquipmentId,
   formatFraction,
@@ -28,11 +27,16 @@ import {
   type TextBlock,
   unitType,
 } from "@recipe-book/shared";
-import { useMemo, useState } from "react";
+import type { TreeNode } from "primereact/treenode";
+import { useMemo, useRef, useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import { DurationEditor } from "../components/duration/DurationEditor.tsx";
 import { IngredientSelector } from "../components/ingredients_table/IngredientSelector.tsx";
 import { MeasurementEditor } from "../components/measurement/MeasurementEditor.tsx";
+import { buildInstructionIngredientTree } from "../components/recipe_editor/buildInstructionIngredientTree.ts";
+import { COMMON_CONTAINERS } from "../components/recipe_editor/containers.ts";
+import { InstructionIngredientSelector } from "../components/recipe_editor/InstructionIngredientSelector.tsx";
+import { RecipeFolderSelector } from "../components/recipe_folder/RecipeFolderSelector.tsx";
 import { useIngredientStore } from "../hooks/useIngredientStore.ts";
 import { useLabelStore } from "../hooks/useLabelStore.ts";
 import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.ts";
@@ -256,7 +260,7 @@ interface WithIngredients {
 // ---------------------------------------------------------------------------
 
 interface IngredientItemRowProps
-  extends RecipeSectionItemRowProps<IngredientItem>, WithIngredients {}
+  extends RecipeSectionItemRowProps<IngredientItem>, WithIngredients { }
 
 function IngredientItemRow({
   item,
@@ -400,16 +404,7 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
 // ContainerItemRow
 // ---------------------------------------------------------------------------
 
-const COMMON_CONTAINERS = [
-  { id: fixedId(ContainerId, "bowl"), name: "Bowl" },
-  { id: fixedId(ContainerId, "pot"), name: "Pot" },
-  { id: fixedId(ContainerId, "steamer"), name: "Steamer" },
-  { id: fixedId(ContainerId, "foil"), name: "Foil" },
-  { id: fixedId(ContainerId, "pan"), name: "Pan" },
-  { id: fixedId(ContainerId, "plate"), name: "Plate" },
-] as const;
-
-interface ContainerItemRowProps extends RecipeSectionItemRowProps<ContainerItem>, WithIngredients {}
+interface ContainerItemRowProps extends RecipeSectionItemRowProps<ContainerItem>, WithIngredients { }
 
 function ContainerItemRow({
   item,
@@ -522,15 +517,19 @@ const COMMON_EQUIPMENT = [
   { id: fixedId(EquipmentId, "skillet"), name: "Skillet" },
 ] as const;
 
-interface InstructionRowProps extends RecipeSectionItemRowProps<Instruction>, WithIngredients {}
+interface InstructionRowProps extends RecipeSectionItemRowProps<Instruction> {
+  readonly instructionIngredientNodes: TreeNode[];
+}
 
-function InstructionRow({ item, allIngredients, onChange, onRemove }: InstructionRowProps) {
-  function toggleIngredient(id: IngredientId) {
-    const current = item.ingredient_ids ?? [];
-    const exists = current.includes(id);
-    const newIds = exists ? current.filter((x) => x !== id) : [...current, id];
-    if (newIds.length > 0) {
-      onChange({ ...item, ingredient_ids: newIds });
+function InstructionRow({
+  item,
+  instructionIngredientNodes,
+  onChange,
+  onRemove,
+}: InstructionRowProps) {
+  function handleIngredientsChange(ids: IngredientId[]) {
+    if (ids.length > 0) {
+      onChange({ ...item, ingredient_ids: ids });
     } else {
       const { ingredient_ids: _, ...rest } = item;
       onChange(rest);
@@ -616,20 +615,11 @@ function InstructionRow({ item, allIngredients, onChange, onRemove }: Instructio
 
       <div className="re-instruction-ingredients">
         <span className="re-instruction-ing-label">Ingredients:</span>
-        {allIngredients.map((ing) => {
-          const checked = (item.ingredient_ids ?? []).includes(ing.id);
-          return (
-            <label key={ing.id} className="re-instruction-ing-option">
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={() => toggleIngredient(ing.id)}
-                aria-label={ing.name}
-              />
-              {ing.name}
-            </label>
-          );
-        })}
+        <InstructionIngredientSelector
+          nodes={instructionIngredientNodes}
+          selectedIds={item.ingredient_ids ?? []}
+          onChange={handleIngredientsChange}
+        />
       </div>
     </div>
   );
@@ -672,6 +662,7 @@ type NewItemKind = "ingredient" | "container" | "instruction" | "text_block" | "
 
 interface SectionEditorProps extends RecipeSectionItemRowProps<Section>, WithIngredients {
   readonly depth: number;
+  readonly instructionIngredientNodes: TreeNode[];
 }
 
 function SectionEditor({
@@ -679,6 +670,7 @@ function SectionEditor({
   depth,
   allIngredients,
   allLabels,
+  instructionIngredientNodes,
   onChange,
   onRemove,
 }: SectionEditorProps) {
@@ -785,8 +777,7 @@ function SectionEditor({
               <InstructionRow
                 key={item.id}
                 item={item}
-                allIngredients={allIngredients}
-                allLabels={allLabels}
+                instructionIngredientNodes={instructionIngredientNodes}
                 onChange={(updated) => updateItem(i, updated)}
                 onRemove={() => removeItem(i)}
               />
@@ -810,6 +801,7 @@ function SectionEditor({
                 depth={depth + 1}
                 allIngredients={allIngredients}
                 allLabels={allLabels}
+                instructionIngredientNodes={instructionIngredientNodes}
                 onChange={(updated) => updateItem(i, updated)}
                 onRemove={() => removeItem(i)}
               />
@@ -1083,18 +1075,28 @@ export function RecipeEditor({
   onCancel,
 }: RecipeEditorProps) {
   const { create, save, copy } = useRecipeStore();
-  const { folders } = useRecipeFolderStore();
+  const { folders, createFolder } = useRecipeFolderStore();
   const { ingredients } = useIngredientStore();
   const { labels } = useLabelStore();
   const [form, setForm] = useState<EditorState>(() =>
     makeInitialState(recipe, versionId, initialFolderId),
   );
   const [showCopyDialog, setShowCopyDialog] = useState(false);
+  const descriptionInputRef = useRef<HTMLInputElement>(null);
 
   const flat = flattenFolders(folders);
+  const instructionIngredientNodes = useMemo(
+    () => buildInstructionIngredientTree(form.sections, ingredients),
+    [form.sections, ingredients],
+  );
 
   function patch<K extends keyof EditorState>(key: K, value: EditorState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  function handleToggleNewVersion(checked: boolean) {
+    setForm((f) => ({ ...f, create_new_version: checked, ...(checked && { description: "" }) }));
+    if (checked) descriptionInputRef.current?.focus();
   }
 
   function handleSave() {
@@ -1142,9 +1144,10 @@ export function RecipeEditor({
     () => collectIngredientItems(form.sections).filter((i) => i.customAmount == null).length,
     [form.sections],
   );
+  const titleError = form.title.trim() === "" ? "Title is required" : null;
   const descriptionError =
     form.description.trim() === "" ? "Version description is required" : null;
-  const canSave = form.title.trim() !== "" && descriptionError === null && missingAmountCount === 0;
+  const canSave = titleError === null && descriptionError === null && missingAmountCount === 0;
 
   return (
     <main className="re-editor" aria-label="Recipe editor">
@@ -1171,14 +1174,23 @@ export function RecipeEditor({
 
         <label className="re-field-label">
           Title
+          <span className="field-required" aria-hidden="true">
+            *
+          </span>
           <input
-            className="re-field-input re-field-input--title"
+            className={`re-field-input re-field-input--title${titleError !== null ? " field-input--error" : ""}`}
             value={form.title}
             onChange={(e) => patch("title", e.target.value)}
             placeholder="Recipe title"
             aria-label="Recipe title"
+            aria-describedby={titleError !== null ? "re-title-error" : undefined}
             required
           />
+          {titleError !== null && (
+            <span id="re-title-error" className="field-error" role="alert">
+              {titleError}
+            </span>
+          )}
         </label>
 
         <label className="re-field-label">
@@ -1206,24 +1218,13 @@ export function RecipeEditor({
 
         <label className="re-field-label">
           Folder
-          <select
-            className="re-field-select"
-            value={form.parent_folder_id ?? ""}
-            onChange={(e) =>
-              patch(
-                "parent_folder_id",
-                e.target.value ? loadId(RecipeFolderId, e.target.value) : undefined,
-              )
-            }
-            aria-label="Parent folder"
-          >
-            <option value="">— None —</option>
-            {flat.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.label}
-              </option>
-            ))}
-          </select>
+          <RecipeFolderSelector
+            value={form.parent_folder_id}
+            folders={folders}
+            onChange={(id) => patch("parent_folder_id", id)}
+            onCreateFolder={(name, parentId) => createFolder(name, parentId)}
+            ariaLabel="Parent folder"
+          />
         </label>
       </section>
 
@@ -1240,6 +1241,7 @@ export function RecipeEditor({
             depth={1}
             allIngredients={ingredients}
             allLabels={labels}
+            instructionIngredientNodes={instructionIngredientNodes}
             onChange={(updated) =>
               patch(
                 "sections",
@@ -1282,15 +1284,23 @@ export function RecipeEditor({
               <input
                 type="checkbox"
                 checked={form.create_new_version}
-                onChange={(e) => patch("create_new_version", e.target.checked)}
+                onChange={(e) => handleToggleNewVersion(e.target.checked)}
                 aria-label="Create a new version from changes"
               />
               Create new version
             </label>
           )}
           <div className="re-version-description">
+            <label className="re-version-description-label" htmlFor="re-version-description-input">
+              Version description
+              <span className="field-required" aria-hidden="true">
+                *
+              </span>
+            </label>
             <input
-              className={`re-new-version-input${descriptionError !== null ? " re-field-input--error" : ""}`}
+              id="re-version-description-input"
+              ref={descriptionInputRef}
+              className={`re-new-version-input${descriptionError !== null ? " field-input--error" : ""}`}
               value={form.description}
               onChange={(e) => patch("description", e.target.value)}
               placeholder='ex: "Untested" or "Final Version"'
@@ -1298,7 +1308,7 @@ export function RecipeEditor({
               aria-describedby={descriptionError !== null ? "re-description-error" : undefined}
             />
             {descriptionError !== null && (
-              <span id="re-description-error" className="re-field-error" role="alert">
+              <span id="re-description-error" className="field-error" role="alert">
                 {descriptionError}
               </span>
             )}

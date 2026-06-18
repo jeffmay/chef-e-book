@@ -54,6 +54,7 @@ export function RecipeFolderSelector({
 
   const treeNodes = useMemo(() => (folders as RecipeFolder[]).map(folderToNode), [folders]);
   const selectedPath = value !== undefined ? buildPath(folders as RecipeFolder[], value) : "";
+  const nameError = adding && newName.trim() === "" ? "Subfolder name is required" : null;
 
   function handleChange(e: TreeSelectChangeEvent): void {
     const v = e.value;
@@ -62,6 +63,11 @@ export function RecipeFolderSelector({
     } else if (typeof v === "string") {
       onChange(loadId(RecipeFolderIdCompanion, v));
     }
+  }
+
+  function cancelAdd() {
+    setAdding(false);
+    setNewName("");
   }
 
   function submitNewFolder() {
@@ -88,15 +94,21 @@ export function RecipeFolderSelector({
           ariaLabel={ariaLabel}
           appendTo="self"
         />
-        <button
-          type="button"
-          className="rfs-add-btn"
-          onClick={() => setAdding((v) => !v)}
+        <label
+          className="rfs-add-toggle"
           title={value !== undefined ? `Add subfolder under "${selectedPath}"` : "Add root folder"}
-          aria-label="New subfolder"
         >
-          + Folder
-        </button>
+          <input
+            type="checkbox"
+            checked={adding}
+            onChange={(e) => {
+              if (e.target.checked) setAdding(true);
+              else cancelAdd();
+            }}
+            aria-label="Create new subfolder"
+          />
+          New subfolder
+        </label>
       </div>
       {value !== undefined && (
         <span className="rfs-path" aria-label="Selected folder path">
@@ -104,36 +116,37 @@ export function RecipeFolderSelector({
         </span>
       )}
       {adding && (
-        <span className="rfs-add-row">
+        <div className="rfs-add-row">
           <input
-            className="rfs-add-input"
+            className={`rfs-add-input${nameError !== null ? " field-input--error" : ""}`}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") submitNewFolder();
-              if (e.key === "Escape") {
-                setAdding(false);
-                setNewName("");
-              }
+              if (e.key === "Escape") cancelAdd();
             }}
-            placeholder="Folder name…"
+            placeholder="Subfolder name…"
             aria-label="New folder name"
+            aria-describedby={nameError !== null ? "rfs-name-error" : undefined}
             autoFocus
           />
-          <button type="button" onClick={submitNewFolder} aria-label="Create folder">
-            ✓
-          </button>
           <button
             type="button"
-            onClick={() => {
-              setAdding(false);
-              setNewName("");
-            }}
-            aria-label="Cancel new folder"
+            onClick={submitNewFolder}
+            disabled={nameError !== null}
+            aria-label="Create folder"
           >
+            ✓
+          </button>
+          <button type="button" onClick={cancelAdd} aria-label="Cancel new folder">
             ✕
           </button>
-        </span>
+          {nameError !== null && (
+            <span id="rfs-name-error" className="field-error" role="alert">
+              {nameError}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );

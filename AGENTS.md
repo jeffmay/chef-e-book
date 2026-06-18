@@ -235,15 +235,17 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 ### Recipe Editor
 
 - Edit name and description
+- Required `title` and version `description` fields show a `*` indicator and the shared field-error styling when empty
+- Choose/create a parent folder with `RecipeFolderSelector` (`TreeSelect` + a "New subfolder" checkbox that requires a name; the editor creates the folder then selects it)
 - Add sections with an optional header
 - Add/edit ingredients (with measurement editor)
 - Add/edit containers (bowl, steamer, pot, foil) containing nested ingredients
-- Add/edit equipment instructions (bake 20 min, sear on high, mix 20 min, etc.)
+- Add/edit equipment instructions (bake 20 min, sear on high, mix 20 min, etc.); each instruction picks the ingredients it acts on via `InstructionIngredientSelector` — a multi-select `TreeSelect` of the recipe's own ingredients grouped by container (containers hold only ingredients; add ingredients to a section/container to make them available)
 - Add/edit text blocks
 - Add/edit sub-sections
 - Attach notes to any sections or section items
 - Auto-grouping ingredients (ex: group by label - solid or liquid)
-- Save as a new version
+- Save as a new version (the "Create new version" checkbox clears the version description and focuses it)
 - View past versions (version history)
 - Clone and rename recipe
 - View session log
@@ -322,6 +324,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - **Layout:** Responsive — no horizontal scrolling; maximize horizontal space at all screen sizes
 - **Styling:** CSS-only (no JS layout), `vw` units for widths (except relative font sizes use `em`)
 - **Fractions:** Always simplified; displayed as integer + proper fraction superscript/subscript
+- **Form validation:** Reusable classes in `global.css` — `.field-required` (the `*` label indicator), `.field-input--error` (heavy black outline, not a red border), and `.field-error` (italic text prefixed with a `⚠` glyph). Shared across all forms.
 
 ## Testing Architecture
 
