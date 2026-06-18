@@ -16,6 +16,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import type { IngredientSelectorProps } from "../../components/ingredients_table/IngredientSelector.tsx";
 import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
+import { flushAsyncEffects } from "../../testUtils.ts";
 import {
   computeTopIngredients,
   isSameMeasurementCategory,
@@ -334,13 +335,15 @@ describe("computeTopIngredients", () => {
 // ---------------------------------------------------------------------------
 
 describe("RecipeEditor — new recipe form", () => {
-  it("shows the New Recipe heading", () => {
+  it("shows the New Recipe heading", async () => {
     setupNewRecipeEditor();
+    await flushAsyncEffects();
     expect(screen.getByRole("heading", { name: "New Recipe" })).toBeInTheDocument();
   });
 
-  it("shows all required fields", () => {
+  it("shows all required fields", async () => {
     setupNewRecipeEditor();
+    await flushAsyncEffects();
     expect(screen.getByRole("textbox", { name: "Recipe title" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Recipe subtitle" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Source URL" })).toBeInTheDocument();
@@ -348,8 +351,9 @@ describe("RecipeEditor — new recipe form", () => {
     expect(screen.getByRole("combobox", { name: "Parent folder" })).toBeInTheDocument();
   });
 
-  it("Save button is disabled when title is empty", () => {
+  it("Save button is disabled when title is empty", async () => {
     setupNewRecipeEditor();
+    await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "Save recipe" })).toBeDisabled();
   });
 
@@ -394,17 +398,18 @@ describe("RecipeEditor — new recipe form", () => {
 });
 
 describe("RecipeEditor — initialFolderId", () => {
-  it("gracefully degrades to no folder when initialFolderId references a non-existent folder", () => {
+  it("gracefully degrades to no folder when initialFolderId references a non-existent folder", async () => {
     const ghostId = paddedId(RecipeFolderId, "ghost");
     render(
       <RecipeEditor recipe={null} initialFolderId={ghostId} onSave={vi.fn()} onCancel={vi.fn()} />,
       { wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc) },
     );
+    await flushAsyncEffects();
     const select = screen.getByRole("combobox", { name: "Parent folder" }) as HTMLSelectElement;
     expect(select.value).toBe("");
   });
 
-  it("pre-selects the folder when initialFolderId is provided", () => {
+  it("pre-selects the folder when initialFolderId is provided", async () => {
     const folder = createRecipeFolder(recipeBookDoc, "Desserts");
     const onSave = vi.fn();
     const onCancel = vi.fn();
@@ -419,38 +424,44 @@ describe("RecipeEditor — initialFolderId", () => {
         wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc),
       },
     );
+    await flushAsyncEffects();
     const select = screen.getByRole("combobox", { name: "Parent folder" }) as HTMLSelectElement;
     expect(select.value).toBe(folder.id);
   });
 });
 
 describe("RecipeEditor — editing existing recipe", () => {
-  it("shows the edit heading with recipe title", () => {
+  it("shows the edit heading with recipe title", async () => {
     setupExistingRecipeEditor("Banana Bread");
+    await flushAsyncEffects();
     expect(screen.getByRole("heading", { name: "Edit: Banana Bread" })).toBeInTheDocument();
   });
 
-  it("shows version history for existing recipe", () => {
+  it("shows version history for existing recipe", async () => {
     setupExistingRecipeEditor("Banana Bread");
+    await flushAsyncEffects();
     expect(screen.getByText(/Version history/i)).toBeInTheDocument();
   });
 
-  it("shows the 'Create a new version' checkbox when editing", () => {
+  it("shows the 'Create a new version' checkbox when editing", async () => {
     setupExistingRecipeEditor("Banana Bread");
+    await flushAsyncEffects();
     expect(
       screen.getByRole("checkbox", { name: "Create a new version from changes" }),
     ).toBeInTheDocument();
   });
 
-  it("shows Copy recipe button when editing", () => {
+  it("shows Copy recipe button when editing", async () => {
     setupExistingRecipeEditor("Banana Bread");
+    await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "Copy recipe" })).toBeInTheDocument();
   });
 });
 
 describe("RecipeEditor — description validation", () => {
-  it("shows a description required error alert when the description is empty", () => {
+  it("shows a description required error alert when the description is empty", async () => {
     setupExistingRecipeEditor("Banana Bread");
+    await flushAsyncEffects();
     expect(screen.getByRole("alert")).toHaveTextContent("Version description is required");
   });
 
@@ -463,8 +474,9 @@ describe("RecipeEditor — description validation", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("disables Save when the description is empty", () => {
+  it("disables Save when the description is empty", async () => {
     setupExistingRecipeEditor("Banana Bread");
+    await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "Save recipe" })).toBeDisabled();
   });
 
@@ -479,13 +491,15 @@ describe("RecipeEditor — description validation", () => {
 });
 
 describe("RecipeEditor — ingredients section", () => {
-  it("shows the Ingredients section", () => {
+  it("shows the Ingredients section", async () => {
     setupNewRecipeEditor();
+    await flushAsyncEffects();
     expect(screen.getByRole("region", { name: "Ingredients" })).toBeInTheDocument();
   });
 
-  it("shows empty state message when no sections have ingredients", () => {
+  it("shows empty state message when no sections have ingredients", async () => {
     setupNewRecipeEditor();
+    await flushAsyncEffects();
     expect(
       screen.getByText(/Add ingredients to sections to see them listed here/i),
     ).toBeInTheDocument();
@@ -512,13 +526,15 @@ describe("RecipeEditor — ingredients section", () => {
 });
 
 describe("RecipeEditor — sections editor", () => {
-  it("shows the Instructions section", () => {
+  it("shows the Instructions section", async () => {
     setupNewRecipeEditor();
+    await flushAsyncEffects();
     expect(screen.getByRole("region", { name: "Instructions" })).toBeInTheDocument();
   });
 
-  it("shows Add section button", () => {
+  it("shows Add section button", async () => {
     setupNewRecipeEditor();
+    await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "Add section" })).toBeInTheDocument();
   });
 
@@ -612,13 +628,15 @@ describe("RecipeEditor — sections editor", () => {
     expect(screen.queryByRole("group", { name: /Section:/ })).not.toBeInTheDocument();
   });
 
-  it("does not show notes panel anywhere in the editor", () => {
+  it("does not show notes panel anywhere in the editor", async () => {
     setupNewRecipeEditor();
+    await flushAsyncEffects();
     expect(screen.queryByRole("complementary", { name: "Notes" })).not.toBeInTheDocument();
   });
 
-  it("does not show the Create new version checkbox for a new recipe", () => {
+  it("does not show the Create new version checkbox for a new recipe", async () => {
     setupNewRecipeEditor();
+    await flushAsyncEffects();
     expect(
       screen.queryByRole("checkbox", { name: "Create a new version from changes" }),
     ).not.toBeInTheDocument();

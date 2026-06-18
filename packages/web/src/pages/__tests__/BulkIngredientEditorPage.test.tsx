@@ -4,6 +4,7 @@ import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import { KitchenwareDocContext } from "../../contexts/docContext.ts";
+import { flushAsyncEffects } from "../../testUtils.ts";
 import { BulkIngredientEditorPage } from "../BulkIngredientEditorPage.tsx";
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
@@ -47,8 +48,9 @@ function getTable() {
 }
 
 describe("BulkIngredientEditorPage — initial render", () => {
-  it("renders the Ingredients heading", () => {
+  it("renders the Ingredients heading", async () => {
     setup();
+    await flushAsyncEffects();
     expect(screen.getByRole("heading", { name: "Ingredients" })).toBeInTheDocument();
   });
 
@@ -58,13 +60,15 @@ describe("BulkIngredientEditorPage — initial render", () => {
     expect(within(getTable()).getByText("Butter")).toBeInTheDocument();
   });
 
-  it("shows the + New ingredient button", () => {
+  it("shows the + New ingredient button", async () => {
     setup();
+    await flushAsyncEffects();
     expect(screen.getByLabelText("Add new ingredient")).toBeInTheDocument();
   });
 
-  it("does not show filter bar", () => {
+  it("does not show filter bar", async () => {
     setup();
+    await flushAsyncEffects();
     expect(screen.queryByLabelText("Filter ingredients")).not.toBeInTheDocument();
   });
 });

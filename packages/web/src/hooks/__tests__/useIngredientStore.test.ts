@@ -13,6 +13,7 @@ import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import { KitchenwareDocContext } from "../../contexts/docContext.ts";
+import { flushAsyncEffects } from "../../testUtils.ts";
 import { useIngredientStore } from "../useIngredientStore.ts";
 
 const ingredientKinds: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
@@ -44,6 +45,14 @@ function makeWrapper(doc: Y.Doc) {
   };
 }
 
+// Renders the store and flushes the mount-time `whenSynced.then(...)` re-read and
+// async CSV import inside act() so deferred state updates don't trigger warnings.
+async function renderStore(doc: Y.Doc) {
+  const rendered = renderHook(() => useIngredientStore(), { wrapper: makeWrapper(doc) });
+  await flushAsyncEffects();
+  return rendered;
+}
+
 let doc: Y.Doc;
 
 beforeEach(() => {
@@ -71,17 +80,14 @@ describe("useIngredientStore — async default loading", () => {
 
   it("does not fetch when the store already has data", async () => {
     // doc is pre-populated with BUTTER in beforeEach
-    renderHook(() => useIngredientStore(), { wrapper: makeWrapper(doc) });
-    await Promise.resolve(); // flush microtask queue
+    await renderStore(doc);
     expect(vi.mocked(fetch)).not.toHaveBeenCalled();
   });
 });
 
 describe("useIngredientStore — createIngredient", () => {
-  it("adds a new ingredient", () => {
-    const { result } = renderHook(() => useIngredientStore(), {
-      wrapper: makeWrapper(doc),
-    });
+  it("adds a new ingredient", async () => {
+    const { result } = await renderStore(doc);
     const before = result.current.ingredients.length;
     act(() =>
       result.current.createIngredient({
@@ -96,10 +102,8 @@ describe("useIngredientStore — createIngredient", () => {
 });
 
 describe("useIngredientStore — addLabels / removeLabels", () => {
-  it("appends labels to selected ingredients", () => {
-    const { result } = renderHook(() => useIngredientStore(), {
-      wrapper: makeWrapper(doc),
-    });
+  it("appends labels to selected ingredients", async () => {
+    const { result } = await renderStore(doc);
     act(() =>
       result.current.createIngredient({
         name: "Test Ing",
@@ -117,10 +121,8 @@ describe("useIngredientStore — addLabels / removeLabels", () => {
     expect(updated?.labels.has(cId)).toBe(true);
   });
 
-  it("removes labels from selected ingredients", () => {
-    const { result } = renderHook(() => useIngredientStore(), {
-      wrapper: makeWrapper(doc),
-    });
+  it("removes labels from selected ingredients", async () => {
+    const { result } = await renderStore(doc);
     act(() =>
       result.current.createIngredient({
         name: "Test Ing 2",
@@ -140,10 +142,8 @@ describe("useIngredientStore — addLabels / removeLabels", () => {
 });
 
 describe("useIngredientStore — setMeasurementValue", () => {
-  it("changes the measurement value", () => {
-    const { result } = renderHook(() => useIngredientStore(), {
-      wrapper: makeWrapper(doc),
-    });
+  it("changes the measurement value", async () => {
+    const { result } = await renderStore(doc);
     const butter = result.current.ingredients.find((i) => i.id === BUTTER_ID);
     if (butter === undefined) throw new Error("butter not found");
     const weightMeasurement = { value: { numerator: 1, denominator: 1 }, unit: "oz" as const };
@@ -155,10 +155,8 @@ describe("useIngredientStore — setMeasurementValue", () => {
 });
 
 describe("useIngredientStore — renameIngredient", () => {
-  it("updates the ingredient name", () => {
-    const { result } = renderHook(() => useIngredientStore(), {
-      wrapper: makeWrapper(doc),
-    });
+  it("updates the ingredient name", async () => {
+    const { result } = await renderStore(doc);
     const butter = result.current.ingredients.find((i) => i.id === BUTTER_ID);
     if (butter === undefined) throw new Error("butter not found");
     act(() => result.current.renameIngredient(butter.id, "Salted Butter"));
@@ -167,10 +165,8 @@ describe("useIngredientStore — renameIngredient", () => {
 });
 
 describe("useIngredientStore — setLabels", () => {
-  it("replaces all labels for an ingredient", () => {
-    const { result } = renderHook(() => useIngredientStore(), {
-      wrapper: makeWrapper(doc),
-    });
+  it("replaces all labels for an ingredient", async () => {
+    const { result } = await renderStore(doc);
     act(() =>
       result.current.createIngredient({
         name: "Test Ing Labels",
@@ -190,10 +186,8 @@ describe("useIngredientStore — setLabels", () => {
 });
 
 describe("useIngredientStore — setParent", () => {
-  it("sets and clears parent_id", () => {
-    const { result } = renderHook(() => useIngredientStore(), {
-      wrapper: makeWrapper(doc),
-    });
+  it("sets and clears parent_id", async () => {
+    const { result } = await renderStore(doc);
     const butter = result.current.ingredients.find((i) => i.id === BUTTER_ID);
     if (butter === undefined) throw new Error("butter not found");
     const dairyId = paddedId(IngredientId, "dairy");

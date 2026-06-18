@@ -52,6 +52,7 @@ The app is running at http://localhost:5173, and you can use the Playwright MCP 
 - MUST ALWAYS write unit tests for all changes.
 - MUST NEVER skip unit tests using early returns. Instead, ALWAYS provide a test fixture with values that meet the test pre-conditions when initializing the game state or throw something on unexpected state to satisfy the type checker.
 - MUST ALWAYS write component tests for all view changes.
+- MUST NEVER leave React "not wrapped in act(...)" warnings in tests. When rendering doc-backed hooks/components, flush mount-time async state updates inside `act(...)` (e.g. `await flushAsyncEffects()` from `src/testUtils.ts`), and wrap any mid-test external Yjs mutations in `act(() => ...)`. See [Flushing async state updates inside `act(...)`](#flushing-async-state-updates-inside-act) under Testing Architecture.
 - MUST NEVER use the `as` keyword to cast a type without validating every field in the type.
 - MUST NEVER use the `in` keyword to test for the existance of a property on a union type. Instead, use the proper type union discriminator field to narrow the type to the desired type or interface.
 - MUST NEVER use the `any` type. Instead, try your best to define a strict generic type. If you are adding type information to something that does not allow passing the type information along (such as deserialization or APIs that return untyped data), then use a specific function to validate and cast the object as the expected / provided type. Or, as a last resort, use the `unknown` type instead.
@@ -329,6 +330,33 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - **End-to-end tests:** Playwright - browser-dependent interaction testing and defect detection
 - **Typecheck:** `tsc --noEmit`
 - **Lint:** ESLint + Prettier
+
+### Flushing async state updates inside `act(...)`
+
+Doc-backed hooks/components (e.g. `useIngredientStore`, `useContainerStore`) schedule
+state updates from promise callbacks that resolve **after** a synchronous test body
+returns — the `whenSynced.then(() => setState(...))` re-read and the async CSV import
+chain. When those `setState` calls land outside `act(...)`, React logs:
+
+```
+An update to <Component> inside a test was not wrapped in act(...).
+```
+
+To prevent this, every test that renders a doc-backed hook/component must flush those
+pending updates inside `act(...)` before the test ends:
+
+- **Synchronous, assertion-only tests** (no `await userEvent` / `findBy*`): make the test
+  `async` and call `await flushAsyncEffects()` (from `src/testUtils.ts`) immediately after
+  rendering — or render through an async helper that awaits it (see the `renderStore`
+  helpers in the store tests).
+- **Tests that already `await` an interaction** (`userEvent`, `findBy*`) flush implicitly,
+  because those helpers run inside `act(...)`; no extra flush is needed.
+- **External Yjs mutations made mid-test** (e.g. `deleteRecipe(doc, id)` to simulate a
+  concurrent edit) fire store observers synchronously, so wrap the mutation itself in
+  `act(() => ...)`.
+
+`flushAsyncEffects()` awaits a `setTimeout(0)` macrotask inside `act(...)`, which fully
+settles multi-step promise chains (`await whenSynced` → `await fetch` → `await text`).
 
 ### Naming Conventions
 

@@ -1,11 +1,12 @@
 import { createRecipe, createRecipeFolder, deleteRecipe } from "@recipe-book/shared";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
+import { flushAsyncEffects } from "../../testUtils.ts";
 import { BulkRecipeEditorPage } from "../BulkRecipeEditorPage.tsx";
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
@@ -58,18 +59,21 @@ function setup() {
 }
 
 describe("BulkRecipeEditorPage — empty state", () => {
-  it("renders the Recipes heading", () => {
+  it("renders the Recipes heading", async () => {
     setup();
+    await flushAsyncEffects();
     expect(screen.getByRole("heading", { name: "Recipes" })).toBeInTheDocument();
   });
 
-  it("shows the + New recipe button", () => {
+  it("shows the + New recipe button", async () => {
     setup();
+    await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "New recipe" })).toBeInTheDocument();
   });
 
-  it("shows empty state when no recipes exist", () => {
+  it("shows empty state when no recipes exist", async () => {
     setup();
+    await flushAsyncEffects();
     expect(screen.getByText(/No recipes yet/i)).toBeInTheDocument();
   });
 
@@ -81,15 +85,17 @@ describe("BulkRecipeEditorPage — empty state", () => {
 });
 
 describe("BulkRecipeEditorPage — recipe rows", () => {
-  it("shows recipe title in the table", () => {
+  it("shows recipe title in the table", async () => {
     createRecipe(recipeBookDoc, { title: "Banana Bread" });
     setup();
+    await flushAsyncEffects();
     expect(screen.getByText("Banana Bread")).toBeInTheDocument();
   });
 
-  it("shows created and updated dates", () => {
+  it("shows created and updated dates", async () => {
     createRecipe(recipeBookDoc, { title: "Pasta" });
     setup();
+    await flushAsyncEffects();
     const today = new Date().toLocaleDateString();
     const dateCells = screen.getAllByText(today);
     expect(dateCells.length).toBeGreaterThanOrEqual(2);
@@ -103,9 +109,10 @@ describe("BulkRecipeEditorPage — recipe rows", () => {
     expect(mockNavigate).toHaveBeenCalledWith(`/recipes/${recipe.id}/v/${latestVersionId}`);
   });
 
-  it("shows table with recipe rows when recipes exist", () => {
+  it("shows table with recipe rows when recipes exist", async () => {
     createRecipe(recipeBookDoc, { title: "Pizza" });
     setup();
+    await flushAsyncEffects();
     expect(screen.getByRole("table", { name: "Recipe list" })).toBeInTheDocument();
   });
 });
@@ -148,9 +155,10 @@ describe("BulkRecipeEditorPage — expand/collapse", () => {
 });
 
 describe("BulkRecipeEditorPage — folder rows", () => {
-  it("shows folder in the table", () => {
+  it("shows folder in the table", async () => {
     createRecipeFolder(recipeBookDoc, "Desserts");
     setup();
+    await flushAsyncEffects();
     expect(screen.getByText("Desserts")).toBeInTheDocument();
   });
 
@@ -302,8 +310,9 @@ describe("BulkRecipeEditorPage — merge", () => {
     await userEvent.click(screen.getByRole("button", { name: "Merge selected recipes" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Merged recipe name" }), "A+B");
 
-    // Delete recipe A externally so merge() will throw "Recipe not found"
-    deleteRecipe(recipeBookDoc, a.id);
+    // Delete recipe A externally so merge() will throw "Recipe not found".
+    // Wrap in act() because the external mutation fires the store observer's setState.
+    act(() => deleteRecipe(recipeBookDoc, a.id));
 
     await userEvent.click(screen.getByRole("button", { name: "Confirm merge" }));
 
@@ -314,16 +323,18 @@ describe("BulkRecipeEditorPage — merge", () => {
 });
 
 describe("BulkRecipeEditorPage — virtual root folder", () => {
-  it("shows the virtual Recipes folder row", () => {
+  it("shows the virtual Recipes folder row", async () => {
     setup();
+    await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "Collapse Recipes folder" })).toBeInTheDocument();
     // "Recipes" appears in both the h1 heading and the virtual root folder cell
     expect(screen.getAllByText("Recipes").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("Recipes folder is expanded by default", () => {
+  it("Recipes folder is expanded by default", async () => {
     createRecipe(recipeBookDoc, { title: "Stew" });
     setup();
+    await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "Collapse Recipes folder" })).toBeInTheDocument();
     expect(screen.getByText("Stew")).toBeInTheDocument();
   });
@@ -344,16 +355,18 @@ describe("BulkRecipeEditorPage — virtual root folder", () => {
     expect(screen.getByText("Stew")).toBeInTheDocument();
   });
 
-  it("shows empty message inside table when no recipes exist", () => {
+  it("shows empty message inside table when no recipes exist", async () => {
     setup();
+    await flushAsyncEffects();
     expect(screen.getByText(/No recipes yet/i)).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Recipe list" })).toBeInTheDocument();
   });
 });
 
 describe("BulkRecipeEditorPage — New menu on root folder", () => {
-  it("root folder row has a New button", () => {
+  it("root folder row has a New button", async () => {
     setup();
+    await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "New item in Recipes" })).toBeInTheDocument();
   });
 
@@ -398,9 +411,10 @@ describe("BulkRecipeEditorPage — New menu on root folder", () => {
 });
 
 describe("BulkRecipeEditorPage — New menu on folder rows", () => {
-  it("folder rows have a New button", () => {
+  it("folder rows have a New button", async () => {
     createRecipeFolder(recipeBookDoc, "Mains");
     setup();
+    await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "New item in folder Mains" })).toBeInTheDocument();
   });
 
