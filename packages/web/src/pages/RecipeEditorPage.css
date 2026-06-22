@@ -17,28 +17,18 @@
 }
 
 .re-field-label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 0.85em;
+  display: block;
   color: var(--color-muted);
   margin-bottom: var(--spacing-sm);
 }
 
 .re-field-input {
   font-family: var(--font-body);
-  font-size: 1em;
   padding: var(--spacing-xs) var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-fg);
   width: 100%;
-  max-width: 60vw;
-}
-
-.re-field-input--title {
-  font-size: 1.1em;
-  font-family: var(--font-display);
 }
 
 .re-field-select {
@@ -471,23 +461,11 @@
 }
 
 .re-version-description-label {
-  font-size: 0.85em;
   color: var(--color-muted);
 }
 
-.re-validation-error {
-  font-size: 0.85em;
-  color: #c00;
-  margin-bottom: var(--spacing-xs);
-}
-
-.re-new-version-label {
-  display: flex;
-  padding: var(--spacing-xs);
-  gap: var(--spacing-sm);
-}
-
 .re-new-version-label > input {
+  /* Remove the width: 100% for a checkbox */
   width: unset;
   margin-right: var(--spacing-xs);
 }

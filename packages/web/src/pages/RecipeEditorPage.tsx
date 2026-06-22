@@ -1019,7 +1019,7 @@ interface EditorState {
   subtitle: string;
   source_url: string;
   parent_folder_id: RecipeFolderId | undefined;
-  description: string;
+  version_description: string;
   sections: Section[];
   create_new_version: boolean;
 }
@@ -1035,7 +1035,7 @@ function makeInitialState(
       subtitle: "",
       source_url: "",
       parent_folder_id: initialFolderId,
-      description: "",
+      version_description: "",
       sections: [],
       create_new_version: false,
     };
@@ -1049,7 +1049,7 @@ function makeInitialState(
     subtitle: recipe.subtitle ?? "",
     source_url: recipe.source_url ?? "",
     parent_folder_id: recipe.parent_folder_id,
-    description: v?.description ?? "",
+    version_description: "",
     sections: v?.sections ?? [],
     create_new_version: false,
   };
@@ -1096,7 +1096,11 @@ export function RecipeEditor({
 
   function handleToggleNewVersion(checked: boolean) {
     setForm((f) => ({ ...f, create_new_version: checked, ...(checked && { description: "" }) }));
-    if (checked) descriptionInputRef.current?.focus();
+    if (checked) {
+      setTimeout(() => {
+        descriptionInputRef.current?.focus();
+      }, 0);
+    }
   }
 
   function handleSave() {
@@ -1108,7 +1112,7 @@ export function RecipeEditor({
         ...(form.subtitle && { subtitle: form.subtitle }),
         ...(form.source_url && { source_url: form.source_url }),
         ...(form.parent_folder_id !== undefined && { parent_folder_id: form.parent_folder_id }),
-        description: form.description,
+        description: form.version_description,
       });
       onSave(created);
     } else {
@@ -1116,7 +1120,7 @@ export function RecipeEditor({
       const version: RecipeVersion = {
         id: (form.create_new_version && v?.id) || randomId(RecipeVersionId),
         recipe_id: recipe.id,
-        description: form.description,
+        description: form.version_description,
         ingredients: computedIngredients,
         sections: form.sections,
         created_at: (form.create_new_version && v?.created_at) || Date.now(),
@@ -1146,7 +1150,7 @@ export function RecipeEditor({
   );
   const titleError = form.title.trim() === "" ? "Title is required" : null;
   const descriptionError =
-    form.description.trim() === "" ? "Version description is required" : null;
+    form.version_description.trim() === "" ? "Version description is required" : null;
   const canSave = titleError === null && descriptionError === null && missingAmountCount === 0;
 
   return (
@@ -1160,7 +1164,10 @@ export function RecipeEditor({
         >
           ← Back
         </button>
-        <h1 className="re-editor-title">{recipe ? `Edit: ${recipe.title}` : "New Recipe"}</h1>
+        <h1 className="re-editor-title">
+          {recipe ? "Edit" : "New Recipe"}
+          {form.title ? `: ${form.title}` : ""}
+        </h1>
         {recipe && (
           <button type="button" className="re-copy-btn" onClick={() => setShowCopyDialog(true)}>
             Copy recipe
@@ -1178,10 +1185,10 @@ export function RecipeEditor({
             *
           </span>
           <input
+            id="recipe-title"
             className={`re-field-input re-field-input--title${titleError !== null ? " field-input--error" : ""}`}
             value={form.title}
             onChange={(e) => patch("title", e.target.value)}
-            placeholder="Recipe title"
             aria-label="Recipe title"
             aria-describedby={titleError !== null ? "re-title-error" : undefined}
             required
@@ -1199,7 +1206,6 @@ export function RecipeEditor({
             className="re-field-input"
             value={form.subtitle}
             onChange={(e) => patch("subtitle", e.target.value)}
-            placeholder="Subtitle"
             aria-label="Recipe subtitle"
           />
         </label>
@@ -1211,7 +1217,6 @@ export function RecipeEditor({
             type="url"
             value={form.source_url}
             onChange={(e) => patch("source_url", e.target.value)}
-            placeholder="https://..."
             aria-label="Source URL"
           />
         </label>
@@ -1290,29 +1295,29 @@ export function RecipeEditor({
               Create new version
             </label>
           )}
-          <div className="re-version-description">
+          {form.create_new_version && (
             <label className="re-version-description-label" htmlFor="re-version-description-input">
               Version description
               <span className="field-required" aria-hidden="true">
                 *
               </span>
+              <input
+                id="re-version-description-input"
+                ref={descriptionInputRef}
+                className={`re-new-version-input${descriptionError !== null ? " field-input--error" : ""}`}
+                value={form.version_description}
+                onChange={(e) => patch("version_description", e.target.value)}
+                aria-label="Version description"
+                aria-describedby={descriptionError !== null ? "re-description-error" : undefined}
+                required={form.create_new_version}
+              />
+              {descriptionError !== null && (
+                <span id="re-description-error" className="field-error" role="alert">
+                  {descriptionError}
+                </span>
+              )}
             </label>
-            <input
-              id="re-version-description-input"
-              ref={descriptionInputRef}
-              className={`re-new-version-input${descriptionError !== null ? " field-input--error" : ""}`}
-              value={form.description}
-              onChange={(e) => patch("description", e.target.value)}
-              placeholder='ex: "Untested" or "Final Version"'
-              aria-label="Version description"
-              aria-describedby={descriptionError !== null ? "re-description-error" : undefined}
-            />
-            {descriptionError !== null && (
-              <span id="re-description-error" className="field-error" role="alert">
-                {descriptionError}
-              </span>
-            )}
-          </div>
+          )}
         </div>
         {missingAmountCount > 0 && (
           <p className="re-validation-error" role="alert">
