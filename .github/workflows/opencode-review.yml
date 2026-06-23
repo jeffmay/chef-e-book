@@ -21,6 +21,8 @@ jobs:
       contents: read
       pull-requests: write
       issues: read
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -31,9 +33,13 @@ jobs:
       # Comment-triggered runs start on the default branch; switch to PR head
       # so opencode reads the PR's code.
       - if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: gh pr checkout "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY"
 
       - uses: Barmore-Genc/opencode-pr-reviewer@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
         with:
           model: opencode/deepseek-v4-flash-free
           pr-number: ${{ github.event.pull_request.number || github.event.issue.number }}
