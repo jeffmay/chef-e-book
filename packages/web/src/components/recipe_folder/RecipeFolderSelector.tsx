@@ -7,6 +7,7 @@ import {
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
 import { useMemo, useState } from "react";
+import "../../styles/treeSelect.css";
 import "./RecipeFolderSelector.css";
 
 function folderToNode(folder: RecipeFolder): TreeNode {
@@ -89,10 +90,10 @@ export function RecipeFolderSelector({
           selectionMode="single"
           filter
           placeholder={placeholder}
-          className="rfs-selector"
-          panelClassName="rfs-panel"
+          className="tree-select rfs-selector"
+          panelClassName="tree-select-panel"
           ariaLabel={ariaLabel}
-          appendTo="self"
+          appendTo={document.body}
         />
         <label
           className="rfs-add-toggle"

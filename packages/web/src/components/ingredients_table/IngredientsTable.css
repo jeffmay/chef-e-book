@@ -104,7 +104,7 @@
 
 /* Row hover */
 .it-wrapper .p-treetable .p-treetable-tbody > tr:hover > td {
-  background: #f8f8f8;
+  background: var(--background-subtle);
 }
 
 /* Selected rows */
@@ -279,7 +279,7 @@
   padding: var(--spacing-xs);
   border: var(--border-width) solid var(--color-border);
   border-bottom: none;
-  background: #f8f8f8;
+  background: var(--background-subtle);
   font-size: 0.9em;
 }
 

@@ -12,16 +12,10 @@
 }
 
 .rfs-selector {
-  font-family: var(--font-body);
   font-size: 0.9em;
   flex: 1;
   min-width: 12vw;
   max-width: 50vw;
-}
-
-.rfs-panel {
-  font-family: var(--font-body);
-  font-size: 0.9em;
 }
 
 .rfs-add-toggle {

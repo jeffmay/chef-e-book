@@ -78,7 +78,7 @@
 
 .msf-search:focus {
   outline: none;
-  background: #f8f8f8;
+  background: var(--background-subtle);
 }
 
 .msf-dropdown-body {

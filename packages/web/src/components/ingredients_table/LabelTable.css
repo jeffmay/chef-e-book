@@ -47,7 +47,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-xs) var(--spacing-sm);
-  background: #f8f8f8;
+  background: var(--background-subtle);
   border-bottom: var(--border-width) solid var(--color-border);
   font-size: 0.9em;
 }
@@ -86,7 +86,7 @@
 }
 
 .lt-filter-btn:hover {
-  background: #f8f8f8;
+  background: var(--background-subtle);
 }
 
 .lt-filter-btn--active {
