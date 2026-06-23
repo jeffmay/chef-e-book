@@ -1,3 +1,5 @@
+/* InstructionIngredientSelector — sizing only; shared theme lives in styles/treeSelect.css */
+
 .iis-key-interceptor {
   display: inline-flex;
   flex: 1;
@@ -5,14 +7,8 @@
 }
 
 .iis-selector {
-  font-family: var(--font-body);
   font-size: 0.85em;
   flex: 1;
   min-width: 14vw;
   max-width: 60vw;
-}
-
-.iis-panel {
-  font-family: var(--font-body);
-  font-size: 0.85em;
 }

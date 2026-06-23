@@ -2,6 +2,7 @@ import type { IngredientId } from "@recipe-book/shared";
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
 import { useMemo, type KeyboardEvent } from "react";
+import "../../styles/treeSelect.css";
 import {
   collectKeyToIngredientId,
   ingredientIdsToSelection,
@@ -56,8 +57,8 @@ export function InstructionIngredientSelector({
         filter
         placeholder="— Select ingredients —"
         emptyMessage="Add ingredients to a section or container first"
-        className="iis-selector"
-        panelClassName="iis-panel"
+        className="tree-select iis-selector"
+        panelClassName="tree-select-panel"
         ariaLabel={ariaLabel}
         appendTo={document.body}
       />

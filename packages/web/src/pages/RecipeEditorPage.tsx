@@ -260,7 +260,7 @@ interface WithIngredients {
 // ---------------------------------------------------------------------------
 
 interface IngredientItemRowProps
-  extends RecipeSectionItemRowProps<IngredientItem>, WithIngredients { }
+  extends RecipeSectionItemRowProps<IngredientItem>, WithIngredients {}
 
 function IngredientItemRow({
   item,
@@ -404,7 +404,7 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
 // ContainerItemRow
 // ---------------------------------------------------------------------------
 
-interface ContainerItemRowProps extends RecipeSectionItemRowProps<ContainerItem>, WithIngredients { }
+interface ContainerItemRowProps extends RecipeSectionItemRowProps<ContainerItem>, WithIngredients {}
 
 function ContainerItemRow({
   item,
@@ -1084,6 +1084,18 @@ export function RecipeEditor({
   const [showCopyDialog, setShowCopyDialog] = useState(false);
   const descriptionInputRef = useRef<HTMLInputElement>(null);
 
+  // The recipe book doc loads asynchronously from IndexedDB, so on a hard
+  // refresh `recipe` is null on first render and arrives a tick later. The
+  // form is seeded once from `useState`, so re-seed it whenever the recipe (or
+  // requested version) identity changes — otherwise the title and sections
+  // would stay blank after the recipe finally loads.
+  const editorKey = `${recipe?.id ?? ""}::${versionId ?? ""}`;
+  const [loadedKey, setLoadedKey] = useState(editorKey);
+  if (editorKey !== loadedKey) {
+    setLoadedKey(editorKey);
+    setForm(makeInitialState(recipe, versionId, initialFolderId));
+  }
+
   const flat = flattenFolders(folders);
   const instructionIngredientNodes = useMemo(
     () => buildInstructionIngredientTree(form.sections, ingredients),
@@ -1095,8 +1107,14 @@ export function RecipeEditor({
   }
 
   function handleToggleNewVersion(checked: boolean) {
-    setForm((f) => ({ ...f, create_new_version: checked, ...(checked && { description: "" }) }));
+    setForm((f) => ({
+      ...f,
+      create_new_version: checked,
+      ...(checked && { version_description: "" }),
+    }));
     if (checked) {
+      // The field mounts on this state change, so defer focus until after it
+      // is in the DOM.
       setTimeout(() => {
         descriptionInputRef.current?.focus();
       }, 0);
@@ -1149,8 +1167,14 @@ export function RecipeEditor({
     [form.sections],
   );
   const titleError = form.title.trim() === "" ? "Title is required" : null;
+  // A new recipe always creates its first version, so it requires a version
+  // description. An existing recipe only needs one when the user opts to save a
+  // new version (otherwise the edit updates the latest version in place).
+  const showVersionDescription = recipe === null || form.create_new_version;
   const descriptionError =
-    form.version_description.trim() === "" ? "Version description is required" : null;
+    showVersionDescription && form.version_description.trim() === ""
+      ? "Version description is required"
+      : null;
   const canSave = titleError === null && descriptionError === null && missingAmountCount === 0;
 
   return (
@@ -1186,7 +1210,7 @@ export function RecipeEditor({
           </span>
           <input
             id="recipe-title"
-            className={`re-field-input re-field-input--title${titleError !== null ? " field-input--error" : ""}`}
+            className={`re-field-input${titleError !== null ? " field-input--error" : ""}`}
             value={form.title}
             onChange={(e) => patch("title", e.target.value)}
             aria-label="Recipe title"
@@ -1221,7 +1245,11 @@ export function RecipeEditor({
           />
         </label>
 
-        <label className="re-field-label">
+        {/* A plain <div>, not a <label>: RecipeFolderSelector is a composite
+            widget (TreeSelect + a "New subfolder" checkbox). Wrapping it in a
+            <label> makes pointer clicks forward to the label's control, which
+            toggles the TreeSelect overlay open-then-closed so it never opens. */}
+        <div className="re-field-label">
           Folder
           <RecipeFolderSelector
             value={form.parent_folder_id}
@@ -1230,7 +1258,7 @@ export function RecipeEditor({
             onCreateFolder={(name, parentId) => createFolder(name, parentId)}
             ariaLabel="Parent folder"
           />
-        </label>
+        </div>
       </section>
 
       {/* Computed ingredients list */}
@@ -1295,7 +1323,7 @@ export function RecipeEditor({
               Create new version
             </label>
           )}
-          {form.create_new_version && (
+          {showVersionDescription && (
             <label className="re-version-description-label" htmlFor="re-version-description-input">
               Version description
               <span className="field-required" aria-hidden="true">
@@ -1309,7 +1337,7 @@ export function RecipeEditor({
                 onChange={(e) => patch("version_description", e.target.value)}
                 aria-label="Version description"
                 aria-describedby={descriptionError !== null ? "re-description-error" : undefined}
-                required={form.create_new_version}
+                required
               />
               {descriptionError !== null && (
                 <span id="re-description-error" className="field-error" role="alert">
@@ -1320,7 +1348,7 @@ export function RecipeEditor({
           )}
         </div>
         {missingAmountCount > 0 && (
-          <p className="re-validation-error" role="alert">
+          <p className="field-error" role="alert">
             {missingAmountCount} ingredient{missingAmountCount !== 1 ? "s are" : " is"} missing an
             amount. Set all amounts or remove the ingredient.
           </p>

@@ -1,0 +1,185 @@
+/* ============================================================
+   Shared PrimeReact TreeSelect theme — square, greyscale e-ink.
+   Apply with className="tree-select" + panelClassName="tree-select-panel"
+   on every TreeSelect (ingredient, folder, instruction-ingredient pickers).
+   Per-component classes set only width / font-size.
+   ============================================================ */
+
+/* ---- Control ---- */
+.tree-select {
+  font-family: var(--font-body);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border-radius: 0;
+}
+
+.tree-select .p-treeselect-label-container {
+  display: flex;
+  align-items: center;
+  padding: 2px var(--spacing-xs);
+}
+
+.tree-select .p-treeselect-label {
+  font-family: var(--font-body);
+  font-size: 1em;
+  color: var(--color-fg);
+  padding: 0;
+}
+
+.tree-select.p-treeselect:not(.p-disabled):hover {
+  border-color: var(--color-fg);
+}
+
+.tree-select.p-treeselect.p-focus {
+  outline: 2px solid var(--color-fg);
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
+.tree-select .p-treeselect-trigger {
+  color: var(--color-fg);
+  width: 1.8em;
+}
+
+/* Selected chips (multi-select / checkbox display="chip") */
+.tree-select .p-treeselect-token {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  padding: 0 var(--spacing-xs);
+  margin: 1px var(--spacing-xs) 1px 0;
+}
+
+/* ---- Panel ---- */
+.tree-select-panel {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: 0;
+  font-family: var(--font-body);
+  font-size: 0.9em;
+  background: var(--color-bg);
+}
+
+/* Panel header — compact, no rounded corners, no tinted background */
+.tree-select-panel .p-treeselect-header {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  border-radius: 0;
+  gap: var(--spacing-xs);
+}
+
+.tree-select-panel .p-treeselect-header .p-treeselect-filter-container {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.tree-select-panel .p-treeselect-header .p-treeselect-filter-container input {
+  font-family: var(--font-body);
+  font-size: 0.9em;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  padding: 3px var(--spacing-xs);
+  padding-right: 1.9em;
+  width: 100%;
+}
+
+/* All panel icons are SVGs sized 1rem by the theme — pin them to the
+   surrounding text size and stop flex containers from squishing them. */
+.tree-select-panel .p-icon {
+  width: 0.9em;
+  height: 0.9em;
+  flex-shrink: 0;
+}
+
+/* Search icon — vertically centred inside the input, off the right edge */
+.tree-select-panel .p-treeselect-filter-icon {
+  width: 0.95em;
+  height: 0.95em;
+  top: 50%;
+  right: var(--spacing-sm);
+  margin-top: -0.475em;
+  color: var(--color-muted);
+}
+
+/* Close button — override the circular 2rem theme default */
+.tree-select-panel .p-treeselect-header .p-treeselect-close {
+  width: 1.7em !important;
+  height: 1.7em !important;
+  border-radius: 0 !important;
+  border: var(--border-width) solid var(--color-border) !important;
+  background: var(--color-bg) !important;
+  color: var(--color-fg) !important;
+  flex-shrink: 0;
+}
+
+.tree-select-panel .p-treeselect-header .p-treeselect-close .p-treeselect-close_icon {
+  width: 0.9em;
+  height: 0.9em;
+}
+
+.tree-select-panel .p-treeselect-header .p-treeselect-close:hover {
+  background: var(--color-fg) !important;
+  color: var(--color-bg) !important;
+}
+
+/* Tree nodes */
+.tree-select-panel .p-tree .p-treenode-content {
+  padding: 2px var(--spacing-xs);
+  font-family: var(--font-body);
+  border-radius: 0;
+}
+
+.tree-select-panel .p-tree .p-treenode-content:hover {
+  background: var(--background-subtle);
+}
+
+.tree-select-panel .p-tree .p-treenode-content.p-highlight {
+  background: var(--color-fg) !important;
+  color: var(--color-bg) !important;
+}
+
+/* Child node indentation */
+.tree-select-panel .p-tree .p-treenode-children {
+  padding-left: 1.2em;
+}
+
+/* Toggler inside tree — larger, square, matches table style */
+.tree-select-panel .p-tree .p-tree-toggler {
+  width: 1.5em;
+  height: 1.5em;
+  border: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  margin-right: var(--spacing-sm);
+}
+
+.tree-select-panel .p-tree .p-tree-toggler .p-tree-toggler-icon {
+  width: 0.95em;
+  height: 0.95em;
+}
+
+.tree-select-panel .p-tree .p-tree-toggler:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+/* Leaf rows have no toggler — reserve the same width so labels line up */
+.tree-select-panel .p-tree .p-treenode_leaf > .p-treenode_content .p-tree-toggler {
+  visibility: hidden;
+}
+
+/* Checkbox boxes (checkbox-selection multi-select) — square greyscale */
+.tree-select-panel .p-tree .p-checkbox .p-checkbox-box {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-bg);
+}
+
+.tree-select-panel .p-tree .p-checkbox .p-checkbox-box.p-highlight {
+  background: var(--color-fg);
+  border-color: var(--color-fg);
+}

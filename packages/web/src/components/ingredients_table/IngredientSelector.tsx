@@ -2,6 +2,7 @@ import { IngredientId, loadId, type Ingredient, type KitchenwareLabel } from "@r
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
 import { useMemo, type KeyboardEvent } from "react";
+import "../../styles/treeSelect.css";
 import { buildIngredientTree, type IngredientRow } from "./buildIngredientTree.ts";
 import "./IngredientSelector.css";
 
@@ -60,8 +61,8 @@ export function IngredientSelector({
         selectionMode="single"
         filter
         placeholder={placeholder}
-        className="is-selector"
-        panelClassName="is-panel"
+        className="tree-select is-selector"
+        panelClassName="tree-select-panel"
         ariaLabel={ariaLabel}
         appendTo={document.body}
       />

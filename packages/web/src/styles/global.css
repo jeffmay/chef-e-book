@@ -12,6 +12,9 @@
 
   --background-highlight: var(--color-accent);
 
+  /* Subtle light-grey surface for hover / focus / header backgrounds */
+  --background-subtle: #f8f8f8;
+
   --background-danger: repeating-linear-gradient(
     -45deg,
     transparent,
