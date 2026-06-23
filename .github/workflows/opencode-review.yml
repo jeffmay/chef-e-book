@@ -23,10 +23,8 @@ jobs:
       issues: read
     steps:
       - uses: actions/checkout@v6
-      - name: Configure git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        with:
+          persist-credentials: false
       - uses: anomalyco/opencode/github@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -39,3 +37,4 @@ jobs:
             - Look for potential bugs
             - Suggest improvements
             - Reference past review comments if still unresolved or unaddressed by changes or comment in code or on the pull request
+            - DO NOT attempt to commit or push any code changes and ONLY push commit or pull request comments to github
