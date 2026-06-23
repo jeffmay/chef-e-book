@@ -24,17 +24,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          submodules: true
           persist-credentials: false
-      - uses: anomalyco/opencode/github@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      # Comment-triggered runs start on the default branch; switch to PR head
+      # so opencode reads the PR's code.
+      - if: github.event_name == 'issue_comment'
+        run: gh pr checkout "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY"
+
+      - uses: Barmore-Genc/opencode-pr-reviewer@v1
         with:
           model: opencode/deepseek-v4-flash-free
-          use_github_token: true
-          prompt: |
-            Review this pull request:
-            - Check for code quality issues
-            - Look for potential bugs
-            - Suggest improvements
-            - Reference past review comments if still unresolved or unaddressed by changes or comment in code or on the pull request
-            - DO NOT attempt to commit or push any code changes and ONLY push commit or pull request comments to github
+          pr-number: ${{ github.event.pull_request.number || github.event.issue.number }}
+          user-comment: ${{ github.event.comment.body }}
