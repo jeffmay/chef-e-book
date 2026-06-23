@@ -17,10 +17,11 @@ jobs:
       contains(github.event.comment.body, '/review')
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
+      issues: write
       pull-requests: write
-      issues: read
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v6
         with:
