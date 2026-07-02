@@ -154,7 +154,6 @@
 .bre-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9em;
 }
 
 .bre-th {
@@ -164,7 +163,6 @@
   background: var(--color-fg);
   color: var(--color-bg);
   font-family: var(--font-display);
-  font-size: 0.85em;
   white-space: nowrap;
 }
 

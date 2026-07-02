@@ -123,9 +123,6 @@ input[type="checkbox"] {
 .p-checkbox-box {
   width: 1em;
   height: 1em;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: 0;
-  background: var(--color-bg);
 }
 
 .p-checkbox .p-checkbox-box {
@@ -155,7 +152,7 @@ svg.p-checkbox-icon > path {
 
 /* ============================================================================
    Radio buttons (shared) — black circle, white background, black border.
-   Single source of truth for both native <input type="checkbox"> and the
+   Single source of truth for both native <input type="radio"> and the
    PrimeReact .p-radiobutton.
    ============================================================================
 */
@@ -170,7 +167,7 @@ svg.p-checkbox-icon > path {
    wrapper (not the box) */
 .p-radiobutton.p-highlight .p-radiobutton-box {
   background: var(--color-bg);
-  transition-duration: none;
+  transition: none;
 }
 
 .p-radiobutton .p-radiobutton-box {
