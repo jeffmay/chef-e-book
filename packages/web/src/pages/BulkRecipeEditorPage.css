@@ -2,6 +2,10 @@
    BulkRecipeEditorPage
    ============================================================ */
 
+:root {
+  --tree-spacing-factor: calc(var(--spacing-sm) + 1em);
+}
+
 .bre-page {
   padding: var(--spacing-md);
   max-width: 100%;
@@ -150,7 +154,6 @@
 .bre-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9em;
 }
 
 .bre-th {
@@ -160,7 +163,6 @@
   background: var(--color-fg);
   color: var(--color-bg);
   font-family: var(--font-display);
-  font-size: 0.85em;
   white-space: nowrap;
 }
 
@@ -206,23 +208,23 @@
 }
 
 .bre-td--name[data-depth="1"] {
-  padding-left: calc(var(--spacing-sm) + 2em);
+  padding-left: var(--tree-spacing-factor);
 }
 
 .bre-td--name[data-depth="2"] {
-  padding-left: calc(var(--spacing-sm) + 4em);
+  padding-left: calc(2 * var(--tree-spacing-factor));
 }
 
 .bre-td--name[data-depth="3"] {
-  padding-left: calc(var(--spacing-sm) + 6em);
+  padding-left: calc(3 * var(--tree-spacing-factor));
 }
 
 .bre-td--name[data-depth="4"] {
-  padding-left: calc(var(--spacing-sm) + 8em);
+  padding-left: calc(4 * var(--tree-spacing-factor));
 }
 
 .bre-td--name[data-depth="5"] {
-  padding-left: calc(var(--spacing-sm) + 10em);
+  padding-left: calc(5 * var(--tree-spacing-factor));
 }
 
 /* Flex layout lives in a <div> wrapper to avoid display:flex on <td> */
@@ -259,9 +261,12 @@
   background: color-mix(in srgb, var(--color-checked) 10%, var(--color-bg));
 }
 
+.bre-expand-spacer:has(+ .bre-version-desc) {
+  min-width: 0;
+}
+
 .bre-row--version .bre-td {
   background: color-mix(in srgb, var(--color-fg) 3%, var(--color-bg));
-  font-size: 0.85em;
   color: var(--color-muted);
 }
 
@@ -310,7 +315,6 @@
 
 .bre-edit-btn,
 .bre-new-menu-btn {
-  font-size: 0.8em;
   padding: 2px var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);

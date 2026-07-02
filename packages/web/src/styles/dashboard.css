@@ -1,0 +1,7 @@
+/* Dashboard styles */
+.dashbord-placeholder {
+  color: var(--color-muted);
+  font-style: italic;
+  text-align: center;
+  margin-top: var(--spacing-lg);
+}

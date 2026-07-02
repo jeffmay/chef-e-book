@@ -1,11 +1,15 @@
 /* E-ink / handwritten wireframe design system */
 :root {
-  --color-bg: #ffffff;
-  --color-fg: #1a1a1a;
-  --color-border: #333333;
-  --color-muted: #666666;
-  --color-accent: #222222;
-  --color-checked: #888888;
+  --color-bg: #fff;
+  --color-fg: #000;
+  --color-border: #333;
+  /* Text is always full black or white on e-ink — "muted" only changes
+     emphasis/role, never lightness, so it points at the foreground. */
+  --color-muted: #000;
+  /* Accent color determines the color of native and PrimeReact
+     checkbox / radio button backgrounds when selected. */
+  --color-accent: #111;
+  --color-checked: #888;
 
   --font-body: "Courier New", Courier, monospace;
   --font-display: Georgia, serif;
@@ -24,13 +28,17 @@
   );
 
   --border-width: 1px;
-  --radius: 0px;
+  --checkbox-radius: 0.2em;
   --spacing-xs: 0.25em;
   --spacing-sm: 0.5em;
   --spacing-md: 1em;
   --spacing-lg: 2em;
 
   --nav-height: 3em;
+
+  /* Blank space reserved at the bottom of every page for the PineNote
+     on-screen keyboard (468px) plus breathing room. */
+  --keyboard-clearance: 468px;
 }
 
 *,
@@ -78,6 +86,109 @@ select {
   padding: var(--spacing-xs) var(--spacing-sm);
   width: 100%;
 }
+
+/*
+ * Placeholder text needs to be dark enough to be visible on a dithered black &
+ * white display. Placeholder text should be avoided in favor of labels to avoid
+ * confusion between user-input and placeholder text on a black & white screen.
+ */
+::placeholder {
+  color: var(--color-muted);
+  opacity: 1;
+}
+
+/* ============================================================================
+   Checkboxes (shared) — square greyscale e-ink. Single source of truth for
+   both native <input type="checkbox"> and the PrimeReact .p-checkbox-box used
+   by TreeSelect / TreeTable checkbox selection.
+   ============================================================================
+*/
+
+/* Native checkboxes: reset the global input width/border/padding and
+   render the box and its checkmark in solid black. */
+input[type="checkbox"] {
+  width: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  accent-color: var(--color-fg);
+  cursor: pointer;
+}
+
+.p-checkbox {
+  height: unset;
+  width: unset;
+}
+
+.p-checkbox-box {
+  width: 1em;
+  height: 1em;
+}
+
+.p-checkbox .p-checkbox-box {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--checkbox-radius);
+  background: var(--color-bg);
+}
+
+svg.p-checkbox-icon {
+  height: 0.96em;
+  width: 0.96em;
+  fill: var(--color-bg);
+  stroke: var(--color-bg);
+  stroke-width: 2px;
+}
+
+svg.p-checkbox-icon > path {
+  color: var(--color-fg);
+}
+
+/* Checked state — PrimeReact flags .p-highlight on the .p-checkbox
+   wrapper (not the box) */
+.p-checkbox.p-highlight .p-checkbox-box {
+  background: var(--color-fg);
+  border-color: var(--color-fg);
+}
+
+/* ============================================================================
+   Radio buttons (shared) — black circle, white background, black border.
+   Single source of truth for both native <input type="radio"> and the
+   PrimeReact .p-radiobutton.
+   ============================================================================
+*/
+
+.p-radiobutton {
+  width: unset;
+  height: unset;
+  margin-right: var(--spacing-xs);
+}
+
+/* Checked state — PrimeReact flags .p-highlight on the .p-checkbox
+   wrapper (not the box) */
+.p-radiobutton.p-highlight .p-radiobutton-box {
+  background: var(--color-bg);
+  transition: none;
+}
+
+.p-radiobutton .p-radiobutton-box {
+  border-color: var(--color-border);
+}
+
+.p-radiobutton-box {
+  height: 1em;
+  width: 1em;
+}
+
+.p-radiobutton-icon {
+  height: 0.5em;
+  width: 0.5em;
+  background: var(--color-fg);
+}
+
+/* ============================================================================
+   Common page defaults
+   ============================================================================
+*/
 
 .app {
   display: flex;
@@ -135,11 +246,13 @@ select {
   max-width: 100vw;
 }
 
-.placeholder {
-  color: var(--color-muted);
-  font-style: italic;
-  text-align: center;
-  margin-top: var(--spacing-lg);
+/* Every page leaves blank space at the bottom for the on-screen keyboard.
+   `.app > main` covers all authenticated routes (the route's <main> renders
+   directly inside `.app` via <Outlet>); `main.select-user-page` covers the
+   pre-auth book picker rendered outside the app shell. */
+.app > main,
+main.select-user-page {
+  padding-bottom: calc(var(--keyboard-clearance) + var(--spacing-lg));
 }
 
 /* ============================================================

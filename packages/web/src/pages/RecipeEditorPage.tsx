@@ -271,6 +271,7 @@ function IngredientItemRow({
 }: IngredientItemRowProps) {
   const [isEditingIngredient, setIsEditingIngredient] = useState(false);
   const ingredient = getByIdOrThrow(Ingredient, allIngredients, item.ingredient_id);
+  const amount = item.customAmount ?? ingredient.default_measurement_value;
 
   function handleIngredientChange(id: IngredientId | undefined) {
     if (id) {
@@ -306,13 +307,16 @@ function IngredientItemRow({
           />
         </>
       ) : (
-        <span
-          className="re-item-label"
-          title="Double-click to change ingredient"
-          onDoubleClick={() => setIsEditingIngredient(true)}
-        >
-          {ingredient.name}
-        </span>
+        <>
+          <span
+            className="re-item-label"
+            title="Double-click to change ingredient"
+            onDoubleClick={() => setIsEditingIngredient(true)}
+          >
+            {ingredient.name}
+          </span>
+          <span className="re-item-amount">{formatAmount(amount.value, amount.unit)}</span>
+        </>
       )}
       <button
         type="button"
@@ -442,7 +446,6 @@ function ContainerItemRow({
           className="re-container-descriptor"
           value={item.descriptor}
           onChange={(e) => onChange({ ...item, descriptor: e.target.value })}
-          placeholder="Descriptor (e.g. large, wet ingredients)"
           aria-label="Container descriptor"
         />
         <label className="re-container-ordered">
@@ -547,7 +550,6 @@ function InstructionRow({
           className="re-instruction-text"
           value={item.instruction}
           onChange={(e) => onChange({ ...item, instruction: e.target.value })}
-          placeholder="Action (e.g. mix, bake, stir)"
           aria-label="Instruction text"
         />
         <select
@@ -638,7 +640,6 @@ function TextBlockRow({ item, onChange, onRemove }: TextBlockRowProps) {
         className="re-text-block-input"
         value={item.text}
         onChange={(e) => onChange({ ...item, text: e.target.value })}
-        placeholder="Enter text…"
         aria-label="Text block content"
         rows={3}
       />
@@ -675,6 +676,10 @@ function SectionEditor({
   onRemove,
 }: SectionEditorProps) {
   const [showingNewIngredient, setShowingNewIngredient] = useState(false);
+  // The header input is hidden until requested; a section that already has a
+  // header (e.g. an existing recipe) shows it straight away.
+  const [showHeaderInput, setShowHeaderInput] = useState(section.header !== undefined);
+  const headerInputRef = useRef<HTMLInputElement>(null);
   const Heading = headingForDepth(depth);
 
   function updateItem(index: number, updated: SectionItem) {
@@ -719,23 +724,39 @@ function SectionEditor({
       aria-label={`Section: ${section.header ?? "unnamed"}`}
     >
       <div className="re-section-header-row">
-        <Heading className="re-section-heading">
-          <input
-            className="re-section-header-input"
-            value={section.header ?? ""}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val) {
-                onChange({ ...section, header: val });
-              } else {
-                const { header: _, ...rest } = section;
-                onChange(rest as Section);
-              }
+        {showHeaderInput ? (
+          <Heading className="re-section-heading">
+            <input
+              ref={headerInputRef}
+              className="re-section-header-input"
+              value={section.header ?? ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val) {
+                  onChange({ ...section, header: val });
+                } else {
+                  const { header: _, ...rest } = section;
+                  onChange(rest as Section);
+                }
+              }}
+              aria-label="Section header"
+            />
+          </Heading>
+        ) : (
+          <button
+            type="button"
+            className="re-add-section-header-btn"
+            onClick={() => {
+              setShowHeaderInput(true);
+              // The input mounts on this state change, so defer focus until
+              // it is in the DOM.
+              setTimeout(() => headerInputRef.current?.focus(), 0);
             }}
-            placeholder="Section header (optional)"
-            aria-label="Section header"
-          />
-        </Heading>
+            aria-label="Add section header"
+          >
+            + Add Section Header
+          </button>
+        )}
         <button
           type="button"
           className="re-item-remove"
@@ -929,7 +950,7 @@ function VersionHistoryTable({ versions }: VersionHistoryTableProps) {
         <table className="re-version-table">
           <thead>
             <tr>
-              <th>Date</th>
+              <th className="re-version-date">Date</th>
               <th>Description</th>
             </tr>
           </thead>

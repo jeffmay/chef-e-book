@@ -168,7 +168,7 @@ export function LabelTable({
           {/* Bulk action bar */}
           {someSelected && (
             <div className="lt-bulk-bar" role="region" aria-label="Label bulk actions">
-              <button type="button" className="lt-bulk-clear" onClick={clearSelection}>
+              <button type="button" className="lt-bulk-btn lt-bulk-clear" onClick={clearSelection}>
                 Clear
               </button>
               <span className="lt-bulk-count">{selectedIds.size} selected</span>

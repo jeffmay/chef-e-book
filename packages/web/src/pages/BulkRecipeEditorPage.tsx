@@ -95,7 +95,6 @@ function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFold
               className="bre-new-folder-input"
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
-              placeholder="Folder name…"
               aria-label="New folder name"
               autoFocus
               onKeyDown={(e) => {
@@ -474,7 +473,6 @@ export function BulkRecipeEditorPage() {
                       setMergeName(e.target.value);
                       setMergeError(null);
                     }}
-                    placeholder="Merged recipe name…"
                     aria-label="Merged recipe name"
                     autoFocus
                     onKeyDown={(e) => {

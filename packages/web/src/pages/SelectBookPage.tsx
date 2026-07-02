@@ -28,7 +28,6 @@ export function SelectBookPage({ onSelect }: SelectBookPageProps) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. May Family Recipes"
           autoFocus
           autoComplete="name"
         />

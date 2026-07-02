@@ -18,7 +18,7 @@
 
 .re-field-label {
   display: block;
-  color: var(--color-muted);
+  color: var(--color-fg);
   margin-bottom: var(--spacing-sm);
 }
 
@@ -155,6 +155,12 @@
   width: 100%;
 }
 
+/* Reveals the section header input; sits left with the remove button at right. */
+.re-add-section-header-btn {
+  font-size: 0.85em;
+  margin-right: auto;
+}
+
 .re-section-contents {
   display: flex;
   flex-direction: column;
@@ -200,6 +206,12 @@
   font-weight: bold;
   cursor: default;
   user-select: none;
+}
+
+/* Per-row ingredient amount shown next to the ingredient name. */
+.re-item-amount {
+  font-family: var(--font-body);
+  font-size: 0.9em;
 }
 
 .re-item-remove {
@@ -379,6 +391,10 @@
 .re-version-table th {
   background: var(--color-fg);
   color: var(--color-bg);
+}
+
+th.re-version-date {
+  width: 7em;
 }
 
 /* ============================================================

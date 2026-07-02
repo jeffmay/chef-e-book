@@ -122,23 +122,6 @@
   border: 1px solid var(--color-border);
 }
 
-/* ---- Checkbox selection ---- */
-.p-checkbox-box {
-  width: 1.1em;
-  height: 1.1em;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: 0;
-  background: var(--color-bg);
-}
-
-.p-checkbox-box > svg {
-  stroke: var(--color-fg);
-}
-
-.p-checkbox-box > svg > path {
-  color: var(--color-fg);
-}
-
 .it-wrapper .p-treetable .p-checkbox .p-checkbox-box.p-highlight {
   background: var(--color-fg);
   border-color: var(--color-fg);

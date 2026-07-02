@@ -117,7 +117,6 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
           onChange={(e) => handleInputChange(e.target.value)}
           aria-label="Duration"
           aria-invalid={inputError}
-          placeholder="e.g. 5 min, 1h 30m"
         />
       </span>
 
