@@ -27,6 +27,11 @@
   padding: 0;
 }
 
+/* Empty-state ("— Choose … —") label stays full black, not the theme grey. */
+.tree-select .p-treeselect-label.p-placeholder {
+  color: var(--color-fg);
+}
+
 .tree-select.p-treeselect:not(.p-disabled):hover {
   border-color: var(--color-fg);
 }
@@ -172,14 +177,5 @@
   visibility: hidden;
 }
 
-/* Checkbox boxes (checkbox-selection multi-select) — square greyscale */
-.tree-select-panel .p-tree .p-checkbox .p-checkbox-box {
-  border: var(--border-width) solid var(--color-border);
-  border-radius: 0;
-  background: var(--color-bg);
-}
-
-.tree-select-panel .p-tree .p-checkbox .p-checkbox-box.p-highlight {
-  background: var(--color-fg);
-  border-color: var(--color-fg);
-}
+/* Checkbox boxes (checkbox-selection multi-select) are styled by the shared
+   greyscale checkbox rules in styles/global.css. */

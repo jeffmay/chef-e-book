@@ -2,18 +2,24 @@
 
 ## Project Description
 
-A local-first single-page web app for creating and managing recipes, with optional cloud sync. Built on Yjs for real-time collaborative state, with a greyscale e-ink compatible UI and aesthetic (2D wireframe, handwritten style), optimized for the 1404 x 1872 pixel screen of the [PineNote](https://pine64.org/devices/pinenote/) greyscale e-ink tablet, focused on touch/click interactions using a stylus over a physical keyboard.
+A local-first single-page web app for creating and managing recipes, with optional cloud sync. Built on Yjs for real-time collaborative state, with a greyscale e-ink compatible UI and aesthetic (2D wireframe, handwritten style), optimized for the 1404 x 1872 pixel screen of the [PineNote](https://pine64.org/devices/pinenote/) using greyscale e-ink tablet, focused on touch/click interactions using a stylus over a physical keyboard and supporting black & white with dithering mode for optimal performance.
 
 ## Code Conventions
 
 - Prettier for formatting
 - ESLint for linting
 - Functional components with hooks for React
-- Optimize for the 1404 x 1872 pixel greyscale e-ink screen of the [PineNote](https://pine64.org/devices/pinenote/)
+- Optimize for the 1404 x 1872 pixel e-ink screen of the PineNote in Black & White mode with dithering
+  - Never use animations
+  - Text should only be full black or white (not grey)
+  - Avoid placeholder text
+  - Backgrounds can use grey (rendered with dithered dots), but should favor solid black or white
+  - Always leave at least 468 pixels of blank space for the on-screen keyboard at the bottom of every page
 - 2-space indentation
-- TitleCase for components, classes, and enum type names
-- camelCase for function names (including hooks, event handlers, and utility functions)
-- snake_case for data: object/interface field names, Yjs map keys
+- Naming:
+  - TitleCase for components, classes, and enum type names
+  - camelCase for function names (including hooks, event handlers, and utility functions)
+  - snake_case for data: object/interface field names, Yjs map keys
 
 ## Developer Setup
 
@@ -237,8 +243,8 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Edit name and description
 - Required `title` and version `description` fields show a `*` indicator and the shared field-error styling when empty
 - Choose/create a parent folder with `RecipeFolderSelector` (`TreeSelect` + a "New subfolder" checkbox that requires a name; the editor creates the folder then selects it)
-- Add sections with an optional header
-- Add/edit ingredients (with measurement editor)
+- Add sections with an optional header (hidden until a `+ Add Section Header` button is clicked, which reveals and focuses the input)
+- Add/edit ingredients (with measurement editor); each ingredient row in a section shows its own measurement value next to the name (independent of the aggregate Ingredients list)
 - Add/edit containers (bowl, steamer, pot, foil) containing nested ingredients
 - Add/edit equipment instructions (bake 20 min, sear on high, mix 20 min, etc.); each instruction picks the ingredients it acts on via `InstructionIngredientSelector` — a multi-select `TreeSelect` of the recipe's own ingredients grouped by container (containers hold only ingredients; add ingredients to a section/container to make them available)
 - Add/edit text blocks
@@ -319,10 +325,13 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 
 ## Design System
 
-- **Aesthetic:** 2D wireframe / handwritten style, greyscale e-ink white background, optimized for 1404 x 1872 pixel screen
-- **Interactions:** Optimized for touch / click, but also supports keyboard accessibility
+- **Aesthetic:** 2D wireframe, monospace font for input values, handwritten font for rendered output, black & white e-ink with white background, optimized for 1404 x 1872 pixel screen
+- **Interactions:** Optimized for touch / click, but also supports 468px onboard keyboard at the bottom
 - **Layout:** Responsive — no horizontal scrolling; maximize horizontal space at all screen sizes
+- **Keyboard clearance:** Every page reserves blank space at the bottom for the on-screen keyboard via `global.css` — the `--keyboard-clearance: 468px` token plus `--spacing-lg`, applied to `.app > main` (all authenticated routes) and `main.select-user-page` (pre-auth book picker)
 - **Styling:** CSS-only (no JS layout), `vw` units for widths (except relative font sizes use `em`)
+- **Colors:** Text is only full black or white (no grey); `--color-muted` resolves to black. Placeholder text is avoided; any remaining placeholder/empty-state label renders full black (`::placeholder`, `.tree-select .p-treeselect-label.p-placeholder`)
+- **Checkboxes:** Single source of truth in `global.css` — native `input[type="checkbox"]` (square, `accent-color` black, width reset from the global `input` rule) and the PrimeReact `.p-checkbox-box` (white box, solid-black with white check when its `.p-checkbox` wrapper gains `.p-highlight`). Shared by TreeSelect/TreeTable checkbox selection.
 - **Fractions:** Always simplified; displayed as integer + proper fraction superscript/subscript
 - **Form validation:** Reusable classes in `global.css` — `.field-required` (the `*` label indicator), `.field-input--error` (heavy black outline, not a red border), and `.field-error` (italic text prefixed with a `⚠` glyph). Shared across all forms.
 

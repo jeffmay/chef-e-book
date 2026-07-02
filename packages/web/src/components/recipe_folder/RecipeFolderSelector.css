@@ -15,7 +15,7 @@
   font-size: 0.9em;
   flex: 1;
   min-width: 12vw;
-  max-width: 50vw;
+  max-width: 75vw;
 }
 
 .rfs-add-toggle {
@@ -24,6 +24,7 @@
   gap: var(--spacing-xs);
   font-family: var(--font-body);
   font-size: 0.85em;
+  min-width: 8em;
   cursor: pointer;
   white-space: nowrap;
 }

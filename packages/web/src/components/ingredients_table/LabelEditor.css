@@ -79,6 +79,10 @@
   color: var(--color-bg) !important;
 }
 
+.le__clear-indicator {
+  padding: 4px !important;
+}
+
 @media (max-width: 1000px) {
   .le__indicators {
     width: 1.2em;
@@ -93,8 +97,12 @@
     height: 1px;
     width: 1em !important;
   }
-}
 
-.le__clear-indicator {
-  padding: 4px !important;
+  .le__value-container {
+    flex-direction: column !important;
+  }
+
+  .it-label-edit-buttons {
+    flex-direction: column !important;
+  }
 }
