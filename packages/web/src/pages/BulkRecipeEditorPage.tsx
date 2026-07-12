@@ -5,17 +5,12 @@ import type {
   RecipeId,
   RecipeVersion,
 } from "@recipe-book/shared";
-import {
-  Fragment,
-  type FormEvent,
-  type KeyboardEvent,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, type FormEvent, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { ButtonMenu } from "../components/button_menu/ButtonMenu.tsx";
 import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.ts";
 import { latestVersion, useRecipeStore } from "../hooks/useRecipeStore.ts";
+import { useStartSession } from "../hooks/useStartSession.ts";
 import "./BulkRecipeEditorPage.css";
 
 // ---------------------------------------------------------------------------
@@ -42,14 +37,6 @@ interface VersionRow {
 }
 
 type TreeRow = FolderRow | RecipeRow | VersionRow;
-
-// ---------------------------------------------------------------------------
-// New-menu target — root or a specific folder
-// ---------------------------------------------------------------------------
-
-type NewMenuTarget =
-  | { readonly kind: "root" }
-  | { readonly kind: "folder"; readonly folderId: RecipeFolderId };
 
 // ---------------------------------------------------------------------------
 // CreatingFolderState — discriminated union replacing the null/undefined sentinel
@@ -128,61 +115,6 @@ function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFold
 }
 
 // ---------------------------------------------------------------------------
-// NewItemMenuDropdown — shared dropdown with keyboard navigation
-// ---------------------------------------------------------------------------
-
-interface NewItemMenuDropdownProps {
-  readonly onRecipe: () => void;
-  readonly onFolder: () => void;
-  readonly onClose: () => void;
-}
-
-function NewItemMenuDropdown({ onRecipe, onFolder, onClose }: NewItemMenuDropdownProps) {
-  function handleKeyDown(e: KeyboardEvent<HTMLDivElement>): void {
-    const items = Array.from(
-      e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'),
-    );
-    const idx = items.findIndex((item) => item === document.activeElement);
-
-    if (e.key === "Escape") {
-      e.stopPropagation();
-      const btn = e.currentTarget
-        .closest<HTMLElement>(".bre-new-menu-wrap")
-        ?.querySelector<HTMLButtonElement>(".bre-new-menu-btn");
-      onClose();
-      btn?.focus();
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      e.stopPropagation();
-      // When nothing is focused yet, start at the first item.
-      items[idx === -1 ? 0 : (idx + 1) % items.length]?.focus();
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      e.stopPropagation();
-      // When nothing is focused yet, start at the last item.
-      items[idx === -1 ? items.length - 1 : (idx - 1 + items.length) % items.length]?.focus();
-    }
-  }
-
-  return (
-    <div className="bre-new-menu-dropdown" role="menu" onKeyDown={handleKeyDown}>
-      <button
-        type="button"
-        role="menuitem"
-        className="bre-new-menu-item"
-        onClick={onRecipe}
-        autoFocus
-      >
-        Recipe
-      </button>
-      <button type="button" role="menuitem" className="bre-new-menu-item" onClick={onFolder}>
-        Folder
-      </button>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Tree building
 // ---------------------------------------------------------------------------
 
@@ -241,6 +173,7 @@ export function BulkRecipeEditorPage() {
   const navigate = useNavigate();
   const { recipes, removeAll, merge } = useRecipeStore();
   const { folders, createFolder, updateFolder } = useRecipeFolderStore();
+  const startSession = useStartSession();
 
   const [rootExpanded, setRootExpanded] = useState(true);
   const [expandedFolders, setExpandedFolders] = useState<ReadonlySet<RecipeFolderId>>(new Set());
@@ -250,9 +183,6 @@ export function BulkRecipeEditorPage() {
   const [mergeName, setMergeName] = useState("");
   const [mergeError, setMergeError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // Which folder's New ▾ menu is open. null = none.
-  const [newMenuTarget, setNewMenuTarget] = useState<NewMenuTarget | null>(null);
 
   // Inline folder-creation state.
   const [creatingFolder, setCreatingFolder] = useState<CreatingFolderState>(FOLDER_IDLE);
@@ -364,7 +294,6 @@ export function BulkRecipeEditorPage() {
   // ---------------------------------------------------------------------------
 
   function handleNewRecipe(parentFolderId: RecipeFolderId | undefined): void {
-    setNewMenuTarget(null);
     if (parentFolderId !== undefined) {
       navigate("/recipes/new", { state: { parentFolderId } });
     } else {
@@ -373,7 +302,6 @@ export function BulkRecipeEditorPage() {
   }
 
   function handleStartNewFolder(parentId: RecipeFolderId | undefined): void {
-    setNewMenuTarget(null);
     setCreatingFolder({ kind: "creating", parentId });
     setNewFolderName("");
   }
@@ -424,24 +352,15 @@ export function BulkRecipeEditorPage() {
 
   return (
     <main className="bre-page" aria-label="Recipes">
-      {/* Transparent overlay to close the New menu when clicking outside */}
-      {newMenuTarget !== null && (
-        <div
-          className="bre-new-menu-overlay"
-          onClick={() => setNewMenuTarget(null)}
-          aria-hidden="true"
-        />
-      )}
-
       <div className="bre-header">
         <h1 className="bre-title">Recipes</h1>
         <button
           type="button"
           className="bre-new-btn"
           onClick={() => navigate("/recipes/new")}
-          aria-label="New recipe"
+          aria-label="New Recipe"
         >
-          + New recipe
+          ➕ Recipe
         </button>
       </div>
 
@@ -616,28 +535,15 @@ export function BulkRecipeEditorPage() {
             <td className="bre-td bre-td--date">—</td>
             <td className="bre-td bre-td--date">—</td>
             <td className="bre-td bre-td--actions">
-              <div className="bre-new-menu-wrap">
-                <button
-                  type="button"
-                  className="bre-new-menu-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setNewMenuTarget((prev) => (prev?.kind === "root" ? null : { kind: "root" }));
-                  }}
-                  aria-label="New item in Recipes"
-                  aria-haspopup="true"
-                  aria-expanded={newMenuTarget?.kind === "root"}
-                >
-                  New ▾
-                </button>
-                {newMenuTarget?.kind === "root" && (
-                  <NewItemMenuDropdown
-                    onRecipe={() => handleNewRecipe(undefined)}
-                    onFolder={() => handleStartNewFolder(undefined)}
-                    onClose={() => setNewMenuTarget(null)}
-                  />
-                )}
-              </div>
+              <ButtonMenu
+                defaultButton={{
+                  label: "➕ Recipe",
+                  onSelect: () => handleNewRecipe(undefined),
+                  ariaLabel: "New recipe in Recipes",
+                }}
+                buttons={[{ label: "📂 Folder", onSelect: () => handleStartNewFolder(undefined) }]}
+                menuLabel="New item in Recipes"
+              />
             </td>
           </tr>
 
@@ -667,8 +573,6 @@ export function BulkRecipeEditorPage() {
                   const isExpanded = expandedFolders.has(folder.id);
                   const isCreatingHere =
                     creatingFolder.kind === "creating" && creatingFolder.parentId === folder.id;
-                  const isMenuOpen =
-                    newMenuTarget?.kind === "folder" && newMenuTarget.folderId === folder.id;
                   return (
                     <Fragment key={`folder-${folder.id}`}>
                       <tr className="bre-row bre-row--folder">
@@ -763,32 +667,20 @@ export function BulkRecipeEditorPage() {
                         <td className="bre-td bre-td--date">—</td>
                         <td className="bre-td bre-td--date">—</td>
                         <td className="bre-td bre-td--actions">
-                          <div className="bre-new-menu-wrap">
-                            <button
-                              type="button"
-                              className="bre-new-menu-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setNewMenuTarget((prev) =>
-                                  prev?.kind === "folder" && prev.folderId === folder.id
-                                    ? null
-                                    : { kind: "folder", folderId: folder.id },
-                                );
-                              }}
-                              aria-label={`New item in folder ${folder.name}`}
-                              aria-haspopup="true"
-                              aria-expanded={isMenuOpen}
-                            >
-                              New ▾
-                            </button>
-                            {isMenuOpen && (
-                              <NewItemMenuDropdown
-                                onRecipe={() => handleNewRecipe(folder.id)}
-                                onFolder={() => handleStartNewFolder(folder.id)}
-                                onClose={() => setNewMenuTarget(null)}
-                              />
-                            )}
-                          </div>
+                          <ButtonMenu
+                            defaultButton={{
+                              label: "➕ Recipe",
+                              onSelect: () => handleNewRecipe(folder.id),
+                              ariaLabel: `New recipe in folder ${folder.name}`,
+                            }}
+                            buttons={[
+                              {
+                                label: "📂 Folder",
+                                onSelect: () => handleStartNewFolder(folder.id),
+                              },
+                            ]}
+                            menuLabel={`New item in folder ${folder.name}`}
+                          />
                         </td>
                       </tr>
                       {isCreatingHere && (
@@ -809,6 +701,22 @@ export function BulkRecipeEditorPage() {
                   const isExpanded = expandedRecipes.has(recipe.id);
                   const isSelected = selectedRecipeIds.has(recipe.id);
                   const hasVersions = recipe.versions.length > 0;
+                  const startButton = {
+                    label: "▶ Start",
+                    onSelect: () => {
+                      const latest = latestVersion(recipe);
+                      if (latest !== undefined) startSession(recipe.id, latest.id);
+                    },
+                    ariaLabel: `Start session for ${recipe.title}`,
+                  } as const;
+                  const editButton = {
+                    label: "🖊️ Edit",
+                    onSelect: () => editRecipe(recipe),
+                    ariaLabel: `Edit recipe ${recipe.title}`,
+                  } as const;
+                  const [defaultButton, others] = hasVersions
+                    ? ([startButton, [editButton]] as const)
+                    : ([editButton, []] as const);
                   return (
                     <tr
                       key={`recipe-${recipe.id}`}
@@ -852,14 +760,11 @@ export function BulkRecipeEditorPage() {
                         {new Date(recipe.updated_at).toLocaleDateString()}
                       </td>
                       <td className="bre-td bre-td--actions">
-                        <button
-                          type="button"
-                          className="bre-edit-btn"
-                          onClick={() => editRecipe(recipe)}
-                          aria-label={`Edit recipe ${recipe.title}`}
-                        >
-                          Edit
-                        </button>
+                        <ButtonMenu
+                          defaultButton={defaultButton}
+                          buttons={others}
+                          menuLabel={`More actions for recipe ${recipe.title}`}
+                        />
                       </td>
                     </tr>
                   );
@@ -887,14 +792,20 @@ export function BulkRecipeEditorPage() {
                     </td>
                     <td className="bre-td bre-td--date">—</td>
                     <td className="bre-td bre-td--actions">
-                      <button
-                        type="button"
-                        className="bre-edit-btn"
-                        onClick={() => navigate(`/recipes/${recipeId}/v/${version.id}`)}
-                        aria-label={`Edit version ${version.description || "Untitled version"}`}
-                      >
-                        Edit
-                      </button>
+                      <ButtonMenu
+                        defaultButton={{
+                          label: "▶ Start",
+                          onSelect: () => startSession(recipeId, version.id),
+                          ariaLabel: `Start session for version ${version.description || "Untitled version"}`,
+                        }}
+                        buttons={[
+                          {
+                            label: "🖊️ Edit",
+                            onSelect: () => navigate(`/recipes/${recipeId}/v/${version.id}`),
+                          },
+                        ]}
+                        menuLabel={`More actions for version ${version.description || "Untitled version"}`}
+                      />
                     </td>
                   </tr>
                 );

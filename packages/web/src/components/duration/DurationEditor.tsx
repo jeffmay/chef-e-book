@@ -1,6 +1,6 @@
 import { useState } from "react";
 import parse from "parse-duration";
-import humanize, { type HumanizeDurationOptions } from "humanize-duration";
+import { humanizeSeconds } from "./humanizeSeconds.ts";
 import "./DurationEditor.css";
 
 // ---------------------------------------------------------------------------
@@ -11,16 +11,6 @@ type DurationUnit = "min" | "sec";
 
 const MIN_DELTAS = [-5, -1, 1, 5] as const;
 const SEC_DELTAS = [-15, -5, 5, 15] as const;
-
-const HUMANIZE_OPTS: HumanizeDurationOptions = {
-  units: ["h", "m", "s"],
-  largest: 2,
-  round: true,
-};
-
-function humanizeSeconds(seconds: number): string {
-  return humanize(seconds * 1000, HUMANIZE_OPTS);
-}
 
 // ---------------------------------------------------------------------------
 // Component

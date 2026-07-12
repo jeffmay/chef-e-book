@@ -3,11 +3,13 @@ import { IdCompanion } from "./ids.ts";
 import { Fraction, Measurement } from "./measurement.ts";
 import { EnumCompanion } from "./enums.ts";
 import { Companion } from "./companion.ts";
+import { RecipeId, RecipeVersionId } from "./recipe.ts";
 
 export const ItemState = Companion(
   "ItemState",
   type({
     checked: "boolean",
+    "skipped?": "boolean",
     "one_off_quantity?": Measurement.type,
     "notes?": "string",
   }),
@@ -24,8 +26,8 @@ export const Session = Companion(
   "Session",
   type({
     id: SessionId.type,
-    recipe_id: "string",
-    recipe_version_id: "string",
+    recipe_id: RecipeId.type,
+    recipe_version_id: RecipeVersionId.type,
     started_at: "number",
     "completed_at?": "number",
     status: SessionStatus.type,

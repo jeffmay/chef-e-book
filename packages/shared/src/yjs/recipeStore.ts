@@ -47,11 +47,13 @@ function validateIngredientItem(raw: unknown): IngredientItem | null {
   const r = raw as Record<string, unknown>;
   if (r["kind"] !== "ingredient") return null;
   if (typeof r["id"] !== "string" || typeof r["ingredient_id"] !== "string") return null;
+  // Older writes stored the amount under "amount"; the model field is customAmount.
+  const customAmount = r["customAmount"] ?? r["amount"];
   return {
     kind: "ingredient",
     id: loadId(SectionItemId, r["id"]),
     ingredient_id: loadId(IngredientId, r["ingredient_id"]),
-    ...(r["amount"] !== undefined && { amount: r["amount"] as Measurement }),
+    ...(customAmount !== undefined && { customAmount: customAmount as Measurement }),
     ...(Array.isArray(r["notes"]) && { notes: r["notes"] as string[] }),
   };
 }
@@ -186,6 +188,12 @@ function validateRecipeVersion(raw: unknown): RecipeVersion | null {
     description: r["description"],
     ingredients,
     sections,
+    ...(typeof r["estimated_time_seconds"] === "number" && {
+      estimated_time_seconds: r["estimated_time_seconds"],
+    }),
+    ...(typeof r["seconds_per_ingredient"] === "number" && {
+      seconds_per_ingredient: r["seconds_per_ingredient"],
+    }),
     created_at: r["created_at"],
     // created_by: r["created_by"],
   };

@@ -3,11 +3,14 @@ import {
   ContainerId,
   createRecipe,
   createRecipeFolder,
+  getRecipe,
+  getSessions,
   IngredientId,
   loadId,
   fixedId,
   randomId,
   RecipeFolderId,
+  saveRecipe,
   SectionItemId,
 } from "@recipe-book/shared";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -32,6 +35,15 @@ const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------butter,ingredient,Butter,volume,fat+solid
 ------flour,ingredient,Flour,volume,dry
 `;
+
+const mockNavigate = vi.fn();
+
+// The editor's Start button uses useStartSession → useNavigate, which needs a
+// Router; mock it so the editor renders without one.
+vi.mock("react-router", async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...(actual as object), useNavigate: () => mockNavigate };
+});
 
 // Mock IngredientSelector so PrimeReact's TreeSelect doesn't run in jsdom.
 vi.mock("../../components/ingredients_table/IngredientSelector.tsx", () => ({
@@ -165,6 +177,7 @@ beforeEach(() => {
   kitchenwareDoc = new Y.Doc();
   recipeBookDoc = new Y.Doc();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }));
+  mockNavigate.mockClear();
 });
 
 afterEach(() => {
@@ -869,5 +882,80 @@ describe("RecipeEditor — version description validation (existing recipe)", ()
       await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
       expect(screen.queryByRole("dialog", { name: "Copy recipe" })).not.toBeInTheDocument();
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Start session
+// ---------------------------------------------------------------------------
+
+describe("RecipeEditor — start session", () => {
+  it("does not show a Start button for a new recipe", async () => {
+    setupNewRecipeEditor();
+    await flushAsyncEffects();
+    expect(screen.queryByRole("button", { name: /Start session/ })).not.toBeInTheDocument();
+  });
+
+  it("header Start creates a session for the latest version and navigates to it", async () => {
+    const { recipe } = setupExistingRecipeEditor("Pancakes");
+    await flushAsyncEffects();
+
+    await userEvent.click(screen.getByRole("button", { name: "Start session for Pancakes" }));
+
+    const sessions = getSessions(recipeBookDoc);
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]?.recipe_id).toBe(recipe.id);
+    expect(sessions[0]?.recipe_version_id).toBe(recipe.versions.at(-1)?.id);
+    expect(mockNavigate).toHaveBeenCalledWith(`/sessions/${sessions[0]?.id}`);
+  });
+
+  it("version history rows default to Edit and offer Start in the chevron menu", async () => {
+    const { recipe } = setupExistingRecipeEditor("Pancakes");
+    await flushAsyncEffects();
+    const versionId = recipe.versions.at(-1)?.id;
+
+    // The default button edits that version.
+    await userEvent.click(screen.getByRole("button", { name: /Edit version/, hidden: true }));
+    expect(mockNavigate).toHaveBeenCalledWith(`/recipes/${recipe.id}/v/${versionId}`);
+
+    // The chevron menu offers Start, which creates a session for that version.
+    await userEvent.click(
+      screen.getByRole("button", { name: /More actions for version/, hidden: true }),
+    );
+    await userEvent.click(await screen.findByRole("menuitem", { name: "▶ Start" }));
+
+    const sessions = getSessions(recipeBookDoc);
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]?.recipe_version_id).toBe(versionId);
+    expect(mockNavigate).toHaveBeenCalledWith(`/sessions/${sessions[0]?.id}`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Version time fields
+// ---------------------------------------------------------------------------
+
+describe("RecipeEditor — version time fields", () => {
+  it("preserves estimated time fields when saving in place", async () => {
+    const recipe = createRecipe(recipeBookDoc, { title: "Pancakes" });
+    const base = recipe.versions[0];
+    if (base === undefined) throw new Error("expected an initial version");
+    const seeded = saveRecipe(recipeBookDoc, recipe.id, {
+      title: recipe.title,
+      version: { ...base, estimated_time_seconds: 900, seconds_per_ingredient: 60 },
+      create_new_version: false,
+    });
+
+    const onSave = vi.fn();
+    render(<RecipeEditor recipe={seeded} onSave={onSave} onCancel={vi.fn()} />, {
+      wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc),
+    });
+    await flushAsyncEffects();
+    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    const latest = getRecipe(recipeBookDoc, recipe.id)?.versions.at(-1);
+    expect(latest?.estimated_time_seconds).toBe(900);
+    expect(latest?.seconds_per_ingredient).toBe(60);
+    expect(onSave).toHaveBeenCalled();
   });
 });

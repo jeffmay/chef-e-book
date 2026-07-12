@@ -115,6 +115,11 @@ input[type="checkbox"] {
   cursor: pointer;
 }
 
+.p-component {
+  font-family: var(--font-body);
+  font-size: inherit;
+}
+
 .p-checkbox {
   height: unset;
   width: unset;

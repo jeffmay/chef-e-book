@@ -110,6 +110,10 @@ export const RecipeVersion = Companion(
     description: "string > 0",
     ingredients: RecipeIngredient.type.array(),
     sections: Section.type.array(),
+    // Overrides the computed estimate (instruction durations + per-ingredient time).
+    "estimated_time_seconds?": "number >= 0",
+    // Per-ingredient prep time; falls back to the RecipeBook setting, then the build default.
+    "seconds_per_ingredient?": "number >= 0",
     created_at: "number.epoch",
     // created_by: "string",
   }),

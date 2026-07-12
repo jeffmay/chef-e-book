@@ -1,0 +1,30 @@
+/* Skipped item decoration (session summary): grey/white diagonal stripes with
+   a floating centered "skipped" tag. Restore puts the item back into the
+   version; Dismiss (✕) removes the row from view. */
+
+.re-item--skipped {
+  position: relative;
+  background: var(--background-danger);
+}
+
+.re-item-skipped-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-fg);
+  color: var(--color-bg);
+  padding: 0.2vw 1vw;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.re-item-restore,
+.re-item-dismiss {
+  white-space: nowrap;
+}
+
+.re-item-restore {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
