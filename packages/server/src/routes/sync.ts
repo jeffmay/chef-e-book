@@ -1,21 +1,26 @@
+import { Companion } from "@recipe-book/shared";
+import { isInvalid, validate } from "@recipe-book/shared/src/yjs/validation.ts";
 import { type } from "arktype";
 import { Router, type Request, type Response } from "express";
 import * as Y from "yjs";
 import type { DocumentStore } from "../storage/types.ts";
 
-const SyncRequestBody = type({
-  book_id: "string > 0",
-  "update?": "string.base64",
-});
+const SyncRequestBody = Companion(
+  "SyncRequestBody",
+  type({
+    book_id: "string > 0",
+    "update?": "string.base64",
+  }),
+);
 
 export function createSyncRouter(store: DocumentStore): Router {
   const router = Router();
 
   // POST /sync — body: { book_id: string, update?: string }
   router.post("/", async (req: Request, res: Response) => {
-    const body = SyncRequestBody(req.body);
-    if (body instanceof type.errors) {
-      res.status(400).json({ error: body.summary });
+    const body = validate(SyncRequestBody, req.body);
+    if (isInvalid(body)) {
+      res.status(400).json({ error: body.errors.summary });
       return;
     }
     const bookId = body.book_id;

@@ -26,12 +26,15 @@ export type KitchenwareKind = typeof KitchenwareKind.type.infer;
 export const KitchenwareLabelId = IdCompanion("KitchenwareLabelId", 7);
 export type KitchenwareLabelId = typeof KitchenwareLabelId.type.infer;
 
-export const KitchenwareLabel = type({
-  id: KitchenwareLabelId.type,
-  name: "string",
-  kinds: setOf(KitchenwareKind.type),
-});
-export type KitchenwareLabel = typeof KitchenwareLabel.infer;
+export const KitchenwareLabel = Companion(
+  "KitchenwareLabel",
+  type({
+    id: KitchenwareLabelId.type,
+    name: "string",
+    kinds: setOf(KitchenwareKind.type),
+  }),
+);
+export type KitchenwareLabel = typeof KitchenwareLabel.type.infer;
 
 export const IngredientId = IdCompanion("IngredientId", KitchenwareIdLength);
 export type IngredientId = typeof IngredientId.type.infer;

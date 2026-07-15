@@ -9,6 +9,7 @@ A local-first single-page web app for creating and managing recipes, with option
 - Prettier for formatting
 - ESLint for linting
 - Functional components with hooks for React
+- Companion objects to define named and branded `arktype` schemas
 - Optimize for the 1404 x 1872 pixel e-ink screen of the PineNote in Black & White mode with dithering
   - Never use animations
   - Text should only be full black or white (not grey)
@@ -60,6 +61,8 @@ The app is running at http://localhost:5173, and you can use the Playwright MCP 
 - MUST ALWAYS write component tests for all view changes.
 - MUST NEVER leave React "not wrapped in act(...)" warnings in tests. When rendering doc-backed hooks/components, flush mount-time async state updates inside `act(...)` (e.g. `await flushAsyncEffects()` from `src/testUtils.ts`), and wrap any mid-test external Yjs mutations in `act(() => ...)`. See [Flushing async state updates inside `act(...)`](#flushing-async-state-updates-inside-act) under Testing Architecture.
 - MUST NEVER use the `as` keyword to cast a type without validating every field in the type.
+- MUST ALWAYS use `Companion` (or subclass) constants with the same name as the `type` and an `arktype` schema that is used to derive the type definition (using `typeof X.type.infer`).
+- MUST ALWAYS use `arktype` for runtime validation over hand-rolled validation functions.
 - MUST NEVER use the `in` keyword to test for the existance of a property on a union type. Instead, use the proper type union discriminator field to narrow the type to the desired type or interface.
 - MUST NEVER use the `any` type. Instead, try your best to define a strict generic type. If you are adding type information to something that does not allow passing the type information along (such as deserialization or APIs that return untyped data), then use a specific function to validate and cast the object as the expected / provided type. Or, as a last resort, use the `unknown` type instead.
 - MUST ALWAYS use double quotes ("") for constant strings, unless the string itself contains double quotes, in which case, you should use single quotes ('"'), unless the string contains both double and single quotes, in which case use backticks (`"''"`).

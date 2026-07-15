@@ -1,7 +1,6 @@
 import { type } from "arktype";
 import type { ReadonlyDeep } from "type-fest";
 import type * as Y from "yjs";
-import { isTypeError } from "../assertions/index.ts";
 import { Companion } from "../types/companion.ts";
 import { randomId } from "../types/ids.ts";
 import {
@@ -10,6 +9,8 @@ import {
   type KitchenwareLabel,
 } from "../types/kitchenware.ts";
 import { setOf } from "../types/sets.ts";
+import type { ValidationError } from "./validation.ts";
+import { isInvalid, isValid, validate } from "./validation.ts";
 
 const LABELS_MAP_KEY = "labels";
 
@@ -25,15 +26,11 @@ export function getLabelsYmap(doc: Y.Doc): Y.Map<unknown> {
   return doc.getMap(LABELS_MAP_KEY);
 }
 
-function validateLabel(id: string, raw: unknown): KitchenwareLabel | type.errors {
-  const result = StoredLabel.type(raw);
-  if (result instanceof type.errors) {
-    return result;
-  }
-  const labelId = KitchenwareLabelId.type(id);
-  if (labelId instanceof type.errors) {
-    return labelId;
-  }
+function validateLabel(id: string, raw: unknown): KitchenwareLabel | ValidationError {
+  const result = validate(StoredLabel, raw);
+  if (isInvalid(result)) return result;
+  const labelId = validate(KitchenwareLabelId, id);
+  if (isInvalid(labelId)) return labelId;
   return { id: labelId, name: result.name, kinds: result.kinds };
 }
 
@@ -49,7 +46,7 @@ export function getLabels(doc: Y.Doc): KitchenwareLabel[] {
   const results: KitchenwareLabel[] = [];
   map.forEach((value, id) => {
     const label = validateLabel(id, value);
-    if (!isTypeError(label)) results.push(label);
+    if (isValid(label)) results.push(label);
   });
   return results.sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -69,7 +66,7 @@ export function findLabelByName(doc: Y.Doc, name: string): KitchenwareLabel | nu
   let found: KitchenwareLabel | null = null;
   for (const [id, value] of map) {
     const label = validateLabel(id, value);
-    if (!isTypeError(label) && label.name === name) {
+    if (isValid(label) && label.name === name) {
       found = label;
       break;
     }
@@ -99,6 +96,6 @@ export function deleteLabels(doc: Y.Doc, ids: readonly KitchenwareLabelId[]): vo
 export function renameLabel(doc: Y.Doc, id: KitchenwareLabelId, name: string): void {
   const map = getLabelsYmap(doc);
   const label = validateLabel(id, map.get(id));
-  if (isTypeError(label)) return;
+  if (isInvalid(label)) return;
   map.set(id, toStored({ ...label, name }));
 }

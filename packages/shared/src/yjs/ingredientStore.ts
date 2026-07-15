@@ -1,13 +1,16 @@
 import { type } from "arktype";
 import type * as Y from "yjs";
-import { isTypeError } from "../assertions/index.ts";
 import type { KitchenwareTemplate } from "../fixtures/kitchenware.ts";
+import { Companion } from "../types/companion.ts";
 import { loadId } from "../types/ids.ts";
 import type { Ingredient, KitchenwareKind } from "../types/kitchenware.ts";
 import { IngredientId, KitchenwareLabelId } from "../types/kitchenware.ts";
-import { Measurement, MeasurementType } from "../types/measurement.ts";
+import type { MeasurementType } from "../types/measurement.ts";
+import { Measurement } from "../types/measurement.ts";
 import { setOf } from "../types/sets.ts";
 import { findOrCreateLabel, getLabelsYmap } from "./labelStore.ts";
+import type { ValidationError } from "./validation.ts";
+import { isInvalid, isValid, validateByIdOrLog } from "./validation.ts";
 
 const MAP_KEY = "ingredients";
 
@@ -23,12 +26,15 @@ export function getIngredientYmap(doc: Y.Doc): Y.Map<unknown> {
   return doc.getMap(MAP_KEY);
 }
 
-const StoredIngredient = type({
-  name: "string",
-  default_measurement_value: Measurement.type,
-  labels: setOf<KitchenwareLabelId>(KitchenwareLabelId.type),
-  "parent_id?": IngredientId.type,
-});
+const StoredIngredient = Companion(
+  "StoredIngredient",
+  type({
+    name: "string",
+    default_measurement_value: Measurement.type,
+    labels: setOf<KitchenwareLabelId>(KitchenwareLabelId.type),
+    "parent_id?": IngredientId.type,
+  }),
+);
 
 function toStored(i: Ingredient) {
   return {
@@ -45,26 +51,9 @@ function toStored(i: Ingredient) {
   };
 }
 
-// TODO: Log invalid ingredients instead of silently skipping them
-function validateStored(id: IngredientId, raw: unknown): Ingredient | null {
-  // Migrate old format: default_measurement_type → default_measurement_value
-  if (typeof raw === "object" && raw !== null) {
-    const r = raw as Record<string, unknown>;
-    if (
-      r["default_measurement_type"] !== undefined &&
-      r["default_measurement_value"] === undefined
-    ) {
-      const oldType = r["default_measurement_type"] as string;
-      const validType = MeasurementType.type(oldType);
-      r["default_measurement_value"] = isTypeError(validType)
-        ? DEFAULT_MEASUREMENT_BY_TYPE.volume
-        : DEFAULT_MEASUREMENT_BY_TYPE[validType];
-      delete r["default_measurement_type"];
-    }
-  }
-
-  const result = StoredIngredient(raw);
-  if (isTypeError(result)) return null;
+function validateStoredOrLog(id: IngredientId, raw: unknown): Ingredient | ValidationError {
+  const result = validateByIdOrLog(StoredIngredient, id, raw, { dataFrom: "localstorage" });
+  if (isInvalid(result)) return result;
   return {
     kind: "ingredient",
     id,
@@ -85,8 +74,8 @@ export function getIngredients(doc: Y.Doc): Ingredient[] {
   const map = getIngredientYmap(doc);
   const results: Ingredient[] = [];
   map.forEach((value, id) => {
-    const ingredient = validateStored(loadId(IngredientId, id), value);
-    if (ingredient != null) results.push(ingredient);
+    const ingredient = validateStoredOrLog(loadId(IngredientId, id), value);
+    if (isValid(ingredient)) results.push(ingredient);
   });
   return results.sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -144,8 +133,8 @@ export function addLabelsToIngredients(
   const map = getIngredientYmap(doc);
   doc.transact(() => {
     for (const id of ids) {
-      const ingredient = validateStored(id, map.get(id));
-      if (ingredient === null) continue;
+      const ingredient = validateStoredOrLog(id, map.get(id));
+      if (isInvalid(ingredient)) continue;
       const newLabels = new Set([...ingredient.labels, ...labelIds]);
       map.set(id, toStored({ ...ingredient, labels: newLabels }));
     }
@@ -161,8 +150,8 @@ export function removeLabelsFromIngredients(
   const map = getIngredientYmap(doc);
   doc.transact(() => {
     for (const id of ids) {
-      const ingredient = validateStored(id, map.get(id));
-      if (ingredient === null) continue;
+      const ingredient = validateStoredOrLog(id, map.get(id));
+      if (isInvalid(ingredient)) continue;
       const newLabels = new Set([...ingredient.labels].filter((l) => !removeSet.has(l)));
       if (newLabels.size === ingredient.labels.size) continue;
       map.set(id, toStored({ ...ingredient, labels: newLabels }));
@@ -174,8 +163,8 @@ export function removeLabelFromAllIngredients(doc: Y.Doc, labelId: KitchenwareLa
   const map = getIngredientYmap(doc);
   doc.transact(() => {
     map.forEach((value, id) => {
-      const ingredient = validateStored(loadId(IngredientId, id), value);
-      if (ingredient === null) return;
+      const ingredient = validateStoredOrLog(loadId(IngredientId, id), value);
+      if (isInvalid(ingredient)) return;
       if (!ingredient.labels.has(labelId)) return;
       const newLabels = new Set(ingredient.labels);
       newLabels.delete(labelId);
@@ -193,8 +182,8 @@ export function replaceLabelInAllIngredients(
   const map = getIngredientYmap(doc);
   doc.transact(() => {
     map.forEach((value, id) => {
-      const ingredient = validateStored(loadId(IngredientId, id), value);
-      if (ingredient === null) return;
+      const ingredient = validateStoredOrLog(loadId(IngredientId, id), value);
+      if (isInvalid(ingredient)) return;
       const hasAnyOld = [...ingredient.labels].some((l) => oldSet.has(l));
       if (!hasAnyOld) return;
       const newLabels = new Set([...ingredient.labels].filter((l) => !oldSet.has(l)));
@@ -212,8 +201,8 @@ export function setMeasurementValueForIngredients(
   const map = getIngredientYmap(doc);
   doc.transact(() => {
     for (const id of ids) {
-      const ingredient = validateStored(id, map.get(id));
-      if (ingredient === null) continue;
+      const ingredient = validateStoredOrLog(id, map.get(id));
+      if (isInvalid(ingredient)) continue;
       map.set(id, toStored({ ...ingredient, default_measurement_value: value }));
     }
   });
@@ -227,8 +216,8 @@ export function setParentForIngredients(
   const map = getIngredientYmap(doc);
   doc.transact(() => {
     for (const id of ids) {
-      const ingredient = validateStored(id, map.get(id));
-      if (ingredient === null) continue;
+      const ingredient = validateStoredOrLog(id, map.get(id));
+      if (isInvalid(ingredient)) continue;
       const updated: Ingredient = {
         kind: "ingredient",
         id: ingredient.id,
@@ -244,8 +233,8 @@ export function setParentForIngredients(
 
 export function renameIngredient(doc: Y.Doc, id: IngredientId, name: string): void {
   const map = getIngredientYmap(doc);
-  const ingredient = validateStored(id, map.get(id));
-  if (ingredient === null) return;
+  const ingredient = validateStoredOrLog(id, map.get(id));
+  if (isInvalid(ingredient)) return;
   map.set(id, toStored({ ...ingredient, name }));
 }
 
@@ -255,7 +244,7 @@ export function setLabelsForIngredient(
   labelIds: readonly KitchenwareLabelId[],
 ): void {
   const map = getIngredientYmap(doc);
-  const ingredient = validateStored(id, map.get(id));
-  if (ingredient === null) return;
+  const ingredient = validateStoredOrLog(id, map.get(id));
+  if (isInvalid(ingredient)) return;
   map.set(id, toStored({ ...ingredient, labels: new Set(labelIds) }));
 }

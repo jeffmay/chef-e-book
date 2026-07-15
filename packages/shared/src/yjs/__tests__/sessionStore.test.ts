@@ -1,23 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import { applyUpdate, encodeStateAsUpdate } from "yjs";
+import { assertNotValidationError } from "../../assertions/index.ts";
 import { fixedId } from "../../types/ids.ts";
 import { RecipeId, RecipeVersionId } from "../../types/recipe.ts";
 import { SessionId } from "../../types/session.ts";
-
-/** Sync `from` doc into `to` doc (simulates one direction of a sync). */
-function sync(from: Y.Doc, to: Y.Doc): void {
-  applyUpdate(to, encodeStateAsUpdate(from));
-}
 import {
   completeSession,
   createSession,
   getItemStatesYmap,
   getSession,
-  getSessionYmap,
   getSessions,
+  getSessionYmap,
   updateSessionItemState,
 } from "../sessionStore.ts";
+import { isInvalid } from "../validation.ts";
+
+/** Sync `from` doc into `to` doc (simulates one direction of a sync). */
+function sync(from: Y.Doc, to: Y.Doc): void {
+  applyUpdate(to, encodeStateAsUpdate(from));
+}
 
 const RECIPE_ID = fixedId(RecipeId, "recipe-1");
 const VERSION_ID = fixedId(RecipeVersionId, "version-1");
@@ -36,16 +38,17 @@ describe("createSession / getSession", () => {
   it("creates an active session with no item states", () => {
     const session = createSession(doc, RECIPE_ID, VERSION_ID);
     const loaded = getSession(doc, session.id);
-    expect(loaded).not.toBeNull();
-    expect(loaded?.recipe_id).toBe(RECIPE_ID);
-    expect(loaded?.recipe_version_id).toBe(VERSION_ID);
-    expect(loaded?.status).toBe("active");
-    expect(loaded?.item_states).toEqual({});
-    expect(loaded?.completed_at).toBeUndefined();
+    assertNotValidationError(loaded);
+    expect(loaded.recipe_id).toBe(RECIPE_ID);
+    expect(loaded.recipe_version_id).toBe(VERSION_ID);
+    expect(loaded.status).toBe("active");
+    expect(loaded.item_states).toEqual({});
+    expect(loaded.completed_at).toBeUndefined();
   });
 
   it("returns null for an unknown id", () => {
-    expect(getSession(doc, fixedId(SessionId, "nope"))).toBeNull();
+    const result = getSession(doc, fixedId(SessionId, "nope"));
+    expect(isInvalid(result)).toBe(true);
   });
 });
 
@@ -68,25 +71,30 @@ describe("updateSessionItemState", () => {
   it("creates a default unchecked state and applies the patch", () => {
     const session = createSession(doc, RECIPE_ID, VERSION_ID);
     updateSessionItemState(doc, session.id, "item-1", { checked: true });
-    expect(getSession(doc, session.id)?.item_states["item-1"]).toEqual({ checked: true });
+    const loaded = getSession(doc, session.id);
+    assertNotValidationError(loaded);
+    expect(loaded.item_states["item-1"]).toEqual({ checked: true });
   });
 
   it("merges the patch into an existing state", () => {
     const session = createSession(doc, RECIPE_ID, VERSION_ID);
     updateSessionItemState(doc, session.id, "item-1", { checked: true });
     updateSessionItemState(doc, session.id, "item-1", { notes: "used less" });
-    expect(getSession(doc, session.id)?.item_states["item-1"]).toEqual({
-      checked: true,
-      notes: "used less",
-    });
+    const loaded = getSession(doc, session.id);
+    assertNotValidationError(loaded);
+    expect(loaded.item_states["item-1"]).toEqual({ checked: true, notes: "used less" });
   });
 
   it("can mark an item skipped and unskipped", () => {
     const session = createSession(doc, RECIPE_ID, VERSION_ID);
     updateSessionItemState(doc, session.id, "item-1", { skipped: true });
-    expect(getSession(doc, session.id)?.item_states["item-1"]?.skipped).toBe(true);
+    const loadedFirst = getSession(doc, session.id);
+    assertNotValidationError(loadedFirst);
+    expect(loadedFirst.item_states["item-1"]?.skipped).toBe(true);
     updateSessionItemState(doc, session.id, "item-1", { skipped: false });
-    expect(getSession(doc, session.id)?.item_states["item-1"]?.skipped).toBe(false);
+    const loadedSecond = getSession(doc, session.id);
+    assertNotValidationError(loadedSecond);
+    expect(loadedSecond.item_states["item-1"]?.skipped).toBe(false);
   });
 
   it("throws for a missing session", () => {
@@ -118,7 +126,9 @@ describe("completeSession", () => {
     const completed = completeSession(doc, session.id, []);
     expect(completed.status).toBe("completed");
     expect(completed.completed_at).toBeTypeOf("number");
-    expect(getSession(doc, session.id)?.status).toBe("completed");
+    const loaded = getSession(doc, session.id);
+    assertNotValidationError(loaded);
+    expect(loaded.status).toBe("completed");
   });
 
   it("marks unchecked, unskipped items as skipped", () => {
@@ -172,8 +182,10 @@ describe("concurrent merge", () => {
     sync(alice, bob);
     sync(bob, alice);
 
-    const mergedAlice = getSession(alice, sessionId)!;
-    const mergedBob = getSession(bob, sessionId)!;
+    const mergedAlice = getSession(alice, sessionId);
+    const mergedBob = getSession(bob, sessionId);
+    assertNotValidationError(mergedAlice);
+    assertNotValidationError(mergedBob);
 
     // Both items should be checked — no data loss.
     expect(mergedAlice.item_states["item-a"]).toEqual({ checked: true });
@@ -201,8 +213,10 @@ describe("concurrent merge", () => {
     sync(alice, bob);
     sync(bob, alice);
 
-    const mergedAlice = getSession(alice, sessionId)!;
-    const mergedBob = getSession(bob, sessionId)!;
+    const mergedAlice = getSession(alice, sessionId);
+    const mergedBob = getSession(bob, sessionId);
+    assertNotValidationError(mergedAlice);
+    assertNotValidationError(mergedBob);
 
     // Both peers converge to the same state after sync.
     expect(mergedAlice.status).toBe("completed");
@@ -238,8 +252,11 @@ describe("concurrent merge", () => {
     sync(alice, bob);
     sync(bob, alice);
 
-    const merged = getSession(alice, sessionId)!;
-    const mergedBob = getSession(bob, sessionId)!;
+    const merged = getSession(alice, sessionId);
+    const mergedBob = getSession(bob, sessionId);
+    assertNotValidationError(merged);
+    assertNotValidationError(mergedBob);
+
     // Both peers converge to the same state.
     expect(merged.item_states["item-x"]).toEqual(mergedBob.item_states["item-x"]);
   });
@@ -258,7 +275,8 @@ describe("backward compatibility with inline item_states", () => {
       },
     });
 
-    const loaded = getSession(doc, session.id)!;
+    const loaded = getSession(doc, session.id);
+    assertNotValidationError(loaded);
     expect(loaded.item_states["old-item"]).toEqual({ checked: true });
   });
 
@@ -273,7 +291,8 @@ describe("backward compatibility with inline item_states", () => {
     });
     getItemStatesYmap(doc).set(`${session.id}/new-item`, { checked: true, notes: "new" });
 
-    const loaded = getSession(doc, session.id)!;
+    const loaded = getSession(doc, session.id);
+    assertNotValidationError(loaded);
     // Both should be present (separate map is not empty, so inline is skipped).
     expect(loaded.item_states["new-item"]).toEqual({ checked: true, notes: "new" });
     expect(loaded.item_states["old-item"]).toBeUndefined();
@@ -295,6 +314,7 @@ describe("backward compatibility with inline item_states", () => {
     updateSessionItemState(doc, otherSession.id, "other-item", { checked: true });
 
     const loaded = getSession(doc, session.id)!;
+    assertNotValidationError(loaded);
     expect(loaded.item_states["old-item"]).toEqual({ checked: true });
   });
 });

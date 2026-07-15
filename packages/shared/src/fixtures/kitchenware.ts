@@ -1,9 +1,11 @@
 import { type } from "arktype";
 import Papa from "papaparse";
 import { validOrThrow } from "../assertions/index.ts";
+import { Companion } from "../types/companion.ts";
 import { fixedId } from "../types/ids.ts";
 import { KitchenwareId } from "../types/kitchenware.ts";
 import { MeasurementType } from "../types/measurement.ts";
+import { isInvalid, validate } from "../yjs/validation.ts";
 
 export interface IngredientTemplate {
   readonly kind: "ingredient";
@@ -30,52 +32,64 @@ export interface EquipmentTemplate {
 
 export type KitchenwareTemplate = IngredientTemplate | ContainerTemplate | EquipmentTemplate;
 
-const LabelNames = type("string").pipe((s) =>
-  s
-    .split("+")
-    .map((l) => l.trim())
-    .filter((l) => l !== ""),
+const LabelNames = Companion(
+  "LabelNames",
+  type("string").pipe((s) =>
+    s
+      .split("+")
+      .map((l) => l.trim())
+      .filter((l) => l !== ""),
+  ),
 );
 
-const IngredientRow = type({
-  "Unique ID": "string",
-  Description: "string",
-  "Default Measurement Type": MeasurementType.type,
-  Labels: LabelNames,
-}).pipe(
-  (row): IngredientTemplate => ({
-    kind: "ingredient",
-    id: fixedId(KitchenwareId, row["Unique ID"].trim()),
-    name: row["Description"],
-    default_measurement_type: row["Default Measurement Type"],
-    label_names: row["Labels"],
-  }),
+const IngredientRow = Companion(
+  "IngredientRow",
+  type({
+    "Unique ID": "string",
+    Description: "string",
+    "Default Measurement Type": MeasurementType.type,
+    Labels: LabelNames.type,
+  }).pipe(
+    (row): IngredientTemplate => ({
+      kind: "ingredient",
+      id: fixedId(KitchenwareId, row["Unique ID"].trim()),
+      name: row["Description"],
+      default_measurement_type: row["Default Measurement Type"],
+      label_names: row["Labels"],
+    }),
+  ),
 );
 
-const ContainerRow = type({
-  "Unique ID": "string",
-  Description: "string",
-  Labels: LabelNames,
-}).pipe(
-  (row): ContainerTemplate => ({
-    kind: "container",
-    id: fixedId(KitchenwareId, row["Unique ID"].trim()),
-    name: row["Description"],
-    label_names: row["Labels"],
-  }),
+const ContainerRow = Companion(
+  "ContainerRow",
+  type({
+    "Unique ID": "string",
+    Description: "string",
+    Labels: LabelNames.type,
+  }).pipe(
+    (row): ContainerTemplate => ({
+      kind: "container",
+      id: fixedId(KitchenwareId, row["Unique ID"].trim()),
+      name: row["Description"],
+      label_names: row["Labels"],
+    }),
+  ),
 );
 
-const EquipmentRow = type({
-  "Unique ID": "string",
-  Description: "string",
-  Labels: LabelNames,
-}).pipe(
-  (row): EquipmentTemplate => ({
-    kind: "equipment",
-    id: fixedId(KitchenwareId, row["Unique ID"].trim()),
-    name: row["Description"],
-    label_names: row["Labels"],
-  }),
+const EquipmentRow = Companion(
+  "EquipmentRow",
+  type({
+    "Unique ID": "string",
+    Description: "string",
+    Labels: LabelNames.type,
+  }).pipe(
+    (row): EquipmentTemplate => ({
+      kind: "equipment",
+      id: fixedId(KitchenwareId, row["Unique ID"].trim()),
+      name: row["Description"],
+      label_names: row["Labels"],
+    }),
+  ),
 );
 
 export function parseKitchenwareCsv(csv: string): KitchenwareTemplate[] {
@@ -96,21 +110,21 @@ export function parseKitchenwareCsv(csv: string): KitchenwareTemplate[] {
       if (mType !== "volume" && mType !== "weight" && mType !== "count") {
         throw new Error(`Unknown measurement type "${mType}" for kitchenware "${rowId}"`);
       }
-      const result = IngredientRow(rawRow);
-      if (result instanceof type.errors) {
-        throw new Error(`Malformed ingredient CSV row for "${rowId}": ${result.summary}`);
+      const result = validate(IngredientRow, rawRow);
+      if (isInvalid(result)) {
+        throw new Error(`Malformed ingredient CSV row for "${rowId}": ${result.message}`);
       }
       results.push(result);
     } else if (typeVal === "container") {
-      const result = ContainerRow(rawRow);
-      if (result instanceof type.errors) {
-        throw new Error(`Malformed container CSV row for "${rowId}": ${result.summary}`);
+      const result = validate(ContainerRow, rawRow);
+      if (isInvalid(result)) {
+        throw new Error(`Malformed container CSV row for "${rowId}": ${result.message}`);
       }
       results.push(result);
     } else if (typeVal === "equipment") {
-      const result = EquipmentRow(rawRow);
-      if (result instanceof type.errors) {
-        throw new Error(`Malformed equipment CSV row for "${rowId}": ${result.summary}`);
+      const result = validate(EquipmentRow, rawRow);
+      if (isInvalid(result)) {
+        throw new Error(`Malformed equipment CSV row for "${rowId}": ${result.message}`);
       }
       results.push(result);
     } else {

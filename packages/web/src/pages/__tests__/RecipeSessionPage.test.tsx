@@ -1,5 +1,6 @@
 import type { Measurement, Recipe, RecipeVersion, Session } from "@recipe-book/shared";
 import {
+  assertNotValidationError,
   collectIngredientItems,
   collectInstructions,
   completeSession,
@@ -343,8 +344,9 @@ describe("RecipeSessionPage — summary view", () => {
     await user.click(screen.getByRole("button", { name: "Create a new version" }));
 
     const updated = getRecipe(recipeBookDoc, recipe.id);
-    expect(updated?.versions).toHaveLength(2);
-    const latest = updated?.versions.at(-1);
+    assertNotValidationError(updated);
+    expect(updated.versions).toHaveLength(2);
+    const latest = updated.versions.at(-1);
     expect(latest?.description).toBe("After session");
     // Butter was completed and Flour restored; the skipped instruction is dropped.
     const ingredientIds = collectIngredientItems(latest?.sections ?? []).map(
@@ -395,7 +397,9 @@ describe("RecipeSessionPage — summary view", () => {
     ).toEqual([BUTTER]);
     expect(mockNavigate).toHaveBeenCalledWith(`/recipes/${copy?.id}`);
     // the original recipe is untouched
-    expect(getRecipe(recipeBookDoc, recipe.id)?.versions).toHaveLength(1);
+    const afterCreate = getRecipe(recipeBookDoc, recipe.id);
+    assertNotValidationError(afterCreate);
+    expect(afterCreate.versions).toHaveLength(1);
   });
 
   it("discards without creating anything", async () => {
@@ -406,7 +410,9 @@ describe("RecipeSessionPage — summary view", () => {
     await user.click(screen.getByRole("button", { name: "Discard recipe version" }));
 
     expect(mockNavigate).toHaveBeenCalledWith("/recipes");
-    expect(getRecipe(recipeBookDoc, recipe.id)?.versions).toHaveLength(1);
+    const afterDiscard = getRecipe(recipeBookDoc, recipe.id);
+    assertNotValidationError(afterDiscard);
+    expect(afterDiscard.versions).toHaveLength(1);
     expect(getRecipes(recipeBookDoc)).toHaveLength(1);
   });
 

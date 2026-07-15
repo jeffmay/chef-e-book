@@ -1,10 +1,12 @@
 import { type } from "arktype";
 import type * as Y from "yjs";
-import { isTypeError } from "../assertions/index.ts";
+import { Companion } from "../types/companion.ts";
 import { loadId, randomId } from "../types/ids.ts";
-import type { Fraction, Measurement } from "../types/measurement.ts";
+import type { Fraction } from "../types/measurement.ts";
 import { RecipeId, RecipeVersionId } from "../types/recipe.ts";
-import { type ItemState, type Session, SessionId, SessionStatus } from "../types/session.ts";
+import { ItemState, type Session, SessionId, SessionStatus } from "../types/session.ts";
+import type { ValidationError } from "./validation.ts";
+import { assertValid, isInvalid, isValid, validateByIdOrLog } from "./validation.ts";
 
 const SESSIONS_KEY = "sessions";
 const ITEM_STATES_KEY = "session_item_states";
@@ -27,35 +29,31 @@ function itemStateKey(session_id: string, item_id: string): string {
 // instead of racing on the whole session object.
 // ---------------------------------------------------------------------------
 
-const StoredSession = type({
-  recipe_id: "string",
-  recipe_version_id: "string",
-  started_at: "number",
-  "completed_at?": "number",
-  status: SessionStatus.type,
-  "rescale_multiplier?": "unknown",
-  "rating?": "number",
-  "session_notes?": "string",
-});
+const StoredSession = Companion(
+  "StoredSession",
+  type({
+    recipe_id: "string",
+    recipe_version_id: "string",
+    started_at: "number",
+    "completed_at?": "number",
+    status: SessionStatus.type,
+    "rescale_multiplier?": "unknown",
+    "rating?": "number",
+    "session_notes?": "string",
+  }),
+);
 
-function validateItemState(raw: unknown): ItemState | null {
-  if (typeof raw !== "object" || raw === null) return null;
-  const r = raw as Record<string, unknown>;
-  if (typeof r["checked"] !== "boolean") return null;
-  return {
-    checked: r["checked"],
-    ...(typeof r["skipped"] === "boolean" && { skipped: r["skipped"] }),
-    ...(r["one_off_quantity"] !== undefined && {
-      one_off_quantity: r["one_off_quantity"] as Measurement,
-    }),
-    ...(typeof r["notes"] === "string" && { notes: r["notes"] }),
-  };
+function validateItemState(id: string, raw: unknown): ItemState | ValidationError {
+  return validateByIdOrLog(ItemState, id, raw, { dataFrom: "localstorage" });
 }
 
 /** Validate the session-level fields. Does NOT load item_states. */
-function validateStored(id: SessionId, raw: unknown): Omit<Session, "item_states"> | null {
-  const result = StoredSession(raw);
-  if (isTypeError(result)) return null;
+function validateStored(
+  id: SessionId,
+  raw: unknown,
+): Omit<Session, "item_states"> | ValidationError {
+  const result = validateByIdOrLog(StoredSession, id, raw, { dataFrom: "localstorage" });
+  if (isInvalid(result)) return result;
 
   return {
     id,
@@ -73,15 +71,15 @@ function validateStored(id: SessionId, raw: unknown): Omit<Session, "item_states
 }
 
 /** Load item states from the separate map for a given session. */
-function loadItemStates(doc: Y.Doc, session_id: string): Record<string, ItemState> {
+function loadItemStates(doc: Y.Doc, sessionId: string): Record<string, ItemState> {
   const map = getItemStatesYmap(doc);
-  const prefix = `${session_id}/`;
+  const prefix = `${sessionId}/`;
   const states: Record<string, ItemState> = {};
   map.forEach((value, key) => {
     if (typeof key === "string" && key.startsWith(prefix)) {
       const itemId = key.slice(prefix.length);
-      const validated = validateItemState(value);
-      if (validated !== null) states[itemId] = validated;
+      const validated = validateItemState(itemId, value);
+      if (isValid(validated)) states[itemId] = validated;
     }
   });
   return states;
@@ -97,17 +95,17 @@ export function getSessions(doc: Y.Doc): Session[] {
   const results: Session[] = [];
   sessionsMap.forEach((value, id) => {
     const base = validateStored(loadId(SessionId, id), value);
-    if (base !== null) {
+    if (isValid(base)) {
       results.push({ ...base, item_states: loadItemStates(doc, id) });
     }
   });
   return results.sort((a, b) => b.started_at - a.started_at);
 }
 
-export function getSession(doc: Y.Doc, id: SessionId): Session | null {
+export function getSession(doc: Y.Doc, id: SessionId): Session | ValidationError {
   const raw = getSessionYmap(doc).get(id);
   const base = validateStored(id, raw);
-  if (base === null) return null;
+  if (isInvalid(base)) return base;
 
   const item_states = loadItemStates(doc, id);
 
@@ -118,8 +116,8 @@ export function getSession(doc: Y.Doc, id: SessionId): Session | null {
     const inline = stored["item_states"];
     if (typeof inline === "object" && inline !== null) {
       for (const [itemId, state] of Object.entries(inline as Record<string, unknown>)) {
-        const validated = validateItemState(state);
-        if (validated !== null) item_states[itemId] = validated;
+        const validated = validateItemState(itemId, state);
+        if (isValid(validated)) item_states[itemId] = validated;
       }
     }
   }
@@ -153,7 +151,7 @@ export function createSession(
 
 function requireSession(doc: Y.Doc, session_id: SessionId): Session {
   const session = getSession(doc, session_id);
-  if (session === null) throw new Error(`Session ${session_id} not found`);
+  assertValid(session);
   return session;
 }
 
@@ -164,20 +162,20 @@ function requireSession(doc: Y.Doc, session_id: SessionId): Session {
  */
 export function updateSessionItemState(
   doc: Y.Doc,
-  session_id: SessionId,
-  item_id: string,
+  sessionId: SessionId,
+  itemId: string,
   patch: Partial<ItemState>,
 ): Session {
-  requireSession(doc, session_id);
+  requireSession(doc, sessionId);
   const map = getItemStatesYmap(doc);
-  const key = itemStateKey(session_id, item_id);
+  const key = itemStateKey(sessionId, itemId);
   const existingRaw = map.get(key);
-  const existing: ItemState =
-    existingRaw !== undefined
-      ? (validateItemState(existingRaw) ?? { checked: false })
-      : { checked: false };
+  const result = validateItemState(itemId, existingRaw);
+  const existing: ItemState = isInvalid(result) ? { checked: false } : result;
   map.set(key, { ...existing, ...patch });
-  return getSession(doc, session_id)!;
+  const session = getSession(doc, sessionId);
+  assertValid(session);
+  return session;
 }
 
 /**
@@ -191,22 +189,20 @@ export function updateSessionItemState(
  */
 export function completeSession(
   doc: Y.Doc,
-  session_id: SessionId,
-  all_item_ids: readonly string[],
+  sessionId: SessionId,
+  allItemIds: readonly string[],
 ): Session {
-  requireSession(doc, session_id);
+  requireSession(doc, sessionId);
 
   doc.transact(() => {
     const itemStatesMap = getItemStatesYmap(doc);
-    const prefix = `${session_id}/`;
+    const prefix = `${sessionId}/`;
 
-    for (const itemId of all_item_ids) {
+    for (const itemId of allItemIds) {
       const key = prefix + itemId;
       const existingRaw = itemStatesMap.get(key);
-      const state: ItemState =
-        existingRaw !== undefined
-          ? (validateItemState(existingRaw) ?? { checked: false })
-          : { checked: false };
+      const result = validateItemState(itemId, existingRaw);
+      const state: ItemState = isInvalid(result) ? { checked: false } : result;
       if (!state.checked && state.skipped !== true) {
         itemStatesMap.set(key, { ...state, skipped: true });
       }
@@ -214,15 +210,17 @@ export function completeSession(
 
     // Update session-level fields.
     const sessionsMap = getSessionYmap(doc);
-    const raw = sessionsMap.get(session_id);
-    const base = validateStored(session_id, raw);
-    if (base === null) throw new Error(`Session ${session_id} not found`);
-    sessionsMap.set(session_id, {
+    const raw = sessionsMap.get(sessionId);
+    const base = validateStored(sessionId, raw);
+    if (isInvalid(base)) throw base;
+    sessionsMap.set(sessionId, {
       ...base,
       status: "completed",
       completed_at: Date.now(),
     });
   });
 
-  return getSession(doc, session_id)!;
+  const session = getSession(doc, sessionId);
+  assertValid(session);
+  return session;
 }

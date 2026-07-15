@@ -1,5 +1,6 @@
 import type { Ingredient, Measurement, RecipeFolder, Section } from "@recipe-book/shared";
 import {
+  assertNotValidationError,
   ContainerId,
   createRecipe,
   createRecipeFolder,
@@ -953,7 +954,9 @@ describe("RecipeEditor — version time fields", () => {
     await flushAsyncEffects();
     await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
 
-    const latest = getRecipe(recipeBookDoc, recipe.id)?.versions.at(-1);
+    const reloaded = getRecipe(recipeBookDoc, recipe.id);
+    assertNotValidationError(reloaded);
+    const latest = reloaded.versions.at(-1);
     expect(latest?.estimated_time_seconds).toBe(900);
     expect(latest?.seconds_per_ingredient).toBe(60);
     expect(onSave).toHaveBeenCalled();

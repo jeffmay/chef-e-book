@@ -1,4 +1,5 @@
 import { type } from "arktype";
+import { ValidationError } from "../yjs/validation.ts";
 
 export function isDefined<V>(value: V | null | undefined): value is V {
   return value != null;
@@ -27,6 +28,15 @@ export function assertValid<T>(
     throw new Error(
       `${options?.message ? `${options.message}\n` : ""}\n${Object.entries(result.byAncestorPath).join("\n")}`,
     );
+  }
+}
+
+export function assertNotValidationError<T>(
+  result: T | ValidationError,
+  options?: { message?: string },
+): asserts result is T {
+  if (result instanceof ValidationError) {
+    throw new Error(`${options?.message ? `${options.message}\n` : ""}\n${result.reason}`);
   }
 }
 
