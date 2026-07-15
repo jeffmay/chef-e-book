@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
+import { assertDefined, assertNotValidationError } from "../../assertions/index.ts";
 import { fixedId, randomId } from "../../types/ids.ts";
 import { IngredientId } from "../../types/kitchenware.ts";
 import type { Measurement } from "../../types/measurement.ts";
@@ -44,7 +45,8 @@ describe("ingredient item custom amounts", () => {
     });
 
     const loaded = getRecipe(doc, recipe.id);
-    const item = loaded?.versions.at(-1)?.sections[0]?.contents[0];
+    assertNotValidationError(loaded);
+    const item = loaded.versions.at(-1)?.sections[0]?.contents[0];
     expect(item !== undefined && isIngredientItem(item) && item.customAmount).toEqual(TWO_CUPS);
   });
 });
@@ -68,16 +70,20 @@ describe("recipe version time fields", () => {
     });
 
     const loaded = getRecipe(doc, recipe.id);
-    const latest = loaded?.versions.at(-1);
-    expect(latest?.estimated_time_seconds).toBe(1800);
-    expect(latest?.seconds_per_ingredient).toBe(90);
+    assertNotValidationError(loaded);
+    const latest = loaded.versions.at(-1);
+    assertDefined(latest);
+    expect(latest.estimated_time_seconds).toBe(1800);
+    expect(latest.seconds_per_ingredient).toBe(90);
   });
 
   it("leaves the fields undefined when never set", () => {
     const recipe = createRecipe(doc, { title: "Toast", description: "v1" });
     const loaded = getRecipe(doc, recipe.id);
-    const latest = loaded?.versions.at(-1);
-    expect(latest?.estimated_time_seconds).toBeUndefined();
-    expect(latest?.seconds_per_ingredient).toBeUndefined();
+    assertNotValidationError(loaded);
+    const latest = loaded.versions.at(-1);
+    assertDefined(latest);
+    expect(latest.estimated_time_seconds).toBeUndefined();
+    expect(latest.seconds_per_ingredient).toBeUndefined();
   });
 });

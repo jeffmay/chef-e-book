@@ -1,10 +1,11 @@
 import { type } from "arktype";
 import type * as Y from "yjs";
-import { isTypeError } from "../assertions/index.ts";
 import { Companion } from "../types/companion.ts";
 import { loadId, randomId } from "../types/ids.ts";
 import type { RecipeFolder } from "../types/recipeGroup.ts";
 import { RecipeFolderId, SortOrder } from "../types/recipeGroup.ts";
+import type { ValidationError } from "./validation.ts";
+import { isInvalid, isValid, validateByIdOrLog } from "./validation.ts";
 
 const MAP_KEY = "recipe_folders";
 
@@ -35,9 +36,12 @@ function toStored(folder: RecipeFolder): StoredRecipeFolder {
   };
 }
 
-function validateStored(id: RecipeFolderId, raw: unknown): Omit<RecipeFolder, "children"> | null {
-  const result = StoredRecipeFolder.type(raw);
-  if (isTypeError(result)) return null;
+function validateStored(
+  id: RecipeFolderId,
+  raw: unknown,
+): Omit<RecipeFolder, "children"> | ValidationError {
+  const result = validateByIdOrLog(StoredRecipeFolder, id, raw, { dataFrom: "localstorage" });
+  if (isInvalid(result)) return result;
   return {
     id,
     name: result.name,
@@ -54,7 +58,7 @@ export function getRecipeFoldersFlat(doc: Y.Doc): Array<Omit<RecipeFolder, "chil
   const results: Array<Omit<RecipeFolder, "children">> = [];
   map.forEach((value, id) => {
     const folder = validateStored(loadId(RecipeFolderId, id), value);
-    if (folder !== null) results.push(folder);
+    if (isValid(folder)) results.push(folder);
   });
   return results.sort((a, b) => a.name.localeCompare(b.name));
 }

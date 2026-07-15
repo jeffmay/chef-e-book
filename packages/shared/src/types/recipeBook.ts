@@ -21,9 +21,12 @@ export const RecipeBookSlug = Companion(
 );
 export type RecipeBookSlug = typeof RecipeBookSlug.type.infer;
 
-export const CreateBookBody = type({
-  id: "string",
-  name: RecipeBookName.type,
-  slug: RecipeBookSlug.type,
-});
-export type CreateBookBody = typeof CreateBookBody.infer;
+export const CreateBookBody = Companion(
+  "CreateBookBody",
+  type({
+    id: "string",
+    name: RecipeBookName.type,
+    slug: RecipeBookSlug.type,
+  }),
+);
+export type CreateBookBody = typeof CreateBookBody.type.infer;

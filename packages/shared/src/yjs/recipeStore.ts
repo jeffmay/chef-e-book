@@ -1,6 +1,6 @@
 import { type } from "arktype";
 import type * as Y from "yjs";
-import { isTypeError } from "../assertions/index.ts";
+import { Companion } from "../types/companion.ts";
 import { loadId, randomId } from "../types/ids.ts";
 import { ContainerId, EquipmentId, IngredientId } from "../types/kitchenware.ts";
 import type { Measurement } from "../types/measurement.ts";
@@ -20,6 +20,8 @@ import {
   SectionItemId,
 } from "../types/recipe.ts";
 import { RecipeFolderId } from "../types/recipeGroup.ts";
+import type { ValidationError } from "./validation.ts";
+import { isInvalid, isValid, validateByIdOrLog } from "./validation.ts";
 
 const MAP_KEY = "recipes";
 
@@ -32,15 +34,20 @@ export function getRecipeYmap(doc: Y.Doc): Y.Map<unknown> {
 // ArkType schemas; individual sub-objects are validated structurally).
 // ---------------------------------------------------------------------------
 
-const StoredRecipe = type({
-  title: "string",
-  "subtitle?": "string",
-  "source_url?": "string",
-  "parent_folder_id?": RecipeFolderId.type,
-  versions: "unknown[]",
-  created_at: "number",
-  updated_at: "number",
-});
+const StoredRecipe = Companion(
+  "StoredRecipe",
+  type({
+    title: "string",
+    "subtitle?": "string",
+    "source_url?": "string",
+    "parent_folder_id?": RecipeFolderId.type,
+    versions: "unknown[]",
+    created_at: "number",
+    updated_at: "number",
+  }),
+);
+
+type StoredRecipe = typeof StoredRecipe.type.infer;
 
 function validateIngredientItem(raw: unknown): IngredientItem | null {
   if (typeof raw !== "object" || raw === null) return null;
@@ -199,9 +206,9 @@ function validateRecipeVersion(raw: unknown): RecipeVersion | null {
   };
 }
 
-function validateStored(id: RecipeId, raw: unknown): Recipe | null {
-  const result = StoredRecipe(raw);
-  if (isTypeError(result)) return null;
+function validateStored(id: RecipeId, raw: unknown): Recipe | ValidationError {
+  const result = validateByIdOrLog(StoredRecipe, id, raw, { dataFrom: "localstorage" });
+  if (isInvalid(result)) return result;
 
   const versions: RecipeVersion[] = [];
   for (const v of result.versions) {
@@ -229,12 +236,12 @@ export function getRecipes(doc: Y.Doc): Recipe[] {
   const results: Recipe[] = [];
   map.forEach((value, id) => {
     const recipe = validateStored(loadId(RecipeId, id), value);
-    if (recipe !== null) results.push(recipe);
+    if (isValid(recipe)) results.push(recipe);
   });
   return results.sort((a, b) => b.updated_at - a.updated_at);
 }
 
-export function getRecipe(doc: Y.Doc, id: RecipeId): Recipe | null {
+export function getRecipe(doc: Y.Doc, id: RecipeId): Recipe | ValidationError {
   return validateStored(id, getRecipeYmap(doc).get(id));
 }
 
@@ -287,7 +294,7 @@ export interface SaveRecipeInput {
 
 export function saveRecipe(doc: Y.Doc, recipe_id: RecipeId, input: SaveRecipeInput): Recipe {
   const existing = getRecipe(doc, recipe_id);
-  if (existing === null) throw new Error(`Recipe ${recipe_id} not found`);
+  if (isInvalid(existing)) throw existing;
 
   const now = Date.now();
   let versions: RecipeVersion[];
@@ -336,7 +343,7 @@ export function copyRecipe(
   // created_by: string,
 ): Recipe {
   const original = getRecipe(doc, recipe_id);
-  if (original === null) throw new Error(`Recipe ${recipe_id} not found`);
+  if (isInvalid(original)) throw original;
   const now = Date.now();
   const newRecipeId = randomId(RecipeId);
   const copiedVersions: RecipeVersion[] = original.versions.map((v) => ({
@@ -385,7 +392,7 @@ export function mergeRecipes(
 
   const recipes = recipe_ids.map((id) => {
     const r = getRecipe(doc, id);
-    if (r === null) throw new Error(`Recipe ${id} not found`);
+    if (isInvalid(r)) throw r;
     return r;
   });
 
