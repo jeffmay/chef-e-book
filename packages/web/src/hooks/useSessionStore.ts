@@ -6,6 +6,7 @@ import {
   type SessionId,
   completeSession,
   createSession,
+  getItemStatesYmap,
   getSessionYmap,
   getSessions,
   updateSessionItemState,
@@ -29,13 +30,18 @@ export function useSessionStore(): SessionStore {
   const [sessions, setSessions] = useState<Session[]>(() => getSessions(doc));
 
   useEffect(() => {
-    const map = getSessionYmap(doc);
+    const sessionsMap = getSessionYmap(doc);
+    const itemStatesMap = getItemStatesYmap(doc);
     function update() {
       setSessions(getSessions(doc));
     }
-    map.observe(update);
+    sessionsMap.observe(update);
+    itemStatesMap.observe(update);
     whenSynced.then(() => setSessions(getSessions(doc)));
-    return () => map.unobserve(update);
+    return () => {
+      sessionsMap.unobserve(update);
+      itemStatesMap.unobserve(update);
+    };
   }, [doc, whenSynced]);
 
   return {

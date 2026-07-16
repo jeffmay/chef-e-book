@@ -210,6 +210,8 @@ Always displayed as simplified integer + fraction. All operations preserve exact
 
 An "active session" is a started recipe run. Stored in the `"sessions"` Yjs map (`packages/shared/src/yjs/sessionStore.ts`); completed sessions are never deleted automatically.
 
+**Item states are stored separately** in the `"session_item_states"` Yjs map, keyed by `"<session_id>/<item_id>"`. Each item state is an individual entry so concurrent updates to different items merge at the CRDT entry level instead of racing on the whole session object. `getSessionYmap()` returns the sessions map; `getItemStatesYmap()` returns the item states map. The hook (`useSessionStore`) observes both maps for reactive updates. Old sessions with inline `item_states` in the session entry are still readable via backward-compat fallback in `getSession()`.
+
 - `id`: `SessionId` (branded nanoid, 12 chars)
 - `recipe_id`: `RecipeId`
 - `recipe_version_id`: `RecipeVersionId`
