@@ -97,16 +97,23 @@ export function computeTopIngredients(sections: ReadonlyDeep<Section[]>): Recipe
  */
 export function removeSectionItemsById(
   sections: readonly Section[],
-  removed_ids: ReadonlySet<SectionItemId>,
+  removedIds: ReadonlySet<SectionItemId>,
+  removeEmptyContainers?: boolean,
 ): Section[] {
-  function filterContents(contents: readonly SectionItem[]): SectionItem[] {
+  function filterContents(contents: SectionItem[]): SectionItem[] {
     const result: SectionItem[] = [];
     for (const item of contents) {
-      if (removed_ids.has(item.id)) continue;
+      if (removedIds.has(item.id)) continue;
       if (item.kind === "container") {
-        result.push({ ...item, contents: item.contents.filter((c) => !removed_ids.has(c.id)) });
+        const contents = item.contents.filter((c) => !removedIds.has(c.id));
+        if (removeEmptyContainers !== true) {
+          result.push({ ...item, contents });
+        }
       } else if (item.kind === "section") {
-        result.push({ ...item, contents: filterContents(item.contents) });
+        const contents = filterContents(item.contents);
+        if (removeEmptyContainers !== true) {
+          result.push({ ...item, contents });
+        }
       } else {
         result.push(item);
       }
@@ -115,6 +122,6 @@ export function removeSectionItemsById(
   }
 
   return sections
-    .filter((s) => !removed_ids.has(s.id))
+    .filter((s) => !removedIds.has(s.id))
     .map((s) => ({ ...s, contents: filterContents(s.contents) }));
 }
