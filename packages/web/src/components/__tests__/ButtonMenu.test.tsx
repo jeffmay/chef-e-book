@@ -45,6 +45,27 @@ describe("ButtonMenu", () => {
     expect(onStart).not.toHaveBeenCalled();
   });
 
+  it("performs the default action when clicked while the menu is open", async () => {
+    const onStart = vi.fn();
+    const onEdit = vi.fn();
+    render(
+      <ButtonMenu
+        defaultButton={{ label: "Start", onSelect: onStart }}
+        buttons={[{ label: "Edit", onSelect: onEdit }]}
+        menuLabel="More actions"
+      />,
+    );
+
+    // Open the menu first
+    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    expect(screen.getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
+
+    // Click the default button while the menu is still open
+    await userEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect(onStart).toHaveBeenCalledTimes(1);
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
   it("closes the menu on Escape", async () => {
     render(
       <ButtonMenu buttons={[{ label: "Start", onSelect: vi.fn() }]} menuLabel="More actions" />,
