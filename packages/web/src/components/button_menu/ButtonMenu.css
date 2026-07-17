@@ -1,0 +1,47 @@
+.button-menu {
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.button-menu .p-button-group {
+  display: inline-flex;
+}
+
+.button-menu-default,
+.button-menu-chevron {
+  padding: 2px var(--spacing-sm);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button-menu-default {
+  border-right: none;
+}
+
+/* Wireframe menu popup — solid white panel, black border, no grey text */
+.button-menu-popup.p-menu {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: 0;
+  padding: 0;
+  width: auto;
+  min-width: 8em;
+}
+
+.button-menu-popup .p-menuitem-link {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  color: var(--color-fg);
+}
+
+.button-menu-popup .p-menuitem-text {
+  color: var(--color-fg);
+}
+
+.button-menu-popup .p-menuitem.p-focus > .p-menuitem-content,
+.button-menu-popup .p-menuitem-link:hover {
+  background: var(--background-subtle);
+}

@@ -75,6 +75,13 @@
   font-size: 0.85em;
 }
 
+.re-start-btn {
+  font-size: 0.85em;
+  background: var(--color-fg);
+  color: var(--color-bg);
+  white-space: nowrap;
+}
+
 /* ============================================================
    Computed Ingredients Display (read-only)
    ============================================================ */
@@ -394,6 +401,10 @@
 }
 
 th.re-version-date {
+  width: 7em;
+}
+
+th.re-version-actions {
   width: 7em;
 }
 

@@ -16,6 +16,7 @@ export default [
   route("recipes/new", "routes/recipes.new.tsx"),
   route("recipes/:recipe_id", "routes/recipes.$recipe_id.tsx"),
   route("recipes/:recipe_id/v/:version_id", "routes/recipes.$recipe_id.v.$version_id.tsx"),
+  route("sessions/:session_id", "routes/sessions.$session_id.tsx"),
   // route("profile", "routes/profile.tsx"),
   ...ignoreDevToolsRoutes,
 ] satisfies RouteConfig;

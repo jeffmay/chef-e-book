@@ -1,5 +1,5 @@
-import { createRecipe, createRecipeFolder, deleteRecipe } from "@recipe-book/shared";
-import { act, render, screen } from "@testing-library/react";
+import { createRecipe, createRecipeFolder, deleteRecipe, getSessions } from "@recipe-book/shared";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
 import { MemoryRouter } from "react-router";
@@ -68,7 +68,7 @@ describe("BulkRecipeEditorPage — empty state", () => {
   it("shows the + New recipe button", async () => {
     setup();
     await flushAsyncEffects();
-    expect(screen.getByRole("button", { name: "New recipe" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New Recipe" })).toBeInTheDocument();
   });
 
   it("shows empty state when no recipes exist", async () => {
@@ -79,7 +79,7 @@ describe("BulkRecipeEditorPage — empty state", () => {
 
   it("+ New recipe navigates to /recipes/new", async () => {
     setup();
-    await userEvent.click(screen.getByRole("button", { name: "New recipe" }));
+    await userEvent.click(screen.getByRole("button", { name: "New Recipe" }));
     expect(mockNavigate).toHaveBeenCalledWith("/recipes/new");
   });
 });
@@ -101,11 +101,12 @@ describe("BulkRecipeEditorPage — recipe rows", () => {
     expect(dateCells.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("Edit button navigates to the latest version", async () => {
+  it("Edit in the recipe row menu navigates to the latest version", async () => {
     const recipe = createRecipe(recipeBookDoc, { title: "Soup" });
     const latestVersionId = recipe.versions.at(-1)?.id;
     setup();
-    await userEvent.click(screen.getByRole("button", { name: "Edit recipe Soup" }));
+    await userEvent.click(screen.getByRole("button", { name: "More actions for recipe Soup" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "🖊️ Edit" }));
     expect(mockNavigate).toHaveBeenCalledWith(`/recipes/${recipe.id}/v/${latestVersionId}`);
   });
 
@@ -126,21 +127,22 @@ describe("BulkRecipeEditorPage — expand/collapse", () => {
     expect(screen.getByText(/Untitled version/i)).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
-        name: `Edit version ${version?.description || "Untitled version"}`,
+        name: `Start session for version ${version?.description || "Untitled version"}`,
       }),
     ).toBeInTheDocument();
   });
 
-  it("version Edit button navigates to the specific version", async () => {
+  it("version row menu Edit navigates to the specific version", async () => {
     const recipe = createRecipe(recipeBookDoc, { title: "Cake" });
     const version = recipe.versions[0];
     setup();
     await userEvent.click(screen.getByRole("button", { name: "Expand versions of Cake" }));
     await userEvent.click(
       screen.getByRole("button", {
-        name: `Edit version ${version?.description || "Untitled version"}`,
+        name: `More actions for version ${version?.description || "Untitled version"}`,
       }),
     );
+    await userEvent.click(await screen.findByRole("menuitem", { name: "🖊️ Edit" }));
     expect(mockNavigate).toHaveBeenCalledWith(`/recipes/${recipe.id}/v/${version?.id}`);
   });
 
@@ -364,37 +366,36 @@ describe("BulkRecipeEditorPage — virtual root folder", () => {
 });
 
 describe("BulkRecipeEditorPage — New menu on root folder", () => {
-  it("root folder row has a New button", async () => {
+  it("root folder row has a New Recipe default button and a chevron menu", async () => {
     setup();
     await flushAsyncEffects();
+    expect(screen.getByRole("button", { name: "New recipe in Recipes" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "New item in Recipes" })).toBeInTheDocument();
   });
 
-  it("clicking New opens a menu with Recipe and Folder options", async () => {
+  it("the default New Recipe button navigates to /recipes/new", async () => {
     setup();
-    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
-    expect(screen.getByRole("menuitem", { name: "Recipe" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Folder" })).toBeInTheDocument();
-  });
-
-  it("New > Recipe from root navigates to /recipes/new without folder state", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Recipe" }));
+    await userEvent.click(screen.getByRole("button", { name: "New recipe in Recipes" }));
     expect(mockNavigate).toHaveBeenCalledWith("/recipes/new");
   });
 
-  it("New > Folder from root shows inline folder name form", async () => {
+  it("clicking the chevron opens a menu with New Folder option", async () => {
     setup();
     await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    expect(await screen.findByRole("menuitem", { name: "📂 Folder" })).toBeInTheDocument();
+  });
+
+  it("New Folder menu item shows inline folder name form", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "📂 Folder" }));
     expect(screen.getByRole("textbox", { name: "New folder name" })).toBeInTheDocument();
   });
 
   it("submitting the new root folder creates the folder", async () => {
     setup();
     await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "📂 Folder" }));
     await userEvent.type(screen.getByRole("textbox", { name: "New folder name" }), "Desserts");
     await userEvent.click(screen.getByRole("button", { name: "Confirm new folder" }));
     expect(screen.getByText("Desserts")).toBeInTheDocument();
@@ -404,43 +405,45 @@ describe("BulkRecipeEditorPage — New menu on root folder", () => {
   it("cancelling the new root folder hides the form", async () => {
     setup();
     await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "📂 Folder" }));
     await userEvent.click(screen.getByRole("button", { name: "Cancel new folder" }));
     expect(screen.queryByRole("textbox", { name: "New folder name" })).not.toBeInTheDocument();
+  });
+
+  it("Escape closes the chevron menu", async () => {
+    setup();
+    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
+    expect(await screen.findByRole("menuitem", { name: "📂 Folder" })).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(screen.queryByRole("menuitem", { name: "📂 Folder" })).not.toBeInTheDocument(),
+    );
   });
 });
 
 describe("BulkRecipeEditorPage — New menu on folder rows", () => {
-  it("folder rows have a New button", async () => {
+  it("folder rows have a New Recipe default button and a chevron menu", async () => {
     createRecipeFolder(recipeBookDoc, "Mains");
     setup();
     await flushAsyncEffects();
+    expect(screen.getByRole("button", { name: "New recipe in folder Mains" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "New item in folder Mains" })).toBeInTheDocument();
   });
 
-  it("clicking New on a folder opens a menu with Recipe and Folder options", async () => {
-    createRecipeFolder(recipeBookDoc, "Mains");
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New item in folder Mains" }));
-    expect(screen.getByRole("menuitem", { name: "Recipe" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Folder" })).toBeInTheDocument();
-  });
-
-  it("New > Recipe from a folder navigates to /recipes/new with parentFolderId state", async () => {
+  it("the default New Recipe button navigates with parentFolderId state", async () => {
     const folder = createRecipeFolder(recipeBookDoc, "Mains");
     setup();
-    await userEvent.click(screen.getByRole("button", { name: "New item in folder Mains" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Recipe" }));
+    await userEvent.click(screen.getByRole("button", { name: "New recipe in folder Mains" }));
     expect(mockNavigate).toHaveBeenCalledWith("/recipes/new", {
       state: { parentFolderId: folder.id },
     });
   });
 
-  it("New > Folder from a folder shows inline folder name form", async () => {
+  it("New Folder menu item shows inline folder name form", async () => {
     createRecipeFolder(recipeBookDoc, "Mains");
     setup();
     await userEvent.click(screen.getByRole("button", { name: "New item in folder Mains" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "📂 Folder" }));
     expect(screen.getByRole("textbox", { name: "New folder name" })).toBeInTheDocument();
   });
 
@@ -448,7 +451,7 @@ describe("BulkRecipeEditorPage — New menu on folder rows", () => {
     createRecipeFolder(recipeBookDoc, "Mains");
     setup();
     await userEvent.click(screen.getByRole("button", { name: "New item in folder Mains" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "📂 Folder" }));
     await userEvent.click(screen.getByRole("button", { name: "Cancel new folder" }));
     expect(screen.queryByRole("textbox", { name: "New folder name" })).not.toBeInTheDocument();
   });
@@ -459,47 +462,11 @@ describe("BulkRecipeEditorPage — New menu on folder rows", () => {
     // Expand Mains first so the new child folder will be visible after creation.
     await userEvent.click(screen.getByRole("button", { name: "Expand folder Mains" }));
     await userEvent.click(screen.getByRole("button", { name: "New item in folder Mains" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Folder" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "📂 Folder" }));
     await userEvent.type(screen.getByRole("textbox", { name: "New folder name" }), "Pasta");
     await userEvent.click(screen.getByRole("button", { name: "Confirm new folder" }));
     expect(screen.getByText("Pasta")).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "New folder name" })).not.toBeInTheDocument();
-  });
-});
-
-describe("BulkRecipeEditorPage — New menu keyboard navigation", () => {
-  it("autoFocus puts focus on Recipe when menu opens", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
-    expect(screen.getByRole("menuitem", { name: "Recipe" })).toHaveFocus();
-  });
-
-  it("ArrowDown moves focus from Recipe to Folder", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
-    await userEvent.keyboard("{ArrowDown}");
-    expect(screen.getByRole("menuitem", { name: "Folder" })).toHaveFocus();
-  });
-
-  it("ArrowDown wraps from Folder back to Recipe", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
-    await userEvent.keyboard("{ArrowDown}{ArrowDown}");
-    expect(screen.getByRole("menuitem", { name: "Recipe" })).toHaveFocus();
-  });
-
-  it("ArrowUp from Recipe wraps to Folder (last item)", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
-    await userEvent.keyboard("{ArrowUp}");
-    expect(screen.getByRole("menuitem", { name: "Folder" })).toHaveFocus();
-  });
-
-  it("Escape closes the menu", async () => {
-    setup();
-    await userEvent.click(screen.getByRole("button", { name: "New item in Recipes" }));
-    await userEvent.keyboard("{Escape}");
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 });
 
@@ -591,7 +558,8 @@ describe("BulkRecipeEditorPage — edit navigation", () => {
     const recipe = createRecipe(recipeBookDoc, { title: "Lasagne" });
     const latestVersionId = recipe.versions.at(-1)?.id;
     setup();
-    await userEvent.click(screen.getByRole("button", { name: "Edit recipe Lasagne" }));
+    await userEvent.click(screen.getByRole("button", { name: "More actions for recipe Lasagne" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "🖊️ Edit" }));
     expect(mockNavigate).toHaveBeenCalledWith(`/recipes/${recipe.id}/v/${latestVersionId}`);
     // Recipe must still be visible — Edit does not delete or clear it
     expect(screen.getByText("Lasagne")).toBeInTheDocument();
@@ -604,11 +572,51 @@ describe("BulkRecipeEditorPage — edit navigation", () => {
     await userEvent.click(screen.getByRole("button", { name: "Expand versions of Risotto" }));
     await userEvent.click(
       screen.getByRole("button", {
-        name: `Edit version ${version?.description || "Untitled version"}`,
+        name: `More actions for version ${version?.description || "Untitled version"}`,
       }),
     );
+    await userEvent.click(await screen.findByRole("menuitem", { name: "🖊️ Edit" }));
     expect(mockNavigate).toHaveBeenCalledWith(`/recipes/${recipe.id}/v/${version?.id}`);
     // Recipe row must still be present — version edit does not mutate the list
     expect(screen.getByText("Risotto")).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Start session
+// ---------------------------------------------------------------------------
+
+describe("BulkRecipeEditorPage — start session", () => {
+  it("recipe row Start creates a session for the latest version and navigates to it", async () => {
+    const recipe = createRecipe(recipeBookDoc, { title: "Risotto" });
+    setup();
+    await flushAsyncEffects();
+
+    await userEvent.click(screen.getByRole("button", { name: "Start session for Risotto" }));
+
+    const sessions = getSessions(recipeBookDoc);
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]?.recipe_id).toBe(recipe.id);
+    expect(sessions[0]?.recipe_version_id).toBe(recipe.versions.at(-1)?.id);
+    expect(mockNavigate).toHaveBeenCalledWith(`/sessions/${sessions[0]?.id}`);
+  });
+
+  it("version row Start creates a session for that specific version", async () => {
+    const recipe = createRecipe(recipeBookDoc, { title: "Risotto" });
+    const version = recipe.versions[0];
+    setup();
+    await flushAsyncEffects();
+
+    await userEvent.click(screen.getByRole("button", { name: "Expand versions of Risotto" }));
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: `Start session for version ${version?.description || "Untitled version"}`,
+      }),
+    );
+
+    const sessions = getSessions(recipeBookDoc);
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]?.recipe_version_id).toBe(version?.id);
+    expect(mockNavigate).toHaveBeenCalledWith(`/sessions/${sessions[0]?.id}`);
   });
 });

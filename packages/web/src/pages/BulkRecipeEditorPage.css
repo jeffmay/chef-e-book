@@ -200,6 +200,7 @@
 
 .bre-td--actions {
   text-align: center;
+  font-size: 0.85em;
 }
 
 /* Depth-based name cell indentation — <td> handles padding only */
@@ -314,6 +315,7 @@
    ============================================================ */
 
 .bre-edit-btn,
+.bre-start-btn,
 .bre-new-menu-btn {
   padding: 2px var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
@@ -321,6 +323,12 @@
   color: var(--color-fg);
   cursor: pointer;
   white-space: nowrap;
+}
+
+.bre-start-btn {
+  margin-left: var(--spacing-sm);
+  background: var(--color-fg);
+  color: var(--color-bg);
 }
 
 /* ============================================================

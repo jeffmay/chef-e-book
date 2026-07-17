@@ -1,4 +1,4 @@
-import { useRef, type FocusEvent } from "react";
+import { useEffect, useRef, type FocusEvent } from "react";
 import { Link } from "react-router";
 import "./NavMenu.css";
 
@@ -13,6 +13,22 @@ export function NavMenu() {
     const related = e.relatedTarget instanceof Node ? e.relatedTarget : null;
     if (!e.currentTarget.contains(related)) close();
   }
+
+  /** Close on click outside (catches non-focusable targets). */
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        detailsRef.current !== null &&
+        detailsRef.current.open &&
+        e.target instanceof Node &&
+        !detailsRef.current.contains(e.target)
+      ) {
+        close();
+      }
+    }
+    document.addEventListener("pointerdown", handleClick);
+    return () => document.removeEventListener("pointerdown", handleClick);
+  }, []);
 
   return (
     <details ref={detailsRef} className="nav-menu" onBlur={handleBlur}>

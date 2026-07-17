@@ -95,6 +95,7 @@ recipe-book/
 │   │           ├── recipes.new.tsx                        # /recipes/new
 │   │           ├── recipes.$recipe_id.tsx                 # /recipes/:recipe_id
 │   │           ├── recipes.$recipe_id.v.$version_id.tsx   # /recipes/:recipe_id/v/:version_id
+│   │           ├── sessions.$session_id.tsx               # /sessions/:session_id
 │   │           └── profile.tsx                            # /profile
 │   └── server/        # Node.js sync server (Yjs document store per user)
 ├── AGENTS.md
@@ -178,8 +179,12 @@ A snapshot of a recipe's ingredients and sections at a point in time.
 - `description`: string (e.g. "Untested" or "Final Version")
 - `ingredients`: `RecipeIngredient[]` — top-level ingredient list (ingredient_id + optional Measurement)
 - `sections`: `Section[]` — ordered list of sections containing `SectionItem`s
+- `estimated_time_seconds?`: number — overrides the computed estimate (instruction durations + per-ingredient time × ingredient count)
+- `seconds_per_ingredient?`: number — per-ingredient prep time; resolution chain: version value → RecipeBook `book_settings` value → `VITE_DEFAULT_SECONDS_PER_INGREDIENT` build variable → 2-minute shared default (`DEFAULT_SECONDS_PER_INGREDIENT`)
 - `created_at`: timestamp
 - `created_by`: string
+
+Estimation helpers live in `packages/shared/src/math/estimation.ts` (`minimumEstimatedSeconds`, `resolveEstimatedSeconds`, `computeItemWeights`, `progressFraction`); section walkers (`collectIngredientItems`, `collectInstructions`, `computeTopIngredients`, `removeSectionItemsById`) live in `packages/shared/src/types/sections.ts`.
 
 #### SectionItem (recursive)
 
@@ -203,16 +208,28 @@ Always displayed as simplified integer + fraction. All operations preserve exact
 
 ### Session
 
-An "active session" is a started recipe run:
+An "active session" is a started recipe run. Stored in the `"sessions"` Yjs map (`packages/shared/src/yjs/sessionStore.ts`); completed sessions are never deleted automatically.
 
-- `id`: string
-- `recipe_version_id`: string
+**Item states are stored separately** in the `"session_item_states"` Yjs map, keyed by `"<session_id>/<item_id>"`. Each item state is an individual entry so concurrent updates to different items merge at the CRDT entry level instead of racing on the whole session object. `getSessionYmap()` returns the sessions map; `getItemStatesYmap()` returns the item states map. The hook (`useSessionStore`) observes both maps for reactive updates. Old sessions with inline `item_states` in the session entry are still readable via backward-compat fallback in `getSession()`.
+
+- `id`: `SessionId` (branded nanoid, 12 chars)
+- `recipe_id`: `RecipeId`
+- `recipe_version_id`: `RecipeVersionId`
 - `started_at`: timestamp
 - `completed_at?`: timestamp
-- `item_states`: map of item id → `{ checked: boolean, one_off_quantity?: Measurement, notes?: string }`
+- `status`: `"active" | "completed"`
+- `item_states`: map of item id → `{ checked: boolean, skipped?: boolean, one_off_quantity?: Measurement, notes?: string }`
 - `rescale_multiplier?: Fraction`
 - `rating?: number` (0–10, shown as 0–5 stars)
 - `session_notes?: string`
+
+`completeSession` records `completed_at` and marks any item that is neither checked nor skipped as skipped, so the summary can offer to remove or keep it.
+
+### Book Settings
+
+Book-wide settings stored in the `"book_settings"` Yjs map (`packages/shared/src/yjs/bookSettingsStore.ts`). All values optional; a future settings page will edit them.
+
+- `seconds_per_ingredient?`: number — book-level default per-ingredient prep time; falls back to the `VITE_DEFAULT_SECONDS_PER_INGREDIENT` build variable (parsed in `packages/web/src/config.ts`, default 120s). Resolved by the `useBookSettings` hook.
 
 ### Recipe Folder (formerly RecipeGroup)
 
@@ -232,6 +249,8 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 
 - All editor components use "↩" (cancel changes) and "✔︎" (accept changes) buttons in left-to-right order.
   If the horizontal screen space is needed, the buttons can be stacked from top-to-bottom.
+- **`ButtonMenu`** (`components/button_menu/`) — shared split button: an optional `defaultButton` performs its action directly, and a "▾" chevron opens a PrimeReact popup `Menu` listing all available actions (PrimeReact `ButtonGroup` + `Menu`). When `defaultButton` is undefined only the chevron shows. Used by the bulk recipe page rows, the folder "New" menus, and the version history table.
+- **`RecipeVersionEditor`** (`components/recipe_editor/`) — the editable body of a RecipeVersion (computed Ingredients display + recursive Instructions section editor). Shared by `RecipeEditor` and the session summary; optional `skippedIds`/`onRestoreItem`/`onDismissItem` decorate skipped items with the `--background-danger` stripes, a floating "skipped" tag, and Restore/✕ actions.
 
 ### Home Page
 
@@ -252,12 +271,34 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Attach notes to any sections or section items
 - Auto-grouping ingredients (ex: group by label - solid or liquid)
 - Save as a new version (the "Create new version" checkbox clears the version description and focuses it)
-- View past versions (version history)
+- View past versions (version history); each row has a `ButtonMenu` — "Edit" is the default button (opens that version) with "Start" in the chevron menu
+- "▶ Start" button in the header starts a session for the version being viewed (or the latest)
 - Clone and rename recipe
 - View session log
 - Move to a parent group ("organize")
 
-### Active Session View
+### Recipe Session Page (`/sessions/:session_id`)
+
+`RecipeSessionPage` (`packages/web/src/pages/RecipeSessionPage.tsx`) renders a started session; started from the recipe editor (header + version table) or the bulk recipe page (recipe + version rows) via `useStartSession`.
+
+**Run view** (`status: "active"`):
+
+- Renders the version's sections in order: ingredients and instructions as checkbox rows with a Skip/Unskip toggle, containers as grouped nested ingredient lists, text blocks as plain text, sub-section headers by depth
+- Checked rows disable Skip; skipped rows disable the checkbox and show a solid-black "skipped" tag with strikethrough
+- Progress bar (black fill, no animation) weighted by `computeItemWeights`: each ingredient advances by the per-ingredient time; the remaining time budget (total − per-ingredient × count) is distributed across instructions in proportion to their durations (split evenly when none have durations); skipped items count as done
+- Shows percent complete and approximate remaining time
+- "✔︎ Complete" button at the end calls `completeSession`
+
+**Summary view** (`status: "completed"`, also shown when revisiting an old completed session):
+
+- Total (actual) time from `started_at` → `completed_at`
+- The full `RecipeVersionEditor`, so new ingredients/sections can be added before saving; skipped items render in place with the `--background-danger` diagonal stripes and a floating centered "skipped" tag, plus a "Restore" button (puts the item back into the version) and a "✕" button (removes the row from view) — still-skipped items are removed from any saved version by default
+- "Time per ingredient" `DurationEditor` (separated from its label by a vertical rule), defaulting to the resolved config for the session's version
+- "Estimated total time" range slider, clamped to a minimum of instruction durations + per-ingredient time × ingredient count over the _kept_ items (recomputed on restore/dismiss and per-ingredient time changes)
+- Required version description (shared field-error styling)
+- Actions: "Create a new version" (appends to the same recipe with the adjusted time fields), "Create a new recipe" (uses the prefilled new-recipe title input), "Discard recipe version" (navigates away; the completed session is still kept)
+
+### Active Session View (planned — extends the Recipe Session Page)
 
 - Ingredients and containers as checkboxes (nested for containers)
 - Checking a container does not auto-check its contents
@@ -311,6 +352,8 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Sort by last modified, date created, or alphabetical
 - Manual drag-and-drop reorder
 - Per-item buttons: edit recipe, expand versions, expand subgroup
+- Recipe and version rows use a `ButtonMenu` — "▶ Start" is the default button (latest version on recipe rows, that version on version rows) with Start/Edit in the chevron menu
+- Folder rows (and the virtual root) use a `ButtonMenu` — "New Recipe" is the default button with New Recipe / New Folder in the chevron menu
 
 ### Recipe Import
 
