@@ -92,9 +92,8 @@ _(none)_
 ## Future Development Goals
 
 - Re-implement per-item notes (attach notes to sections, ingredients, instructions, text blocks) — temporarily removed; see `recipe-editor-ingredient-selector` branch
-- Offline-first PWA support (service worker)
-- Hardware display target: Waveshare 7.5" e-paper + Raspberry Pi Pico 2
+- Hardware display target: PineNote with a 1404 x 1872 pixel black & white (with dithering) e-ink screen
 - Multi-user collaboration (shared Yjs documents)
-- Nutrition data integration
-- AI-assisted recipe scaling suggestions
+- Large default list of ingredients and default measurement values
+- AI-assisted recipe scraping
 - Export to PDF / print view
