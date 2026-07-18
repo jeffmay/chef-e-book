@@ -17,7 +17,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * Reads the `ingredient_id` off a leaf node's `data`, or `undefined` when the
  * node is a grouping node (a container) with no ingredient of its own.
  */
-function leafIngredientId(node: TreeNode): string | undefined {
+function leafIngredientId(node: ReadonlyDeep<TreeNode>): string | undefined {
   const data: unknown = node.data;
   if (isRecord(data) && typeof data.ingredient_id === "string") {
     return data.ingredient_id;
@@ -34,7 +34,7 @@ function leafIngredientId(node: TreeNode): string | undefined {
  */
 export function buildInstructionIngredientTree(
   sections: ReadonlyDeep<Section[]>,
-  allIngredients: readonly Ingredient[],
+  allIngredients: ReadonlyDeep<Ingredient[]>,
 ): TreeNode[] {
   const nameById = new Map<string, string>(allIngredients.map((i) => [i.id, i.name]));
   const roots: TreeNode[] = [];
@@ -73,9 +73,11 @@ export function buildInstructionIngredientTree(
 }
 
 /** Maps every leaf node key to the ingredient it represents. */
-export function collectKeyToIngredientId(nodes: TreeNode[]): Map<string, IngredientId> {
+export function collectKeyToIngredientId(
+  nodes: ReadonlyDeep<TreeNode[]>,
+): Map<string, IngredientId> {
   const map = new Map<string, IngredientId>();
-  function visit(node: TreeNode): void {
+  function visit(node: ReadonlyDeep<TreeNode>): void {
     const ingId = leafIngredientId(node);
     if (ingId !== undefined) map.set(String(node.key), loadId(IngredientId, ingId));
     node.children?.forEach(visit);
@@ -85,10 +87,10 @@ export function collectKeyToIngredientId(nodes: TreeNode[]): Map<string, Ingredi
 }
 
 /** Selection state for a single node in TreeSelect's checkbox mode. */
-export interface NodeSelectionState {
-  readonly checked: boolean;
-  readonly partialChecked: boolean;
-}
+export type NodeSelectionState = {
+  checked: boolean;
+  partialChecked: boolean;
+};
 
 /**
  * Builds TreeSelect's checkbox selection map from the ingredient ids referenced
@@ -96,13 +98,13 @@ export interface NodeSelectionState {
  * children are referenced, and partially checked when only some are.
  */
 export function ingredientIdsToSelection(
-  nodes: TreeNode[],
-  ids: readonly IngredientId[],
+  nodes: ReadonlyDeep<TreeNode[]>,
+  ids: ReadonlyDeep<IngredientId[]>,
 ): Record<string, NodeSelectionState> {
   const idSet = new Set<string>(ids);
   const map: Record<string, NodeSelectionState> = {};
 
-  function visit(node: TreeNode): boolean {
+  function visit(node: ReadonlyDeep<TreeNode>): boolean {
     const key = String(node.key);
     const children = node.children;
     if (children === undefined || children.length === 0) {

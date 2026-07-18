@@ -4,16 +4,17 @@ import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
 import { useMemo, type KeyboardEvent } from "react";
 import "../../styles/treeSelect.css";
 import { buildIngredientTree, type IngredientRow } from "./buildIngredientTree.ts";
+import type { ReadonlyDeep } from "type-fest";
 import "./IngredientSelector.css";
 
-export interface IngredientSelectorProps {
-  readonly value: IngredientId | undefined;
-  readonly options: readonly Ingredient[];
-  readonly labels: readonly KitchenwareLabel[];
-  readonly onChange: (id: IngredientId | undefined) => void;
-  readonly ariaLabel: string;
-  readonly placeholder?: string;
-}
+export type IngredientSelectorProps = ReadonlyDeep<{
+  value: IngredientId | undefined;
+  options: Ingredient[];
+  labels: KitchenwareLabel[];
+  onChange: (id: IngredientId | undefined) => void;
+  ariaLabel: string;
+  placeholder?: string;
+}>;
 
 function rowToNode(row: IngredientRow): TreeNode {
   return {

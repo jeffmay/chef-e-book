@@ -12,20 +12,21 @@ import {
 } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
 import { useKitchenwareDoc } from "../contexts/docContext.ts";
+import type { ReadonlyDeep } from "type-fest";
 
-export interface NewContainerInput {
-  readonly name: string;
-  readonly label_ids?: readonly KitchenwareLabelId[];
-  readonly parent_id?: ContainerId;
-}
+export type NewContainerInput = {
+  name: string;
+  label_ids?: KitchenwareLabelId[];
+  parent_id?: ContainerId;
+};
 
-export interface UseContainerStoreResult {
-  readonly containers: readonly Container[];
-  readonly addContainer: (input: NewContainerInput) => Container;
-  readonly renameContainer: (id: ContainerId, name: string) => void;
-  readonly setLabels: (id: ContainerId, label_ids: readonly KitchenwareLabelId[]) => void;
-  readonly setParent: (id: ContainerId, parent_id: ContainerId | undefined) => void;
-}
+export type UseContainerStoreResult = {
+  containers: Container[];
+  addContainer: (input: ReadonlyDeep<NewContainerInput>) => Container;
+  renameContainer: (id: ContainerId, name: string) => void;
+  setLabels: (id: ContainerId, label_ids: readonly KitchenwareLabelId[]) => void;
+  setParent: (id: ContainerId, parent_id: ContainerId | undefined) => void;
+};
 
 export function useContainerStore(): UseContainerStoreResult {
   const { doc, whenSynced } = useKitchenwareDoc();

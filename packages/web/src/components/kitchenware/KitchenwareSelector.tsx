@@ -3,32 +3,33 @@ import { useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import { KitchenwareEditor } from "./KitchenwareEditor.tsx";
 import "./KitchenwareSelector.css";
+import type { ReadonlyDeep } from "type-fest";
 
-interface SelectOption {
-  readonly value: ContainerId;
-  readonly label: string;
-}
+type SelectOption = {
+  value: ContainerId;
+  label: string;
+};
 
-interface NewContainerState {
-  readonly container: Container;
+type NewContainerState = {
+  container: Container;
   labelIds: KitchenwareLabelId[];
   parentId: ContainerId | undefined;
-}
+};
 
-export interface KitchenwareSelectorProps {
-  readonly value: ContainerId | undefined;
-  readonly containers: readonly Container[];
-  readonly allLabelNames: readonly string[];
-  readonly onChange: (id: ContainerId | undefined) => void;
-  readonly onCreateContainer: (name: string) => Container;
-  readonly onUpdateContainer: (
+export type KitchenwareSelectorProps = ReadonlyDeep<{
+  value: ContainerId | undefined;
+  containers: Container[];
+  allLabelNames: string[];
+  onChange: (id: ContainerId | undefined) => void;
+  onCreateContainer: (name: string) => Container;
+  onUpdateContainer: (
     id: ContainerId,
-    label_ids: KitchenwareLabelId[],
+    label_ids: readonly KitchenwareLabelId[],
     parent_id: ContainerId | undefined,
   ) => void;
-  readonly ariaLabel?: string;
-  readonly placeholder?: string;
-}
+  ariaLabel?: string;
+  placeholder?: string;
+}>;
 
 export function KitchenwareSelector({
   value,
@@ -40,7 +41,7 @@ export function KitchenwareSelector({
   ariaLabel = "Container",
   placeholder = "Select or create a container…",
 }: KitchenwareSelectorProps) {
-  const [newContainer, setNewContainer] = useState<NewContainerState | null>(null);
+  const [newContainer, setNewContainer] = useState<ReadonlyDeep<NewContainerState> | null>(null);
 
   const options: SelectOption[] = containers.map((c) => ({ value: c.id, label: c.name }));
   const selected = value !== undefined ? (options.find((o) => o.value === value) ?? null) : null;

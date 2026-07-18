@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createRoutesStub } from "react-router";
-import { ACTIVE_BOOK_KEY, ActiveBookMeta } from "../hooks/useActiveBookMeta.ts";
+import { ACTIVE_BOOK_KEY, ActiveBookMeta } from "../hooks/useActiveBookMetaStore.ts";
 import { randomId, RecipeBookId } from "@recipe-book/shared";
 import { type } from "arktype";
 

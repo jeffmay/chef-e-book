@@ -4,17 +4,17 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import "./LabelTable.css";
 
-export interface LabelTableProps {
-  readonly labels: ReadonlyDeep<KitchenwareLabel[]>;
-  readonly ingredients: ReadonlyDeep<Ingredient[]>;
-  readonly onFilterAll: (label_ids: readonly KitchenwareLabelId[]) => void;
-  readonly onFilterAny: (label_ids: readonly KitchenwareLabelId[]) => void;
+export type LabelTableProps = ReadonlyDeep<{
+  labels: readonly KitchenwareLabel[];
+  ingredients: readonly Ingredient[];
+  onFilterAll: (label_ids: readonly KitchenwareLabelId[]) => void;
+  onFilterAny: (label_ids: readonly KitchenwareLabelId[]) => void;
   /** @default calls onFilterAll([]) */
-  readonly onClearFilters?: () => void;
-  readonly onDelete: (label_ids: readonly KitchenwareLabelId[]) => void;
-  readonly onMerge: (label_ids: readonly KitchenwareLabelId[], new_name: string) => void;
-  readonly onRename: (id: KitchenwareLabelId, name: string) => void;
-}
+  onClearFilters?: () => void;
+  onDelete: (label_ids: readonly KitchenwareLabelId[]) => void;
+  onMerge: (label_ids: readonly KitchenwareLabelId[], new_name: string) => void;
+  onRename: (id: KitchenwareLabelId, name: string) => void;
+}>;
 
 export function LabelTable({
   labels,

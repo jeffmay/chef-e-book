@@ -76,12 +76,12 @@ export function BulkIngredientEditorPage() {
     const input: {
       name: string;
       default_measurement_value: Measurement;
-      labelNames: readonly string[];
+      label_names: readonly string[];
       parent_id?: IngredientId;
     } = {
       name: labelName,
       default_measurement_value: addForm.measurement_value,
-      labelNames,
+      label_names: labelNames,
     };
     if (addForm.parent_id !== "") {
       input.parent_id = loadId(IngredientId, addForm.parent_id);

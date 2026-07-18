@@ -33,14 +33,14 @@ function buildPath(folders: RecipeFolder[], id: RecipeFolderId): string {
   return find(folders, id)?.join(" / ") ?? id;
 }
 
-export interface RecipeFolderSelectorProps {
+export type RecipeFolderSelectorProps = {
   readonly value: RecipeFolderId | undefined;
   readonly folders: readonly RecipeFolder[];
   readonly onChange: (id: RecipeFolderId | undefined) => void;
   readonly onCreateFolder: (name: string, parent_id?: RecipeFolderId) => RecipeFolder;
   readonly ariaLabel?: string;
   readonly placeholder?: string;
-}
+};
 
 export function RecipeFolderSelector({
   value,

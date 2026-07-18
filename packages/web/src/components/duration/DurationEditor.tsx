@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ReadonlyDeep } from "type-fest";
 import parse from "parse-duration";
 import { humanizeSeconds } from "./humanizeSeconds.ts";
 import "./DurationEditor.css";
@@ -16,10 +17,10 @@ const SEC_DELTAS = [-15, -5, 5, 15] as const;
 // Component
 // ---------------------------------------------------------------------------
 
-export interface DurationEditorProps {
-  readonly value: number; // seconds
-  readonly onCommit: (seconds: number) => void;
-}
+export type DurationEditorProps = ReadonlyDeep<{
+  value: number; // seconds
+  onCommit: (seconds: number) => void;
+}>;
 
 export function DurationEditor({ value, onCommit }: DurationEditorProps) {
   const [editing, setEditing] = useState(false);

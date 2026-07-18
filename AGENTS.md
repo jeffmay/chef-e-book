@@ -10,6 +10,11 @@ A local-first single-page web app for creating and managing recipes, with option
 - ESLint for linting
 - Functional components with hooks for React
 - Companion objects to define named and branded `arktype` schemas
+- Use `ReadonlyDeep<*>` for all input types whenever possible
+  - React props types should always be defined as `ReadonlyDeep<{...}>`.
+  - Use `type *Props = ReadonlyDeep<{...}>` over `interface *Props { ... }` except for `*Store` types returned from `use*Store` functions.
+  - Non-props type `X` should be defined as mutable and functions should always take `ReadonlyDeep<X>` as input.
+  - Functions that return types should always return them as mutable when possible.
 - Optimize for the 1404 x 1872 pixel e-ink screen of the PineNote in Black & White mode with dithering
   - Never use animations
   - Text should only be full black or white (not grey)
@@ -65,6 +70,7 @@ The app is running at http://localhost:5173, and you can use the Playwright MCP 
 - MUST ALWAYS use `arktype` for runtime validation over hand-rolled validation functions.
 - MUST NEVER use the `in` keyword to test for the existance of a property on a union type. Instead, use the proper type union discriminator field to narrow the type to the desired type or interface.
 - MUST NEVER use the `any` type. Instead, try your best to define a strict generic type. If you are adding type information to something that does not allow passing the type information along (such as deserialization or APIs that return untyped data), then use a specific function to validate and cast the object as the expected / provided type. Or, as a last resort, use the `unknown` type instead.
+- MUST ALWAYS use `ReadonlyDeep<*>` for function inputs unless it would be meaningless.
 - MUST ALWAYS use double quotes ("") for constant strings, unless the string itself contains double quotes, in which case, you should use single quotes ('"'), unless the string contains both double and single quotes, in which case use backticks (`"''"`).
 - MUST ALWAYS use responsive design to ensure that the elements never require horizontal scrolling, while maximizing use of horizontal space for mobile device, tablet, laptop, and wide screens.
 - MUST ALWAYS use CSS over JavaScript for styling elements.

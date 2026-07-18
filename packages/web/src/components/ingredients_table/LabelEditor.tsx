@@ -2,12 +2,13 @@ import { useState, useMemo, useRef, useEffect, type MouseEvent } from "react";
 import CreatableSelect from "react-select/creatable";
 import { components as SelectComponents, type SelectInstance } from "react-select";
 import type { GroupBase, MenuProps, MultiValue } from "react-select";
+import type { ReadonlyDeep } from "type-fest";
 import "./LabelEditor.css";
 
-interface LabelOption {
-  readonly label: string;
-  readonly value: string;
-}
+type LabelOption = ReadonlyDeep<{
+  label: string;
+  value: string;
+}>;
 
 // Intercepts non-left-click mousedown to prevent focus steal that would close the dropdown.
 function LabelEditorMenu(props: MenuProps<LabelOption, true, GroupBase<LabelOption>>) {
@@ -28,18 +29,18 @@ function LabelEditorMenu(props: MenuProps<LabelOption, true, GroupBase<LabelOpti
   );
 }
 
-export interface LabelEditorProps {
-  readonly selectedLabelNames: readonly string[];
-  readonly allLabelNames: readonly string[];
-  readonly ariaLabel: string;
-  readonly placeholder?: string;
-  readonly onChange: (names: readonly string[]) => void;
-  readonly onCommit?: () => void;
-  readonly onCancel?: () => void;
-  readonly commitAriaLabel?: string;
-  readonly commitDisabled?: boolean;
-  readonly autoFocus?: boolean;
-}
+export type LabelEditorProps = ReadonlyDeep<{
+  selectedLabelNames: string[];
+  allLabelNames: string[];
+  ariaLabel: string;
+  placeholder?: string;
+  onChange: (names: readonly string[]) => void;
+  onCommit?: () => void;
+  onCancel?: () => void;
+  commitAriaLabel?: string;
+  commitDisabled?: boolean;
+  autoFocus?: boolean;
+}>;
 
 export function LabelEditor({
   selectedLabelNames,

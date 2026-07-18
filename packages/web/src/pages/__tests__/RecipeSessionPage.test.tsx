@@ -167,12 +167,14 @@ function seedRecipe(versionOverrides: Partial<RecipeVersion> = {}): {
     created_at: Date.now(),
     ...versionOverrides,
   };
-  const recipe = saveRecipe(recipeBookDoc, created.id, {
+  saveRecipe(recipeBookDoc, created.id, {
     title: created.title,
     version,
     create_new_version: false,
   });
-  return { recipe, version };
+  const saved = getRecipe(recipeBookDoc, created.id);
+  assertNotValidationError(saved);
+  return { recipe: saved, version };
 }
 
 function seedSession(): { recipe: Recipe; version: RecipeVersion; session: Session } {

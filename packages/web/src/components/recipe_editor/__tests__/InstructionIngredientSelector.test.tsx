@@ -7,12 +7,12 @@ import { InstructionIngredientSelector } from "../InstructionIngredientSelector.
 
 type SelectionState = { checked?: boolean; partialChecked?: boolean };
 
-interface MockTreeSelectProps {
+type MockTreeSelectProps = {
   value: Record<string, SelectionState> | null | undefined;
   options: TreeNode[] | undefined;
   onChange: (e: { value: Record<string, SelectionState> }) => void;
   ariaLabel: string | undefined;
-}
+};
 
 // Render the checkbox-mode TreeSelect as a flat list of leaf checkboxes that
 // reads/writes the selection-keys object the real component expects.

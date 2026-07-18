@@ -129,7 +129,7 @@ vi.mock("../../components/recipe_editor/InstructionIngredientSelector.tsx", () =
         }
       }
     }
-    collect(nodes);
+    collect(nodes as TreeNode[]);
     return (
       <div role="group" aria-label="Instruction ingredients">
         {leaves.map((leaf) => {
@@ -941,11 +941,13 @@ describe("RecipeEditor — version time fields", () => {
     const recipe = createRecipe(recipeBookDoc, { title: "Pancakes" });
     const base = recipe.versions[0];
     if (base === undefined) throw new Error("expected an initial version");
-    const seeded = saveRecipe(recipeBookDoc, recipe.id, {
+    saveRecipe(recipeBookDoc, recipe.id, {
       title: recipe.title,
       version: { ...base, estimated_time_seconds: 900, seconds_per_ingredient: 60 },
       create_new_version: false,
     });
+    const seeded = getRecipe(recipeBookDoc, recipe.id);
+    assertNotValidationError(seeded);
 
     const onSave = vi.fn();
     render(<RecipeEditor recipe={seeded} onSave={onSave} onCancel={vi.fn()} />, {

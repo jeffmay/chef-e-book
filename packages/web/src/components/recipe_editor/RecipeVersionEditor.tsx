@@ -51,15 +51,15 @@ function headingForDepth(depth: number): HeadingLevel {
 // Helper: compute totals per ingredient per unit from sections
 // ---------------------------------------------------------------------------
 
-interface ComputedIngredientTotal {
+type ComputedIngredientTotal = ReadonlyDeep<{
   ingredient_id: IngredientId;
   name: string;
-  amounts: Array<{ unit: MeasurementUnit; value: Fraction }>;
-}
+  amounts: Measurement[];
+}>;
 
 function computeIngredientTotals(
-  sections: readonly Section[],
-  allIngredients: readonly Ingredient[],
+  sections: ReadonlyDeep<Section[]>,
+  allIngredients: ReadonlyDeep<Ingredient[]>,
 ): ComputedIngredientTotal[] {
   const items = collectIngredientItems(sections);
   const grouped = new Map<IngredientId, Map<MeasurementUnit, Fraction>>();
@@ -95,7 +95,7 @@ function computeIngredientTotals(
 // ---------------------------------------------------------------------------
 
 export function computeAmountOrDefault(
-  item: IngredientItem,
+  item: ReadonlyDeep<IngredientItem>,
   allIngredients: ReadonlyDeep<Ingredient[]>,
 ): Measurement {
   if (item.customAmount) return item.customAmount;
@@ -117,7 +117,7 @@ export function getByIdOrThrow<A extends ReadonlyDeep<V[]>, V extends { id: stri
 // Unit display labels
 // ---------------------------------------------------------------------------
 
-function formatAmount(value: Fraction, unit: MeasurementUnit): string {
+function formatAmount(value: ReadonlyDeep<Fraction>, unit: MeasurementUnit): string {
   return `${formatFraction(value)} ${MeasurementUnit.display[unit]}`;
 }
 
@@ -148,8 +148,8 @@ export function isSameMeasurementCategory(unitA: MeasurementUnit, unitB: Measure
 export function resolveAmountOnIngredientChange(
   oldIngredientId: IngredientId | undefined,
   newIngredientId: IngredientId,
-  currentAmount: Measurement | undefined,
-  allIngredients: readonly Ingredient[],
+  currentAmount: ReadonlyDeep<Measurement> | undefined,
+  allIngredients: ReadonlyDeep<Ingredient[]>,
 ): Measurement {
   const newIngredient = getByIdOrThrow(Ingredient, allIngredients, newIngredientId);
   if (
@@ -168,38 +168,39 @@ export function resolveAmountOnIngredientChange(
 // Shared prop interfaces
 // ---------------------------------------------------------------------------
 
-interface RecipeSectionItemRowProps<T extends SectionItem = SectionItem> {
-  readonly item: T;
-  readonly onChange: (item: T) => void;
-  readonly onRemove: () => void;
-}
+type RecipeSectionItemRowProps<T extends SectionItem = SectionItem> = ReadonlyDeep<{
+  item: T;
+  onChange: (item: ReadonlyDeep<T>) => void;
+  onRemove: () => void;
+}>;
 
-interface WithIngredients {
-  readonly allIngredients: readonly Ingredient[];
-  readonly allLabels: readonly KitchenwareLabel[];
-}
+type WithIngredientsProps = ReadonlyDeep<{
+  allIngredients: Ingredient[];
+  allLabels: KitchenwareLabel[];
+}>;
 
 /**
  * Skipped-item decoration (session summary): items in `skippedIds` render with
  * the danger background and a floating "skipped" label, and offer Restore /
  * Dismiss actions instead of remove.
  */
-interface WithSkippedItems {
-  readonly skippedIds?: ReadonlySet<SectionItemId> | undefined;
-  readonly onRestoreItem?: ((id: SectionItemId) => void) | undefined;
-  readonly onDismissItem?: ((id: SectionItemId) => void) | undefined;
-}
+type WithSkippedItemsProps = ReadonlyDeep<{
+  skippedIds?: ReadonlySet<SectionItemId> | undefined;
+  onRestoreItem?: ((id: SectionItemId) => void) | undefined;
+  onDismissItem?: ((id: SectionItemId) => void) | undefined;
+}>;
 
-interface SkippedRowProps {
-  readonly skipped?: boolean | undefined;
-  readonly onRestore?: (() => void) | undefined;
-  readonly onDismiss?: (() => void) | undefined;
-}
+type SkippedRowProps = ReadonlyDeep<{
+  skipped?: boolean | undefined;
+  onRestore?: (() => void) | undefined;
+  onDismiss?: (() => void) | undefined;
+}>;
 
-interface SkippedRowActionsProps extends SkippedRowProps {
-  /** Human-readable name used in the Restore/Dismiss accessible labels. */
-  readonly itemName: string;
-}
+type SkippedRowActionsProps = SkippedRowProps &
+  ReadonlyDeep<{
+    /** Human-readable name used in the Restore/Dismiss accessible labels. */
+    itemName: string;
+  }>;
 
 function SkippedRowActions({ itemName, onRestore, onDismiss }: SkippedRowActionsProps) {
   return (
@@ -229,8 +230,9 @@ function SkippedRowActions({ itemName, onRestore, onDismiss }: SkippedRowActions
 // IngredientItemRow
 // ---------------------------------------------------------------------------
 
-interface IngredientItemRowProps
-  extends RecipeSectionItemRowProps<IngredientItem>, WithIngredients, SkippedRowProps {}
+type IngredientItemRowProps = RecipeSectionItemRowProps<IngredientItem> &
+  WithIngredientsProps &
+  SkippedRowProps;
 
 function IngredientItemRow({
   item,
@@ -318,10 +320,11 @@ function IngredientItemRow({
 // NewIngredientRow — draft for adding a new ingredient with required amount
 // ---------------------------------------------------------------------------
 
-interface NewIngredientRowProps extends WithIngredients {
-  readonly onAdd: (item: IngredientItem) => void;
-  readonly onCancel: () => void;
-}
+type NewIngredientRowProps = WithIngredientsProps &
+  ReadonlyDeep<{
+    onAdd: (item: ReadonlyDeep<IngredientItem>) => void;
+    onCancel: () => void;
+  }>;
 
 function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIngredientRowProps) {
   const [ingredient_id, setIngredientId] = useState<IngredientId | undefined>(undefined);
@@ -392,8 +395,9 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
 // ContainerItemRow
 // ---------------------------------------------------------------------------
 
-interface ContainerItemRowProps
-  extends RecipeSectionItemRowProps<ContainerItem>, WithIngredients, WithSkippedItems {}
+type ContainerItemRowProps = RecipeSectionItemRowProps<ContainerItem> &
+  WithIngredientsProps &
+  WithSkippedItemsProps;
 
 function ContainerItemRow({
   item,
@@ -511,9 +515,10 @@ const COMMON_EQUIPMENT = [
   { id: fixedId(EquipmentId, "skillet"), name: "Skillet" },
 ] as const;
 
-interface InstructionRowProps extends RecipeSectionItemRowProps<Instruction>, SkippedRowProps {
-  readonly instructionIngredientNodes: TreeNode[];
-}
+type InstructionRowProps = RecipeSectionItemRowProps<Instruction> &
+  SkippedRowProps & {
+    readonly instructionIngredientNodes: TreeNode[];
+  };
 
 function InstructionRow({
   item,
@@ -524,7 +529,7 @@ function InstructionRow({
   onRestore,
   onDismiss,
 }: InstructionRowProps) {
-  function handleIngredientsChange(ids: IngredientId[]) {
+  function handleIngredientsChange(ids: readonly IngredientId[]) {
     if (ids.length > 0) {
       onChange({ ...item, ingredient_ids: ids });
     } else {
@@ -665,11 +670,12 @@ function TextBlockRow({ item, onChange, onRemove }: TextBlockRowProps) {
 
 type NewItemKind = "ingredient" | "container" | "instruction" | "text_block" | "section";
 
-interface SectionEditorProps
-  extends RecipeSectionItemRowProps<Section>, WithIngredients, WithSkippedItems {
-  readonly depth: number;
-  readonly instructionIngredientNodes: TreeNode[];
-}
+type SectionEditorProps = RecipeSectionItemRowProps<Section> &
+  WithIngredientsProps &
+  WithSkippedItemsProps & {
+    readonly depth: number;
+    readonly instructionIngredientNodes: TreeNode[];
+  };
 
 function SectionEditor({
   item: section,
@@ -690,7 +696,7 @@ function SectionEditor({
   const headerInputRef = useRef<HTMLInputElement>(null);
   const Heading = headingForDepth(depth);
 
-  function updateItem(index: number, updated: SectionItem) {
+  function updateItem(index: number, updated: ReadonlyDeep<SectionItem>) {
     const newContents = section.contents.map((item, i) => (i === index ? updated : item));
     onChange({ ...section, contents: newContents });
   }
@@ -907,10 +913,10 @@ function SectionEditor({
 // RecipeIngredientsDisplay — computed read-only list derived from sections
 // ---------------------------------------------------------------------------
 
-interface RecipeIngredientsDisplayProps {
-  readonly sections: readonly Section[];
-  readonly allIngredients: readonly Ingredient[];
-}
+type RecipeIngredientsDisplayProps = ReadonlyDeep<{
+  sections: Section[];
+  allIngredients: Ingredient[];
+}>;
 
 function RecipeIngredientsDisplay({ sections, allIngredients }: RecipeIngredientsDisplayProps) {
   const totals = useMemo(
@@ -951,10 +957,11 @@ function RecipeIngredientsDisplay({ sections, allIngredients }: RecipeIngredient
 // RecipeVersionEditor — computed ingredients + editable instruction sections
 // ---------------------------------------------------------------------------
 
-export interface RecipeVersionEditorProps extends WithSkippedItems {
-  readonly sections: Section[];
-  readonly onChange: (sections: Section[]) => void;
-}
+export type RecipeVersionEditorProps = WithSkippedItemsProps &
+  ReadonlyDeep<{
+    sections: Section[];
+    onChange: (sections: ReadonlyDeep<Section[]>) => void;
+  }>;
 
 /**
  * The editable body of a RecipeVersion: the computed Ingredients display and

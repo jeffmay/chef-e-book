@@ -15,15 +15,16 @@ import {
   extend,
 } from "@recipe-book/shared";
 import "./FractionEditor.css";
+import type { ReadonlyDeep } from "type-fest";
 
 // ---------------------------------------------------------------------------
 // Shared display + op constants (also used by MeasurementEditor)
 // ---------------------------------------------------------------------------
 
-export interface OpButton {
-  readonly label: string;
-  readonly apply: (f: Fraction) => Fraction;
-}
+export type OpButton = ReadonlyDeep<{
+  label: string;
+  apply: (f: ReadonlyDeep<Fraction>) => ReadonlyDeep<Fraction>;
+}>;
 
 export const OpMode = extend(EnumCompanion("OpMode", ["=", "+", "-", "✕", "÷"]), (init) => {
   const alphaEnum = {
@@ -77,9 +78,9 @@ export const OP_ROWS: Record<OpMode, readonly OpButton[]> = {
 // FractionDisplay
 // ---------------------------------------------------------------------------
 
-export interface FractionDisplayProps {
-  readonly value: Fraction;
-}
+export type FractionDisplayProps = ReadonlyDeep<{
+  value: Fraction;
+}>;
 
 export function FractionDisplay({ value }: FractionDisplayProps) {
   const s = simplify(value);
@@ -106,12 +107,12 @@ export function FractionDisplay({ value }: FractionDisplayProps) {
 // FractionEditor
 // ---------------------------------------------------------------------------
 
-export interface FractionEditorProps {
-  readonly value: Fraction;
-  readonly onCommit: (value: Fraction) => void;
+export type FractionEditorProps = ReadonlyDeep<{
+  value: Fraction;
+  onCommit: (value: Fraction) => void;
   /** Rendered between the operation buttons and the OK button when editing. */
-  readonly extraControls?: ReactNode;
-}
+  extraControls?: ReactNode;
+}>;
 
 export function FractionEditor({ value, onCommit, extraControls }: FractionEditorProps) {
   const [editing, setEditing] = useState(false);

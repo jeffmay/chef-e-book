@@ -12,11 +12,11 @@ import {
 import { useRecipeBookDoc } from "../contexts/docContext.ts";
 
 export interface RecipeFolderStore {
-  readonly folders: RecipeFolder[];
-  readonly flatFolders: Array<Omit<RecipeFolder, "children">>;
-  readonly createFolder: (name: string, parentId?: RecipeFolderId) => RecipeFolder;
-  readonly updateFolder: (folder: RecipeFolder) => void;
-  readonly deleteFolder: (id: RecipeFolderId) => void;
+  folders: RecipeFolder[];
+  flatFolders: Array<Omit<RecipeFolder, "children">>;
+  createFolder: (name: string, parentId?: RecipeFolderId) => RecipeFolder;
+  updateFolder: (folder: RecipeFolder) => void;
+  deleteFolder: (id: RecipeFolderId) => void;
 }
 
 export function useRecipeFolderStore(): RecipeFolderStore {

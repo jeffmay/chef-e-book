@@ -12,17 +12,18 @@ import {
   updateSessionItemState,
 } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
+import type { ReadonlyDeep } from "type-fest";
 import { useRecipeBookDoc } from "../contexts/docContext.ts";
 
 export interface SessionStore {
-  readonly sessions: Session[];
-  readonly start: (recipeId: RecipeId, versionId: RecipeVersionId) => Session;
-  readonly updateItemState: (
+  sessions: Session[];
+  start: (recipeId: RecipeId, versionId: RecipeVersionId) => Session;
+  updateItemState: (
     sessionId: SessionId,
     itemId: string,
-    patch: Partial<ItemState>,
+    patch: ReadonlyDeep<Partial<ItemState>>,
   ) => Session;
-  readonly complete: (sessionId: SessionId, allItemIds: readonly string[]) => Session;
+  complete: (sessionId: SessionId, allItemIds: readonly string[]) => Session;
 }
 
 export function useSessionStore(): SessionStore {

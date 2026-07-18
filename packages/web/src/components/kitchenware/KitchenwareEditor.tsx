@@ -1,17 +1,18 @@
 import { type Container, type ContainerId, type KitchenwareLabelId } from "@recipe-book/shared";
+import type { ReadonlyDeep } from "type-fest";
 import { LabelEditor } from "../ingredients_table/LabelEditor.tsx";
-import { KitchenwareParentSelector } from "./KitchenwareParentSelector.tsx";
 import "./KitchenwareEditor.css";
+import { KitchenwareParentSelector } from "./KitchenwareParentSelector.tsx";
 
-export interface KitchenwareEditorProps {
-  readonly name: string;
-  readonly labelIds: readonly KitchenwareLabelId[];
-  readonly parentId: ContainerId | undefined;
-  readonly allLabelNames: readonly string[];
-  readonly containers: readonly Container[];
-  readonly onChangeLabels: (label_ids: KitchenwareLabelId[]) => void;
-  readonly onChangeParent: (parent_id: ContainerId | undefined) => void;
-}
+export type KitchenwareEditorProps = ReadonlyDeep<{
+  name: string;
+  labelIds: KitchenwareLabelId[];
+  parentId: ContainerId | undefined;
+  allLabelNames: string[];
+  containers: Container[];
+  onChangeLabels: (labelIds: readonly KitchenwareLabelId[]) => void;
+  onChangeParent: (parentId: ContainerId | undefined) => void;
+}>;
 
 export function KitchenwareEditor({
   name,

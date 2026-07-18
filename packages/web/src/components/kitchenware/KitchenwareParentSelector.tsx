@@ -2,15 +2,16 @@ import { type Container, ContainerId, loadId } from "@recipe-book/shared";
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
 import { useMemo } from "react";
+import type { ReadonlyDeep } from "type-fest";
 import "./KitchenwareParentSelector.css";
 
-interface ContainerNode {
-  id: ContainerId;
-  name: string;
+type ContainerNode = {
+  readonly id: ContainerId;
+  readonly name: string;
   children: ContainerNode[];
-}
+};
 
-function buildContainerTree(containers: readonly Container[]): ContainerNode[] {
+function buildContainerTree(containers: ReadonlyDeep<Container[]>): ContainerNode[] {
   const byId = new Map<string, ContainerNode>();
   for (const c of containers) {
     byId.set(c.id, { id: c.id, name: c.name, children: [] });
@@ -38,13 +39,13 @@ function toTreeNode(node: ContainerNode): TreeNode {
   };
 }
 
-export interface KitchenwareParentSelectorProps {
-  readonly value: ContainerId | undefined;
-  readonly containers: readonly Container[];
-  readonly onChange: (id: ContainerId | undefined) => void;
-  readonly ariaLabel?: string;
-  readonly placeholder?: string;
-}
+export type KitchenwareParentSelectorProps = ReadonlyDeep<{
+  value: ContainerId | undefined;
+  containers: readonly Container[];
+  onChange: (id: ContainerId | undefined) => void;
+  ariaLabel?: string;
+  placeholder?: string;
+}>;
 
 export function KitchenwareParentSelector({
   value,

@@ -6,13 +6,13 @@ import type { TreeNode } from "primereact/treenode";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IngredientSelector } from "../IngredientSelector.tsx";
 
-interface MockTreeSelectProps {
+type MockTreeSelectProps = {
   value: string | null | undefined;
   onChange: (e: TreeSelectChangeEvent) => void;
   ariaLabel: string | undefined;
   options: TreeNode[] | undefined;
   placeholder: string | undefined;
-}
+};
 
 // Mock TreeSelect so overlay rendering works in jsdom.
 // Tests focus on IngredientSelector's tree-building and value mapping logic.
