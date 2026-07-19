@@ -1,21 +1,22 @@
 import { type ReactNode } from "react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
+import type { ReadonlyDeep } from "type-fest";
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.css";
 import "primeicons/primeicons.css";
 import "./styles/global.css";
-import type { ActiveBookMeta } from "./hooks/useActiveBookMeta.ts";
-import { useActiveBookMeta } from "./hooks/useActiveBookMeta.ts";
+import type { ActiveBookMeta } from "./hooks/useActiveBookMetaStore.ts";
+import { useActiveBookMeta } from "./hooks/useActiveBookMetaStore.ts";
 import { useKitchenwareDoc, useRecipeBookDoc } from "./hooks/useYjsDoc.ts";
 import { KitchenwareDocContext, RecipeBookDocContext } from "./contexts/docContext.ts";
 import { NavMenu } from "./components/NavMenu.tsx";
 import { SelectBookPage } from "./pages/SelectBookPage.tsx";
 import type { RecipeBookId } from "@recipe-book/shared";
 
-export interface RootContext {
-  readonly bookId: RecipeBookId;
-  readonly onRename: (name: string) => void;
-}
+export type RootContext = ReadonlyDeep<{
+  bookId: RecipeBookId;
+  onRename: (name: string) => void;
+}>;
 
 export function Layout({ children }: { children: ReactNode }) {
   return (
@@ -37,10 +38,10 @@ export function Layout({ children }: { children: ReactNode }) {
   );
 }
 
-interface AuthenticatedShellProps {
-  readonly book: ActiveBookMeta;
-  readonly onRename: (name: string) => void;
-}
+type AuthenticatedShellProps = ReadonlyDeep<{
+  book: ActiveBookMeta;
+  onRename: (name: string) => void;
+}>;
 
 function AuthenticatedShell({ book, onRename }: AuthenticatedShellProps) {
   const kitchenwareDoc = useKitchenwareDoc(book.id);

@@ -20,6 +20,7 @@ import {
   SectionItemId,
 } from "../types/recipe.ts";
 import { RecipeFolderId } from "../types/recipeGroup.ts";
+import type { ReadonlyDeep } from "type-fest";
 import type { ValidationError } from "./validation.ts";
 import { isInvalid, isValid, validateByIdOrLog } from "./validation.ts";
 
@@ -245,16 +246,16 @@ export function getRecipe(doc: Y.Doc, id: RecipeId): Recipe | ValidationError {
   return validateStored(id, getRecipeYmap(doc).get(id));
 }
 
-export interface CreateRecipeInput {
+export type CreateRecipeInput = {
   title: string;
   subtitle?: string;
   source_url?: string;
   parent_folder_id?: RecipeFolderId;
   description?: string;
   // created_by: string;
-}
+};
 
-export function createRecipe(doc: Y.Doc, input: CreateRecipeInput): Recipe {
+export function createRecipe(doc: Y.Doc, input: ReadonlyDeep<CreateRecipeInput>): Recipe {
   const now = Date.now();
   const recipeId = randomId(RecipeId);
   const initialVersion: RecipeVersion = {
@@ -280,7 +281,7 @@ export function createRecipe(doc: Y.Doc, input: CreateRecipeInput): Recipe {
   return recipe;
 }
 
-export interface SaveRecipeInput {
+export type SaveRecipeInput = {
   title: string;
   subtitle?: string;
   source_url?: string;
@@ -290,16 +291,20 @@ export interface SaveRecipeInput {
   /** When true, adds the version as a new entry instead of replacing the latest. */
   create_new_version: boolean;
   // created_by: string;
-}
+};
 
-export function saveRecipe(doc: Y.Doc, recipe_id: RecipeId, input: SaveRecipeInput): Recipe {
+export function saveRecipe(
+  doc: Y.Doc,
+  recipe_id: RecipeId,
+  input: ReadonlyDeep<SaveRecipeInput>,
+): ReadonlyDeep<Recipe> {
   const existing = getRecipe(doc, recipe_id);
   if (isInvalid(existing)) throw existing;
 
   const now = Date.now();
-  let versions: RecipeVersion[];
+  let versions: ReadonlyDeep<RecipeVersion>[];
   if (input.create_new_version) {
-    const newVersion: RecipeVersion = {
+    const newVersion: ReadonlyDeep<RecipeVersion> = {
       ...input.version,
       id: randomId(RecipeVersionId),
       recipe_id,
@@ -309,7 +314,7 @@ export function saveRecipe(doc: Y.Doc, recipe_id: RecipeId, input: SaveRecipeInp
     versions = [...existing.versions, newVersion];
   } else {
     // Replace the last version in place
-    const updatedVersion: RecipeVersion = {
+    const updatedVersion: ReadonlyDeep<RecipeVersion> = {
       ...input.version,
       recipe_id,
       created_at: input.version.created_at,
@@ -321,7 +326,7 @@ export function saveRecipe(doc: Y.Doc, recipe_id: RecipeId, input: SaveRecipeInp
         : [...existing.versions.slice(0, -1), updatedVersion];
   }
 
-  const updated: Recipe = {
+  const updated: ReadonlyDeep<Recipe> = {
     id: existing.id,
     title: input.title,
     versions,
@@ -371,7 +376,7 @@ export function deleteRecipe(doc: Y.Doc, id: RecipeId): void {
   getRecipeYmap(doc).delete(id);
 }
 
-export function deleteRecipes(doc: Y.Doc, ids: RecipeId[]): void {
+export function deleteRecipes(doc: Y.Doc, ids: readonly RecipeId[]): void {
   const map = getRecipeYmap(doc);
   doc.transact(() => {
     for (const id of ids) {
@@ -382,7 +387,7 @@ export function deleteRecipes(doc: Y.Doc, ids: RecipeId[]): void {
 
 export function mergeRecipes(
   doc: Y.Doc,
-  recipe_ids: RecipeId[],
+  recipe_ids: readonly RecipeId[],
   new_title: string,
   new_folder_id?: RecipeFolderId,
 ): Recipe {

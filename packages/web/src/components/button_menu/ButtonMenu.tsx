@@ -2,28 +2,29 @@ import { ButtonGroup } from "primereact/buttongroup";
 import { Menu } from "primereact/menu";
 import type { MenuItem } from "primereact/menuitem";
 import { useEffect, useRef, type FocusEvent, type SyntheticEvent } from "react";
+import type { ReadonlyDeep } from "type-fest";
 import "./ButtonMenu.css";
 
-export interface ButtonMenuItem {
-  readonly label: string;
-  readonly onSelect: () => void;
+export type ButtonMenuItem = ReadonlyDeep<{
+  label: string;
+  onSelect: () => void;
   /** Accessible name for the default button; menu entries use the label. */
-  readonly ariaLabel?: string;
-  readonly disabled?: boolean;
-}
+  ariaLabel?: string;
+  disabled?: boolean;
+}>;
 
-export interface ButtonMenuProps {
+export type ButtonMenuProps = ReadonlyDeep<{
   /**
    * The action performed by clicking the main button. When undefined, only
    * the chevron menu button is shown.
    */
-  readonly defaultButton?: ButtonMenuItem;
+  defaultButton?: ButtonMenuItem;
   /** All available actions, listed in the chevron menu. */
-  readonly buttons: readonly ButtonMenuItem[];
+  buttons: ButtonMenuItem[];
   /** Accessible name for the chevron menu trigger. */
-  readonly menuLabel: string;
-  readonly className?: string;
-}
+  menuLabel: string;
+  className?: string;
+}>;
 
 /**
  * A split button: a default action button grouped with a chevron that opens

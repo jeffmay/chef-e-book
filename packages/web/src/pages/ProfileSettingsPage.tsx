@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from "react";
+import type { ReadonlyDeep } from "type-fest";
 import "./ProfileSettingsPage.css";
 
-interface ProfileSettingsPageProps {
-  readonly currentName: string;
-  readonly onSave: (name: string) => void;
-  readonly onCancel: () => void;
-}
+type ProfileSettingsPageProps = ReadonlyDeep<{
+  currentName: string;
+  onSave: (name: string) => void;
+  onCancel: () => void;
+}>;
 
 export function ProfileSettingsPage({ currentName, onSave, onCancel }: ProfileSettingsPageProps) {
   const [name, setName] = useState(currentName);

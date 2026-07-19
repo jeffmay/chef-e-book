@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import "./MultiSelectFilter.css";
 
-export interface MultiSelectFilterProps {
+export type MultiSelectFilterProps = {
   readonly value: readonly string[];
   readonly onChange: (values: string[]) => void;
   readonly allOptions: readonly string[];
   readonly ariaLabel: string;
-}
+};
 
 export function MultiSelectFilter({
   value,

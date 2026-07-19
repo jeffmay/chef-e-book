@@ -6,13 +6,13 @@ import type { TreeNode } from "primereact/treenode";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RecipeFolderSelector } from "../RecipeFolderSelector.tsx";
 
-interface MockTreeSelectProps {
+type MockTreeSelectProps = {
   value: string | null | undefined;
   onChange: (e: TreeSelectChangeEvent) => void;
   ariaLabel: string | undefined;
   options: TreeNode[] | undefined;
   placeholder: string | undefined;
-}
+};
 
 vi.mock("primereact/treeselect", () => ({
   TreeSelect: ({ value, onChange, ariaLabel, options, placeholder }: MockTreeSelectProps) => {

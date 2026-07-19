@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import {
+  assertNotValidationError,
   type CreateRecipeInput,
   type Recipe,
   type RecipeId,
-  type RecipeVersion,
   type SaveRecipeInput,
   copyRecipe,
   createRecipe,
   deleteRecipe,
   deleteRecipes,
+  getRecipe,
   getRecipeYmap,
   getRecipes,
   mergeRecipes,
@@ -16,15 +17,16 @@ import {
 } from "@recipe-book/shared";
 import type { RecipeFolderId } from "@recipe-book/shared";
 import { useRecipeBookDoc } from "../contexts/docContext.ts";
+import type { ReadonlyDeep } from "type-fest";
 
 export interface RecipeStore {
-  readonly recipes: Recipe[];
-  readonly create: (input: Omit<CreateRecipeInput, "created_by">) => Recipe;
-  readonly save: (recipeId: RecipeId, input: Omit<SaveRecipeInput, "created_by">) => Recipe;
-  readonly copy: (recipeId: RecipeId, newTitle: string, newFolderId?: RecipeFolderId) => Recipe;
-  readonly remove: (recipeId: RecipeId) => void;
-  readonly removeAll: (recipeIds: RecipeId[]) => void;
-  readonly merge: (recipeIds: RecipeId[], newTitle: string, newFolderId?: RecipeFolderId) => Recipe;
+  recipes: Recipe[];
+  create: (input: ReadonlyDeep<Omit<CreateRecipeInput, "created_by">>) => Recipe;
+  save: (recipeId: RecipeId, input: ReadonlyDeep<Omit<SaveRecipeInput, "created_by">>) => Recipe;
+  copy: (recipeId: RecipeId, newTitle: string, newFolderId?: RecipeFolderId) => Recipe;
+  remove: (recipeId: RecipeId) => void;
+  removeAll: (recipeIds: readonly RecipeId[]) => void;
+  merge: (recipeIds: readonly RecipeId[], newTitle: string, newFolderId?: RecipeFolderId) => Recipe;
 }
 
 export function useRecipeStore(): RecipeStore {
@@ -44,7 +46,12 @@ export function useRecipeStore(): RecipeStore {
   return {
     recipes,
     create: (input) => createRecipe(doc, { ...input /* created_by: userName */ }),
-    save: (recipeId, input) => saveRecipe(doc, recipeId, { ...input /* created_by: userName */ }),
+    save: (recipeId, input) => {
+      saveRecipe(doc, recipeId, { ...input /* created_by: userName */ });
+      const saved = getRecipe(doc, recipeId);
+      assertNotValidationError(saved);
+      return saved;
+    },
     copy: (recipeId, newTitle, newFolderId) =>
       copyRecipe(doc, recipeId, newTitle, newFolderId /* userName */),
     remove: (recipeId) => deleteRecipe(doc, recipeId),
@@ -55,6 +62,8 @@ export function useRecipeStore(): RecipeStore {
 }
 
 /** Returns the most-recent version of a recipe, or undefined if none exist. */
-export function latestVersion(recipe: Recipe): RecipeVersion | undefined {
+export function latestVersion<R extends ReadonlyDeep<Recipe>>(
+  recipe: R,
+): R["versions"][number] | undefined {
   return recipe.versions.at(-1);
 }

@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 
 export const ACTIVE_BOOK_KEY = "ecookdeck_book" as const;
 
-export interface UseActiveBookMetaResult {
-  readonly activeBookMeta: ActiveBookMeta | null;
-  readonly setActiveBookName: (name: string) => void;
-  readonly clearActiveBookMeta: () => void;
+export interface ActiveBookMetaStore {
+  activeBookMeta: ActiveBookMeta | null;
+  setActiveBookName: (name: string) => void;
+  clearActiveBookMeta: () => void;
 }
 
 export const ActiveBookMeta = Companion(
@@ -35,7 +35,7 @@ function loadActiveBookMeta(): ActiveBookMeta | null {
   return book;
 }
 
-export function useActiveBookMeta(): UseActiveBookMetaResult {
+export function useActiveBookMeta(): ActiveBookMetaStore {
   // Start with null so server pre-render and hydration pass both match.
   // The real localStorage value is read in useEffect (client-only).
   const [activeBookMeta, setState] = useState<ActiveBookMeta | null>(null);

@@ -16,19 +16,16 @@ import { useEffect, useState } from "react";
 import type * as Y from "yjs";
 import { useKitchenwareDoc } from "../contexts/docContext.ts";
 
-export interface UseLabelStoreResult {
-  readonly labels: readonly KitchenwareLabel[];
-  readonly createLabel: (name: string, kinds: ReadonlySet<KitchenwareKind>) => KitchenwareLabelId;
-  readonly findOrCreate: (name: string, kinds: ReadonlySet<KitchenwareKind>) => KitchenwareLabelId;
-  readonly renameLabel: (id: KitchenwareLabelId, name: string) => void;
-  readonly deleteLabels: (ids: readonly KitchenwareLabelId[]) => void;
-  readonly mergeLabels: (
-    ids: readonly KitchenwareLabelId[],
-    new_name: string,
-  ) => KitchenwareLabelId;
+export interface LabelStore {
+  labels: KitchenwareLabel[];
+  createLabel: (name: string, kinds: ReadonlySet<KitchenwareKind>) => KitchenwareLabelId;
+  findOrCreate: (name: string, kinds: ReadonlySet<KitchenwareKind>) => KitchenwareLabelId;
+  renameLabel: (id: KitchenwareLabelId, name: string) => void;
+  deleteLabels: (ids: readonly KitchenwareLabelId[]) => void;
+  mergeLabels: (ids: readonly KitchenwareLabelId[], new_name: string) => KitchenwareLabelId;
 }
 
-export function useLabelStore(): UseLabelStoreResult {
+export function useLabelStore(): LabelStore {
   const { doc, whenSynced } = useKitchenwareDoc();
   const [labels, setLabels] = useState<KitchenwareLabel[]>(() => getLabels(doc));
 

@@ -27,15 +27,16 @@ import { IngredientSelector } from "./IngredientSelector.tsx";
 import "./IngredientsTable.css";
 import { LabelEditor } from "./LabelEditor.tsx";
 import { MultiSelectFilter } from "./MultiSelectFilter.tsx";
+import type { ReadonlyDeep } from "type-fest";
 
 // ---------------------------------------------------------------------------
 // External label filter
 // ---------------------------------------------------------------------------
 
-export interface ExternalLabelFilter {
-  readonly label_ids: readonly KitchenwareLabelId[];
-  readonly mode: "all" | "any";
-}
+export type ExternalLabelFilter = ReadonlyDeep<{
+  label_ids: readonly KitchenwareLabelId[];
+  mode: "all" | "any";
+}>;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -167,22 +168,19 @@ function collectVisibleKeys(
 // Props
 // ---------------------------------------------------------------------------
 
-export interface IngredientsTableProps {
-  readonly ingredients: readonly Ingredient[];
-  readonly labels: readonly KitchenwareLabel[];
-  readonly external_label_filter?: ExternalLabelFilter;
-  readonly onRename: (id: IngredientId, name: string) => void;
-  readonly onSetMeasurementValue: (id: IngredientId, value: Measurement) => void;
-  readonly onSetLabels: (id: IngredientId, label_names: readonly string[]) => void;
-  readonly onSetParent: (id: IngredientId, parent_id: IngredientId | undefined) => void;
-  readonly onAddLabels: (ids: readonly IngredientId[], label_names: readonly string[]) => void;
-  readonly onRemoveLabels: (ids: readonly IngredientId[], label_names: readonly string[]) => void;
-  readonly onBulkSetMeasurementValue: (ids: readonly IngredientId[], value: Measurement) => void;
-  readonly onBulkSetParent: (
-    ids: readonly IngredientId[],
-    parent_id: IngredientId | undefined,
-  ) => void;
-}
+export type IngredientsTableProps = ReadonlyDeep<{
+  ingredients: readonly Ingredient[];
+  labels: readonly KitchenwareLabel[];
+  external_label_filter?: ExternalLabelFilter;
+  onRename: (id: IngredientId, name: string) => void;
+  onSetMeasurementValue: (id: IngredientId, value: Measurement) => void;
+  onSetLabels: (id: IngredientId, label_names: readonly string[]) => void;
+  onSetParent: (id: IngredientId, parent_id: IngredientId | undefined) => void;
+  onAddLabels: (ids: readonly IngredientId[], label_names: readonly string[]) => void;
+  onRemoveLabels: (ids: readonly IngredientId[], label_names: readonly string[]) => void;
+  onBulkSetMeasurementValue: (ids: readonly IngredientId[], value: Measurement) => void;
+  onBulkSetParent: (ids: readonly IngredientId[], parent_id: IngredientId | undefined) => void;
+}>;
 
 // ---------------------------------------------------------------------------
 // Main component

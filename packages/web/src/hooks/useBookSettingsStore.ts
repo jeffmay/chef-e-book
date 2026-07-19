@@ -10,11 +10,11 @@ import { useRecipeBookDoc } from "../contexts/docContext.ts";
 
 export interface BookSettingsStore {
   /** The book's per-ingredient prep time, falling back to the build default. */
-  readonly secondsPerIngredient: number;
+  secondsPerIngredient: number;
   /** The raw book-level override, when one has been set. */
-  readonly bookSecondsPerIngredient: number | undefined;
+  bookSecondsPerIngredient: number | undefined;
   /** Sets (or clears, with undefined) the book-level override. */
-  readonly setSecondsPerIngredient: (seconds: number | undefined) => void;
+  setSecondsPerIngredient: (seconds: number | undefined) => void;
 }
 
 export function useBookSettings(): BookSettingsStore {

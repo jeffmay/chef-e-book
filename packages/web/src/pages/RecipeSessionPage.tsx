@@ -36,7 +36,7 @@ import { DurationEditor } from "../components/duration/DurationEditor.tsx";
 import { humanizeSeconds } from "../components/duration/humanizeSeconds.ts";
 import { COMMON_CONTAINERS } from "../components/recipe_editor/containers.ts";
 import { RecipeVersionEditor } from "../components/recipe_editor/RecipeVersionEditor.tsx";
-import { useBookSettings } from "../hooks/useBookSettings.ts";
+import { useBookSettings } from "../hooks/useBookSettingsStore.ts";
 import { useIngredientStore } from "../hooks/useIngredientStore.ts";
 import { useRecipeStore } from "../hooks/useRecipeStore.ts";
 import { useSessionStore } from "../hooks/useSessionStore.ts";
@@ -90,13 +90,13 @@ function isDone(state: ItemState): boolean {
 // CheckableRow — checkbox + label + optional detail + skip toggle
 // ---------------------------------------------------------------------------
 
-interface CheckableRowProps {
-  readonly label: string;
-  readonly detail?: string;
-  readonly state: ItemState;
-  readonly onCheckedChange: (checked: boolean) => void;
-  readonly onSkippedChange: (skipped: boolean) => void;
-}
+type CheckableRowProps = ReadonlyDeep<{
+  label: string;
+  detail?: string;
+  state: ItemState;
+  onCheckedChange: (checked: boolean) => void;
+  onSkippedChange: (skipped: boolean) => void;
+}>;
 
 function CheckableRow({
   label,
@@ -137,16 +137,16 @@ function CheckableRow({
 // Session item tree (run view)
 // ---------------------------------------------------------------------------
 
-interface SessionItemsProps {
+type SessionItemsProps = {
   readonly session: Session;
   readonly allIngredients: readonly Ingredient[];
   readonly onItemChange: (itemId: string, patch: Partial<ItemState>) => void;
-}
+};
 
-interface SessionSectionProps extends SessionItemsProps {
+type SessionSectionProps = SessionItemsProps & {
   readonly section: Section;
   readonly depth: number;
-}
+};
 
 function SessionIngredientRow({
   item,
@@ -244,11 +244,11 @@ function SessionSection({ section, depth, ...rest }: SessionSectionProps) {
 // SessionRunView — checkboxes, skip buttons, progress bar, complete button
 // ---------------------------------------------------------------------------
 
-interface SessionRunViewProps {
+type SessionRunViewProps = {
   readonly session: Session;
   readonly recipe: Recipe;
   readonly version: RecipeVersion;
-}
+};
 
 function SessionRunView({ session, recipe, version }: SessionRunViewProps) {
   const { updateItemState, complete } = useSessionStore();
@@ -323,18 +323,18 @@ function SessionRunView({ session, recipe, version }: SessionRunViewProps) {
 // SessionSummaryView — post-completion review + version/recipe creation
 // ---------------------------------------------------------------------------
 
-interface SessionSummaryViewProps {
+type SessionSummaryViewProps = {
   readonly session: Session & { status: "completed"; completed_at: number };
   readonly recipe: Recipe;
   readonly version: RecipeVersion;
-}
+};
 
 function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProps) {
   const navigate = useNavigate();
   const { save, create } = useRecipeStore();
   const { secondsPerIngredient: bookSecondsPerIngredient } = useBookSettings();
 
-  const [sections, setSections] = useState<Section[]>(() => version.sections);
+  const [sections, setSections] = useState<ReadonlyDeep<Section[]>>(() => version.sections);
   // Items the session skipped stay in the editor decorated as skipped; they
   // are removed from any saved version unless restored.
   const [skippedIds, setSkippedIds] = useState<ReadonlySet<SectionItemId>>(() => {
@@ -391,7 +391,7 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
     restoreItem(id);
   }
 
-  function buildVersion(recipeId: RecipeId): RecipeVersion {
+  function buildVersion(recipeId: RecipeId): ReadonlyDeep<RecipeVersion> {
     return {
       id: randomId(RecipeVersionId),
       recipe_id: recipeId,
@@ -549,9 +549,9 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
 // RecipeSessionPage
 // ---------------------------------------------------------------------------
 
-export interface RecipeSessionPageProps {
+export type RecipeSessionPageProps = {
   readonly sessionId: string;
-}
+};
 
 export function RecipeSessionPage({ sessionId }: RecipeSessionPageProps) {
   const { sessions } = useSessionStore();

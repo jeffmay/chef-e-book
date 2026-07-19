@@ -6,7 +6,7 @@ import * as Y from "yjs";
 import { BUILD_SECONDS_PER_INGREDIENT } from "../../config.ts";
 import { RecipeBookDocContext } from "../../contexts/docContext.ts";
 import { flushAsyncEffects } from "../../testUtils.ts";
-import { useBookSettings } from "../useBookSettings.ts";
+import { useBookSettings } from "../useBookSettingsStore.ts";
 
 let doc: Y.Doc;
 

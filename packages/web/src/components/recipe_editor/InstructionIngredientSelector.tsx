@@ -2,6 +2,7 @@ import type { IngredientId } from "@recipe-book/shared";
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
 import { useMemo, type KeyboardEvent } from "react";
+import type { ReadonlyDeep } from "type-fest";
 import "../../styles/treeSelect.css";
 import {
   collectKeyToIngredientId,
@@ -10,12 +11,12 @@ import {
 } from "./buildInstructionIngredientTree.ts";
 import "./InstructionIngredientSelector.css";
 
-export interface InstructionIngredientSelectorProps {
-  readonly nodes: TreeNode[];
-  readonly selectedIds: readonly IngredientId[];
-  readonly onChange: (ids: IngredientId[]) => void;
-  readonly ariaLabel?: string;
-}
+export type InstructionIngredientSelectorProps = ReadonlyDeep<{
+  nodes: TreeNode[];
+  selectedIds: IngredientId[];
+  onChange: (ids: readonly IngredientId[]) => void;
+  ariaLabel?: string;
+}>;
 
 /**
  * Multi-select TreeSelect for choosing which of the recipe's ingredients an
@@ -49,7 +50,7 @@ export function InstructionIngredientSelector({
     <span className="iis-key-interceptor" onKeyDown={handleKeyDown}>
       <TreeSelect
         value={selectionKeys}
-        options={nodes}
+        options={nodes as TreeNode[] /* safe: the nodes are never mutated by the library */}
         onChange={handleChange}
         selectionMode="checkbox"
         display="chip"

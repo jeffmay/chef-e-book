@@ -12,6 +12,7 @@ import {
 } from "@recipe-book/shared";
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import type { ReadonlyDeep } from "type-fest";
 import { ButtonMenu } from "../components/button_menu/ButtonMenu.tsx";
 import { RecipeVersionEditor } from "../components/recipe_editor/RecipeVersionEditor.tsx";
 import { RecipeFolderSelector } from "../components/recipe_folder/RecipeFolderSelector.tsx";
@@ -22,22 +23,22 @@ import "./RecipeEditorPage.css";
 
 // Re-exported for existing consumers/tests; the implementations moved to the
 // shared package and the RecipeVersionEditor component.
-export { computeTopIngredients };
 export {
   computeAmountOrDefault,
   getByIdOrThrow,
   isSameMeasurementCategory,
   resolveAmountOnIngredientChange,
 } from "../components/recipe_editor/RecipeVersionEditor.tsx";
+export { computeTopIngredients };
 
 // ---------------------------------------------------------------------------
 // Helper: flatten folder tree for <select>
 // ---------------------------------------------------------------------------
 
-interface FlatFolder {
-  id: RecipeFolderId;
-  label: string;
-}
+type FlatFolder = {
+  readonly id: RecipeFolderId;
+  readonly label: string;
+};
 
 function flattenFolders(folders: RecipeFolder[], depth = 0): FlatFolder[] {
   const result: FlatFolder[] = [];
@@ -54,11 +55,11 @@ function flattenFolders(folders: RecipeFolder[], depth = 0): FlatFolder[] {
 // VersionHistoryTable
 // ---------------------------------------------------------------------------
 
-interface VersionHistoryTableProps {
-  readonly versions: RecipeVersion[];
-  readonly onStart: (version: RecipeVersion) => void;
-  readonly onEdit: (version: RecipeVersion) => void;
-}
+type VersionHistoryTableProps = ReadonlyDeep<{
+  versions: RecipeVersion[];
+  onStart: (version: ReadonlyDeep<RecipeVersion>) => void;
+  onEdit: (version: ReadonlyDeep<RecipeVersion>) => void;
+}>;
 
 function VersionHistoryTable({ versions, onStart, onEdit }: VersionHistoryTableProps) {
   const [open, setOpen] = useState(false);
@@ -112,16 +113,16 @@ function VersionHistoryTable({ versions, onStart, onEdit }: VersionHistoryTableP
 // CopyRecipeDialog
 // ---------------------------------------------------------------------------
 
-interface CopyRecipeDialogProps {
-  readonly recipe: Recipe;
-  readonly flatFolders: Array<{ id: RecipeFolderId; label: string }>;
-  readonly onCopy: (title: string, folder_id: RecipeFolderId | undefined) => void;
-  readonly onCancel: () => void;
-}
+type CopyRecipeDialogProps = ReadonlyDeep<{
+  recipe: Recipe;
+  flatFolders: { id: RecipeFolderId; label: string }[];
+  onCopy: (title: string, folderId: RecipeFolderId | undefined) => void;
+  onCancel: () => void;
+}>;
 
 function CopyRecipeDialog({ recipe, flatFolders, onCopy, onCancel }: CopyRecipeDialogProps) {
   const [title, setTitle] = useState(`${recipe.title} (copy)`);
-  const [folder_id, setFolderId] = useState<RecipeFolderId | undefined>(recipe.parent_folder_id);
+  const [folderId, setFolderId] = useState<RecipeFolderId | undefined>(recipe.parent_folder_id);
 
   return (
     <div className="re-dialog-overlay" role="dialog" aria-modal="true" aria-label="Copy recipe">
@@ -140,7 +141,7 @@ function CopyRecipeDialog({ recipe, flatFolders, onCopy, onCancel }: CopyRecipeD
           Parent folder
           <select
             className="re-field-select"
-            value={folder_id ?? ""}
+            value={folderId ?? ""}
             onChange={(e) =>
               setFolderId(e.target.value ? loadId(RecipeFolderId, e.target.value) : undefined)
             }
@@ -157,7 +158,7 @@ function CopyRecipeDialog({ recipe, flatFolders, onCopy, onCancel }: CopyRecipeD
         <div className="re-dialog-actions">
           <button
             type="button"
-            onClick={() => onCopy(title, folder_id)}
+            onClick={() => onCopy(title, folderId)}
             disabled={title.trim() === ""}
           >
             Copy
@@ -175,7 +176,7 @@ function CopyRecipeDialog({ recipe, flatFolders, onCopy, onCancel }: CopyRecipeD
 // EditorState
 // ---------------------------------------------------------------------------
 
-interface EditorState {
+type EditorState = {
   title: string;
   subtitle: string;
   source_url: string;
@@ -183,13 +184,13 @@ interface EditorState {
   version_description: string;
   sections: Section[];
   create_new_version: boolean;
-}
+};
 
 function makeInitialState(
-  recipe: Recipe | null,
+  recipe: ReadonlyDeep<Recipe> | null,
   versionId?: string,
   initialFolderId?: RecipeFolderId,
-): EditorState {
+): ReadonlyDeep<EditorState> {
   if (recipe === null) {
     return {
       title: "",
@@ -220,13 +221,13 @@ function makeInitialState(
 // RecipeEditor
 // ---------------------------------------------------------------------------
 
-export interface RecipeEditorProps {
-  readonly recipe: Recipe | null;
-  readonly versionId?: string;
-  readonly initialFolderId?: RecipeFolderId;
-  readonly onSave: (recipe: Recipe) => void;
-  readonly onCancel: () => void;
-}
+export type RecipeEditorProps = ReadonlyDeep<{
+  recipe: Recipe | null;
+  versionId?: string;
+  initialFolderId?: RecipeFolderId;
+  onSave: (recipe: Recipe) => void;
+  onCancel: () => void;
+}>;
 
 export function RecipeEditor({
   recipe,
@@ -239,7 +240,7 @@ export function RecipeEditor({
   const { folders, createFolder } = useRecipeFolderStore();
   const startSession = useStartSession();
   const navigate = useNavigate();
-  const [form, setForm] = useState<EditorState>(() =>
+  const [form, setForm] = useState<ReadonlyDeep<EditorState>>(() =>
     makeInitialState(recipe, versionId, initialFolderId),
   );
   const [showCopyDialog, setShowCopyDialog] = useState(false);
@@ -267,7 +268,7 @@ export function RecipeEditor({
         ? (recipe.versions.find((v) => v.id === versionId) ?? latestVersion(recipe))
         : latestVersion(recipe);
 
-  function patch<K extends keyof EditorState>(key: K, value: EditorState[K]) {
+  function patch<K extends keyof EditorState>(key: K, value: ReadonlyDeep<EditorState[K]>) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
@@ -300,7 +301,7 @@ export function RecipeEditor({
       onSave(created);
     } else {
       const v = latestVersion(recipe);
-      const version: RecipeVersion = {
+      const version: ReadonlyDeep<RecipeVersion> = {
         id: (form.create_new_version && v?.id) || randomId(RecipeVersionId),
         recipe_id: recipe.id,
         description: form.version_description,

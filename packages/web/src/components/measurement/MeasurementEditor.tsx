@@ -14,6 +14,7 @@ import {
   type VolumeUnit,
   type WeightUnit,
 } from "@recipe-book/shared";
+import type { ReadonlyDeep } from "type-fest";
 import { FractionDisplay, OpMode, OP_ROWS } from "./FractionEditor.tsx";
 import "./MeasurementEditor.css";
 
@@ -91,12 +92,12 @@ function bestUnitConversion(value: Fraction, unit: MeasurementUnit): Measurement
 // Component
 // ---------------------------------------------------------------------------
 
-export interface MeasurementEditorProps {
-  readonly value: Measurement;
-  readonly onCommit: (value: Measurement) => void;
-  readonly onCancel?: () => void;
-  readonly initiallyOpen?: boolean;
-}
+export type MeasurementEditorProps = ReadonlyDeep<{
+  value: Measurement;
+  onCommit: (value: Measurement) => void;
+  onCancel?: () => void;
+  initiallyOpen?: boolean;
+}>;
 
 export function MeasurementEditor({
   value,

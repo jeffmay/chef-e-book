@@ -93,7 +93,7 @@ describe("useIngredientStore — createIngredient", () => {
       result.current.createIngredient({
         name: "Almond Milk",
         default_measurement_value: DEFAULT_MEASUREMENT,
-        labelNames: ["liquid", "dairy-free"],
+        label_names: ["liquid", "dairy-free"],
       }),
     );
     expect(result.current.ingredients.length).toBe(before + 1);
@@ -108,7 +108,7 @@ describe("useIngredientStore — addLabels / removeLabels", () => {
       result.current.createIngredient({
         name: "Test Ing",
         default_measurement_value: DEFAULT_MEASUREMENT,
-        labelNames: ["a"],
+        label_names: ["a"],
       }),
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing")?.id;
@@ -127,7 +127,7 @@ describe("useIngredientStore — addLabels / removeLabels", () => {
       result.current.createIngredient({
         name: "Test Ing 2",
         default_measurement_value: DEFAULT_MEASUREMENT,
-        labelNames: ["x", "y"],
+        label_names: ["x", "y"],
       }),
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing 2")?.id;
@@ -171,7 +171,7 @@ describe("useIngredientStore — setLabels", () => {
       result.current.createIngredient({
         name: "Test Ing Labels",
         default_measurement_value: DEFAULT_MEASUREMENT,
-        labelNames: ["a", "b"],
+        label_names: ["a", "b"],
       }),
     );
     const id = result.current.ingredients.find((i) => i.name === "Test Ing Labels")?.id;

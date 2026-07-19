@@ -1,10 +1,11 @@
 import { useRef, type FocusEvent } from "react";
+import type { ReadonlyDeep } from "type-fest";
 import "./UserMenu.css";
 
-interface UserMenuProps {
-  readonly userName: string;
-  readonly onProfile: () => void;
-}
+type UserMenuProps = ReadonlyDeep<{
+  userName: string;
+  onProfile: () => void;
+}>;
 
 export function UserMenu({ userName, onProfile }: UserMenuProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);

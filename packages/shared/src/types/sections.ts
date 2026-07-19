@@ -95,13 +95,13 @@ export function computeTopIngredients(sections: ReadonlyDeep<Section[]>): Recipe
  * A container or sub-section whose own id is in the set is removed along
  * with its contents.
  */
-export function removeSectionItemsById(
-  sections: readonly Section[],
+export function removeSectionItemsById<S extends ReadonlyDeep<Section>>(
+  sections: readonly S[],
   removedIds: ReadonlySet<SectionItemId>,
   removeEmptyContainers?: boolean,
-): Section[] {
-  function filterContents(contents: SectionItem[]): SectionItem[] {
-    const result: SectionItem[] = [];
+): S[] {
+  function filterContents(contents: ReadonlyDeep<SectionItem[]>): ReadonlyDeep<SectionItem>[] {
+    const result: ReadonlyDeep<SectionItem>[] = [];
     for (const item of contents) {
       if (removedIds.has(item.id)) continue;
       if (item.kind === "container") {

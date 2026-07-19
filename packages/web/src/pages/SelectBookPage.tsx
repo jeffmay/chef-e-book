@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
+import type { ReadonlyDeep } from "type-fest";
 import "./SelectBookPage.css";
 
-interface SelectBookPageProps {
-  readonly onSelect: (name: string) => void;
-}
+type SelectBookPageProps = ReadonlyDeep<{
+  onSelect: (name: string) => void;
+}>;
 
 export function SelectBookPage({ onSelect }: SelectBookPageProps) {
   const [name, setName] = useState("");

@@ -62,13 +62,13 @@ const FOLDER_EDIT_IDLE: EditingFolderState = { kind: "idle" };
 // NewFolderRow
 // ---------------------------------------------------------------------------
 
-interface NewFolderRowProps {
+type NewFolderRowProps = {
   readonly depth: number;
   readonly name: string;
   readonly onNameChange: (name: string) => void;
   readonly onSubmit: (e: FormEvent) => void;
   readonly onCancel: () => void;
-}
+};
 
 function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFolderRowProps) {
   return (
