@@ -17,8 +17,6 @@
 }
 
 .re-field-label {
-  display: block;
-  color: var(--color-fg);
   margin-bottom: var(--spacing-sm);
 }
 
@@ -28,7 +26,6 @@
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-fg);
-  width: 100%;
 }
 
 .re-field-select {
@@ -38,8 +35,13 @@
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-fg);
-  width: auto;
   max-width: 60vw;
+}
+
+/* Grow the folder selector to fill the row, matching the width the
+   text/select inputs already get from the shared .field-row rule. */
+.field-row > .rfs-root {
+  flex: 1 1 auto;
 }
 
 /* ============================================================
@@ -424,11 +426,7 @@ th.re-version-actions {
 }
 
 .re-version-description-label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
   flex: 1;
-  color: var(--color-muted);
 }
 
 .re-new-version-label {
@@ -440,10 +438,6 @@ th.re-version-actions {
   /* Override the global input { width: 100% } for a checkbox */
   width: unset;
   margin-right: var(--spacing-xs);
-}
-
-.re-new-version-input {
-  flex-grow: 1;
 }
 
 .re-save-actions {

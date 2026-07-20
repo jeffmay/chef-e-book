@@ -290,3 +290,29 @@ main.select-user-page {
   content: "⚠ ";
   font-style: normal;
 }
+
+/* Field row: keeps a label (with its optional required marker) on the
+   same line as its input, wrapping only when the row can't fit; any
+   error message always starts its own line below. */
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--spacing-sm);
+  row-gap: var(--spacing-xs);
+}
+
+.field-row-label {
+  white-space: nowrap;
+}
+
+.field-row > input,
+.field-row > select,
+.field-row > textarea {
+  flex: 1 1 auto;
+  width: auto;
+}
+
+.field-row > .field-error {
+  flex-basis: 100%;
+}

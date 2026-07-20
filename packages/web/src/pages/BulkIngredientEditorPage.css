@@ -10,7 +10,6 @@
   padding: var(--spacing-md);
   border: var(--border-width) solid var(--color-border);
   margin-bottom: var(--spacing-md);
-  max-width: 60vw;
 }
 
 .bie-add-title {
@@ -20,11 +19,13 @@
 }
 
 .bie-add-label {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
   font-size: 0.85em;
-  color: var(--color-muted);
+}
+
+/* Grow the labels multi-select to fill the row, matching the width
+   the text/select inputs already get from the shared .field-row rule. */
+.field-row > .it-label-editor {
+  flex: 1 1 auto;
 }
 
 .bie-add-input,
