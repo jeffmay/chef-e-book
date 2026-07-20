@@ -134,10 +134,10 @@ export function BulkIngredientEditorPage() {
 
       {/* Add ingredient form */}
       {showAddForm && (
-        <form className="bie-addForm" onSubmit={handleAddSubmit} aria-label="Add ingredient">
+        <form className="bie-add-form" onSubmit={handleAddSubmit} aria-label="Add ingredient">
           <h2 className="bie-add-title">New Ingredient</h2>
-          <label className="bie-add-label">
-            Name
+          <label className="bie-add-label field-row">
+            <span className="field-row-label">Name</span>
             <input
               className="bie-add-input"
               type="text"
@@ -148,15 +148,15 @@ export function BulkIngredientEditorPage() {
               autoFocus
             />
           </label>
-          <label className="bie-add-label">
-            Default measurement
+          <label className="bie-add-label field-row">
+            <span className="field-row-label">Default measurement</span>
             <MeasurementEditor
               value={addForm.measurement_value}
               onCommit={(value) => setAddForm((f) => ({ ...f, measurement_value: value }))}
             />
           </label>
-          <label className="bie-add-label">
-            Labels
+          <label className="bie-add-label field-row">
+            <span className="field-row-label">Labels</span>
             <LabelEditor
               selectedLabelNames={addForm.labels}
               allLabelNames={labels.map((l) => l.name)}
@@ -165,8 +165,8 @@ export function BulkIngredientEditorPage() {
               onChange={(names) => setAddForm((f) => ({ ...f, labels: names }))}
             />
           </label>
-          <label className="bie-add-label">
-            Parent ingredient
+          <label className="bie-add-label field-row">
+            <span className="field-row-label">Parent ingredient</span>
             <select
               className="bie-add-select"
               value={addForm.parent_id}

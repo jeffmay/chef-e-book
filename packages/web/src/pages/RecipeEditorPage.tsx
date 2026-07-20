@@ -128,8 +128,8 @@ function CopyRecipeDialog({ recipe, flatFolders, onCopy, onCancel }: CopyRecipeD
     <div className="re-dialog-overlay" role="dialog" aria-modal="true" aria-label="Copy recipe">
       <div className="re-dialog">
         <h2 className="re-dialog-title">Copy Recipe</h2>
-        <label className="re-field-label">
-          New title
+        <label className="re-field-label field-row">
+          <span className="field-row-label">New title</span>
           <input
             className="re-field-input"
             value={title}
@@ -137,8 +137,8 @@ function CopyRecipeDialog({ recipe, flatFolders, onCopy, onCancel }: CopyRecipeD
             aria-label="New recipe title"
           />
         </label>
-        <label className="re-field-label">
-          Parent folder
+        <label className="re-field-label field-row">
+          <span className="field-row-label">Parent folder</span>
           <select
             className="re-field-select"
             value={folderId ?? ""}
@@ -387,10 +387,12 @@ export function RecipeEditor({
       <section className="re-section-block" aria-label="Recipe info">
         <h2 className="re-section-title">Recipe Info</h2>
 
-        <label className="re-field-label">
-          Title
-          <span className="field-required" aria-hidden="true">
-            *
+        <label className="re-field-label field-row">
+          <span className="field-row-label">
+            Title
+            <span className="field-required" aria-hidden="true">
+              *
+            </span>
           </span>
           <input
             id="recipe-title"
@@ -408,8 +410,8 @@ export function RecipeEditor({
           )}
         </label>
 
-        <label className="re-field-label">
-          Subtitle
+        <label className="re-field-label field-row">
+          <span className="field-row-label">Subtitle</span>
           <input
             className="re-field-input"
             value={form.subtitle}
@@ -418,8 +420,8 @@ export function RecipeEditor({
           />
         </label>
 
-        <label className="re-field-label">
-          Source URL
+        <label className="re-field-label field-row">
+          <span className="field-row-label">Source URL</span>
           <input
             className="re-field-input"
             type="url"
@@ -433,8 +435,8 @@ export function RecipeEditor({
             widget (TreeSelect + a "New subfolder" checkbox). Wrapping it in a
             <label> makes pointer clicks forward to the label's control, which
             toggles the TreeSelect overlay open-then-closed so it never opens. */}
-        <div className="re-field-label">
-          Folder
+        <div className="re-field-label field-row">
+          <span className="field-row-label">Folder</span>
           <RecipeFolderSelector
             value={form.parent_folder_id}
             folders={folders}
@@ -475,15 +477,20 @@ export function RecipeEditor({
             </label>
           )}
           {showVersionDescription && (
-            <label className="re-version-description-label" htmlFor="re-version-description-input">
-              Version description
-              <span className="field-required" aria-hidden="true">
-                *
+            <label
+              className="re-version-description-label field-row"
+              htmlFor="re-version-description-input"
+            >
+              <span className="field-row-label">
+                Version description
+                <span className="field-required" aria-hidden="true">
+                  *
+                </span>
               </span>
               <input
                 id="re-version-description-input"
                 ref={descriptionInputRef}
-                className={`re-new-version-input${descriptionError !== null ? " field-input--error" : ""}`}
+                className={descriptionError !== null ? "field-input--error" : ""}
                 value={form.version_description}
                 onChange={(e) => patch("version_description", e.target.value)}
                 aria-label="Version description"
