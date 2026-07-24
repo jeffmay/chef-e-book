@@ -360,26 +360,24 @@ export function RecipeEditor({
           onClick={onCancel}
           aria-label="Back to recipe list"
         >
-          ← Back
+          ⬅︎
         </button>
         <h1 className="re-editor-title">
-          {recipe ? "Edit" : "New Recipe"}
-          {form.title ? `: ${form.title}` : ""}
+          {form.title ? form.title : recipe ? "Edit" : "New Recipe"}
         </h1>
         {recipe && (
-          <button type="button" className="re-copy-btn" onClick={() => setShowCopyDialog(true)}>
-            Copy recipe
-          </button>
-        )}
-        {recipe && displayedVersion !== undefined && (
-          <button
-            type="button"
-            className="re-start-btn"
-            onClick={() => startSession(recipe.id, displayedVersion.id)}
-            aria-label={`Start session for ${recipe.title}`}
-          >
-            ▶ Start
-          </button>
+          <ButtonMenu
+            className="re-header-actions"
+            {...(displayedVersion !== undefined && {
+              defaultButton: {
+                label: "▶ Start",
+                onSelect: () => startSession(recipe.id, displayedVersion.id),
+                ariaLabel: `Start session for ${recipe.title}`,
+              },
+            })}
+            buttons={[{ label: "Copy recipe", onSelect: () => setShowCopyDialog(true) }]}
+            menuLabel={`More actions for ${recipe.title}`}
+          />
         )}
       </div>
 
