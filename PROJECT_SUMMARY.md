@@ -87,6 +87,7 @@ _(none)_
 - [x] Session summary rework — replaced the skipped-item checkbox rows with the full `RecipeVersionEditor` (new ingredients/sections can be added before saving); Restore puts a skipped item back, ✕ removes the row, and still-skipped items are dropped from any saved version by default; the estimated-time slider minimum now tracks the kept items; a vertical rule separates the "Time per ingredient" label from its duration selector
 - [x] `ButtonMenu` adoption — bulk recipe page recipe/version rows (▶ Start default, Start/Edit in menu), folder + virtual-root "New" menus (New Recipe default, New Recipe/New Folder in menu, replacing the hand-rolled `NewItemMenuDropdown`), and recipe editor version-history rows (Edit default, Start in menu)
 - [x] Mobile view for the bulk recipe page — new `useMobileView` hook (`hooks/useMobileView.ts`, `MOBILE_VIEW_MAX_WIDTH` = 600px, reactive `matchMedia`) and a matching `@media (max-width: 600px)` rule; at ≤ 600px the Created/Updated columns collapse (leaving Select/Name/Actions) and every actions `ButtonMenu` gets `hideDefault` (default action folds into the "▾" menu). Added a `hideDefault` prop to `ButtonMenu` for this
+- [x] Mobile focus-zoom prevention — a global `@media (max-width: 600px)` rule in `global.css` forces focusable text inputs/textarea/select to `font-size: 16px !important` so mobile browsers (notably iOS Safari) no longer auto-zoom the page on input focus; guarded by a `styles/__tests__/global.test.ts` invariant test
 
 ---
 
