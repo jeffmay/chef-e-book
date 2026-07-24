@@ -316,3 +316,23 @@ main.select-user-page {
 .field-row > .field-error {
   flex-basis: 100%;
 }
+
+/* ============================================================
+   Mobile view (≤600px) — prevent focus zoom on text fields.
+   Mobile browsers (notably iOS Safari) auto-zoom the page when a
+   focused form control's font-size is below 16px. On this screen
+   the root font clamps to 14px (and many fields use sub-1em `em`
+   sizes), so force every focusable text-entry control up to the
+   16px threshold here. `!important` wins over the component-level
+   `em` sizes; no focusable input sets an `!important` font-size,
+   so nothing competes. Checkboxes/radios are excluded (their size
+   is width/height-driven and they never trigger focus zoom).
+   Breakpoint matches MOBILE_VIEW_MAX_WIDTH in useMobileView.ts.
+   ============================================================ */
+@media (max-width: 600px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
