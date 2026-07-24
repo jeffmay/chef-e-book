@@ -508,7 +508,7 @@ export function BulkRecipeEditorPage() {
             <th className="bre-th bre-th--name">Name</th>
             <th className="bre-th bre-th--date">Created</th>
             <th className="bre-th bre-th--date">Updated</th>
-            <th className="bre-th bre-th--actions">Actions</th>
+            <th className="bre-th bre-th--actions">{!isMobileView && "Actions"}</th>
           </tr>
         </thead>
         <tbody>
