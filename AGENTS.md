@@ -282,8 +282,8 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Auto-grouping ingredients (ex: group by label - solid or liquid)
 - Save as a new version (the "Create new version" checkbox clears the version description and focuses it)
 - View past versions (version history); each row has a `ButtonMenu` — "Edit" is the default button (opens that version) with "Start" in the chevron menu
-- "▶ Start" button in the header starts a session for the version being viewed (or the latest)
-- Clone and rename recipe
+- The header shows the recipe title alone (no "Edit:" prefix; a new recipe shows "New Recipe" only until a title is typed), a compact "⬅︎" back button, and — when editing — a `ButtonMenu` whose default "▶ Start" button starts a session for the version being viewed (or the latest) with "Copy recipe" in the chevron menu
+- Clone and rename recipe (via the header "Copy recipe" action)
 - View session log
 - Move to a parent group ("organize")
 

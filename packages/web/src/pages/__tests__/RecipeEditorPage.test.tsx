@@ -443,6 +443,13 @@ describe("RecipeEditor — new recipe form", () => {
     expect(screen.getByRole("heading", { name: "New Recipe" })).toBeInTheDocument();
   });
 
+  it("replaces the New Recipe heading with the title once one is entered", async () => {
+    setupNewRecipeEditor();
+    await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Chocolate Cake");
+    expect(screen.getByRole("heading", { name: "Chocolate Cake" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /New Recipe/ })).not.toBeInTheDocument();
+  });
+
   it("shows all required fields", async () => {
     setupNewRecipeEditor();
     await flushAsyncEffects();
@@ -559,10 +566,10 @@ describe("RecipeEditor — async recipe load", () => {
 });
 
 describe("RecipeEditor — editing existing recipe", () => {
-  it("shows the edit heading with recipe title", async () => {
+  it("shows the recipe title as the heading (no 'Edit:' prefix)", async () => {
     setupExistingRecipeEditor("Banana Bread");
     await flushAsyncEffects();
-    expect(screen.getByRole("heading", { name: "Edit: Banana Bread" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Banana Bread" })).toBeInTheDocument();
   });
 
   it("shows version history for existing recipe", async () => {
@@ -579,10 +586,13 @@ describe("RecipeEditor — editing existing recipe", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows Copy recipe button when editing", async () => {
+  it("offers Copy recipe in the header actions menu when editing", async () => {
     setupExistingRecipeEditor("Banana Bread");
     await flushAsyncEffects();
-    expect(screen.getByRole("button", { name: "Copy recipe" })).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "More actions for Banana Bread", hidden: true }),
+    );
+    expect(await screen.findByRole("menuitem", { name: "Copy recipe" })).toBeInTheDocument();
   });
 });
 
@@ -861,15 +871,22 @@ describe("RecipeEditor — version description validation (existing recipe)", ()
   });
 
   describe("RecipeEditor — copy recipe", () => {
-    it("opens the copy dialog when Copy recipe is clicked", async () => {
+    async function openCopyDialog() {
+      await userEvent.click(
+        screen.getByRole("button", { name: "More actions for Soup", hidden: true }),
+      );
+      await userEvent.click(await screen.findByRole("menuitem", { name: "Copy recipe" }));
+    }
+
+    it("opens the copy dialog when Copy recipe is selected", async () => {
       setupExistingRecipeEditor("Soup");
-      await userEvent.click(screen.getByRole("button", { name: "Copy recipe" }));
+      await openCopyDialog();
       expect(screen.getByRole("dialog", { name: "Copy recipe" })).toBeInTheDocument();
     });
 
     it("copy dialog pre-fills the title", async () => {
       setupExistingRecipeEditor("Soup");
-      await userEvent.click(screen.getByRole("button", { name: "Copy recipe" }));
+      await openCopyDialog();
       const dialog = screen.getByRole("dialog", { name: "Copy recipe" });
       expect(within(dialog).getByRole("textbox", { name: "New recipe title" })).toHaveValue(
         "Soup (copy)",
@@ -878,7 +895,7 @@ describe("RecipeEditor — version description validation (existing recipe)", ()
 
     it("cancel closes the copy dialog", async () => {
       setupExistingRecipeEditor("Soup");
-      await userEvent.click(screen.getByRole("button", { name: "Copy recipe" }));
+      await openCopyDialog();
       const dialog = screen.getByRole("dialog", { name: "Copy recipe" });
       await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
       expect(screen.queryByRole("dialog", { name: "Copy recipe" })).not.toBeInTheDocument();

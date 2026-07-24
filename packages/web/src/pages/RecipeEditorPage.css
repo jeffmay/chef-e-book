@@ -71,17 +71,21 @@
 
 .re-back-btn {
   font-size: 0.9em;
+  flex: 0 0 auto;
 }
 
-.re-copy-btn {
+/* Header split button (Start + Copy recipe); keep it from stretching so the
+   title takes the remaining row width and the group stays compact when the
+   header wraps on smaller windows. */
+.re-header-actions {
+  flex: 0 0 auto;
   font-size: 0.85em;
 }
 
-.re-start-btn {
-  font-size: 0.85em;
+/* Match the previous prominent "Start" treatment: solid-black default button. */
+.re-header-actions .button-menu-default {
   background: var(--color-fg);
   color: var(--color-bg);
-  white-space: nowrap;
 }
 
 /* ============================================================
