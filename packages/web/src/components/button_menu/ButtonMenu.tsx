@@ -23,6 +23,12 @@ export type ButtonMenuProps = ReadonlyDeep<{
   buttons: ButtonMenuItem[];
   /** Accessible name for the chevron menu trigger. */
   menuLabel: string;
+  /**
+   * When true, the default button is not rendered and its action is instead
+   * moved to the top of the chevron menu — so only the "▾" trigger shows.
+   * Useful in constrained layouts (e.g. mobile view).
+   */
+  hideDefault?: boolean;
   className?: string;
 }>;
 
@@ -37,11 +43,22 @@ export type ButtonMenuProps = ReadonlyDeep<{
  * click target is inside the popup — letting PrimeReact's own item-click
  * handler fire the `command` before the menu is hidden.
  */
-export function ButtonMenu({ defaultButton, buttons, menuLabel, className }: ButtonMenuProps) {
+export function ButtonMenu({
+  defaultButton,
+  buttons,
+  menuLabel,
+  hideDefault = false,
+  className,
+}: ButtonMenuProps) {
   const menuRef = useRef<Menu>(null);
   const wrapperRef = useRef<HTMLSpanElement>(null);
 
-  const items: MenuItem[] = buttons.map((button) => ({
+  // When hiding the default button, fold its action into the top of the menu.
+  const showDefault = defaultButton !== undefined && !hideDefault;
+  const menuButtons =
+    hideDefault && defaultButton !== undefined ? [defaultButton, ...buttons] : buttons;
+
+  const items: MenuItem[] = menuButtons.map((button) => ({
     label: button.label,
     command: () => button.onSelect(),
     ...(button.disabled !== undefined && { disabled: button.disabled }),
@@ -86,7 +103,7 @@ export function ButtonMenu({ defaultButton, buttons, menuLabel, className }: But
       onBlur={handleBlur}
     >
       <ButtonGroup>
-        {defaultButton !== undefined && (
+        {showDefault && defaultButton !== undefined && (
           <button
             type="button"
             className="button-menu-default"

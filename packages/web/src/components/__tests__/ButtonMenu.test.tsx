@@ -91,6 +91,33 @@ describe("ButtonMenu", () => {
     expect(screen.getByRole("button", { name: "Start" })).toBeDisabled();
   });
 
+  it("hides the default button and folds its action into the menu when hideDefault is set", async () => {
+    const onStart = vi.fn();
+    const onEdit = vi.fn();
+    render(
+      <ButtonMenu
+        defaultButton={{ label: "Start", onSelect: onStart, ariaLabel: "Start session" }}
+        buttons={[{ label: "Edit", onSelect: onEdit }]}
+        menuLabel="More actions"
+        hideDefault
+      />,
+    );
+
+    // Only the chevron trigger renders — the default button is gone.
+    expect(screen.queryByRole("button", { name: "Start session" })).not.toBeInTheDocument();
+    const buttons = screen.getAllByRole("button");
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]).toHaveAccessibleName("More actions");
+
+    // The default action is now the first menu item.
+    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    const menuItems = screen.getAllByRole("menuitem");
+    expect(menuItems.map((item) => item.textContent)).toEqual(["Start", "Edit"]);
+    await userEvent.click(screen.getByRole("menuitem", { name: "Start" }));
+    expect(onStart).toHaveBeenCalledTimes(1);
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
   it("closes the menu when clicking outside", async () => {
     render(
       <ButtonMenu buttons={[{ label: "Start", onSelect: vi.fn() }]} menuLabel="More actions" />,

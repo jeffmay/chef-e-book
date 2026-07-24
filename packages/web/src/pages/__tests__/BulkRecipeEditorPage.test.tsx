@@ -118,6 +118,45 @@ describe("BulkRecipeEditorPage — recipe rows", () => {
   });
 });
 
+describe("BulkRecipeEditorPage — mobile view", () => {
+  function stubMobileView(): void {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: true,
+        media: "(max-width: 600px)",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+  }
+
+  it("folds the recipe row default action into the menu (chevron only)", async () => {
+    stubMobileView();
+    createRecipe(recipeBookDoc, { title: "Gumbo" });
+    setup();
+    await flushAsyncEffects();
+
+    // The default "Start" button is not shown as a standalone button in mobile view.
+    expect(
+      screen.queryByRole("button", { name: "Start session for Gumbo" }),
+    ).not.toBeInTheDocument();
+
+    // Its action is available inside the actions menu instead, above Edit.
+    await userEvent.click(screen.getByRole("button", { name: "More actions for recipe Gumbo" }));
+    expect(screen.getByRole("menuitem", { name: "▶ Start" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "🖊️ Edit" })).toBeInTheDocument();
+  });
+
+  it("keeps the default action visible on wider screens", async () => {
+    // No mobile matchMedia stub — useMobileView falls back to desktop.
+    createRecipe(recipeBookDoc, { title: "Gumbo" });
+    setup();
+    await flushAsyncEffects();
+    expect(screen.getByRole("button", { name: "Start session for Gumbo" })).toBeInTheDocument();
+  });
+});
+
 describe("BulkRecipeEditorPage — expand/collapse", () => {
   it("expands recipe to show versions", async () => {
     const recipe = createRecipe(recipeBookDoc, { title: "Cake" });

@@ -419,3 +419,16 @@
   color: var(--color-fg);
   cursor: pointer;
 }
+
+/* ============================================================
+   Mobile view (≤600px) — keep only Select, Name, and Actions
+   columns; the Created/Updated date columns are hidden. Kept in
+   sync with MOBILE_VIEW_MAX_WIDTH in useMobileView.ts.
+   ============================================================ */
+
+@media (max-width: 600px) {
+  .bre-th--date,
+  .bre-td--date {
+    display: none;
+  }
+}

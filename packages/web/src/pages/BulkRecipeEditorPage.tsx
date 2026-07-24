@@ -8,6 +8,7 @@ import type {
 import { Fragment, type FormEvent, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { ButtonMenu } from "../components/button_menu/ButtonMenu.tsx";
+import { useMobileView } from "../hooks/useMobileView.ts";
 import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.ts";
 import { latestVersion, useRecipeStore } from "../hooks/useRecipeStore.ts";
 import { useStartSession } from "../hooks/useStartSession.ts";
@@ -174,6 +175,7 @@ export function BulkRecipeEditorPage() {
   const { recipes, removeAll, merge } = useRecipeStore();
   const { folders, createFolder, updateFolder } = useRecipeFolderStore();
   const startSession = useStartSession();
+  const isMobileView = useMobileView();
 
   const [rootExpanded, setRootExpanded] = useState(true);
   const [expandedFolders, setExpandedFolders] = useState<ReadonlySet<RecipeFolderId>>(new Set());
@@ -543,6 +545,7 @@ export function BulkRecipeEditorPage() {
                 }}
                 buttons={[{ label: "📂 Folder", onSelect: () => handleStartNewFolder(undefined) }]}
                 menuLabel="New item in Recipes"
+                hideDefault={isMobileView}
               />
             </td>
           </tr>
@@ -680,6 +683,7 @@ export function BulkRecipeEditorPage() {
                               },
                             ]}
                             menuLabel={`New item in folder ${folder.name}`}
+                            hideDefault={isMobileView}
                           />
                         </td>
                       </tr>
@@ -764,6 +768,7 @@ export function BulkRecipeEditorPage() {
                           defaultButton={defaultButton}
                           buttons={others}
                           menuLabel={`More actions for recipe ${recipe.title}`}
+                          hideDefault={isMobileView}
                         />
                       </td>
                     </tr>
@@ -805,6 +810,7 @@ export function BulkRecipeEditorPage() {
                           },
                         ]}
                         menuLabel={`More actions for version ${version.description || "Untitled version"}`}
+                        hideDefault={isMobileView}
                       />
                     </td>
                   </tr>
