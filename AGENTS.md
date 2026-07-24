@@ -258,7 +258,8 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 
 - All editor components use "↩" (cancel changes) and "✔︎" (accept changes) buttons in left-to-right order.
   If the horizontal screen space is needed, the buttons can be stacked from top-to-bottom.
-- **`ButtonMenu`** (`components/button_menu/`) — shared split button: an optional `defaultButton` performs its action directly, and a "▾" chevron opens a PrimeReact popup `Menu` listing all available actions (PrimeReact `ButtonGroup` + `Menu`). When `defaultButton` is undefined only the chevron shows. Used by the bulk recipe page rows, the folder "New" menus, and the version history table.
+- **`ButtonMenu`** (`components/button_menu/`) — shared split button: an optional `defaultButton` performs its action directly, and a "▾" chevron opens a PrimeReact popup `Menu` listing all available actions (PrimeReact `ButtonGroup` + `Menu`). When `defaultButton` is undefined only the chevron shows. The `hideDefault` prop hides the default button and folds its action to the top of the chevron menu (so only the "▾" trigger shows) — used to compact the actions column in mobile view. Used by the bulk recipe page rows, the folder "New" menus, and the version history table.
+- **`useMobileView`** (`hooks/useMobileView.ts`) — returns whether the viewport is in "mobile view" (≤ `MOBILE_VIEW_MAX_WIDTH` = 600px), tracking `window.matchMedia` reactively (and defaulting to `false` where `matchMedia` is unavailable, e.g. jsdom). The 600px breakpoint is kept in sync with the `@media (max-width: 600px)` rules in page stylesheets.
 - **`RecipeVersionEditor`** (`components/recipe_editor/`) — the editable body of a RecipeVersion (computed Ingredients display + recursive Instructions section editor). Shared by `RecipeEditor` and the session summary; optional `skippedIds`/`onRestoreItem`/`onDismissItem` decorate skipped items with the `--background-danger` stripes, a floating "skipped" tag, and Restore/✕ actions.
 
 ### Home Page
@@ -363,6 +364,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Per-item buttons: edit recipe, expand versions, expand subgroup
 - Recipe and version rows use a `ButtonMenu` — "▶ Start" is the default button (latest version on recipe rows, that version on version rows) with Start/Edit in the chevron menu
 - Folder rows (and the virtual root) use a `ButtonMenu` — "New Recipe" is the default button with New Recipe / New Folder in the chevron menu
+- **Mobile view** (`useMobileView`, ≤ 600px): the Created/Updated date columns are hidden via a `@media (max-width: 600px)` rule (leaving only Select, Name, and Actions), and every row's actions `ButtonMenu` sets `hideDefault` so only the "▾" trigger shows (its default action moves into the menu)
 
 ### Recipe Import
 
