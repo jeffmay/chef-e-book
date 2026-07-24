@@ -11,7 +11,13 @@ export function NavMenu() {
 
   function handleBlur(e: FocusEvent<HTMLDetailsElement>) {
     const related = e.relatedTarget instanceof Node ? e.relatedTarget : null;
-    if (!e.currentTarget.contains(related)) close();
+    // Only close when focus actually moved to another element outside the menu
+    // (e.g. keyboard tab-away). On touch devices (iOS Safari) tapping a link does
+    // not focus it, so `related` is null; closing here would collapse the menu and
+    // hide the link before its click/navigation fires, stranding the user on the
+    // current page. Genuine outside taps are handled by the pointerdown listener
+    // below, and link taps close the menu via each Link's onClick={close}.
+    if (related !== null && !e.currentTarget.contains(related)) close();
   }
 
   /** Close on click outside (catches non-focusable targets). */

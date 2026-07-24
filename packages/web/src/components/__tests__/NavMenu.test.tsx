@@ -53,4 +53,18 @@ describe("NavMenu", () => {
     fireEvent.focusOut(trigger, { relatedTarget: outside });
     expect(details.hasAttribute("open")).toBe(false);
   });
+
+  it("keeps the menu open when focus leaves without a related target (mobile link tap)", async () => {
+    // On iOS Safari tapping a link does not focus it, so focusout fires with a
+    // null relatedTarget. Closing here would hide the link before its click can
+    // navigate, so the menu must stay open and let the click proceed.
+    renderMenu();
+    const trigger = screen.getByLabelText("Navigation menu");
+    await userEvent.click(trigger);
+    const details = trigger.closest("details");
+    if (!details) throw new Error("No details element");
+    expect(details.hasAttribute("open")).toBe(true);
+    fireEvent.focusOut(trigger, { relatedTarget: null });
+    expect(details.hasAttribute("open")).toBe(true);
+  });
 });
