@@ -791,10 +791,12 @@ export function IngredientsTable({
           header="Default Value"
           sortable
           body={measurementBody}
+          headerClassName="it-col--measurement"
+          bodyClassName="it-col--measurement"
           filter
           filterMatchMode="custom"
           filterFunction={typeFilterFunction}
-          filterHeaderClassName="it-filter-th"
+          filterHeaderClassName="it-filter-th it-col--measurement"
           filterElement={
             <MultiSelectFilter
               value={typeFilter}
@@ -821,7 +823,15 @@ export function IngredientsTable({
             />
           }
         />
-        <Column field="parent_name" header="Parent" sortable body={parentBody} />
+        <Column
+          field="parent_name"
+          header="Parent"
+          sortable
+          body={parentBody}
+          headerClassName="it-col--parent"
+          bodyClassName="it-col--parent"
+          filterHeaderClassName="it-col--parent"
+        />
       </TreeTable>
     </div>
   );
