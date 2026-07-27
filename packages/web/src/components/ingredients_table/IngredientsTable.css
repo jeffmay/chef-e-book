@@ -196,6 +196,54 @@
   overflow: visible;
 }
 
+/* ---- Depth lines (all viewport sizes) ----
+   Replace PrimeReact's per-level horizontal indentation with a compact,
+   fixed-width column of vertical lines (one per nesting level) at the far left
+   of the name cell — reclaiming horizontal space at every screen size. */
+
+/* Drop the toggler's per-level horizontal indentation; the depth lines convey
+   nesting instead. */
+.it-wrapper .p-treetable .p-treetable-toggler {
+  margin-left: 0 !important;
+}
+
+/* Reserve the depth column at the far left of the name cell (before the
+   checkbox/toggler) and make the cell the positioning context for the
+   absolutely-placed depth lines. Applied to every first body cell so the
+   checkbox column stays aligned regardless of nesting depth. */
+.it-wrapper .p-treetable .p-treetable-tbody > tr > td:first-child {
+  position: relative;
+  padding-left: calc(14px + var(--spacing-xs));
+}
+
+/* Name cell wraps the depth-lines block and the editable/editing content. */
+.it-name-cell {
+  display: inline;
+}
+
+/* Fixed sub-16px column fitting at least 4 lines (2px wide, 2px apart:
+   4 × 2px + 3 × 2px gaps = 14px). Absolutely anchored to the name cell's full
+   height (top/bottom: 0) so the lines fill the row no matter how much the text
+   wraps, and sit to the left of the checkbox (left: 0). */
+.it-depth {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  width: 14px;
+  max-width: 14px;
+  overflow: hidden;
+}
+
+.it-depth-line {
+  flex: 0 0 2px;
+  width: 2px;
+  background: var(--color-fg);
+}
+
 /* ---- Editable cells ---- */
 .it-editable {
   margin-left: 0.5em;
@@ -271,6 +319,12 @@
   white-space: nowrap;
 }
 
+/* Visible label replacing the removed "Labels to add/remove" placeholders. */
+.it-bulk-label {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
 .it-bulk-clear {
   background: none;
   border: var(--border-width) solid var(--color-border);
@@ -338,4 +392,38 @@
 /* ---- Misc ---- */
 .it-muted {
   color: var(--color-muted);
+}
+
+/* ---- Mobile view (≤ 600px) ----
+   Kept in sync with MOBILE_VIEW_MAX_WIDTH in useMobileView.ts. Reclaims
+   horizontal space by wrapping header text and stacking the inline/bulk
+   editors. (The depth-lines column applies at every viewport size — see the
+   "Depth lines" section above.) */
+@media (max-width: 600px) {
+  /* Let header titles wrap instead of forcing wide columns. */
+  .it-wrapper .p-treetable .p-treetable-thead > tr > th {
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  /* Stack the accept/cancel buttons below the input for inline edits… */
+  .it-editing,
+  .it-label-editor {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* …but keep the two inline-edit buttons themselves side by side below the
+     field (overriding the ≤1000px column rule above). */
+  .it-edit-buttons {
+    flex-direction: row;
+  }
+
+  /* Vertically stack the bulk edit fields (and their buttons). */
+  .it-bulk-bar,
+  .it-bulk-action {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

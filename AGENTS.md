@@ -351,8 +351,11 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Search/filter by label, default measurement type, or parent type
 - Multi-select checkboxes
 - Bulk actions: add label, remove label, change measurement type, change parent ingredient
+  - The "Labels to add" / "Labels to remove" editors use visible labels (no in-field placeholder)
 - "Add new ingredient" form
 - "Refresh filter" link when changes invalidate the current filter
+- **Depth lines (all viewport sizes)**: the Name column's per-level horizontal indentation is replaced by a fixed sub-16px depth-lines column (`.it-depth`, rendered by the `DepthLines` component) that draws one vertical line (`.it-depth-line`) per nesting level. PrimeReact's toggler indentation is zeroed; the lines are absolutely anchored to the name `<td>` (`top`/`bottom: 0`) so they fill the full row height regardless of text wrapping, and sit to the left of the checkbox via `padding-left` on the first body cell. Roots render zero lines but still reserve the column so the checkbox stays aligned
+- **Mobile view** (≤ 600px, via `@media (max-width: 600px)` in `IngredientsTable.css`): table header text wraps, inline-edit accept/cancel buttons stack below their field, and the bulk edit fields stack vertically
 
 ### Recipe Group Editor (Directory View)
 

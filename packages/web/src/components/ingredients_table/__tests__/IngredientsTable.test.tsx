@@ -189,6 +189,33 @@ describe("IngredientsTable — tree expand/collapse", () => {
   });
 });
 
+describe("IngredientsTable — depth lines", () => {
+  function depthLineCount(name: string): number {
+    const cell = screen
+      .getByRole("button", { name: `Edit name for ${name}` })
+      .closest(".it-name-cell");
+    return cell?.querySelectorAll(".it-depth-line").length ?? -1;
+  }
+
+  it("renders no depth lines for root ingredients", async () => {
+    setup();
+    await screen.findByText("Flour");
+    expect(depthLineCount("Flour")).toBe(0);
+    expect(depthLineCount("Dairy")).toBe(0);
+  });
+
+  it("renders one depth line per nesting level", async () => {
+    setup();
+    await screen.findByText("Dairy");
+    const togglers = screen
+      .getAllByRole("button")
+      .filter((b) => b.classList.contains("p-treetable-toggler"));
+    await userEvent.click(togglers[0]!);
+    // Butter is nested one level under Dairy.
+    expect(depthLineCount("Butter")).toBe(1);
+  });
+});
+
 describe("IngredientsTable — text filters", () => {
   it("filters by name", async () => {
     setup();
@@ -464,6 +491,13 @@ describe("IngredientsTable — bulk actions", () => {
     const flourRow = screen.getByText("Flour").closest("tr")!;
     await userEvent.click(within(flourRow).getAllByRole("checkbox")[0]!);
   }
+
+  it("shows visible labels for the add/remove label editors (no placeholder)", async () => {
+    await selectFlour();
+    const bulkBar = screen.getByRole("region", { name: "Bulk actions" });
+    expect(within(bulkBar).getByText("Labels to add")).toBeInTheDocument();
+    expect(within(bulkBar).getByText("Labels to remove")).toBeInTheDocument();
+  });
 
   it("calls onAddLabels with selected ids and created labels", async () => {
     await selectFlour();
