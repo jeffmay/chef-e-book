@@ -6,6 +6,9 @@ import {
   type KitchenwareKind,
   type KitchenwareLabel,
 } from "@recipe-book/shared";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TreeNode } from "primereact/treenode";
@@ -213,6 +216,57 @@ describe("IngredientsTable — depth lines", () => {
     await userEvent.click(togglers[0]!);
     // Butter is nested one level under Dairy.
     expect(depthLineCount("Butter")).toBe(1);
+  });
+});
+
+describe("IngredientsTable — narrow-view column hiding", () => {
+  // The Default Value and Parent columns are hidden below 450px (edited via the
+  // bulk bar instead). Media queries can't be exercised in jsdom, so assert the
+  // marker classes the CSS targets are present on every cell of those columns,
+  // and absent from the Name/Labels columns.
+  it("tags the Default Value column cells with it-col--measurement", async () => {
+    setup();
+    await screen.findByText("Flour");
+    expect(screen.getByText("Default Value").closest("th")).toHaveClass("it-col--measurement");
+    expect(
+      screen.getByRole("button", { name: "Edit default measurement for Flour" }).closest("td"),
+    ).toHaveClass("it-col--measurement");
+  });
+
+  it("tags the Parent column cells with it-col--parent", async () => {
+    setup();
+    await screen.findByText("Flour");
+    expect(screen.getByText("Parent").closest("th")).toHaveClass("it-col--parent");
+    expect(screen.getByRole("button", { name: "Edit parent for Flour" }).closest("td")).toHaveClass(
+      "it-col--parent",
+    );
+  });
+
+  it("does not tag the Name or Labels columns with the hide classes", async () => {
+    setup();
+    await screen.findByText("Flour");
+    const nameCell = screen.getByRole("button", { name: "Edit name for Flour" }).closest("td");
+    const labelsCell = screen.getByRole("button", { name: "Edit labels for Flour" }).closest("td");
+    expect(nameCell).not.toHaveClass("it-col--measurement");
+    expect(nameCell).not.toHaveClass("it-col--parent");
+    expect(labelsCell).not.toHaveClass("it-col--measurement");
+    expect(labelsCell).not.toHaveClass("it-col--parent");
+  });
+});
+
+describe("IngredientsTable.css — narrow-view column hiding", () => {
+  const css = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), "../IngredientsTable.css"),
+    "utf8",
+  );
+
+  it("hides the measurement and parent columns below 450px", () => {
+    const media = /@media\s*\(max-width:\s*449(?:\.\d+)?px\)\s*\{([\s\S]*?)\}\s*\}/.exec(css);
+    expect(media).not.toBeNull();
+    const block = media?.[1] ?? "";
+    expect(block).toMatch(/\.it-col--measurement/);
+    expect(block).toMatch(/\.it-col--parent/);
+    expect(block).toMatch(/display:\s*none/);
   });
 });
 

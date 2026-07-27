@@ -427,3 +427,15 @@
     align-items: stretch;
   }
 }
+
+/* ---- Narrow view (< 450px) ----
+   Below 450px there is no room for the inline Default Value and Parent
+   columns, so hide them (header, filter row, and body cells — every cell
+   carries the column's `it-col--*` class). Those values are edited via the
+   bulk-action bar instead; the Name and Labels columns stay inline-editable. */
+@media (max-width: 449.98px) {
+  .it-wrapper .it-col--measurement,
+  .it-wrapper .it-col--parent {
+    display: none;
+  }
+}
