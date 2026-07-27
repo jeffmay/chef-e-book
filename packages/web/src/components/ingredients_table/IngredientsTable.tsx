@@ -99,6 +99,21 @@ function toTreeNode(row: IngredientRow): TreeNode {
   };
 }
 
+// Renders one full-height vertical line per level of nesting, drawn (via CSS)
+// in a compact fixed-width column at the far left of the name cell. Replaces
+// PrimeReact's per-level horizontal indentation at every viewport size to
+// reclaim horizontal space. Roots render zero lines but still reserve the
+// column so the checkbox stays aligned across rows.
+function DepthLines({ depth }: ReadonlyDeep<{ depth: number }>) {
+  return (
+    <span className="it-depth" aria-hidden="true">
+      {Array.from({ length: depth }, (_, i) => (
+        <span key={i} className="it-depth-line" />
+      ))}
+    </span>
+  );
+}
+
 // TreeTable column filterFunctions — invoked per node with the resolved
 // field value and the active filter value. Returning true keeps the node;
 // the table itself walks the tree (lenient mode) to keep matching parents.
@@ -238,6 +253,20 @@ export function IngredientsTable({
     return rows.map(toTreeNode);
   }, [filteredIngredients, labels]);
 
+  // Nesting depth per row key (roots = 0), used to draw the mobile-view depth
+  // lines in place of PrimeReact's horizontal indentation.
+  const depthByKey = useMemo(() => {
+    const map = new Map<string, number>();
+    function walk(nodes: readonly TreeNode[], depth: number): void {
+      for (const node of nodes) {
+        map.set(String(node.key), depth);
+        if (node.children !== undefined) walk(node.children, depth + 1);
+      }
+    }
+    walk(treeNodes, 0);
+    return map;
+  }, [treeNodes]);
+
   // TreeTable consults `filters` only when an `onFilter` handler is present.
   // Each entry is keyed by the column's `field`; blank filters are omitted so
   // the table skips filtering entirely when nothing is active.
@@ -366,89 +395,96 @@ export function IngredientsTable({
 
   function nameBody(node: TreeNode) {
     const [row] = validateAndPassthrough(IngredientRow, node.data);
+    const depth = depthByKey.get(row.id) ?? 0;
     const pending = pendingEdits.get(pkey(row.id, "name"));
     if (pending !== undefined) {
       return (
-        <span className="it-editing" data-editing>
-          <input
-            type="text"
-            value={pending}
-            className="it-edit-input"
-            autoFocus
-            aria-label={`Edit name for ${row.name}`}
-            onChange={(e) => onUpdateEdit(row.id, "name", e.target.value)}
-            onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === "Enter") onCommitEdit(row.id, "name");
-              if (e.key === "Escape") onCancelEdit(row.id, "name");
-            }}
-          />
-          <div className="it-edit-buttons">
-            <button
-              type="button"
-              className="it-cancel-btn"
-              onClick={() => onCancelEdit(row.id, "name")}
-              aria-label="Cancel edit"
-            >
-              ↩
-            </button>
-            <button
-              type="button"
-              className="it-confirm-btn"
-              onClick={() => onCommitEdit(row.id, "name")}
-              aria-label="Confirm edit"
-            >
-              ✔︎
-            </button>
-          </div>
+        <span className="it-name-cell">
+          <DepthLines depth={depth} />
+          <span className="it-editing" data-editing>
+            <input
+              type="text"
+              value={pending}
+              className="it-edit-input"
+              autoFocus
+              aria-label={`Edit name for ${row.name}`}
+              onChange={(e) => onUpdateEdit(row.id, "name", e.target.value)}
+              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === "Enter") onCommitEdit(row.id, "name");
+                if (e.key === "Escape") onCancelEdit(row.id, "name");
+              }}
+            />
+            <div className="it-edit-buttons">
+              <button
+                type="button"
+                className="it-cancel-btn"
+                onClick={() => onCancelEdit(row.id, "name")}
+                aria-label="Cancel edit"
+              >
+                ↩
+              </button>
+              <button
+                type="button"
+                className="it-confirm-btn"
+                onClick={() => onCommitEdit(row.id, "name")}
+                aria-label="Confirm edit"
+              >
+                ✔︎
+              </button>
+            </div>
+          </span>
         </span>
       );
     }
     return (
-      <span
-        className="it-editable"
-        data-editable
-        role="button"
-        tabIndex={0}
-        aria-label={`Edit name for ${row.name}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          // Delay the selection action so a rapid second click can cancel it.
-          // A dblclick fires two click events before the dblclick event; without
-          // this debounce the row would toggle twice (net no-op) and the editor
-          // would open in an unintentionally modified selection state.
-          const timers = clickTimersRef.current;
-          const existing = timers.get(row.id);
-          if (existing !== undefined) clearTimeout(existing);
-          timers.set(
-            row.id,
-            setTimeout(() => {
+      <span className="it-name-cell">
+        <DepthLines depth={depth} />
+        <span
+          className="it-editable"
+          data-editable
+          role="button"
+          tabIndex={0}
+          aria-label={`Edit name for ${row.name}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            // Delay the selection action so a rapid second click can cancel it.
+            // A dblclick fires two click events before the dblclick event; without
+            // this debounce the row would toggle twice (net no-op) and the editor
+            // would open in an unintentionally modified selection state.
+            const timers = clickTimersRef.current;
+            const existing = timers.get(row.id);
+            if (existing !== undefined) clearTimeout(existing);
+            timers.set(
+              row.id,
+              setTimeout(() => {
+                timers.delete(row.id);
+                toggleRowSelection(row.id);
+              }, 250),
+            );
+          }}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            // Cancel the pending single-click selection so the row is not
+            // inadvertently toggled.  Selecting and editing are separate
+            // operations; opening the editor does not implicitly select the row.
+            const timers = clickTimersRef.current;
+            const existing = timers.get(row.id);
+            if (existing !== undefined) {
+              clearTimeout(existing);
               timers.delete(row.id);
+            }
+            onBeginEdit(row.id, "name", row.name);
+          }}
+          onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
               toggleRowSelection(row.id);
-            }, 250),
-          );
-        }}
-        onDoubleClick={(e) => {
-          e.stopPropagation();
-          // Cancel the pending single-click selection so the row is not
-          // inadvertently toggled.  Selecting and editing are separate
-          // operations; opening the editor does not implicitly select the row.
-          const timers = clickTimersRef.current;
-          const existing = timers.get(row.id);
-          if (existing !== undefined) {
-            clearTimeout(existing);
-            timers.delete(row.id);
-          }
-          onBeginEdit(row.id, "name", row.name);
-        }}
-        onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            toggleRowSelection(row.id);
-          }
-          if (e.key === "F2") onBeginEdit(row.id, "name", row.name);
-        }}
-      >
-        {row.name}
+            }
+            if (e.key === "F2") onBeginEdit(row.id, "name", row.name);
+          }}
+        >
+          {row.name}
+        </span>
       </span>
     );
   }
@@ -640,11 +676,12 @@ export function IngredientsTable({
           </button>
 
           <span className="it-bulk-action">
+            <span className="it-bulk-label">Labels to add</span>
             <LabelEditor
               selectedLabelNames={bulkAddLabels}
               allLabelNames={allLabelNames}
               ariaLabel="Labels to add"
-              placeholder="Labels to add…"
+              placeholder=""
               commitAriaLabel="Apply add labels"
               commitDisabled={bulkAddLabels.length === 0}
               onChange={(names) => setBulkAddLabels(names)}
@@ -654,11 +691,12 @@ export function IngredientsTable({
           </span>
 
           <span className="it-bulk-action">
+            <span className="it-bulk-label">Labels to remove</span>
             <LabelEditor
               selectedLabelNames={bulkRemoveLabels}
               allLabelNames={allLabelNames}
               ariaLabel="Labels to remove"
-              placeholder="Labels to remove…"
+              placeholder=""
               commitAriaLabel="Apply remove labels"
               commitDisabled={bulkRemoveLabels.length === 0}
               onChange={(names) => setBulkRemoveLabels(names)}
