@@ -222,6 +222,10 @@ export function IngredientsTable({
   const [labelFilter, setLabelFilter] = useState<string[]>([]);
   const [bulkAddLabels, setBulkAddLabels] = useState<readonly string[]>([]);
   const [bulkRemoveLabels, setBulkRemoveLabels] = useState<readonly string[]>([]);
+  // The bulk add/remove label editors are folded up by default and expanded
+  // via their "⌄" toggle, keeping the bulk bar compact.
+  const [bulkAddExpanded, setBulkAddExpanded] = useState(false);
+  const [bulkRemoveExpanded, setBulkRemoveExpanded] = useState(false);
   const [bulkMeasurement, setBulkMeasurement] = useState<Measurement | null>(null);
   const [bulkParentId, setBulkParentId] = useState("");
   const [editingMeasurementFor, setEditingMeasurementFor] = useState<IngredientId | null>(null);
@@ -640,11 +644,14 @@ export function IngredientsTable({
     }
   }
 
+  // Accept the parent selection: sets the chosen parent, or clears it when no
+  // parent is selected ("— None —"). Mirrors the inline parent editor's ✔︎.
   function applyBulkParent(): void {
-    if (bulkParentId !== "") {
-      onBulkSetParent(selectedIds, loadId(IngredientId, bulkParentId));
-      setBulkParentId("");
-    }
+    onBulkSetParent(
+      selectedIds,
+      bulkParentId !== "" ? loadId(IngredientId, bulkParentId) : undefined,
+    );
+    setBulkParentId("");
   }
 
   // ---------------------------------------------------------------------------
@@ -670,42 +677,83 @@ export function IngredientsTable({
       </div>
       {selectedIds.length > 0 && (
         <div className="it-bulk-bar" role="region" aria-label="Bulk actions">
-          <span className="it-bulk-count">{selectedIds.length} selected</span>
-          <button type="button" className="it-bulk-clear" onClick={() => setSelectionKeys({})}>
-            Clear
-          </button>
+          <div className="it-bulk-header">
+            <span className="it-bulk-count">{selectedIds.length} selected</span>
+            <button type="button" className="it-bulk-clear" onClick={() => setSelectionKeys({})}>
+              Clear
+            </button>
+          </div>
 
           <span className="it-bulk-action">
-            <span className="it-bulk-label">Labels to add</span>
-            <LabelEditor
-              selectedLabelNames={bulkAddLabels}
-              allLabelNames={allLabelNames}
-              ariaLabel="Labels to add"
-              placeholder=""
-              commitAriaLabel="Apply add labels"
-              commitDisabled={bulkAddLabels.length === 0}
-              onChange={(names) => setBulkAddLabels(names)}
-              onCommit={applyAddLabels}
-              onCancel={() => setBulkAddLabels([])}
-            />
+            <span className="it-bulk-fold-head">
+              <span className="it-bulk-label">Labels to add</span>
+              {bulkAddLabels.length > 0 && (
+                <span className="it-bulk-fold-count">{bulkAddLabels.length}</span>
+              )}
+              <button
+                type="button"
+                className="it-bulk-fold-toggle"
+                aria-expanded={bulkAddExpanded}
+                aria-label={`${bulkAddExpanded ? "Hide" : "Show"} labels to add`}
+                onClick={() => setBulkAddExpanded((v) => !v)}
+              >
+                <span className="it-bulk-fold-icon" aria-hidden="true">
+                  {bulkAddExpanded ? "▲" : "▼"}
+                </span>
+              </button>
+            </span>
+            {bulkAddExpanded && (
+              <LabelEditor
+                selectedLabelNames={bulkAddLabels}
+                allLabelNames={allLabelNames}
+                ariaLabel="Labels to add"
+                placeholder=""
+                autoFocus
+                commitAriaLabel="Apply add labels"
+                commitDisabled={bulkAddLabels.length === 0}
+                onChange={(names) => setBulkAddLabels(names)}
+                onCommit={applyAddLabels}
+                onCancel={() => setBulkAddLabels([])}
+              />
+            )}
           </span>
 
           <span className="it-bulk-action">
-            <span className="it-bulk-label">Labels to remove</span>
-            <LabelEditor
-              selectedLabelNames={bulkRemoveLabels}
-              allLabelNames={allLabelNames}
-              ariaLabel="Labels to remove"
-              placeholder=""
-              commitAriaLabel="Apply remove labels"
-              commitDisabled={bulkRemoveLabels.length === 0}
-              onChange={(names) => setBulkRemoveLabels(names)}
-              onCommit={applyRemoveLabels}
-              onCancel={() => setBulkRemoveLabels([])}
-            />
+            <span className="it-bulk-fold-head">
+              <span className="it-bulk-label">Labels to remove</span>
+              {bulkRemoveLabels.length > 0 && (
+                <span className="it-bulk-fold-count">{bulkRemoveLabels.length}</span>
+              )}
+              <button
+                type="button"
+                className="it-bulk-fold-toggle"
+                aria-expanded={bulkRemoveExpanded}
+                aria-label={`${bulkRemoveExpanded ? "Hide" : "Show"} labels to remove`}
+                onClick={() => setBulkRemoveExpanded((v) => !v)}
+              >
+                <span className="it-bulk-fold-icon" aria-hidden="true">
+                  {bulkRemoveExpanded ? "▲" : "▼"}
+                </span>
+              </button>
+            </span>
+            {bulkRemoveExpanded && (
+              <LabelEditor
+                selectedLabelNames={bulkRemoveLabels}
+                allLabelNames={allLabelNames}
+                ariaLabel="Labels to remove"
+                placeholder=""
+                autoFocus
+                commitAriaLabel="Apply remove labels"
+                commitDisabled={bulkRemoveLabels.length === 0}
+                onChange={(names) => setBulkRemoveLabels(names)}
+                onCommit={applyRemoveLabels}
+                onCancel={() => setBulkRemoveLabels([])}
+              />
+            )}
           </span>
 
-          <span className="it-bulk-action">
+          <span className="it-bulk-action it-bulk-action--inline">
+            <span className="it-bulk-label">Set default measurement</span>
             <MeasurementEditor
               value={bulkMeasurement ?? DEFAULT_BULK_MEASUREMENT}
               onCommit={(value) => {
@@ -716,34 +764,36 @@ export function IngredientsTable({
             />
           </span>
 
-          <span className="it-bulk-action">
-            <IngredientSelector
-              value={bulkParentId !== "" ? loadId(IngredientId, bulkParentId) : undefined}
-              options={ingredients}
-              labels={labels}
-              onChange={(id) => setBulkParentId(id ?? "")}
-              ariaLabel="Bulk parent"
-              placeholder="— Parent —"
-            />
-            <button
-              type="button"
-              className="it-bulk-apply"
-              disabled={bulkParentId === ""}
-              onClick={applyBulkParent}
-              aria-label="Apply parent change"
-            >
-              Change parent
-            </button>
-            <button
-              type="button"
-              className="it-bulk-apply"
-              onClick={() => {
-                onBulkSetParent(selectedIds, undefined);
-              }}
-              aria-label="Clear parent"
-            >
-              Clear parent
-            </button>
+          <span className="it-bulk-action it-bulk-action--inline">
+            <span className="it-bulk-label">Set parent</span>
+            <span className="it-editing" data-editing>
+              <IngredientSelector
+                value={bulkParentId !== "" ? loadId(IngredientId, bulkParentId) : undefined}
+                options={ingredients}
+                labels={labels}
+                onChange={(id) => setBulkParentId(id ?? "")}
+                ariaLabel="Bulk parent"
+                placeholder="— None —"
+              />
+              <div className="it-edit-buttons">
+                <button
+                  type="button"
+                  className="it-cancel-btn"
+                  onClick={() => setBulkParentId("")}
+                  aria-label="Cancel parent change"
+                >
+                  ↩
+                </button>
+                <button
+                  type="button"
+                  className="it-confirm-btn"
+                  onClick={applyBulkParent}
+                  aria-label="Accept parent change"
+                >
+                  ✔︎
+                </button>
+              </div>
+            </span>
           </span>
         </div>
       )}

@@ -314,18 +314,69 @@
   font-size: 0.9em;
 }
 
+/* Count + Clear grouped into one block; Clear floats to the right when the
+   block spans the full width (mobile view — the bulk bar stacks). */
+.it-bulk-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
 .it-bulk-count {
   font-weight: bold;
   white-space: nowrap;
 }
 
-/* Visible label replacing the removed "Labels to add/remove" placeholders. */
+/* Visible label captioning each bulk editor. */
 .it-bulk-label {
   font-weight: bold;
   white-space: nowrap;
 }
 
+/* Label + count + fold toggle on one row; the toggle floats to the right when
+   the row spans the full width (mobile view — the bulk bar stacks). */
+.it-bulk-fold-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* Fold/expand toggle for the bulk add/remove label editors — the solid
+   triangle sits in its own button beside the label. */
+.it-bulk-fold-toggle {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  background: none;
+  border: var(--border-width) solid var(--color-border);
+  padding: 1px 6px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+}
+
+.it-bulk-fold-toggle:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+/* Count of pending labels, shown beside the label while folded up. */
+.it-bulk-fold-count {
+  font-weight: bold;
+  border: var(--border-width) solid currentColor;
+  border-radius: 999px;
+  padding: 0 0.4em;
+  font-size: 0.8em;
+  line-height: 1.4;
+}
+
+.it-bulk-fold-icon {
+  font-size: 0.7em;
+  line-height: 1;
+}
+
 .it-bulk-clear {
+  margin-left: auto;
   background: none;
   border: var(--border-width) solid var(--color-border);
   padding: 1px 6px;
@@ -344,36 +395,6 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-}
-
-.it-bulk-select {
-  font-size: 0.85em;
-  padding: 1px 4px;
-  border: var(--border-width) solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-fg);
-  font-family: var(--font-body);
-}
-
-.it-bulk-apply {
-  background: none;
-  border: var(--border-width) solid var(--color-border);
-  padding: 1px 6px;
-  font-size: 0.85em;
-  cursor: pointer;
-  font-family: var(--font-body);
-  color: var(--color-fg);
-  white-space: nowrap;
-}
-
-.it-bulk-apply:hover:not(:disabled) {
-  background: var(--color-fg);
-  color: var(--color-bg);
-}
-
-.it-bulk-apply:disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 
 /* ---- LabelEditor (react-select CreatableSelect) ---- */
@@ -425,6 +446,22 @@
   .it-bulk-action {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  /* …but keep the "Set default measurement" and "Set parent" editors laid out
+     horizontally. Same specificity as `.it-bulk-action` above, so the later
+     source order wins. Measurement wraps once its editor opens; the parent's
+     selector + ↩/✔ buttons stay inline (higher-specificity `.it-editing`
+     override below). */
+  .it-bulk-action--inline {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .it-bulk-action--inline .it-editing {
+    flex-direction: row;
+    align-items: center;
   }
 }
 
