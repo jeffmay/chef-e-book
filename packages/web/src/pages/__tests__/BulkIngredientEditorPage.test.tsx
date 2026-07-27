@@ -144,6 +144,7 @@ describe("BulkIngredientEditorPage — bulk actions", () => {
 
   it("bulk add labels clears the selection after apply", async () => {
     await selectButterRow();
+    await userEvent.click(screen.getByRole("button", { name: "Show labels to add" }));
     await userEvent.type(screen.getByRole("combobox", { name: "Labels to add" }), "organic");
     await userEvent.click(await screen.findByText(/Create "organic"/));
     await userEvent.click(screen.getByRole("button", { name: "Apply add labels" }));
@@ -152,6 +153,7 @@ describe("BulkIngredientEditorPage — bulk actions", () => {
 
   it("bulk remove labels clears the selection after apply", async () => {
     await selectButterRow();
+    await userEvent.click(screen.getByRole("button", { name: "Show labels to remove" }));
     // "fat" already exists as a label — select it from the dropdown (no Create needed)
     await userEvent.click(screen.getByRole("combobox", { name: "Labels to remove" }));
     await userEvent.click(await screen.findByRole("option", { name: "fat" }));

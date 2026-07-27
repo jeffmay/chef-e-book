@@ -98,11 +98,24 @@
     width: 1em !important;
   }
 
-  .le__value-container {
-    flex-direction: column !important;
+  /* From 1000px down to 400px, keep the selected-labels view and the ↩/✔
+     buttons laid out horizontally (as they are above 1000px). Qualifying with
+     the `.it-label-editor` ancestor lifts these to specificity (0,2,0) — above
+     react-select's own single-class (0,1,0) styles — so no `!important` is
+     needed here, which is what lets the narrower <400px rule below override
+     them with just one more step of specificity. */
+  .it-label-editor .le__value-container,
+  .it-label-editor .it-label-edit-buttons {
+    flex-direction: row;
   }
+}
 
-  .it-label-edit-buttons {
-    flex-direction: column !important;
+/* Below 400px there is too little width to keep them side by side, so stack.
+   The doubled class raises specificity to (0,3,0), one step above the ≤1000px
+   rule (0,2,0), so it wins without `!important`. */
+@media (max-width: 400px) {
+  .it-label-editor .le__value-container.le__value-container,
+  .it-label-editor .it-label-edit-buttons.it-label-edit-buttons {
+    flex-direction: column;
   }
 }

@@ -270,6 +270,33 @@ describe("IngredientsTable.css — narrow-view column hiding", () => {
   });
 });
 
+describe("LabelEditor.css — selected-labels/buttons layout precedence", () => {
+  const css = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), "../LabelEditor.css"),
+    "utf8",
+  );
+
+  it("lays out the value view and ↩/✔ buttons as a row ≤1000px without !important", () => {
+    expect(css).toMatch(
+      /\.it-label-editor \.le__value-container,\s*\.it-label-editor \.it-label-edit-buttons\s*\{\s*flex-direction:\s*row;\s*\}/,
+    );
+    // The old `column !important` force must be gone (it would block the <400px override).
+    expect(css).not.toMatch(/le__value-container\s*\{\s*flex-direction:\s*column\s*!important/);
+    expect(css).not.toMatch(/it-label-edit-buttons\s*\{\s*flex-direction:\s*column\s*!important/);
+  });
+
+  it("stacks them below 400px via a higher-specificity rule (no !important)", () => {
+    const narrow = /@media\s*\(max-width:\s*400px\)\s*\{([\s\S]*?\})\s*\}/.exec(css);
+    expect(narrow).not.toBeNull();
+    const block = narrow?.[1] ?? "";
+    // Doubled class = one specificity step above the ≤1000px rule.
+    expect(block).toMatch(/\.le__value-container\.le__value-container/);
+    expect(block).toMatch(/\.it-label-edit-buttons\.it-label-edit-buttons/);
+    expect(block).toMatch(/flex-direction:\s*column/);
+    expect(block).not.toMatch(/!important/);
+  });
+});
+
 describe("IngredientsTable — text filters", () => {
   it("filters by name", async () => {
     setup();
@@ -546,15 +573,41 @@ describe("IngredientsTable — bulk actions", () => {
     await userEvent.click(within(flourRow).getAllByRole("checkbox")[0]!);
   }
 
-  it("shows visible labels for the add/remove label editors (no placeholder)", async () => {
+  it("shows visible labels captioning each bulk editor (no placeholder)", async () => {
     await selectFlour();
     const bulkBar = screen.getByRole("region", { name: "Bulk actions" });
     expect(within(bulkBar).getByText("Labels to add")).toBeInTheDocument();
     expect(within(bulkBar).getByText("Labels to remove")).toBeInTheDocument();
+    expect(within(bulkBar).getByText("Set default measurement")).toBeInTheDocument();
+    expect(within(bulkBar).getByText("Set parent")).toBeInTheDocument();
+  });
+
+  it("marks the measurement and parent editors as horizontally-arranged (--inline)", async () => {
+    await selectFlour();
+    const bulkBar = screen.getByRole("region", { name: "Bulk actions" });
+    expect(
+      within(bulkBar).getByText("Set default measurement").closest(".it-bulk-action"),
+    ).toHaveClass("it-bulk-action--inline");
+    expect(within(bulkBar).getByText("Set parent").closest(".it-bulk-action")).toHaveClass(
+      "it-bulk-action--inline",
+    );
+  });
+
+  it("folds the add/remove label editors until their ⌄ toggle is pressed", async () => {
+    await selectFlour();
+    // Folded by default: no combobox rendered.
+    expect(screen.queryByRole("combobox", { name: "Labels to add" })).not.toBeInTheDocument();
+    // Expand.
+    await userEvent.click(screen.getByRole("button", { name: "Show labels to add" }));
+    expect(screen.getByRole("combobox", { name: "Labels to add" })).toBeInTheDocument();
+    // Collapse again.
+    await userEvent.click(screen.getByRole("button", { name: "Hide labels to add" }));
+    expect(screen.queryByRole("combobox", { name: "Labels to add" })).not.toBeInTheDocument();
   });
 
   it("calls onAddLabels with selected ids and created labels", async () => {
     await selectFlour();
+    await userEvent.click(screen.getByRole("button", { name: "Show labels to add" }));
     await userEvent.type(screen.getByRole("combobox", { name: "Labels to add" }), "organic");
     await userEvent.click(await screen.findByText(/Create "organic"/));
     await userEvent.type(screen.getByRole("combobox", { name: "Labels to add" }), "fresh");
@@ -565,6 +618,7 @@ describe("IngredientsTable — bulk actions", () => {
 
   it("calls onRemoveLabels with selected ids and created labels", async () => {
     await selectFlour();
+    await userEvent.click(screen.getByRole("button", { name: "Show labels to remove" }));
     await userEvent.type(screen.getByRole("combobox", { name: "Labels to remove" }), "baking");
     await userEvent.click(await screen.findByText(/Create "baking"/));
     await userEvent.click(screen.getByRole("button", { name: "Apply remove labels" }));
@@ -581,21 +635,22 @@ describe("IngredientsTable — bulk actions", () => {
     );
   });
 
-  it("calls onBulkSetParent when parent is selected and applied", async () => {
+  it("calls onBulkSetParent when a parent is selected and accepted", async () => {
     await selectFlour();
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Bulk parent" }), CHEESE.id);
-    await userEvent.click(screen.getByRole("button", { name: "Apply parent change" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept parent change" }));
     expect(onBulkSetParent).toHaveBeenCalledWith([FLOUR.id], CHEESE.id);
   });
 
-  it("calls onBulkSetParent with undefined when Clear parent is clicked", async () => {
+  it("calls onBulkSetParent with undefined when accepted with no parent selected", async () => {
     await selectFlour();
-    await userEvent.click(screen.getByRole("button", { name: "Clear parent" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept parent change" }));
     expect(onBulkSetParent).toHaveBeenCalledWith([FLOUR.id], undefined);
   });
 
   it("Add labels Apply button is disabled when no labels selected", async () => {
     await selectFlour();
+    await userEvent.click(screen.getByRole("button", { name: "Show labels to add" }));
     expect(screen.getByRole("button", { name: "Apply add labels" })).toBeDisabled();
   });
 });
