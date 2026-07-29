@@ -2,6 +2,7 @@ import type { RecipeFolder } from "@recipe-book/shared";
 import {
   collectIngredientItems,
   computeTopIngredients,
+  DEFAULT_VERSION_DESCRIPTION,
   loadId,
   randomId,
   type Recipe,
@@ -197,7 +198,7 @@ function makeInitialState(
       subtitle: "",
       source_url: "",
       parent_folder_id: initialFolderId,
-      version_description: "",
+      version_description: DEFAULT_VERSION_DESCRIPTION,
       sections: [],
       create_new_version: false,
     };

@@ -92,14 +92,17 @@ describe("BulkRecipeEditorPage — empty state", () => {
 
 describe("BulkRecipeEditorPage — recipe rows", () => {
   it("shows recipe title in the table", async () => {
-    createRecipe(recipeBookDoc, { title: "Banana Bread" });
+    createRecipe(recipeBookDoc, {
+      title: "Banana Bread",
+      description: DEFAULT_VERSION_DESCRIPTION,
+    });
     setup();
     await flushAsyncEffects();
     expect(screen.getByText("Banana Bread")).toBeInTheDocument();
   });
 
   it("shows created and updated dates", async () => {
-    createRecipe(recipeBookDoc, { title: "Pasta" });
+    createRecipe(recipeBookDoc, { title: "Pasta", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await flushAsyncEffects();
     const today = new Date().toLocaleDateString();
@@ -108,7 +111,10 @@ describe("BulkRecipeEditorPage — recipe rows", () => {
   });
 
   it("Edit in the recipe row menu navigates to the latest version", async () => {
-    const recipe = createRecipe(recipeBookDoc, { title: "Soup" });
+    const recipe = createRecipe(recipeBookDoc, {
+      title: "Soup",
+      description: DEFAULT_VERSION_DESCRIPTION,
+    });
     const latestVersionId = recipe.versions.at(-1)?.id;
     setup();
     await userEvent.click(screen.getByRole("button", { name: "More actions for recipe Soup" }));
@@ -117,7 +123,7 @@ describe("BulkRecipeEditorPage — recipe rows", () => {
   });
 
   it("shows table with recipe rows when recipes exist", async () => {
-    createRecipe(recipeBookDoc, { title: "Pizza" });
+    createRecipe(recipeBookDoc, { title: "Pizza", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await flushAsyncEffects();
     expect(screen.getByRole("table", { name: "Recipe list" })).toBeInTheDocument();
@@ -139,7 +145,7 @@ describe("BulkRecipeEditorPage — mobile view", () => {
 
   it("folds the recipe row default action into the menu (chevron only)", async () => {
     stubMobileView();
-    createRecipe(recipeBookDoc, { title: "Gumbo" });
+    createRecipe(recipeBookDoc, { title: "Gumbo", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await flushAsyncEffects();
 
@@ -156,7 +162,7 @@ describe("BulkRecipeEditorPage — mobile view", () => {
 
   it("keeps the default action visible on wider screens", async () => {
     // No mobile matchMedia stub — useMobileView falls back to desktop.
-    createRecipe(recipeBookDoc, { title: "Gumbo" });
+    createRecipe(recipeBookDoc, { title: "Gumbo", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "Start session for Gumbo" })).toBeInTheDocument();
@@ -165,7 +171,10 @@ describe("BulkRecipeEditorPage — mobile view", () => {
 
 describe("BulkRecipeEditorPage — expand/collapse", () => {
   it("expands recipe to show versions", async () => {
-    const recipe = createRecipe(recipeBookDoc, { title: "Cake" });
+    const recipe = createRecipe(recipeBookDoc, {
+      title: "Cake",
+      description: DEFAULT_VERSION_DESCRIPTION,
+    });
     const version = recipe.versions[0];
     setup();
     await userEvent.click(screen.getByRole("button", { name: "Expand versions of Cake" }));
@@ -178,7 +187,10 @@ describe("BulkRecipeEditorPage — expand/collapse", () => {
   });
 
   it("version row menu Edit navigates to the specific version", async () => {
-    const recipe = createRecipe(recipeBookDoc, { title: "Cake" });
+    const recipe = createRecipe(recipeBookDoc, {
+      title: "Cake",
+      description: DEFAULT_VERSION_DESCRIPTION,
+    });
     const version = recipe.versions[0];
     setup();
     await userEvent.click(screen.getByRole("button", { name: "Expand versions of Cake" }));
@@ -192,7 +204,7 @@ describe("BulkRecipeEditorPage — expand/collapse", () => {
   });
 
   it("collapses recipe versions on second click", async () => {
-    createRecipe(recipeBookDoc, { title: "Pie" });
+    createRecipe(recipeBookDoc, { title: "Pie", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("button", { name: "Expand versions of Pie" }));
     expect(screen.getByText(DEFAULT_VERSION_DESCRIPTION)).toBeInTheDocument();
@@ -211,7 +223,11 @@ describe("BulkRecipeEditorPage — folder rows", () => {
 
   it("expands folder to show recipes inside it", async () => {
     const folder = createRecipeFolder(recipeBookDoc, "Mains");
-    createRecipe(recipeBookDoc, { title: "Roast Chicken", parent_folder_id: folder.id });
+    createRecipe(recipeBookDoc, {
+      title: "Roast Chicken",
+      parent_folder_id: folder.id,
+      description: DEFAULT_VERSION_DESCRIPTION,
+    });
     setup();
     await userEvent.click(screen.getByRole("button", { name: "Expand folder Mains" }));
     expect(screen.getByText("Roast Chicken")).toBeInTheDocument();
@@ -219,7 +235,11 @@ describe("BulkRecipeEditorPage — folder rows", () => {
 
   it("collapses folder on second click", async () => {
     const folder = createRecipeFolder(recipeBookDoc, "Soups");
-    createRecipe(recipeBookDoc, { title: "Tomato Soup", parent_folder_id: folder.id });
+    createRecipe(recipeBookDoc, {
+      title: "Tomato Soup",
+      parent_folder_id: folder.id,
+      description: DEFAULT_VERSION_DESCRIPTION,
+    });
     setup();
     await userEvent.click(screen.getByRole("button", { name: "Expand folder Soups" }));
     expect(screen.getByText("Tomato Soup")).toBeInTheDocument();
@@ -230,21 +250,21 @@ describe("BulkRecipeEditorPage — folder rows", () => {
 
 describe("BulkRecipeEditorPage — selection", () => {
   it("checkbox selects a recipe", async () => {
-    createRecipe(recipeBookDoc, { title: "Tacos" });
+    createRecipe(recipeBookDoc, { title: "Tacos", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe Tacos" }));
     expect(screen.getByText("1 selected")).toBeInTheDocument();
   });
 
   it("shows bulk action bar when recipe is selected", async () => {
-    createRecipe(recipeBookDoc, { title: "Tacos" });
+    createRecipe(recipeBookDoc, { title: "Tacos", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe Tacos" }));
     expect(screen.getByRole("region", { name: "Recipe bulk actions" })).toBeInTheDocument();
   });
 
   it("Clear button deselects all", async () => {
-    createRecipe(recipeBookDoc, { title: "Tacos" });
+    createRecipe(recipeBookDoc, { title: "Tacos", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe Tacos" }));
     await userEvent.click(screen.getByRole("button", { name: "Clear" }));
@@ -252,8 +272,8 @@ describe("BulkRecipeEditorPage — selection", () => {
   });
 
   it("select-all checkbox selects all recipes", async () => {
-    createRecipe(recipeBookDoc, { title: "A" });
-    createRecipe(recipeBookDoc, { title: "B" });
+    createRecipe(recipeBookDoc, { title: "A", description: DEFAULT_VERSION_DESCRIPTION });
+    createRecipe(recipeBookDoc, { title: "B", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select all recipes" }));
     expect(screen.getByText("2 selected")).toBeInTheDocument();
@@ -262,7 +282,7 @@ describe("BulkRecipeEditorPage — selection", () => {
 
 describe("BulkRecipeEditorPage — delete", () => {
   it("shows delete confirmation dialog", async () => {
-    createRecipe(recipeBookDoc, { title: "Burgers" });
+    createRecipe(recipeBookDoc, { title: "Burgers", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe Burgers" }));
     await userEvent.click(screen.getByRole("button", { name: "Delete selected recipes" }));
@@ -270,7 +290,7 @@ describe("BulkRecipeEditorPage — delete", () => {
   });
 
   it("confirming delete removes the recipe", async () => {
-    createRecipe(recipeBookDoc, { title: "Burgers" });
+    createRecipe(recipeBookDoc, { title: "Burgers", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe Burgers" }));
     await userEvent.click(screen.getByRole("button", { name: "Delete selected recipes" }));
@@ -280,7 +300,7 @@ describe("BulkRecipeEditorPage — delete", () => {
   });
 
   it("cancelling delete keeps the recipe", async () => {
-    createRecipe(recipeBookDoc, { title: "Burgers" });
+    createRecipe(recipeBookDoc, { title: "Burgers", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe Burgers" }));
     await userEvent.click(screen.getByRole("button", { name: "Delete selected recipes" }));
@@ -292,8 +312,8 @@ describe("BulkRecipeEditorPage — delete", () => {
 
 describe("BulkRecipeEditorPage — merge", () => {
   it("Merge button appears only when 2+ recipes are selected", async () => {
-    createRecipe(recipeBookDoc, { title: "A" });
-    createRecipe(recipeBookDoc, { title: "B" });
+    createRecipe(recipeBookDoc, { title: "A", description: DEFAULT_VERSION_DESCRIPTION });
+    createRecipe(recipeBookDoc, { title: "B", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe A" }));
     expect(
@@ -304,8 +324,8 @@ describe("BulkRecipeEditorPage — merge", () => {
   });
 
   it("clicking Merge shows the merge name input", async () => {
-    createRecipe(recipeBookDoc, { title: "A" });
-    createRecipe(recipeBookDoc, { title: "B" });
+    createRecipe(recipeBookDoc, { title: "A", description: DEFAULT_VERSION_DESCRIPTION });
+    createRecipe(recipeBookDoc, { title: "B", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe A" }));
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe B" }));
@@ -314,8 +334,8 @@ describe("BulkRecipeEditorPage — merge", () => {
   });
 
   it("submitting merge with a name creates merged recipe and removes originals", async () => {
-    createRecipe(recipeBookDoc, { title: "A" });
-    createRecipe(recipeBookDoc, { title: "B" });
+    createRecipe(recipeBookDoc, { title: "A", description: DEFAULT_VERSION_DESCRIPTION });
+    createRecipe(recipeBookDoc, { title: "B", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe A" }));
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe B" }));
@@ -328,8 +348,8 @@ describe("BulkRecipeEditorPage — merge", () => {
   });
 
   it("Confirm merge is disabled when name is empty", async () => {
-    createRecipe(recipeBookDoc, { title: "A" });
-    createRecipe(recipeBookDoc, { title: "B" });
+    createRecipe(recipeBookDoc, { title: "A", description: DEFAULT_VERSION_DESCRIPTION });
+    createRecipe(recipeBookDoc, { title: "B", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe A" }));
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe B" }));
@@ -338,8 +358,8 @@ describe("BulkRecipeEditorPage — merge", () => {
   });
 
   it("Cancel merge hides the form", async () => {
-    createRecipe(recipeBookDoc, { title: "A" });
-    createRecipe(recipeBookDoc, { title: "B" });
+    createRecipe(recipeBookDoc, { title: "A", description: DEFAULT_VERSION_DESCRIPTION });
+    createRecipe(recipeBookDoc, { title: "B", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe A" }));
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe B" }));
@@ -349,8 +369,8 @@ describe("BulkRecipeEditorPage — merge", () => {
   });
 
   it("shows an error alert and keeps the form open when merge throws", async () => {
-    const a = createRecipe(recipeBookDoc, { title: "A" });
-    createRecipe(recipeBookDoc, { title: "B" });
+    const a = createRecipe(recipeBookDoc, { title: "A", description: DEFAULT_VERSION_DESCRIPTION });
+    createRecipe(recipeBookDoc, { title: "B", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe A" }));
     await userEvent.click(screen.getByRole("checkbox", { name: "Select recipe B" }));
@@ -379,7 +399,7 @@ describe("BulkRecipeEditorPage — virtual root folder", () => {
   });
 
   it("Recipes folder is expanded by default", async () => {
-    createRecipe(recipeBookDoc, { title: "Stew" });
+    createRecipe(recipeBookDoc, { title: "Stew", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "Collapse Recipes folder" })).toBeInTheDocument();
@@ -387,7 +407,7 @@ describe("BulkRecipeEditorPage — virtual root folder", () => {
   });
 
   it("collapsing root hides all recipes", async () => {
-    createRecipe(recipeBookDoc, { title: "Stew" });
+    createRecipe(recipeBookDoc, { title: "Stew", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("button", { name: "Collapse Recipes folder" }));
     expect(screen.queryByText("Stew")).not.toBeInTheDocument();
@@ -395,7 +415,7 @@ describe("BulkRecipeEditorPage — virtual root folder", () => {
   });
 
   it("collapsing then expanding root shows recipes again", async () => {
-    createRecipe(recipeBookDoc, { title: "Stew" });
+    createRecipe(recipeBookDoc, { title: "Stew", description: DEFAULT_VERSION_DESCRIPTION });
     setup();
     await userEvent.click(screen.getByRole("button", { name: "Collapse Recipes folder" }));
     await userEvent.click(screen.getByRole("button", { name: "Expand Recipes folder" }));

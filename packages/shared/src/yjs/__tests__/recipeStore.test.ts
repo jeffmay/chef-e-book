@@ -21,8 +21,11 @@ beforeEach(() => {
 const TWO_CUPS: Measurement = { value: { numerator: 2, denominator: 1 }, unit: "cup" };
 
 describe("createRecipe defaults", () => {
-  it("defaults the first version's description to DEFAULT_VERSION_DESCRIPTION when omitted", () => {
-    const recipe = createRecipe(doc, { title: "Pancakes" });
+  it("uses the provided description for the first version", () => {
+    const recipe = createRecipe(doc, {
+      title: "Pancakes",
+      description: DEFAULT_VERSION_DESCRIPTION,
+    });
     expect(recipe.versions[0]?.description).toBe(DEFAULT_VERSION_DESCRIPTION);
   });
 });

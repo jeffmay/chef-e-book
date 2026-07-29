@@ -4,6 +4,7 @@ import {
   ContainerId,
   createRecipe,
   createRecipeFolder,
+  DEFAULT_VERSION_DESCRIPTION,
   getRecipe,
   getSessions,
   IngredientId,
@@ -195,7 +196,7 @@ function setupNewRecipeEditor() {
 }
 
 function setupExistingRecipeEditor(title: string) {
-  const recipe = createRecipe(recipeBookDoc, { title });
+  const recipe = createRecipe(recipeBookDoc, { title, description: DEFAULT_VERSION_DESCRIPTION });
   const onSave = vi.fn();
   const onCancel = vi.fn();
   render(<RecipeEditor recipe={recipe} onSave={onSave} onCancel={onCancel} />, {
@@ -466,16 +467,17 @@ describe("RecipeEditor — new recipe form", () => {
     expect(screen.getByRole("button", { name: "Save recipe" })).toBeDisabled();
   });
 
-  it("Save button is still disabled when title is filled but description is empty", async () => {
+  it("Save button is disabled when title is empty despite pre-filled description", async () => {
     setupNewRecipeEditor();
-    await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Chocolate Cake");
     expect(screen.getByRole("button", { name: "Save recipe" })).toBeDisabled();
   });
 
-  it("shows a description error when description is empty", async () => {
+  it("pre-fills the version description with 'Initial version'", async () => {
     setupNewRecipeEditor();
     await userEvent.type(screen.getByRole("textbox", { name: "Recipe title" }), "Chocolate Cake");
-    expect(screen.getByRole("alert")).toHaveTextContent("Version description is required");
+    expect(screen.getByRole("textbox", { name: "Version description" })).toHaveValue(
+      DEFAULT_VERSION_DESCRIPTION,
+    );
   });
 
   it("Save button is enabled when title and description are filled", async () => {
@@ -549,7 +551,10 @@ describe("RecipeEditor — folder field", () => {
 
 describe("RecipeEditor — async recipe load", () => {
   it("re-seeds the form when the recipe finishes loading after mount", () => {
-    const recipe = createRecipe(recipeBookDoc, { title: "Stew" });
+    const recipe = createRecipe(recipeBookDoc, {
+      title: "Stew",
+      description: DEFAULT_VERSION_DESCRIPTION,
+    });
     const wrapper = makeWrapper(kitchenwareDoc, recipeBookDoc);
     // First render mimics a hard refresh where the doc has not synced yet, so
     // the editor receives recipe={null} and shows a blank form.
@@ -955,7 +960,10 @@ describe("RecipeEditor — start session", () => {
 
 describe("RecipeEditor — version time fields", () => {
   it("preserves estimated time fields when saving in place", async () => {
-    const recipe = createRecipe(recipeBookDoc, { title: "Pancakes" });
+    const recipe = createRecipe(recipeBookDoc, {
+      title: "Pancakes",
+      description: DEFAULT_VERSION_DESCRIPTION,
+    });
     const base = recipe.versions[0];
     if (base === undefined) throw new Error("expected an initial version");
     saveRecipe(recipeBookDoc, recipe.id, {
