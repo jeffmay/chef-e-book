@@ -246,6 +246,9 @@ export function getRecipe(doc: Y.Doc, id: RecipeId): Recipe | ValidationError {
   return validateStored(id, getRecipeYmap(doc).get(id));
 }
 
+/** Fallback `RecipeVersion.description` for a new recipe's first version when none is given. */
+export const DEFAULT_VERSION_DESCRIPTION = "Initial version";
+
 export type CreateRecipeInput = {
   title: string;
   subtitle?: string;
@@ -261,7 +264,7 @@ export function createRecipe(doc: Y.Doc, input: ReadonlyDeep<CreateRecipeInput>)
   const initialVersion: RecipeVersion = {
     id: randomId(RecipeVersionId),
     recipe_id: recipeId,
-    description: input.description ?? "",
+    description: input.description ?? DEFAULT_VERSION_DESCRIPTION,
     ingredients: [],
     sections: [],
     created_at: now,

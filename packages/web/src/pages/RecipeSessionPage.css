@@ -159,19 +159,60 @@
   accent-color: #000;
 }
 
-.rs-summary-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5vw;
-  margin-top: 1.5vw;
-}
-
 .rs-summary-btn {
   padding: 1vw 1.5vw;
 }
 
-.rs-summary-btn--discard {
-  margin-left: auto;
+/* Save-as accordion — strips the lara-light-indigo theme's rounded/coloured
+   chrome for the wireframe aesthetic. CSSTransition itself is disabled via
+   transitionOptions (no animations on e-ink), so no transition overrides
+   are needed here. */
+.rs-save-accordion .p-accordion-tab {
+  margin-bottom: 1vw;
+}
+
+.rs-save-accordion .p-accordion-header-link {
+  padding: 1vw 1.5vw;
+  border: var(--border-width) solid #000;
+  border-radius: 0;
+  background: #fff;
+  color: #000;
+  font-weight: bold;
+}
+
+.rs-save-accordion .p-accordion-header:not(.p-disabled):hover .p-accordion-header-link,
+.rs-save-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link,
+.rs-save-accordion .p-accordion-header:not(.p-disabled).p-highlight:hover .p-accordion-header-link {
+  background: #000;
+  border-color: #000;
+  color: #fff;
+}
+
+.rs-save-accordion .p-accordion-content {
+  padding: 1.5vw;
+  border: var(--border-width) solid #000;
+  border-top: none;
+  border-radius: 0;
+  background: #fff;
+  color: #000;
+}
+
+.rs-save-accordion .rs-field-label {
+  margin-bottom: 1vw;
+}
+
+.rs-save-accordion .rs-summary-btn {
+  margin-top: 0.5vw;
+}
+
+/* Discard panel: solid-black warning stripes per the shared danger background. */
+.rs-discard-tab .p-accordion-content {
+  background: var(--background-danger);
+}
+
+.rs-discard-warning {
+  font-weight: bold;
+  margin-bottom: 1vw;
 }
 
 .rs-not-found {

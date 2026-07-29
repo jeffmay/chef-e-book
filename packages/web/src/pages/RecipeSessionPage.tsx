@@ -14,6 +14,7 @@ import type {
   Session,
 } from "@recipe-book/shared";
 import {
+  DEFAULT_VERSION_DESCRIPTION,
   MeasurementUnit,
   RecipeVersionId,
   collectIngredientItems,
@@ -29,6 +30,7 @@ import {
   resolveEstimatedSeconds,
   resolveSecondsPerIngredient,
 } from "@recipe-book/shared";
+import { Accordion, AccordionTab } from "primereact/accordion";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import type { ReadonlyDeep } from "type-fest";
@@ -357,8 +359,8 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
       resolveSecondsPerIngredient(version, bookSecondsPerIngredient),
     ),
   );
-  const [description, setDescription] = useState("");
-  const [newRecipeTitle, setNewRecipeTitle] = useState(`${recipe.title} (copy)`);
+  const [versionSummary, setVersionSummary] = useState("");
+  const [newRecipeName, setNewRecipeName] = useState(recipe.title);
 
   // Skipped items are dropped from the saved version unless restored.
   const finalSections = useMemo(
@@ -374,9 +376,14 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
   const actualSeconds = Math.max(0, Math.round((session.completed_at - session.started_at) / 1000));
   const maxSeconds = Math.max(minSeconds * 3, actualSeconds, minSeconds + 3600);
 
-  const descriptionError =
-    description.trim() === "" ? "Description is required to create a new version" : null;
-  const titleError = newRecipeTitle.trim() === "" ? "Title is required for a new recipe" : null;
+  const versionSummaryError =
+    versionSummary.trim() === "" ? "A version summary is required to create a new version" : null;
+  const newRecipeNameError =
+    newRecipeName.trim() === ""
+      ? "A recipe name is required"
+      : newRecipeName.trim() === recipe.title.trim()
+        ? "Choose a name different from the current recipe"
+        : null;
 
   function restoreItem(id: SectionItemId) {
     setSkippedIds((prev) => {
@@ -391,11 +398,11 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
     restoreItem(id);
   }
 
-  function buildVersion(recipeId: RecipeId): ReadonlyDeep<RecipeVersion> {
+  function buildVersion(recipeId: RecipeId, description: string): ReadonlyDeep<RecipeVersion> {
     return {
       id: randomId(RecipeVersionId),
       recipe_id: recipeId,
-      description: description.trim(),
+      description,
       ingredients: computeTopIngredients(finalSections),
       sections: finalSections,
       estimated_time_seconds: effectiveEstimatedSeconds,
@@ -410,7 +417,7 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
       ...(recipe.subtitle !== undefined && { subtitle: recipe.subtitle }),
       ...(recipe.source_url !== undefined && { source_url: recipe.source_url }),
       ...(recipe.parent_folder_id !== undefined && { parent_folder_id: recipe.parent_folder_id }),
-      version: buildVersion(recipe.id),
+      version: buildVersion(recipe.id, versionSummary.trim()),
       create_new_version: true,
     });
     navigate(`/recipes/${recipe.id}`);
@@ -418,13 +425,12 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
 
   function handleCreateRecipe() {
     const created = create({
-      title: newRecipeTitle.trim(),
-      description: description.trim(),
+      title: newRecipeName.trim(),
       ...(recipe.parent_folder_id !== undefined && { parent_folder_id: recipe.parent_folder_id }),
     });
     save(created.id, {
       title: created.title,
-      version: buildVersion(created.id),
+      version: buildVersion(created.id, DEFAULT_VERSION_DESCRIPTION),
       create_new_version: false,
     });
     navigate(`/recipes/${created.id}`);
@@ -481,65 +487,76 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
       <section className="rs-summary-block" aria-label="Save session results">
         <h2 className="rs-summary-heading">Save as</h2>
 
-        <label className="rs-field-label" htmlFor="rs-summary-description">
-          Version description
-          <span className="field-required" aria-hidden="true">
-            *
-          </span>
-          <input
-            id="rs-summary-description"
-            className={`rs-field-input${descriptionError !== null ? " field-input--error" : ""}`}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            aria-label="Version description"
-            required
-          />
-          {descriptionError !== null && (
-            <span className="field-error" role="alert">
-              {descriptionError}
-            </span>
-          )}
-        </label>
+        {/* PrimeReact CSSTransition is disabled (transitionOptions.disabled) —
+            e-ink screens never animate. */}
+        <Accordion className="rs-save-accordion" transitionOptions={{ timeout: 0, disabled: true }}>
+          <AccordionTab header="Create a new version">
+            <label className="rs-field-label" htmlFor="rs-version-summary">
+              Version summary
+              <span className="field-required" aria-hidden="true">
+                *
+              </span>
+              <input
+                id="rs-version-summary"
+                className={`rs-field-input${versionSummaryError !== null ? " field-input--error" : ""}`}
+                value={versionSummary}
+                onChange={(e) => setVersionSummary(e.target.value)}
+                aria-label="Version summary"
+                required
+              />
+              {versionSummaryError !== null && (
+                <span className="field-error" role="alert">
+                  {versionSummaryError}
+                </span>
+              )}
+            </label>
+            <button
+              type="button"
+              className="rs-summary-btn"
+              onClick={handleCreateVersion}
+              disabled={versionSummaryError !== null}
+            >
+              ✔︎ Create a new version
+            </button>
+          </AccordionTab>
 
-        <label className="rs-field-label" htmlFor="rs-summary-new-recipe-title">
-          New recipe title (only used by “Create a new recipe”)
-          <input
-            id="rs-summary-new-recipe-title"
-            className={`rs-field-input${titleError !== null ? " field-input--error" : ""}`}
-            value={newRecipeTitle}
-            onChange={(e) => setNewRecipeTitle(e.target.value)}
-            aria-label="New recipe title"
-          />
-        </label>
+          <AccordionTab header="Create a new recipe">
+            <label className="rs-field-label" htmlFor="rs-new-recipe-name">
+              New recipe name
+              <span className="field-required" aria-hidden="true">
+                *
+              </span>
+              <input
+                id="rs-new-recipe-name"
+                className={`rs-field-input${newRecipeNameError !== null ? " field-input--error" : ""}`}
+                value={newRecipeName}
+                onChange={(e) => setNewRecipeName(e.target.value)}
+                aria-label="New recipe name"
+                required
+              />
+              {newRecipeNameError !== null && (
+                <span className="field-error" role="alert">
+                  {newRecipeNameError}
+                </span>
+              )}
+            </label>
+            <button
+              type="button"
+              className="rs-summary-btn"
+              onClick={handleCreateRecipe}
+              disabled={newRecipeNameError !== null}
+            >
+              ✔︎ Create a new recipe
+            </button>
+          </AccordionTab>
 
-        <div className="rs-summary-actions">
-          <button
-            type="button"
-            className="rs-summary-btn"
-            onClick={handleCreateVersion}
-            disabled={descriptionError !== null}
-            aria-label="Create a new version"
-          >
-            Create a new version
-          </button>
-          <button
-            type="button"
-            className="rs-summary-btn"
-            onClick={handleCreateRecipe}
-            disabled={descriptionError !== null || titleError !== null}
-            aria-label="Create a new recipe"
-          >
-            Create a new recipe
-          </button>
-          <button
-            type="button"
-            className="rs-summary-btn rs-summary-btn--discard"
-            onClick={() => navigate("/recipes")}
-            aria-label="Discard recipe version"
-          >
-            Discard recipe version
-          </button>
-        </div>
+          <AccordionTab header="Discard recipe version" className="rs-discard-tab">
+            <p className="rs-discard-warning">⚠ You will lose all changes to the recipe</p>
+            <button type="button" className="rs-summary-btn" onClick={() => navigate("/recipes")}>
+              Continue
+            </button>
+          </AccordionTab>
+        </Accordion>
       </section>
     </main>
   );

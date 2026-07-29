@@ -7,6 +7,7 @@ import {
   ContainerId,
   createRecipe,
   createSession,
+  DEFAULT_VERSION_DESCRIPTION,
   fixedId,
   getRecipe,
   getRecipes,
@@ -327,13 +328,26 @@ describe("RecipeSessionPage — summary view", () => {
     expect(screen.queryByRole("button", { name: "Restore Mix well" })).not.toBeInTheDocument();
   });
 
-  it("requires a description before creating a new version", async () => {
+  it("requires a version summary before creating a new version", async () => {
     const { session } = seedCompletedSession();
+    const user = userEvent.setup();
     await setup(session.id);
 
-    expect(screen.getByRole("button", { name: "Create a new version" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Create a new recipe" })).toBeDisabled();
-    expect(screen.getByRole("alert")).toHaveTextContent(/description is required/i);
+    await user.click(screen.getByRole("button", { name: "Create a new version" }));
+    expect(screen.getByRole("textbox", { name: "Version summary" })).toHaveValue("");
+    expect(screen.getByRole("button", { name: "✔︎ Create a new version" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent(/version summary is required/i);
+  });
+
+  it("prefills the new recipe name with the current title and forbids reusing it", async () => {
+    const { recipe, session } = seedCompletedSession();
+    const user = userEvent.setup();
+    await setup(session.id);
+
+    await user.click(screen.getByRole("button", { name: "Create a new recipe" }));
+    expect(screen.getByRole("textbox", { name: "New recipe name" })).toHaveValue(recipe.title);
+    expect(screen.getByRole("button", { name: "✔︎ Create a new recipe" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent(/different from the current recipe/i);
   });
 
   it("creates a new version keeping restored items and dropping still-skipped ones", async () => {
@@ -342,8 +356,9 @@ describe("RecipeSessionPage — summary view", () => {
     await setup(session.id);
 
     await user.click(screen.getByRole("button", { name: "Restore Flour" }));
-    await user.type(screen.getByRole("textbox", { name: "Version description" }), "After session");
     await user.click(screen.getByRole("button", { name: "Create a new version" }));
+    await user.type(screen.getByRole("textbox", { name: "Version summary" }), "After session");
+    await user.click(screen.getByRole("button", { name: "✔︎ Create a new version" }));
 
     const updated = getRecipe(recipeBookDoc, recipe.id);
     assertNotValidationError(updated);
@@ -379,20 +394,23 @@ describe("RecipeSessionPage — summary view", () => {
     expect(screen.getAllByRole("group", { name: /^Section:/ }).length).toBeGreaterThanOrEqual(2);
   });
 
-  it("creates a new recipe with an initial version from the session", async () => {
+  it("creates a new recipe with an auto-generated initial version description", async () => {
     const { recipe, session } = seedCompletedSession();
     const user = userEvent.setup();
     await setup(session.id);
 
-    await user.type(screen.getByRole("textbox", { name: "Version description" }), "Fork it");
     await user.click(screen.getByRole("button", { name: "Create a new recipe" }));
+    const nameInput = screen.getByRole("textbox", { name: "New recipe name" });
+    await user.clear(nameInput);
+    await user.type(nameInput, "Pancakes (copy)");
+    await user.click(screen.getByRole("button", { name: "✔︎ Create a new recipe" }));
 
     const all = getRecipes(recipeBookDoc);
     expect(all).toHaveLength(2);
     const copy = all.find((r) => r.title === "Pancakes (copy)");
     expect(copy).toBeDefined();
     expect(copy?.versions).toHaveLength(1);
-    expect(copy?.versions[0]?.description).toBe("Fork it");
+    expect(copy?.versions[0]?.description).toBe(DEFAULT_VERSION_DESCRIPTION);
     // Only the completed Butter item survives; skipped items are dropped.
     expect(
       collectIngredientItems(copy?.versions[0]?.sections ?? []).map((i) => i.ingredient_id),
@@ -410,6 +428,10 @@ describe("RecipeSessionPage — summary view", () => {
     await setup(session.id);
 
     await user.click(screen.getByRole("button", { name: "Discard recipe version" }));
+    expect(
+      screen.getByText("You will lose all changes to the recipe", { exact: false }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Continue" }));
 
     expect(mockNavigate).toHaveBeenCalledWith("/recipes");
     const afterDiscard = getRecipe(recipeBookDoc, recipe.id);
