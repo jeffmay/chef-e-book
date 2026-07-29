@@ -5,7 +5,9 @@
   gap: var(--spacing-xs);
 }
 
-/* MeasurementEditor — open (block, same structure as FractionEditor) */
+/* MeasurementEditor — open (block, same structure as FractionEditor).
+   Solid background so the panel fully hides any cell/row content it overlaps
+   when opened inside a table. */
 .me-root--open {
   display: inline-flex;
   flex-direction: column;
@@ -13,6 +15,7 @@
   gap: var(--spacing-xs);
   border: var(--border-width) solid var(--color-border);
   padding: var(--spacing-sm);
+  background: var(--color-bg);
 }
 
 /* Unit label shown next to the fraction */

@@ -1,5 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { makeFraction } from "@recipe-book/shared";
 import type { Measurement } from "@recipe-book/shared";
@@ -227,5 +230,18 @@ describe("MeasurementEditor — OK with best unit conversion", () => {
         value: expect.objectContaining({ numerator: 4, denominator: 1 }),
       }),
     );
+  });
+});
+
+describe("MeasurementEditor.css — open panel background", () => {
+  const css = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), "../MeasurementEditor.css"),
+    "utf8",
+  );
+
+  it("gives the open panel a solid background so it hides content it overlaps", () => {
+    const open = /\.me-root--open\s*\{([\s\S]*?)\}/.exec(css);
+    expect(open).not.toBeNull();
+    expect(open?.[1] ?? "").toMatch(/background:\s*var\(--color-bg\)/);
   });
 });

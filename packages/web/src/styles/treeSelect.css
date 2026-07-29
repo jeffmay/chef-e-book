@@ -179,3 +179,18 @@
 
 /* Checkbox boxes (checkbox-selection multi-select) are styled by the shared
    greyscale checkbox rules in styles/global.css. */
+
+/* ---- Mobile view (≤ 600px) ----
+   Kept in sync with MOBILE_VIEW_MAX_WIDTH in useMobileView.ts. The panel is
+   appended to <body> and sized to its content, so a trigger stuck in a cramped
+   right-hand column (e.g. the IngredientsTable "Parent" cell) gets a wide panel
+   that PrimeReact right-aligns to the trigger — spilling left across the whole
+   table. Cap the width so it reads as a compact dropdown hanging from the
+   select instead. It still stays anchored to the trigger; it just no longer
+   sprawls. */
+@media (max-width: 600px) {
+  .tree-select-panel {
+    max-width: 45vw;
+    box-sizing: border-box;
+  }
+}

@@ -1,6 +1,9 @@
 import { type Ingredient, IngredientId, type KitchenwareLabel, fixedId } from "@recipe-book/shared";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { TreeSelectChangeEvent } from "primereact/treeselect";
 import type { TreeNode } from "primereact/treenode";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -210,5 +213,21 @@ describe("IngredientSelector — arrow key propagation", () => {
     const select = screen.getByRole("combobox", { name: "Select parent ingredient" });
     fireEvent.keyDown(select, { key: "Tab", bubbles: true });
     expect(parentHandler).toHaveBeenCalled();
+  });
+});
+
+describe("treeSelect.css — mobile panel width cap", () => {
+  const css = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), "../../../styles/treeSelect.css"),
+    "utf8",
+  );
+
+  it("caps the tree-select panel width in mobile view so it hangs from the trigger", () => {
+    // Keep in sync with MOBILE_VIEW_MAX_WIDTH (600px) in useMobileView.ts.
+    const media = /@media\s*\(max-width:\s*600px\)\s*\{([\s\S]*?\})\s*\}/.exec(css);
+    expect(media).not.toBeNull();
+    const block = media?.[1] ?? "";
+    expect(block).toMatch(/\.tree-select-panel/);
+    expect(block).toMatch(/max-width:\s*45vw/);
   });
 });

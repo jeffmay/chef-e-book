@@ -262,6 +262,28 @@
   gap: 2px;
 }
 
+/* ---- Overlapping cell editors ----
+   An open cell editor (name/parent inputs, the measurement panel, the label
+   editor) can grow past its cell and overlap neighbouring cells and rows. Give
+   each a solid background so it fully hides whatever it covers, and — via
+   :focus-within — raise the editor the user is currently in above the others so
+   it always reads on top. Pure-CSS stacking: only the focused editor is lifted,
+   so no z-index counter is needed. Kept below the filter/portal layers
+   (z-index: 100+) so dropdowns still appear above an open editor. */
+.it-wrapper .p-treetable-tbody .it-editing,
+.it-wrapper .p-treetable-tbody .me-root--open,
+.it-wrapper .p-treetable-tbody .it-label-editor {
+  position: relative;
+  z-index: 1;
+  background: var(--color-bg);
+}
+
+.it-wrapper .p-treetable-tbody .it-editing:focus-within,
+.it-wrapper .p-treetable-tbody .me-root--open:focus-within,
+.it-wrapper .p-treetable-tbody .it-label-editor:focus-within {
+  z-index: 20;
+}
+
 .it-edit-input {
   font-size: 0.9em;
   border: var(--border-width) solid var(--color-border);
