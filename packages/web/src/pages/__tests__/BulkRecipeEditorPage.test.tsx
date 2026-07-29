@@ -1,4 +1,10 @@
-import { createRecipe, createRecipeFolder, deleteRecipe, getSessions } from "@recipe-book/shared";
+import {
+  createRecipe,
+  createRecipeFolder,
+  DEFAULT_VERSION_DESCRIPTION,
+  deleteRecipe,
+  getSessions,
+} from "@recipe-book/shared";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
@@ -163,10 +169,10 @@ describe("BulkRecipeEditorPage — expand/collapse", () => {
     const version = recipe.versions[0];
     setup();
     await userEvent.click(screen.getByRole("button", { name: "Expand versions of Cake" }));
-    expect(screen.getByText(/Untitled version/i)).toBeInTheDocument();
+    expect(screen.getByText(DEFAULT_VERSION_DESCRIPTION)).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
-        name: `Start session for version ${version?.description || "Untitled version"}`,
+        name: `Start session for version ${version?.description || DEFAULT_VERSION_DESCRIPTION}`,
       }),
     ).toBeInTheDocument();
   });
@@ -178,7 +184,7 @@ describe("BulkRecipeEditorPage — expand/collapse", () => {
     await userEvent.click(screen.getByRole("button", { name: "Expand versions of Cake" }));
     await userEvent.click(
       screen.getByRole("button", {
-        name: `More actions for version ${version?.description || "Untitled version"}`,
+        name: `More actions for version ${version?.description || DEFAULT_VERSION_DESCRIPTION}`,
       }),
     );
     await userEvent.click(await screen.findByRole("menuitem", { name: "🖊️ Edit" }));
@@ -189,9 +195,9 @@ describe("BulkRecipeEditorPage — expand/collapse", () => {
     createRecipe(recipeBookDoc, { title: "Pie" });
     setup();
     await userEvent.click(screen.getByRole("button", { name: "Expand versions of Pie" }));
-    expect(screen.getByText(/Untitled version/i)).toBeInTheDocument();
+    expect(screen.getByText(DEFAULT_VERSION_DESCRIPTION)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Collapse versions of Pie" }));
-    expect(screen.queryByText(/Untitled version/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(DEFAULT_VERSION_DESCRIPTION)).not.toBeInTheDocument();
   });
 });
 

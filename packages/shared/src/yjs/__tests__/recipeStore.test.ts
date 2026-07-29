@@ -5,7 +5,12 @@ import { fixedId, randomId } from "../../types/ids.ts";
 import { IngredientId } from "../../types/kitchenware.ts";
 import type { Measurement } from "../../types/measurement.ts";
 import { RecipeVersionId, SectionItemId, isIngredientItem } from "../../types/recipe.ts";
-import { createRecipe, getRecipe, saveRecipe } from "../recipeStore.ts";
+import {
+  DEFAULT_VERSION_DESCRIPTION,
+  createRecipe,
+  getRecipe,
+  saveRecipe,
+} from "../recipeStore.ts";
 
 let doc: Y.Doc;
 
@@ -14,6 +19,13 @@ beforeEach(() => {
 });
 
 const TWO_CUPS: Measurement = { value: { numerator: 2, denominator: 1 }, unit: "cup" };
+
+describe("createRecipe defaults", () => {
+  it("defaults the first version's description to DEFAULT_VERSION_DESCRIPTION when omitted", () => {
+    const recipe = createRecipe(doc, { title: "Pancakes" });
+    expect(recipe.versions[0]?.description).toBe(DEFAULT_VERSION_DESCRIPTION);
+  });
+});
 
 describe("ingredient item custom amounts", () => {
   it("round-trips customAmount on section ingredient items", () => {
