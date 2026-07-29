@@ -303,6 +303,29 @@
 }
 
 /* Instruction item */
+
+/* Reserve room in the top-right corner for the floating delete button so
+   neither the header row nor the collapsed summary render underneath it. */
+.re-item--instruction {
+  position: relative;
+  padding-right: 2.5em;
+}
+
+.re-item--instruction > .re-item-remove {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  margin-left: 0;
+}
+
+.re-instruction-action-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+  font-weight: bold;
+}
+
 .re-instruction-text {
   font-family: var(--font-body);
   font-size: 0.9em;
@@ -311,7 +334,15 @@
   background: var(--color-bg);
   color: var(--color-fg);
   flex: 1;
-  max-width: 30vw;
+  min-width: 0;
+}
+
+.re-instruction-equipment-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+  font-size: 0.85em;
 }
 
 .re-instruction-equipment {
@@ -321,6 +352,24 @@
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-fg);
+}
+
+/* Collapsed instruction: a single summary label; click to reopen the editor. */
+.re-instruction-summary {
+  flex: 1;
+  text-align: left;
+  padding: 0;
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
+.re-item-editor-actions {
+  width: 100%;
+  display: flex;
+  gap: var(--spacing-xs);
+  justify-content: flex-end;
 }
 
 .re-instruction-duration {

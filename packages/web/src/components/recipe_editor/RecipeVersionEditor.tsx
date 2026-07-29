@@ -28,6 +28,7 @@ import type { ReadonlyDeep } from "type-fest";
 import { useIngredientStore } from "../../hooks/useIngredientStore.ts";
 import { useLabelStore } from "../../hooks/useLabelStore.ts";
 import { DurationEditor } from "../duration/DurationEditor.tsx";
+import { humanizeSeconds } from "../duration/humanizeSeconds.ts";
 import { IngredientSelector } from "../ingredients_table/IngredientSelector.tsx";
 import { MeasurementEditor } from "../measurement/MeasurementEditor.tsx";
 import { buildInstructionIngredientTree } from "./buildInstructionIngredientTree.ts";
@@ -517,11 +518,52 @@ const COMMON_EQUIPMENT = [
 
 type InstructionRowProps = RecipeSectionItemRowProps<Instruction> &
   SkippedRowProps & {
+    readonly allIngredients: ReadonlyDeep<Ingredient[]>;
     readonly instructionIngredientNodes: TreeNode[];
   };
 
+/** A freshly-added instruction has no fields set yet; used to open it directly
+ * in edit mode and hide the Cancel button (there is nothing to revert to). */
+function isBlankInstruction(item: ReadonlyDeep<Instruction>): boolean {
+  return (
+    item.instruction === "" &&
+    item.equipment_id === undefined &&
+    item.duration_seconds === undefined &&
+    (item.ingredient_ids === undefined || item.ingredient_ids.length === 0)
+  );
+}
+
+function summarizeInstruction(
+  item: ReadonlyDeep<Instruction>,
+  allIngredients: ReadonlyDeep<Ingredient[]>,
+): string {
+  const parts: string[] = [item.instruction || "Untitled instruction"];
+
+  const ingredientNames = (item.ingredient_ids ?? [])
+    .map((id) => allIngredients.find((ingredient) => ingredient.id === id)?.name)
+    .filter((name): name is string => name !== undefined);
+  if (ingredientNames.length > 0) {
+    parts.push(`the ${ingredientNames.join(", ")}`);
+  }
+
+  const equipment =
+    item.equipment_id !== undefined
+      ? COMMON_EQUIPMENT.find((eq) => eq.id === item.equipment_id)
+      : undefined;
+  if (equipment !== undefined) {
+    parts.push(`in the ${equipment.name}`);
+  }
+
+  if (item.duration_seconds !== undefined) {
+    parts.push(`for ${humanizeSeconds(item.duration_seconds)}`);
+  }
+
+  return parts.join(" ");
+}
+
 function InstructionRow({
   item,
+  allIngredients,
   instructionIngredientNodes,
   onChange,
   onRemove,
@@ -529,16 +571,70 @@ function InstructionRow({
   onRestore,
   onDismiss,
 }: InstructionRowProps) {
+  const [editing, setEditing] = useState(() => isBlankInstruction(item));
+  const [canCancel, setCanCancel] = useState(() => !isBlankInstruction(item));
+  const [draft, setDraft] = useState(item);
+
+  function openEditor() {
+    setDraft(item);
+    setEditing(true);
+  }
+
+  function handleAccept() {
+    onChange(draft);
+    setCanCancel(true);
+    setEditing(false);
+  }
+
+  function handleCancel() {
+    setDraft(item);
+    setEditing(false);
+  }
+
   function handleIngredientsChange(ids: readonly IngredientId[]) {
     if (ids.length > 0) {
-      onChange({ ...item, ingredient_ids: ids });
+      setDraft({ ...draft, ingredient_ids: ids });
     } else {
-      const { ingredient_ids: _, ...rest } = item;
-      onChange(rest);
+      const { ingredient_ids: _, ...rest } = draft;
+      setDraft(rest);
     }
   }
 
   const instructionName = item.instruction || "instruction";
+
+  const removeControl =
+    skipped === true ? (
+      <SkippedRowActions itemName={instructionName} onRestore={onRestore} onDismiss={onDismiss} />
+    ) : (
+      <button
+        type="button"
+        className="re-item-remove"
+        onClick={onRemove}
+        aria-label="Remove instruction"
+      >
+        −
+      </button>
+    );
+
+  if (!editing) {
+    return (
+      <div
+        className={`re-item re-item--instruction${skipped === true ? " re-item--skipped" : ""}`}
+        role="group"
+        aria-label={`Instruction: ${item.instruction || "new"}`}
+      >
+        {removeControl}
+        <button
+          type="button"
+          className="re-instruction-summary"
+          onClick={openEditor}
+          aria-label={`Edit instruction: ${instructionName}`}
+        >
+          {summarizeInstruction(item, allIngredients)}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -546,22 +642,31 @@ function InstructionRow({
       role="group"
       aria-label={`Instruction: ${item.instruction || "new"}`}
     >
+      {removeControl}
+
       <div className="re-item-header">
-        <input
-          className="re-instruction-text"
-          value={item.instruction}
-          onChange={(e) => onChange({ ...item, instruction: e.target.value })}
-          aria-label="Instruction text"
-        />
+        <label className="re-instruction-action-label">
+          Action
+          <input
+            className="re-instruction-text"
+            value={draft.instruction}
+            onChange={(e) => setDraft({ ...draft, instruction: e.target.value })}
+            aria-label="Instruction text"
+          />
+        </label>
+      </div>
+
+      <label className="re-instruction-equipment-label">
+        Equipment
         <select
           className="re-instruction-equipment"
-          value={item.equipment_id ?? ""}
+          value={draft.equipment_id ?? ""}
           onChange={(e) => {
             if (e.target.value) {
-              onChange({ ...item, equipment_id: loadId(EquipmentId, e.target.value) });
+              setDraft({ ...draft, equipment_id: loadId(EquipmentId, e.target.value) });
             } else {
-              const { equipment_id: _, ...rest } = item;
-              onChange(rest);
+              const { equipment_id: _, ...rest } = draft;
+              setDraft(rest);
             }
           }}
           aria-label="Equipment"
@@ -573,49 +678,33 @@ function InstructionRow({
             </option>
           ))}
         </select>
-        {skipped === true ? (
-          <SkippedRowActions
-            itemName={instructionName}
-            onRestore={onRestore}
-            onDismiss={onDismiss}
-          />
-        ) : (
-          <button
-            type="button"
-            className="re-item-remove"
-            onClick={onRemove}
-            aria-label="Remove instruction"
-          >
-            −
-          </button>
-        )}
-      </div>
+      </label>
 
       <div className="re-instruction-duration">
         <label className="re-instruction-duration-label">
           Duration:
-          {item.duration_seconds !== undefined ? (
+          {draft.duration_seconds !== undefined ? (
             <DurationEditor
-              value={item.duration_seconds}
-              onCommit={(s) => onChange({ ...item, duration_seconds: s })}
+              value={draft.duration_seconds}
+              onCommit={(s) => setDraft({ ...draft, duration_seconds: s })}
             />
           ) : (
             <button
               type="button"
               className="re-instruction-add-duration"
-              onClick={() => onChange({ ...item, duration_seconds: 300 })}
+              onClick={() => setDraft({ ...draft, duration_seconds: 300 })}
             >
               + Add duration
             </button>
           )}
         </label>
-        {item.duration_seconds !== undefined && (
+        {draft.duration_seconds !== undefined && (
           <button
             type="button"
             className="re-instruction-remove-duration"
             onClick={() => {
-              const { duration_seconds: _, ...rest } = item;
-              onChange(rest);
+              const { duration_seconds: _, ...rest } = draft;
+              setDraft(rest);
             }}
             aria-label="Remove duration"
           >
@@ -628,9 +717,30 @@ function InstructionRow({
         <span className="re-instruction-ing-label">Ingredients:</span>
         <InstructionIngredientSelector
           nodes={instructionIngredientNodes}
-          selectedIds={item.ingredient_ids ?? []}
+          selectedIds={draft.ingredient_ids ?? []}
           onChange={handleIngredientsChange}
         />
+      </div>
+
+      <div className="re-item-editor-actions">
+        {canCancel && (
+          <button
+            type="button"
+            className="re-instruction-cancel"
+            onClick={handleCancel}
+            aria-label="Cancel changes"
+          >
+            ↩
+          </button>
+        )}
+        <button
+          type="button"
+          className="re-instruction-accept"
+          onClick={handleAccept}
+          aria-label="Accept changes"
+        >
+          ✔︎
+        </button>
       </div>
     </div>
   );
@@ -818,6 +928,7 @@ function SectionEditor({
               <InstructionRow
                 key={item.id}
                 item={item}
+                allIngredients={allIngredients}
                 instructionIngredientNodes={instructionIngredientNodes}
                 skipped={skippedIds?.has(item.id) === true}
                 onRestore={() => onRestoreItem?.(item.id)}
