@@ -273,9 +273,20 @@
   outline-offset: 1px;
 }
 
+/* Open name editor can overlap the neighbouring cells; give it a solid
+   background so it fully hides what it covers, and raise it above sibling
+   editors while focused (pure-CSS :focus-within stacking, no counter). Kept
+   below the delete-overlay layer (z-index: 100). */
 .lt-editing {
   display: flex;
   gap: 2px;
+  position: relative;
+  z-index: 1;
+  background: var(--color-bg);
+}
+
+.lt-editing:focus-within {
+  z-index: 20;
 }
 
 .lt-edit-input {

@@ -270,6 +270,34 @@ describe("IngredientsTable.css — narrow-view column hiding", () => {
   });
 });
 
+describe("IngredientsTable.css — overlapping cell editor stacking", () => {
+  const css = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), "../IngredientsTable.css"),
+    "utf8",
+  );
+
+  it("gives every in-cell editor a solid background and a base z-index", () => {
+    const base =
+      /\.it-wrapper \.p-treetable-tbody \.it-editing,\s*\.it-wrapper \.p-treetable-tbody \.me-root--open,\s*\.it-wrapper \.p-treetable-tbody \.it-label-editor\s*\{([\s\S]*?)\}/.exec(
+        css,
+      );
+    expect(base).not.toBeNull();
+    const block = base?.[1] ?? "";
+    expect(block).toMatch(/position:\s*relative/);
+    expect(block).toMatch(/z-index:\s*1\b/);
+    expect(block).toMatch(/background:\s*var\(--color-bg\)/);
+  });
+
+  it("raises the currently-focused editor above the others via :focus-within", () => {
+    const focused =
+      /\.it-wrapper \.p-treetable-tbody \.it-editing:focus-within,\s*\.it-wrapper \.p-treetable-tbody \.me-root--open:focus-within,\s*\.it-wrapper \.p-treetable-tbody \.it-label-editor:focus-within\s*\{([\s\S]*?)\}/.exec(
+        css,
+      );
+    expect(focused).not.toBeNull();
+    expect(focused?.[1] ?? "").toMatch(/z-index:\s*20\b/);
+  });
+});
+
 describe("LabelEditor.css — selected-labels/buttons layout precedence", () => {
   const css = readFileSync(
     resolve(dirname(fileURLToPath(import.meta.url)), "../LabelEditor.css"),

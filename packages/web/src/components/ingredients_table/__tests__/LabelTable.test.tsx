@@ -2,6 +2,9 @@ import type { Ingredient, KitchenwareKind, KitchenwareLabel } from "@recipe-book
 import { IngredientId, KitchenwareLabelId, fixedId } from "@recipe-book/shared";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { ReadonlyDeep } from "type-fest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LabelTableProps } from "../LabelTable.tsx";
@@ -472,5 +475,27 @@ describe("LabelTable — inline rename", () => {
     await userEvent.dblClick(screen.getByRole("button", { name: "Rename label fat" }));
     await userEvent.click(screen.getByRole("button", { name: "Cancel rename" }));
     expect(screen.getByText("1 selected")).toBeInTheDocument();
+  });
+});
+
+describe("LabelTable.css — inline editor stacking", () => {
+  const css = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), "../LabelTable.css"),
+    "utf8",
+  );
+
+  it("gives the open name editor a solid background and a base z-index", () => {
+    const base = /\.lt-editing\s*\{([\s\S]*?)\}/.exec(css);
+    expect(base).not.toBeNull();
+    const block = base?.[1] ?? "";
+    expect(block).toMatch(/position:\s*relative/);
+    expect(block).toMatch(/z-index:\s*1\b/);
+    expect(block).toMatch(/background:\s*var\(--color-bg\)/);
+  });
+
+  it("raises the editor above its siblings while focused via :focus-within", () => {
+    const focused = /\.lt-editing:focus-within\s*\{([\s\S]*?)\}/.exec(css);
+    expect(focused).not.toBeNull();
+    expect(focused?.[1] ?? "").toMatch(/z-index:\s*20\b/);
   });
 });
