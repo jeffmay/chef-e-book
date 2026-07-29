@@ -2,9 +2,9 @@ import { useParams } from "react-router";
 import { RecipeSessionPage } from "../pages/RecipeSessionPage.tsx";
 
 export default function RecipeSession() {
-  const { sessionId } = useParams();
+  const { session_id } = useParams();
 
-  if (!sessionId) return null;
+  if (!session_id) return null;
 
-  return <RecipeSessionPage sessionId={sessionId} />;
+  return <RecipeSessionPage sessionId={session_id} />;
 }
