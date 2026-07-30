@@ -22,6 +22,7 @@ import {
   type TextBlock,
   unitType,
 } from "@recipe-book/shared";
+import isEqual from "lodash/isEqual";
 import type { TreeNode } from "primereact/treenode";
 import { useMemo, useRef, useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
@@ -574,14 +575,39 @@ function InstructionRow({
   const [editing, setEditing] = useState(() => isBlankInstruction(item));
   const [canCancel, setCanCancel] = useState(() => !isBlankInstruction(item));
   const [draft, setDraft] = useState(item);
+  const snapshotAtOpenRef = useRef(item);
 
   function openEditor() {
+    snapshotAtOpenRef.current = item;
     setDraft(item);
     setEditing(true);
   }
 
   function handleAccept() {
-    onChange(draft);
+    const snapshot = snapshotAtOpenRef.current;
+    const instruction =
+      snapshot.instruction !== draft.instruction ? draft.instruction : item.instruction;
+    const equipment_id =
+      snapshot.equipment_id !== draft.equipment_id ? draft.equipment_id : item.equipment_id;
+    const duration_seconds =
+      snapshot.duration_seconds !== draft.duration_seconds
+        ? draft.duration_seconds
+        : item.duration_seconds;
+    const ingredient_ids = isEqual(snapshot.ingredient_ids, draft.ingredient_ids)
+      ? item.ingredient_ids
+      : draft.ingredient_ids;
+
+    const merged = {
+      id: item.id,
+      kind: "instruction" as const,
+      instruction,
+      ...(item.notes !== undefined ? { notes: item.notes } : {}),
+      ...(equipment_id !== undefined ? { equipment_id } : {}),
+      ...(duration_seconds !== undefined ? { duration_seconds } : {}),
+      ...(ingredient_ids !== undefined ? { ingredient_ids } : {}),
+    } satisfies ReadonlyDeep<Instruction>;
+
+    onChange(merged satisfies ReadonlyDeep<Instruction>);
     setCanCancel(true);
     setEditing(false);
   }
