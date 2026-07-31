@@ -1,7 +1,7 @@
 import { ButtonGroup } from "primereact/buttongroup";
 import { Menu } from "primereact/menu";
 import type { MenuItem } from "primereact/menuitem";
-import { useCallback, useEffect, useRef, type FocusEvent, type SyntheticEvent } from "react";
+import { useCallback, useEffect, useRef, type SyntheticEvent } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import "./ButtonMenu.css";
 
@@ -85,15 +85,16 @@ export function ButtonMenu({
    * so a node "belongs" to this widget if it's inside either the wrapper or
    * the popup itself.
    *
-   * Assumption: `menuRef.current?.getElement()` only returns a non-null,
-   * containing element while the popup is actually open. PrimeReact's Menu
-   * is rendered with `transitionOptions={{ disabled: true }}` below, which
-   * makes it render `null` (unmounting the panel, clearing the ref) whenever
-   * closed rather than merely hiding it — so this check can't be true for a
-   * closed-but-still-mounted popup today. If the popup is ever changed to
-   * stay mounted while hidden (e.g. removing the disabled transition, or
-   * switching to CSS-only hiding), this would need an explicit "is the menu
-   * open" guard alongside the containment check.
+   * Assumption: a click/focus target inside `menuRef.current?.getElement()`
+   * only happens while the popup is genuinely open. `transitionOptions={{
+   * disabled: true }}` on the `<Menu>` below means a closed popup is either
+   * unmounted or otherwise unable to receive real pointer/focus events (the
+   * exact mechanism and its timing are PrimeReact-internal and not a
+   * contract this component should depend on precisely) — so in practice
+   * this check can't be satisfied by a stale reference to a closed popup.
+   * If the popup's open/close rendering ever changes such that a closed
+   * panel remains hit-testable/focusable, this would need an explicit "is
+   * the menu open" guard alongside the containment check.
    */
   const isInsideWidget = useCallback((node: Node | null): boolean => {
     if (node === null) return false;
@@ -101,33 +102,42 @@ export function ButtonMenu({
     return menuRef.current?.getElement()?.contains(node) === true;
   }, []);
 
-  /**
-   * Close on blur (focus leaves the widget entirely). Opening the menu moves
-   * DOM focus into the portaled popup's list, which fires a blur here since
-   * the popup isn't a descendant of the wrapper — isInsideWidget treats that
-   * as staying within the widget instead of an exit.
-   */
-  function handleBlur(e: FocusEvent<HTMLSpanElement>) {
-    const related = e.relatedTarget instanceof Node ? e.relatedTarget : null;
-    if (!isInsideWidget(related)) close();
-  }
-
-  /** Close on click outside (catches non-focusable targets). */
+  /** Close on click outside and on focus leaving the widget. */
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (e.target instanceof Node && !isInsideWidget(e.target)) {
         close();
       }
     }
+    /**
+     * `focusout` (unlike React's `onBlur` on the wrapper span) bubbles all
+     * the way to `document` regardless of where in the DOM tree focus was
+     * lost — including from inside the portaled popup, which isn't a
+     * descendant of the wrapper. That matters both when the menu opens (the
+     * popup auto-focuses its list, which isInsideWidget must NOT treat as
+     * leaving the widget) and when a keyboard user tabs past the last menu
+     * item to an element outside the widget (which SHOULD close the menu,
+     * but never reached a wrapper-only blur handler).
+     */
+    function handleFocusOut(e: FocusEvent) {
+      const target = e.target instanceof Node ? e.target : null;
+      const related = e.relatedTarget instanceof Node ? e.relatedTarget : null;
+      if (target !== null && isInsideWidget(target) && !isInsideWidget(related)) {
+        close();
+      }
+    }
     document.addEventListener("pointerdown", handleClick);
-    return () => document.removeEventListener("pointerdown", handleClick);
+    document.addEventListener("focusout", handleFocusOut);
+    return () => {
+      document.removeEventListener("pointerdown", handleClick);
+      document.removeEventListener("focusout", handleFocusOut);
+    };
   }, [close, isInsideWidget]);
 
   return (
     <span
       ref={wrapperRef}
       className={`button-menu${className !== undefined ? ` ${className}` : ""}`}
-      onBlur={handleBlur}
     >
       <ButtonGroup>
         {showDefault && defaultButton !== undefined && (

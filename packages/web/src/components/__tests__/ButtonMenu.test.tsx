@@ -136,14 +136,14 @@ describe("ButtonMenu", () => {
   it("stays open and still runs the action when focus moves from the wrapper into the portaled popup", async () => {
     // Regression test: PrimeReact's Menu renders its popup via a Portal
     // outside the wrapper span, and auto-focuses the popup's list as soon as
-    // it opens (in a real browser). That focus move fires a blur on the
-    // wrapper with relatedTarget pointing into the popup. jsdom doesn't
-    // reproduce that auto-focus itself, so this test fires the blur
-    // directly to simulate it — the old handler only checked
+    // it opens (in a real browser). That focus move fires a focusout on the
+    // chevron button with relatedTarget pointing into the popup. jsdom
+    // doesn't reproduce that auto-focus itself, so this test fires the
+    // focusout directly to simulate it — the old handler only checked
     // `wrapperRef.contains(relatedTarget)` and treated this as focus leaving
     // the widget entirely, closing the menu before it could ever be clicked.
     const onEdit = vi.fn();
-    const { container } = render(
+    render(
       <ButtonMenu
         defaultButton={{ label: "Start", onSelect: vi.fn() }}
         buttons={[{ label: "Edit", onSelect: onEdit }]}
@@ -151,12 +151,11 @@ describe("ButtonMenu", () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    const chevron = screen.getByRole("button", { name: "More actions" });
+    await userEvent.click(chevron);
     const editItem = screen.getByRole("menuitem", { name: "Edit" });
 
-    const wrapper = container.querySelector(".button-menu");
-    if (wrapper === null) throw new Error("expected .button-menu wrapper to be rendered");
-    fireEvent.blur(wrapper, { relatedTarget: editItem });
+    fireEvent.focusOut(chevron, { relatedTarget: editItem });
 
     expect(screen.getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
 
@@ -164,20 +163,42 @@ describe("ButtonMenu", () => {
     expect(onEdit).toHaveBeenCalledTimes(1);
   });
 
-  it("closes on blur when focus moves to an element outside both the wrapper and the popup", async () => {
+  it("closes when focus moves from the chevron to an element outside both the wrapper and the popup", async () => {
     render(
       <ButtonMenu buttons={[{ label: "Start", onSelect: vi.fn() }]} menuLabel="More actions" />,
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    const chevron = screen.getByRole("button", { name: "More actions" });
+    await userEvent.click(chevron);
     expect(screen.getByRole("menuitem", { name: "Start" })).toBeInTheDocument();
 
     const outsideButton = document.createElement("button");
     document.body.appendChild(outsideButton);
 
-    const wrapper = document.querySelector(".button-menu");
-    if (wrapper === null) throw new Error("expected .button-menu wrapper to be rendered");
-    fireEvent.blur(wrapper, { relatedTarget: outsideButton });
+    fireEvent.focusOut(chevron, { relatedTarget: outsideButton });
+
+    expect(screen.queryByRole("menuitem", { name: "Start" })).not.toBeInTheDocument();
+    outsideButton.remove();
+  });
+
+  it("closes when a keyboard user tabs from a menu item in the popup to an element outside the widget", async () => {
+    // This is the gap a wrapper-only onBlur handler misses: focusout events
+    // that originate inside the portaled popup bubble to `document` but
+    // never pass through the wrapper span, so a wrapper-scoped blur handler
+    // never sees focus leaving the popup itself (e.g. tabbing past the last
+    // item). The document-level `focusout` listener catches this because it
+    // doesn't depend on the event bubbling through any particular subtree.
+    render(
+      <ButtonMenu buttons={[{ label: "Start", onSelect: vi.fn() }]} menuLabel="More actions" />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    const startItem = screen.getByRole("menuitem", { name: "Start" });
+
+    const outsideButton = document.createElement("button");
+    document.body.appendChild(outsideButton);
+
+    fireEvent.focusOut(startItem, { relatedTarget: outsideButton });
 
     expect(screen.queryByRole("menuitem", { name: "Start" })).not.toBeInTheDocument();
     outsideButton.remove();
