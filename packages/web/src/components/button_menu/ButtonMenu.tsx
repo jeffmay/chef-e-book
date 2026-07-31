@@ -1,7 +1,7 @@
 import { ButtonGroup } from "primereact/buttongroup";
 import { Menu } from "primereact/menu";
 import type { MenuItem } from "primereact/menuitem";
-import { useEffect, useRef, type FocusEvent, type SyntheticEvent } from "react";
+import { useCallback, useEffect, useRef, type FocusEvent, type SyntheticEvent } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import "./ButtonMenu.css";
 
@@ -64,22 +64,42 @@ export function ButtonMenu({
     ...(button.disabled !== undefined && { disabled: button.disabled }),
   }));
 
-  function close() {
+  // close/isInsideWidget are wrapped in useCallback (deps: [], since both
+  // only read stable refs) rather than left as plain render-scope functions,
+  // so the outside-click effect below can list them in its dependency array
+  // instead of relying on an empty array that captures whichever closures
+  // existed on mount. That "[]-deps effect closing over render-scope
+  // functions" pattern is otherwise easy to leave stale: if either function
+  // ever started reading state instead of only refs, an empty deps array
+  // would silently keep using the first render's version, while listing
+  // them here makes `react-hooks/exhaustive-deps` catch a missing
+  // dependency immediately.
+  const close = useCallback(() => {
     menuRef.current?.hide({
       currentTarget: wrapperRef.current ?? document.body,
     } as unknown as SyntheticEvent);
-  }
+  }, []);
 
   /**
    * The menu popup is rendered via Portal outside wrapperRef (for stacking),
    * so a node "belongs" to this widget if it's inside either the wrapper or
    * the popup itself.
+   *
+   * Assumption: `menuRef.current?.getElement()` only returns a non-null,
+   * containing element while the popup is actually open. PrimeReact's Menu
+   * is rendered with `transitionOptions={{ disabled: true }}` below, which
+   * makes it render `null` (unmounting the panel, clearing the ref) whenever
+   * closed rather than merely hiding it — so this check can't be true for a
+   * closed-but-still-mounted popup today. If the popup is ever changed to
+   * stay mounted while hidden (e.g. removing the disabled transition, or
+   * switching to CSS-only hiding), this would need an explicit "is the menu
+   * open" guard alongside the containment check.
    */
-  function isInsideWidget(node: Node | null): boolean {
+  const isInsideWidget = useCallback((node: Node | null): boolean => {
     if (node === null) return false;
     if (wrapperRef.current?.contains(node) === true) return true;
     return menuRef.current?.getElement()?.contains(node) === true;
-  }
+  }, []);
 
   /**
    * Close on blur (focus leaves the widget entirely). Opening the menu moves
@@ -101,7 +121,7 @@ export function ButtonMenu({
     }
     document.addEventListener("pointerdown", handleClick);
     return () => document.removeEventListener("pointerdown", handleClick);
-  }, []);
+  }, [close, isInsideWidget]);
 
   return (
     <span
