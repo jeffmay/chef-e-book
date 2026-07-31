@@ -264,6 +264,8 @@ export function createRecipe(doc: Y.Doc, input: ReadonlyDeep<CreateRecipeInput>)
   const initialVersion: RecipeVersion = {
     id: randomId(RecipeVersionId),
     recipe_id: recipeId,
+    // `||`, not `??`: an empty description is normalized to the default too,
+    // since every version needs a name in the version history.
     description: input.description || DEFAULT_VERSION_DESCRIPTION,
     ingredients: [],
     sections: [],

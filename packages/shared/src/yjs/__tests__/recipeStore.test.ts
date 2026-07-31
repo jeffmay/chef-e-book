@@ -22,11 +22,25 @@ const TWO_CUPS: Measurement = { value: { numerator: 2, denominator: 1 }, unit: "
 
 describe("createRecipe defaults", () => {
   it("uses the provided description for the first version", () => {
-    const recipe = createRecipe(doc, {
-      title: "Pancakes",
-      description: DEFAULT_VERSION_DESCRIPTION,
-    });
+    const recipe = createRecipe(doc, { title: "Pancakes", description: "From the box" });
+    expect(recipe.versions[0]?.description).toBe("From the box");
+  });
+
+  it("falls back to the default description when none is given", () => {
+    const recipe = createRecipe(doc, { title: "Pancakes" });
     expect(recipe.versions[0]?.description).toBe(DEFAULT_VERSION_DESCRIPTION);
+  });
+
+  it("falls back to the default description when an empty description is given", () => {
+    const recipe = createRecipe(doc, { title: "Pancakes", description: "" });
+    expect(recipe.versions[0]?.description).toBe(DEFAULT_VERSION_DESCRIPTION);
+  });
+
+  it("persists the defaulted description to the stored recipe", () => {
+    const recipe = createRecipe(doc, { title: "Pancakes" });
+    const stored = getRecipe(doc, recipe.id);
+    assertNotValidationError(stored);
+    expect(stored.versions[0]?.description).toBe(DEFAULT_VERSION_DESCRIPTION);
   });
 });
 

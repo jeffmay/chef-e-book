@@ -3,6 +3,7 @@ import {
   addFractions,
   assertDefined,
   collectIngredientItems,
+  ContainerId,
   type ContainerItem,
   EquipmentId,
   formatFraction,
@@ -13,7 +14,6 @@ import {
   loadId,
   type Measurement,
   MeasurementUnit,
-  fixedId,
   randomId,
   removeSectionItemsById,
   type Section,
@@ -29,12 +29,26 @@ import type { ReadonlyDeep } from "type-fest";
 import { useIngredientStore } from "../../hooks/useIngredientStore.ts";
 import { useLabelStore } from "../../hooks/useLabelStore.ts";
 import { DurationEditor } from "../duration/DurationEditor.tsx";
-import { humanizeSeconds } from "../duration/humanizeSeconds.ts";
 import { IngredientSelector } from "../ingredients_table/IngredientSelector.tsx";
 import { MeasurementEditor } from "../measurement/MeasurementEditor.tsx";
 import { buildInstructionIngredientTree } from "./buildInstructionIngredientTree.ts";
 import { COMMON_CONTAINERS } from "./containers.ts";
+import {
+  containerDisplayName,
+  isBlankContainer,
+  isBlankInstruction,
+  mergeContainerDraft,
+  mergeInstructionDraft,
+  summarizeContainer,
+  summarizeInstruction,
+} from "./drafts.ts";
+import { COMMON_EQUIPMENT } from "./equipment.ts";
 import { InstructionIngredientSelector } from "./InstructionIngredientSelector.tsx";
+import {
+  type PendingSectionEdits,
+  PendingSectionEditsContext,
+  usePendingEdit,
+} from "./pendingEdits.ts";
 import "../../pages/RecipeEditorPage.css";
 import "./RecipeVersionEditor.css";
 
@@ -196,6 +210,15 @@ type SkippedRowProps = ReadonlyDeep<{
   skipped?: boolean | undefined;
   onRestore?: (() => void) | undefined;
   onDismiss?: (() => void) | undefined;
+}>;
+
+/**
+ * Rows that hold a draft need to know whether they were added during this
+ * editing session: a row that has never been committed has no previous state to
+ * revert to, so cancelling it removes the row instead.
+ */
+type NewRowProps = ReadonlyDeep<{
+  isNew?: boolean | undefined;
 }>;
 
 type SkippedRowActionsProps = SkippedRowProps &
@@ -399,10 +422,19 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
 
 type ContainerItemRowProps = RecipeSectionItemRowProps<ContainerItem> &
   WithIngredientsProps &
-  WithSkippedItemsProps;
+  WithSkippedItemsProps &
+  NewRowProps;
 
+/**
+ * A container row toggles between a one-line summary and an inline editor for
+ * its header fields (type, descriptor, ordered), which are committed with "✔︎"
+ * and reverted with "↩" — the same draft flow as InstructionRow. Its nested
+ * ingredient rows stay visible and write through immediately, since each one
+ * confirms its own edits.
+ */
 function ContainerItemRow({
   item,
+  isNew = false,
   allIngredients,
   allLabels,
   onChange,
@@ -412,8 +444,63 @@ function ContainerItemRow({
   onDismissItem,
 }: ContainerItemRowProps) {
   const [showingNewIngredient, setShowingNewIngredient] = useState(false);
-  const containerName =
-    COMMON_CONTAINERS.find((c) => c.id === item.container_id)?.name ?? item.container_id;
+  const [editing, setEditing] = useState(() => isBlankContainer(item));
+  const [draft, setDraft] = useState(item);
+  const [accepted, setAccepted] = useState(false);
+  const snapshotAtOpenRef = useRef(item);
+  const containerName = containerDisplayName(item);
+
+  // A row added in this editing session has nothing to revert to until it has
+  // been accepted once, so cancelling it drops the row instead.
+  const discardRemovesItem = isNew && !accepted;
+  const pending = editing && (discardRemovesItem || !isEqual(draft, snapshotAtOpenRef.current));
+
+  function closeEditor() {
+    setAccepted(true);
+    setEditing(false);
+  }
+
+  function revertEditor() {
+    setDraft(item);
+    setEditing(false);
+  }
+
+  usePendingEdit(item.id, pending, {
+    buildAccepted: () => mergeContainerDraft(snapshotAtOpenRef.current, draft, item),
+    discardRemovesItem,
+    revert: revertEditor,
+    close: closeEditor,
+  });
+
+  function openEditor() {
+    snapshotAtOpenRef.current = item;
+    setDraft(item);
+    setEditing(true);
+  }
+
+  function handleAccept() {
+    onChange(mergeContainerDraft(snapshotAtOpenRef.current, draft, item));
+    closeEditor();
+  }
+
+  function handleCancel() {
+    if (discardRemovesItem) {
+      onRemove();
+      return;
+    }
+    revertEditor();
+  }
+
+  const removeButton = (
+    <button
+      type="button"
+      className="re-item-remove"
+      onClick={onRemove}
+      aria-label={`Remove container ${containerName}`}
+    >
+      −
+    </button>
+  );
 
   return (
     <div
@@ -421,45 +508,74 @@ function ContainerItemRow({
       role="group"
       aria-label={`Container: ${containerName} — ${item.descriptor}`}
     >
-      <div className="re-item-header">
-        <select
-          className="re-container-select"
-          value={item.container_id}
-          onChange={(e) =>
-            onChange({ ...item, container_id: e.target.value as ContainerItem["container_id"] })
-          }
-          aria-label="Container type"
-        >
-          {COMMON_CONTAINERS.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <input
-          className="re-container-descriptor"
-          value={item.descriptor}
-          onChange={(e) => onChange({ ...item, descriptor: e.target.value })}
-          aria-label="Container descriptor"
-        />
-        <label className="re-container-ordered">
-          <input
-            type="checkbox"
-            checked={item.ordered ?? false}
-            onChange={(e) => onChange({ ...item, ordered: e.target.checked })}
-            aria-label="Ordered list"
-          />
-          ordered
-        </label>
-        <button
-          type="button"
-          className="re-item-remove"
-          onClick={onRemove}
-          aria-label={`Remove container ${containerName}`}
-        >
-          −
-        </button>
-      </div>
+      {editing ? (
+        <>
+          <div className="re-item-header">
+            <select
+              className="re-container-select"
+              value={draft.container_id}
+              onChange={(e) =>
+                setDraft({ ...draft, container_id: loadId(ContainerId, e.target.value) })
+              }
+              aria-label="Container type"
+            >
+              {COMMON_CONTAINERS.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <input
+              className="re-container-descriptor"
+              value={draft.descriptor}
+              onChange={(e) => setDraft({ ...draft, descriptor: e.target.value })}
+              aria-label="Container descriptor"
+            />
+            <label className="re-container-ordered">
+              <input
+                type="checkbox"
+                checked={draft.ordered ?? false}
+                onChange={(e) => setDraft({ ...draft, ordered: e.target.checked })}
+                aria-label="Ordered list"
+              />
+              ordered
+            </label>
+            {removeButton}
+          </div>
+          <div className="re-item-editor-actions">
+            <button
+              type="button"
+              className="re-container-cancel"
+              onClick={handleCancel}
+              aria-label={
+                discardRemovesItem ? "Discard new container" : "Cancel changes to container"
+              }
+            >
+              ↩
+            </button>
+            <button
+              type="button"
+              className="re-container-accept"
+              onClick={handleAccept}
+              aria-label="Accept changes to container"
+            >
+              ✔︎
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="re-item-header">
+          <button
+            type="button"
+            className="re-container-summary"
+            onClick={openEditor}
+            aria-label={`Edit container: ${containerName}`}
+          >
+            {summarizeContainer(item)}
+          </button>
+          {removeButton}
+        </div>
+      )}
       <div className="re-container-contents">
         {item.contents.map((content, i) => (
           <IngredientItemRow
@@ -508,62 +624,16 @@ function ContainerItemRow({
 // InstructionRow
 // ---------------------------------------------------------------------------
 
-const COMMON_EQUIPMENT = [
-  { id: fixedId(EquipmentId, "oven"), name: "Oven" },
-  { id: fixedId(EquipmentId, "stove"), name: "Stove" },
-  { id: fixedId(EquipmentId, "mixer"), name: "Mixer" },
-  { id: fixedId(EquipmentId, "blender"), name: "Blender" },
-  { id: fixedId(EquipmentId, "knife"), name: "Knife" },
-  { id: fixedId(EquipmentId, "skillet"), name: "Skillet" },
-] as const;
-
 type InstructionRowProps = RecipeSectionItemRowProps<Instruction> &
-  SkippedRowProps & {
+  SkippedRowProps &
+  NewRowProps & {
     readonly allIngredients: ReadonlyDeep<Ingredient[]>;
     readonly instructionIngredientNodes: TreeNode[];
   };
 
-/** A freshly-added instruction has no fields set yet; used to open it directly
- * in edit mode and hide the Cancel button (there is nothing to revert to). */
-function isBlankInstruction(item: ReadonlyDeep<Instruction>): boolean {
-  return (
-    item.instruction === "" &&
-    item.equipment_id === undefined &&
-    item.duration_seconds === undefined &&
-    (item.ingredient_ids === undefined || item.ingredient_ids.length === 0)
-  );
-}
-
-function summarizeInstruction(
-  item: ReadonlyDeep<Instruction>,
-  allIngredients: ReadonlyDeep<Ingredient[]>,
-): string {
-  const parts: string[] = [item.instruction || "Untitled instruction"];
-
-  const ingredientNames = (item.ingredient_ids ?? [])
-    .map((id) => allIngredients.find((ingredient) => ingredient.id === id)?.name)
-    .filter((name): name is string => name !== undefined);
-  if (ingredientNames.length > 0) {
-    parts.push(`the ${ingredientNames.join(", ")}`);
-  }
-
-  const equipment =
-    item.equipment_id !== undefined
-      ? COMMON_EQUIPMENT.find((eq) => eq.id === item.equipment_id)
-      : undefined;
-  if (equipment !== undefined) {
-    parts.push(`in the ${equipment.name}`);
-  }
-
-  if (item.duration_seconds !== undefined) {
-    parts.push(`for ${humanizeSeconds(item.duration_seconds)}`);
-  }
-
-  return parts.join(" ");
-}
-
 function InstructionRow({
   item,
+  isNew = false,
   allIngredients,
   instructionIngredientNodes,
   onChange,
@@ -573,9 +643,31 @@ function InstructionRow({
   onDismiss,
 }: InstructionRowProps) {
   const [editing, setEditing] = useState(() => isBlankInstruction(item));
-  const [canCancel, setCanCancel] = useState(() => !isBlankInstruction(item));
   const [draft, setDraft] = useState(item);
+  const [accepted, setAccepted] = useState(false);
   const snapshotAtOpenRef = useRef(item);
+
+  // A row added in this editing session has nothing to revert to until it has
+  // been accepted once, so cancelling it drops the row instead.
+  const discardRemovesItem = isNew && !accepted;
+  const pending = editing && (discardRemovesItem || !isEqual(draft, snapshotAtOpenRef.current));
+
+  function closeEditor() {
+    setAccepted(true);
+    setEditing(false);
+  }
+
+  function revertEditor() {
+    setDraft(item);
+    setEditing(false);
+  }
+
+  usePendingEdit(item.id, pending, {
+    buildAccepted: () => mergeInstructionDraft(snapshotAtOpenRef.current, draft, item),
+    discardRemovesItem,
+    revert: revertEditor,
+    close: closeEditor,
+  });
 
   function openEditor() {
     snapshotAtOpenRef.current = item;
@@ -584,37 +676,16 @@ function InstructionRow({
   }
 
   function handleAccept() {
-    const snapshot = snapshotAtOpenRef.current;
-    const instruction =
-      snapshot.instruction !== draft.instruction ? draft.instruction : item.instruction;
-    const equipment_id =
-      snapshot.equipment_id !== draft.equipment_id ? draft.equipment_id : item.equipment_id;
-    const duration_seconds =
-      snapshot.duration_seconds !== draft.duration_seconds
-        ? draft.duration_seconds
-        : item.duration_seconds;
-    const ingredient_ids = isEqual(snapshot.ingredient_ids, draft.ingredient_ids)
-      ? item.ingredient_ids
-      : draft.ingredient_ids;
-
-    const merged = {
-      id: item.id,
-      kind: "instruction" as const,
-      instruction,
-      ...(item.notes !== undefined ? { notes: item.notes } : {}),
-      ...(equipment_id !== undefined ? { equipment_id } : {}),
-      ...(duration_seconds !== undefined ? { duration_seconds } : {}),
-      ...(ingredient_ids !== undefined ? { ingredient_ids } : {}),
-    } satisfies ReadonlyDeep<Instruction>;
-
-    onChange(merged satisfies ReadonlyDeep<Instruction>);
-    setCanCancel(true);
-    setEditing(false);
+    onChange(mergeInstructionDraft(snapshotAtOpenRef.current, draft, item));
+    closeEditor();
   }
 
   function handleCancel() {
-    setDraft(item);
-    setEditing(false);
+    if (discardRemovesItem) {
+      onRemove();
+      return;
+    }
+    revertEditor();
   }
 
   function handleIngredientsChange(ids: readonly IngredientId[]) {
@@ -671,13 +742,14 @@ function InstructionRow({
       {removeControl}
 
       <div className="re-item-header">
+        {/* No aria-label: the wrapping <label> is the accessible name, so it
+            cannot drift from the visible text. */}
         <label className="re-instruction-action-label">
           Action
           <input
             className="re-instruction-text"
             value={draft.instruction}
             onChange={(e) => setDraft({ ...draft, instruction: e.target.value })}
-            aria-label="Instruction text"
           />
         </label>
       </div>
@@ -749,21 +821,21 @@ function InstructionRow({
       </div>
 
       <div className="re-item-editor-actions">
-        {canCancel && (
-          <button
-            type="button"
-            className="re-instruction-cancel"
-            onClick={handleCancel}
-            aria-label="Cancel changes"
-          >
-            ↩
-          </button>
-        )}
+        <button
+          type="button"
+          className="re-instruction-cancel"
+          onClick={handleCancel}
+          aria-label={
+            discardRemovesItem ? "Discard new instruction" : "Cancel changes to instruction"
+          }
+        >
+          ↩
+        </button>
         <button
           type="button"
           className="re-instruction-accept"
           onClick={handleAccept}
-          aria-label="Accept changes"
+          aria-label="Accept changes to instruction"
         >
           ✔︎
         </button>
@@ -830,6 +902,10 @@ function SectionEditor({
   // header (e.g. an existing recipe) shows it straight away.
   const [showHeaderInput, setShowHeaderInput] = useState(section.header !== undefined);
   const headerInputRef = useRef<HTMLInputElement>(null);
+  // Rows added here (rather than loaded from the recipe) have no committed
+  // state, so cancelling their first edit removes them. Stored in a ref because
+  // adding a row already re-renders through `onChange`.
+  const addedItemIdsRef = useRef(new Set<SectionItemId>());
   const Heading = headingForDepth(depth);
 
   function updateItem(index: number, updated: ReadonlyDeep<SectionItem>) {
@@ -864,6 +940,7 @@ function SectionEditor({
       if (depth >= 5) return;
       newItem = { kind: "section", id: newId, contents: [] };
     }
+    addedItemIdsRef.current.add(newId);
     onChange({ ...section, contents: [...section.contents, newItem] });
   }
 
@@ -939,6 +1016,7 @@ function SectionEditor({
               <ContainerItemRow
                 key={item.id}
                 item={item}
+                isNew={addedItemIdsRef.current.has(item.id)}
                 allIngredients={allIngredients}
                 allLabels={allLabels}
                 skippedIds={skippedIds}
@@ -954,6 +1032,7 @@ function SectionEditor({
               <InstructionRow
                 key={item.id}
                 item={item}
+                isNew={addedItemIdsRef.current.has(item.id)}
                 allIngredients={allIngredients}
                 instructionIngredientNodes={instructionIngredientNodes}
                 skipped={skippedIds?.has(item.id) === true}
@@ -1098,7 +1177,14 @@ export type RecipeVersionEditorProps = WithSkippedItemsProps &
   ReadonlyDeep<{
     sections: Section[];
     onChange: (sections: ReadonlyDeep<Section[]>) => void;
-  }>;
+  }> & {
+    /**
+     * Collects rows whose inline editor holds uncommitted changes, so the page
+     * that owns the save button can resolve them before saving. Without one,
+     * row drafts are untracked and a page-level save silently drops them.
+     */
+    readonly pendingEdits?: PendingSectionEdits | undefined;
+  };
 
 /**
  * The editable body of a RecipeVersion: the computed Ingredients display and
@@ -1113,6 +1199,7 @@ export function RecipeVersionEditor({
   skippedIds,
   onRestoreItem,
   onDismissItem,
+  pendingEdits,
 }: RecipeVersionEditorProps) {
   const { ingredients } = useIngredientStore();
   const { labels } = useLabelStore();
@@ -1130,7 +1217,7 @@ export function RecipeVersionEditor({
   );
 
   return (
-    <>
+    <PendingSectionEditsContext.Provider value={pendingEdits ?? null}>
       {/* Computed ingredients list */}
       <RecipeIngredientsDisplay sections={displaySections} allIngredients={ingredients} />
 
@@ -1168,6 +1255,6 @@ export function RecipeVersionEditor({
           + Add section
         </button>
       </section>
-    </>
+    </PendingSectionEditsContext.Provider>
   );
 }
