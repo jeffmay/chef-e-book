@@ -70,25 +70,32 @@ export function ButtonMenu({
     } as unknown as SyntheticEvent);
   }
 
-  /** Close on blur (focus leaves the wrapper entirely). */
+  /**
+   * The menu popup is rendered via Portal outside wrapperRef (for stacking),
+   * so a node "belongs" to this widget if it's inside either the wrapper or
+   * the popup itself.
+   */
+  function isInsideWidget(node: Node | null): boolean {
+    if (node === null) return false;
+    if (wrapperRef.current?.contains(node) === true) return true;
+    return menuRef.current?.getElement()?.contains(node) === true;
+  }
+
+  /**
+   * Close on blur (focus leaves the widget entirely). Opening the menu moves
+   * DOM focus into the portaled popup's list, which fires a blur here since
+   * the popup isn't a descendant of the wrapper — isInsideWidget treats that
+   * as staying within the widget instead of an exit.
+   */
   function handleBlur(e: FocusEvent<HTMLSpanElement>) {
     const related = e.relatedTarget instanceof Node ? e.relatedTarget : null;
-    if (!e.currentTarget.contains(related)) close();
+    if (!isInsideWidget(related)) close();
   }
 
   /** Close on click outside (catches non-focusable targets). */
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (
-        wrapperRef.current !== null &&
-        e.target instanceof Node &&
-        !wrapperRef.current.contains(e.target) &&
-        // The menu popup is rendered via Portal outside wrapperRef, but
-        // clicking inside it should not close the menu here — PrimeReact's
-        // own item-click handler (onItemClick) fires the command, then
-        // calls hide() and stopPropagation().
-        (menuRef.current === null || !menuRef.current.getElement()?.contains(e.target))
-      ) {
+      if (e.target instanceof Node && !isInsideWidget(e.target)) {
         close();
       }
     }
@@ -124,7 +131,17 @@ export function ButtonMenu({
           ▾
         </button>
       </ButtonGroup>
-      <Menu model={items} popup ref={menuRef} className="button-menu-popup" />
+      {/* PrimeReact CSSTransition is disabled (transitionOptions.disabled) —
+          e-ink screens never animate, and a real click landing mid-transition
+          can miss the still-scaling menu item, registering as an outside
+          click that hides the menu without running the item's action. */}
+      <Menu
+        model={items}
+        popup
+        ref={menuRef}
+        className="button-menu-popup"
+        transitionOptions={{ timeout: 0, disabled: true }}
+      />
     </span>
   );
 }
