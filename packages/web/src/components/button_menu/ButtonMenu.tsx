@@ -38,10 +38,14 @@ export type ButtonMenuProps = ReadonlyDeep<{
  * + popup `Menu`).
  *
  * Outside-click detection uses `pointerdown` (not `click`) to avoid racing
- * PrimeReact's overlay listener (which uses `click`). The menu popup is
- * rendered via Portal outside `wrapperRef`, so we skip closing when the
- * click target is inside the popup — letting PrimeReact's own item-click
- * handler fire the `command` before the menu is hidden.
+ * PrimeReact's overlay listener (which uses `click`). Focus-loss detection
+ * uses a document-level `focusout` listener rather than an `onBlur` on the
+ * wrapper, since `focusout` bubbles to `document` even from the popup's
+ * portaled subtree, which never passes through the wrapper. The menu popup
+ * is rendered via Portal outside `wrapperRef`, so both listeners skip
+ * closing when the event's target/relatedTarget is inside the popup —
+ * letting PrimeReact's own item-click handler fire the `command` before the
+ * menu is hidden.
  */
 export function ButtonMenu({
   defaultButton,
@@ -52,6 +56,13 @@ export function ButtonMenu({
 }: ButtonMenuProps) {
   const menuRef = useRef<Menu>(null);
   const wrapperRef = useRef<HTMLSpanElement>(null);
+  // Tracked via the Menu's onShow/onHide (rather than derived from
+  // getElement()) so close() can cheaply no-op while already closed, instead
+  // of relying on PrimeReact's hide() being a harmless no-op — the
+  // always-active document listeners below call close() on every
+  // ButtonMenu instance on the page for any outside interaction, including
+  // ones whose menu was never opened.
+  const isOpenRef = useRef(false);
 
   // When hiding the default button, fold its action into the top of the menu.
   const showDefault = defaultButton !== undefined && !hideDefault;
@@ -75,6 +86,7 @@ export function ButtonMenu({
   // them here makes `react-hooks/exhaustive-deps` catch a missing
   // dependency immediately.
   const close = useCallback(() => {
+    if (!isOpenRef.current) return;
     menuRef.current?.hide({
       currentTarget: wrapperRef.current ?? document.body,
     } as unknown as SyntheticEvent);
@@ -171,6 +183,12 @@ export function ButtonMenu({
         ref={menuRef}
         className="button-menu-popup"
         transitionOptions={{ timeout: 0, disabled: true }}
+        onShow={() => {
+          isOpenRef.current = true;
+        }}
+        onHide={() => {
+          isOpenRef.current = false;
+        }}
       />
     </span>
   );

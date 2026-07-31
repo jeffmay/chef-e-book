@@ -174,11 +174,14 @@ describe("ButtonMenu", () => {
 
     const outsideButton = document.createElement("button");
     document.body.appendChild(outsideButton);
-
-    fireEvent.focusOut(chevron, { relatedTarget: outsideButton });
-
-    expect(screen.queryByRole("menuitem", { name: "Start" })).not.toBeInTheDocument();
-    outsideButton.remove();
+    try {
+      fireEvent.focusOut(chevron, { relatedTarget: outsideButton });
+      await waitFor(() =>
+        expect(screen.queryByRole("menuitem", { name: "Start" })).not.toBeInTheDocument(),
+      );
+    } finally {
+      outsideButton.remove();
+    }
   });
 
   it("closes when a keyboard user tabs from a menu item in the popup to an element outside the widget", async () => {
@@ -197,10 +200,13 @@ describe("ButtonMenu", () => {
 
     const outsideButton = document.createElement("button");
     document.body.appendChild(outsideButton);
-
-    fireEvent.focusOut(startItem, { relatedTarget: outsideButton });
-
-    expect(screen.queryByRole("menuitem", { name: "Start" })).not.toBeInTheDocument();
-    outsideButton.remove();
+    try {
+      fireEvent.focusOut(startItem, { relatedTarget: outsideButton });
+      await waitFor(() =>
+        expect(screen.queryByRole("menuitem", { name: "Start" })).not.toBeInTheDocument(),
+      );
+    } finally {
+      outsideButton.remove();
+    }
   });
 });
