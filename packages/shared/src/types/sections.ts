@@ -125,3 +125,30 @@ export function removeSectionItemsById<S extends ReadonlyDeep<Section>>(
     .filter((s) => !removedIds.has(s.id))
     .map((s) => ({ ...s, contents: filterContents(s.contents) }));
 }
+
+/**
+ * Returns a copy of the sections with every item whose id appears in `updates`
+ * replaced by its updated value (recursing into sub-sections). Container
+ * contents are not walked because only whole containers (never their nested
+ * ingredients) are replaced this way.
+ *
+ * Applying every pending row edit in a single pass keeps concurrent edits from
+ * clobbering each other, which is what happens when each row commits its own
+ * copy of the section tree.
+ */
+export function applySectionItemUpdates<S extends ReadonlyDeep<Section>>(
+  sections: readonly S[],
+  updates: ReadonlyMap<SectionItemId, ReadonlyDeep<SectionItem>>,
+): S[] {
+  function updateContents(contents: ReadonlyDeep<SectionItem[]>): ReadonlyDeep<SectionItem>[] {
+    return contents.map((item) => {
+      const updated = updates.get(item.id);
+      if (updated !== undefined) return updated;
+      if (item.kind === "section") return { ...item, contents: updateContents(item.contents) };
+      return item;
+    });
+  }
+
+  if (updates.size === 0) return [...sections];
+  return sections.map((s) => ({ ...s, contents: updateContents(s.contents) }));
+}

@@ -1,0 +1,660 @@
+import type { Section } from "@recipe-book/shared";
+import {
+  assertDefined,
+  ContainerId,
+  EquipmentId,
+  fixedId,
+  IngredientId,
+  loadId,
+  SectionItemId,
+} from "@recipe-book/shared";
+import { act, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { TreeNode } from "primereact/treenode";
+import { createElement, type ReactNode, useState } from "react";
+import type { ReadonlyDeep } from "type-fest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as Y from "yjs";
+import { KitchenwareDocContext, RecipeBookDocContext } from "../../../contexts/docContext.ts";
+import { flushAsyncEffects } from "../../../testUtils.ts";
+import type { IngredientSelectorProps } from "../../ingredients_table/IngredientSelector.tsx";
+import type { InstructionIngredientSelectorProps } from "../InstructionIngredientSelector.tsx";
+import {
+  createPendingSectionEdits,
+  type PendingEditResolutions,
+  type PendingSectionEdits,
+} from "../pendingEdits.ts";
+import { RecipeVersionEditor } from "../RecipeVersionEditor.tsx";
+
+const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
+------butter,ingredient,Butter,volume,fat+solid
+-------flour,ingredient,Flour,volume,dry
+`;
+
+const BUTTER = fixedId(IngredientId, "butter");
+const OVEN = fixedId(EquipmentId, "oven");
+const BOWL = fixedId(ContainerId, "bowl");
+
+// Mock IngredientSelector so PrimeReact's TreeSelect doesn't run in jsdom.
+vi.mock("../../ingredients_table/IngredientSelector.tsx", () => ({
+  IngredientSelector: ({
+    value,
+    options,
+    onChange,
+    ariaLabel,
+    placeholder,
+  }: IngredientSelectorProps) => (
+    <select
+      aria-label={ariaLabel}
+      value={value ?? ""}
+      onChange={(e) => {
+        const v = e.target.value;
+        onChange(v ? loadId(IngredientId, v) : undefined);
+      }}
+    >
+      <option value="">{placeholder ?? "— None —"}</option>
+      {options.map((ing) => (
+        <option key={ing.id} value={ing.id}>
+          {ing.name}
+        </option>
+      ))}
+    </select>
+  ),
+}));
+
+// Mock InstructionIngredientSelector to a flat checkbox per selectable
+// ingredient, so instruction ingredient selection is testable in jsdom.
+vi.mock("../InstructionIngredientSelector.tsx", () => ({
+  InstructionIngredientSelector: ({
+    nodes,
+    selectedIds,
+    onChange,
+  }: InstructionIngredientSelectorProps) => {
+    const leaves: Array<{ id: IngredientId; label: string }> = [];
+    function collect(ns: TreeNode[]) {
+      for (const n of ns) {
+        const children = n.children;
+        if (children && children.length > 0) {
+          collect(children);
+          continue;
+        }
+        const data: unknown = n.data;
+        if (typeof data === "object" && data !== null && "ingredient_id" in data) {
+          const raw = Reflect.get(data, "ingredient_id");
+          if (typeof raw === "string") {
+            leaves.push({ id: loadId(IngredientId, raw), label: String(n.label ?? "") });
+          }
+        }
+      }
+    }
+    collect(nodes as TreeNode[]);
+    return (
+      <div role="group" aria-label="Instruction ingredients">
+        {leaves.map((leaf) => {
+          const checked = selectedIds.includes(leaf.id);
+          return (
+            <label key={leaf.id}>
+              <input
+                type="checkbox"
+                aria-label={leaf.label}
+                checked={checked}
+                onChange={() =>
+                  onChange(
+                    checked
+                      ? selectedIds.filter((id) => id !== leaf.id)
+                      : [...selectedIds, leaf.id],
+                  )
+                }
+              />
+              {leaf.label}
+            </label>
+          );
+        })}
+      </div>
+    );
+  },
+}));
+
+let kitchenwareDoc: Y.Doc;
+let recipeBookDoc: Y.Doc;
+
+beforeEach(() => {
+  kitchenwareDoc = new Y.Doc();
+  recipeBookDoc = new Y.Doc();
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }));
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+function makeWrapper(kitchenware: Y.Doc, recipeBook: Y.Doc) {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return createElement(
+      KitchenwareDocContext.Provider,
+      { value: { doc: kitchenware, whenSynced: Promise.resolve() } },
+      createElement(
+        RecipeBookDocContext.Provider,
+        { value: { doc: recipeBook, whenSynced: Promise.resolve() } },
+        children,
+      ),
+    );
+  };
+}
+
+type HarnessProps = {
+  readonly initialSections: ReadonlyDeep<Section[]>;
+  readonly pendingEdits?: PendingSectionEdits | undefined;
+  readonly onSectionsChange?: ((sections: ReadonlyDeep<Section[]>) => void) | undefined;
+};
+
+/** Owns the section state the way the recipe editor page does. */
+function Harness({ initialSections, pendingEdits, onSectionsChange }: HarnessProps) {
+  const [sections, setSections] = useState<ReadonlyDeep<Section[]>>(initialSections);
+  return (
+    <RecipeVersionEditor
+      sections={sections}
+      pendingEdits={pendingEdits}
+      onChange={(next) => {
+        setSections(next);
+        onSectionsChange?.(next);
+      }}
+    />
+  );
+}
+
+type SectionsChangeSpy = ReturnType<typeof vi.fn<(sections: ReadonlyDeep<Section[]>) => void>>;
+
+function setup(sections: ReadonlyDeep<Section[]>, pendingEdits?: PendingSectionEdits) {
+  const onSectionsChange: SectionsChangeSpy = vi.fn();
+  render(
+    <Harness
+      initialSections={sections}
+      pendingEdits={pendingEdits}
+      onSectionsChange={onSectionsChange}
+    />,
+    { wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc) },
+  );
+  return { onSectionsChange };
+}
+
+/**
+ * Runs a registry resolution inside `act(...)` — closing the rows' editors
+ * updates their state — and hands back its result, which `act` itself drops.
+ */
+function resolveInAct(resolve: () => PendingEditResolutions): PendingEditResolutions {
+  let resolutions: PendingEditResolutions | undefined;
+  act(() => {
+    resolutions = resolve();
+  });
+  assertDefined(resolutions, "expected the registry to return its resolutions");
+  return resolutions;
+}
+
+/** The sections the harness last handed back, i.e. what a page save would use. */
+function lastSections(onSectionsChange: SectionsChangeSpy): ReadonlyDeep<Section[]> | undefined {
+  return onSectionsChange.mock.calls.at(-1)?.[0];
+}
+
+const MIX_ID = fixedId(SectionItemId, "i-mix");
+const BOWL_ID = fixedId(SectionItemId, "c-bowl");
+const SECTION_ID = fixedId(SectionItemId, "s-main");
+
+function sectionWith(contents: ReadonlyDeep<Section["contents"]>): ReadonlyDeep<Section[]> {
+  return [{ kind: "section", id: SECTION_ID, header: "Main", contents }];
+}
+
+const MIX_INSTRUCTION = {
+  kind: "instruction",
+  id: MIX_ID,
+  instruction: "Mix",
+  duration_seconds: 300,
+} as const;
+
+const BOWL_CONTAINER = {
+  kind: "container",
+  id: BOWL_ID,
+  container_id: BOWL,
+  descriptor: "dry ingredients",
+  contents: [],
+} as const;
+
+// ---------------------------------------------------------------------------
+// InstructionRow
+// ---------------------------------------------------------------------------
+
+describe("InstructionRow — summary view", () => {
+  it("renders an existing instruction as a summary, not an editor", async () => {
+    setup(sectionWith([MIX_INSTRUCTION]));
+    await flushAsyncEffects();
+
+    expect(screen.getByRole("button", { name: "Edit instruction: Mix" })).toHaveTextContent(
+      "Mix for 5 minutes",
+    );
+    expect(screen.queryByRole("textbox", { name: "Action" })).not.toBeInTheDocument();
+  });
+
+  it("opens the editor when the summary is clicked", async () => {
+    setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+
+    expect(screen.getByRole("textbox", { name: "Action" })).toHaveValue("Mix");
+  });
+
+  it("names the action input from its visible label", async () => {
+    setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+
+    expect(screen.queryByRole("textbox", { name: "Instruction text" })).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Action" })).toBeInTheDocument();
+  });
+
+  it("opens a newly added instruction directly in edit mode", async () => {
+    setup(sectionWith([]));
+    await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
+
+    expect(screen.getByRole("textbox", { name: "Action" })).toHaveValue("");
+  });
+});
+
+describe("InstructionRow — accept and cancel", () => {
+  it("does not commit edits until they are accepted", async () => {
+    const { onSectionsChange } = setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
+
+    expect(onSectionsChange).not.toHaveBeenCalled();
+  });
+
+  it("commits the draft and closes the editor on accept", async () => {
+    const { onSectionsChange } = setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to instruction" }));
+
+    expect(screen.getByRole("button", { name: "Edit instruction: Mixing" })).toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]?.contents[0]).toMatchObject({
+      instruction: "Mixing",
+      duration_seconds: 300,
+    });
+  });
+
+  it("reverts the draft and closes the editor on cancel", async () => {
+    const { onSectionsChange } = setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes to instruction" }));
+
+    expect(screen.getByRole("button", { name: "Edit instruction: Mix" })).toBeInTheDocument();
+    expect(onSectionsChange).not.toHaveBeenCalled();
+  });
+
+  it("re-opens the editor with the reverted value after a cancel", async () => {
+    setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes to instruction" }));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+
+    expect(screen.getByRole("textbox", { name: "Action" })).toHaveValue("Mix");
+  });
+
+  it("removes a newly added instruction when its first edit is cancelled", async () => {
+    const { onSectionsChange } = setup(sectionWith([]));
+    await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "Fold");
+    await userEvent.click(screen.getByRole("button", { name: "Discard new instruction" }));
+
+    expect(screen.queryByRole("textbox", { name: "Action" })).not.toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]?.contents).toHaveLength(0);
+  });
+
+  it("reverts instead of removing once a newly added instruction has been accepted", async () => {
+    const { onSectionsChange } = setup(sectionWith([]));
+    await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "Fold");
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to instruction" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Fold" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ed");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes to instruction" }));
+
+    expect(screen.getByRole("button", { name: "Edit instruction: Fold" })).toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]?.contents).toHaveLength(1);
+  });
+
+  it("lets an existing blank instruction be cancelled without removing it", async () => {
+    const blank = { kind: "instruction", id: MIX_ID, instruction: "" } as const;
+    const { onSectionsChange } = setup(sectionWith([blank]));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "Rest");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes to instruction" }));
+
+    expect(
+      screen.getByRole("button", { name: "Edit instruction: instruction" }),
+    ).toBeInTheDocument();
+    expect(onSectionsChange).not.toHaveBeenCalled();
+  });
+
+  it("commits a duration removed in the draft", async () => {
+    const { onSectionsChange } = setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove duration" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to instruction" }));
+
+    expect(lastSections(onSectionsChange)?.[0]?.contents[0]).not.toHaveProperty("duration_seconds");
+  });
+
+  it("commits equipment selected in the draft", async () => {
+    const { onSectionsChange } = setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Equipment" }), OVEN);
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to instruction" }));
+
+    expect(lastSections(onSectionsChange)?.[0]?.contents[0]).toMatchObject({
+      equipment_id: OVEN,
+    });
+  });
+
+  it("commits equipment cleared in the draft", async () => {
+    const baked = { ...MIX_INSTRUCTION, equipment_id: OVEN } as const;
+    const { onSectionsChange } = setup(sectionWith([baked]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Equipment" }), "");
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to instruction" }));
+
+    expect(lastSections(onSectionsChange)?.[0]?.contents[0]).not.toHaveProperty("equipment_id");
+  });
+
+  it("commits ingredients selected in the draft", async () => {
+    const withButter = sectionWith([
+      { kind: "ingredient", id: fixedId(SectionItemId, "i-butter"), ingredient_id: BUTTER },
+      MIX_INSTRUCTION,
+    ]);
+    const { onSectionsChange } = setup(withButter);
+    await flushAsyncEffects();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Butter" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to instruction" }));
+
+    expect(lastSections(onSectionsChange)?.[0]?.contents[1]).toMatchObject({
+      ingredient_ids: [BUTTER],
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ContainerItemRow
+// ---------------------------------------------------------------------------
+
+describe("ContainerItemRow — summary view", () => {
+  it("renders an existing container as a summary, not an editor", async () => {
+    setup(sectionWith([BOWL_CONTAINER]));
+    await flushAsyncEffects();
+
+    expect(screen.getByRole("button", { name: "Edit container: Bowl" })).toHaveTextContent(
+      "Bowl — dry ingredients",
+    );
+    expect(screen.queryByRole("textbox", { name: "Container descriptor" })).not.toBeInTheDocument();
+  });
+
+  it("marks ordered containers in the summary", async () => {
+    setup(sectionWith([{ ...BOWL_CONTAINER, ordered: true }]));
+    await flushAsyncEffects();
+
+    expect(screen.getByRole("button", { name: "Edit container: Bowl" })).toHaveTextContent(
+      "Bowl — dry ingredients (ordered)",
+    );
+  });
+
+  it("opens the editor when the summary is clicked", async () => {
+    setup(sectionWith([BOWL_CONTAINER]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
+
+    expect(screen.getByRole("textbox", { name: "Container descriptor" })).toHaveValue(
+      "dry ingredients",
+    );
+  });
+
+  it("opens a newly added container directly in edit mode", async () => {
+    setup(sectionWith([]));
+    await userEvent.click(screen.getByRole("button", { name: "Add container to section" }));
+
+    expect(screen.getByRole("textbox", { name: "Container descriptor" })).toHaveValue("");
+  });
+
+  it("keeps nested ingredients visible while the header is collapsed", async () => {
+    const filled = {
+      ...BOWL_CONTAINER,
+      contents: [
+        { kind: "ingredient", id: fixedId(SectionItemId, "i-butter"), ingredient_id: BUTTER },
+      ],
+    } as const;
+    setup(sectionWith([filled]));
+    await flushAsyncEffects();
+
+    const containerGroup = screen.getByRole("group", { name: /Container: Bowl/ });
+    expect(
+      within(containerGroup).getByRole("group", { name: "Ingredient: Butter" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("ContainerItemRow — accept and cancel", () => {
+  it("does not commit header edits until they are accepted", async () => {
+    const { onSectionsChange } = setup(sectionWith([BOWL_CONTAINER]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
+    await userEvent.clear(screen.getByRole("textbox", { name: "Container descriptor" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Container descriptor" }),
+      "wet ingredients",
+    );
+
+    expect(onSectionsChange).not.toHaveBeenCalled();
+  });
+
+  it("commits the draft and closes the editor on accept", async () => {
+    const { onSectionsChange } = setup(sectionWith([BOWL_CONTAINER]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
+    await userEvent.clear(screen.getByRole("textbox", { name: "Container descriptor" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Container descriptor" }),
+      "wet ingredients",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to container" }));
+
+    expect(screen.getByRole("button", { name: "Edit container: Bowl" })).toHaveTextContent(
+      "Bowl — wet ingredients",
+    );
+    expect(lastSections(onSectionsChange)?.[0]?.contents[0]).toMatchObject({
+      descriptor: "wet ingredients",
+    });
+  });
+
+  it("commits the container type and ordered flag on accept", async () => {
+    const { onSectionsChange } = setup(sectionWith([BOWL_CONTAINER]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
+    await userEvent.selectOptions(
+      screen.getByRole("combobox", { name: "Container type" }),
+      fixedId(ContainerId, "pot"),
+    );
+    await userEvent.click(screen.getByRole("checkbox", { name: "Ordered list" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to container" }));
+
+    expect(lastSections(onSectionsChange)?.[0]?.contents[0]).toMatchObject({
+      container_id: fixedId(ContainerId, "pot"),
+      ordered: true,
+    });
+  });
+
+  it("reverts the draft and closes the editor on cancel", async () => {
+    const { onSectionsChange } = setup(sectionWith([BOWL_CONTAINER]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
+    await userEvent.clear(screen.getByRole("textbox", { name: "Container descriptor" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Container descriptor" }),
+      "wet ingredients",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes to container" }));
+
+    expect(screen.getByRole("button", { name: "Edit container: Bowl" })).toHaveTextContent(
+      "Bowl — dry ingredients",
+    );
+    expect(onSectionsChange).not.toHaveBeenCalled();
+  });
+
+  it("removes a newly added container when its first edit is cancelled", async () => {
+    const { onSectionsChange } = setup(sectionWith([]));
+    await userEvent.click(screen.getByRole("button", { name: "Add container to section" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Container descriptor" }),
+      "wet ingredients",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Discard new container" }));
+
+    expect(screen.queryByRole("textbox", { name: "Container descriptor" })).not.toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]?.contents).toHaveLength(0);
+  });
+
+  it("keeps ingredients added while the header editor is open", async () => {
+    const { onSectionsChange } = setup(sectionWith([BOWL_CONTAINER]));
+    await flushAsyncEffects();
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add ingredient to Bowl" }));
+    const newIngredient = screen.getByRole("group", { name: "New ingredient" });
+    await userEvent.selectOptions(
+      within(newIngredient).getByRole("combobox", { name: "Select new ingredient" }),
+      BUTTER,
+    );
+    await userEvent.click(
+      within(newIngredient).getByRole("button", { name: /Add Butter to section/ }),
+    );
+
+    await userEvent.clear(screen.getByRole("textbox", { name: "Container descriptor" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Container descriptor" }), "wet");
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to container" }));
+
+    expect(lastSections(onSectionsChange)?.[0]?.contents[0]).toMatchObject({
+      descriptor: "wet",
+      contents: [{ ingredient_id: BUTTER }],
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pending edits registry
+// ---------------------------------------------------------------------------
+
+describe("pending row edits", () => {
+  it("registers a row whose draft has uncommitted changes", async () => {
+    const pendingEdits = createPendingSectionEdits();
+    setup(sectionWith([MIX_INSTRUCTION]), pendingEdits);
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    expect(pendingEdits.pendingCount()).toBe(0);
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
+    expect(pendingEdits.pendingCount()).toBe(1);
+  });
+
+  it("registers a newly added row even before it is touched", async () => {
+    const pendingEdits = createPendingSectionEdits();
+    setup(sectionWith([]), pendingEdits);
+
+    await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
+    expect(pendingEdits.pendingCount()).toBe(1);
+  });
+
+  it("unregisters a row once its draft is accepted", async () => {
+    const pendingEdits = createPendingSectionEdits();
+    setup(sectionWith([MIX_INSTRUCTION]), pendingEdits);
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to instruction" }));
+
+    expect(pendingEdits.pendingCount()).toBe(0);
+  });
+
+  it("unregisters a row once its draft is cancelled", async () => {
+    const pendingEdits = createPendingSectionEdits();
+    setup(sectionWith([MIX_INSTRUCTION]), pendingEdits);
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes to instruction" }));
+
+    expect(pendingEdits.pendingCount()).toBe(0);
+  });
+
+  it("tracks instruction and container drafts that are open at the same time", async () => {
+    const pendingEdits = createPendingSectionEdits();
+    setup(sectionWith([BOWL_CONTAINER, MIX_INSTRUCTION]), pendingEdits);
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Container descriptor" }), "!");
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
+
+    expect(pendingEdits.pendingCount()).toBe(2);
+  });
+
+  it("builds one update per pending row and closes their editors on acceptAll", async () => {
+    const pendingEdits = createPendingSectionEdits();
+    setup(sectionWith([BOWL_CONTAINER, MIX_INSTRUCTION]), pendingEdits);
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Container descriptor" }), "!");
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
+
+    // Resolving pending edits closes the rows' editors, so it updates state.
+    const { updates, removals } = resolveInAct(() => pendingEdits.acceptAll());
+    expect(removals.size).toBe(0);
+    expect(updates.get(BOWL_ID)).toMatchObject({ descriptor: "dry ingredients!" });
+    expect(updates.get(MIX_ID)).toMatchObject({ instruction: "Mixing" });
+  });
+
+  it("reports newly added rows as removals on discardAll", async () => {
+    const pendingEdits = createPendingSectionEdits();
+    setup(sectionWith([MIX_INSTRUCTION]), pendingEdits);
+
+    await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
+    const newRow = screen.getByRole("group", { name: "Instruction: new" });
+    await userEvent.type(within(newRow).getByRole("textbox", { name: "Action" }), "Fold");
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    const mixRow = screen.getByRole("group", { name: "Instruction: Mix" });
+    await userEvent.type(within(mixRow).getByRole("textbox", { name: "Action" }), "ing");
+
+    const { updates, removals } = resolveInAct(() => pendingEdits.discardAll());
+    expect(updates.size).toBe(0);
+    expect(removals.has(MIX_ID)).toBe(false);
+    expect(removals.size).toBe(1);
+  });
+
+  it("closes every open editor on discardAll", async () => {
+    const pendingEdits = createPendingSectionEdits();
+    setup(sectionWith([MIX_INSTRUCTION]), pendingEdits);
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
+
+    await flushAsyncEffects();
+    act(() => {
+      pendingEdits.discardAll();
+    });
+    await flushAsyncEffects();
+
+    expect(screen.getByRole("button", { name: "Edit instruction: Mix" })).toBeInTheDocument();
+    expect(pendingEdits.pendingCount()).toBe(0);
+  });
+
+  it("does not track drafts when no registry is provided", async () => {
+    setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
+
+    expect(screen.getByRole("textbox", { name: "Action" })).toHaveValue("Mixing");
+  });
+});

@@ -1,4 +1,4 @@
-import type { Ingredient, Measurement, RecipeFolder, Section } from "@recipe-book/shared";
+import type { Ingredient, Measurement, Recipe, RecipeFolder, Section } from "@recipe-book/shared";
 import {
   assertNotValidationError,
   ContainerId,
@@ -19,6 +19,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TreeNode } from "primereact/treenode";
 import { createElement, type ReactNode } from "react";
+import type { ReadonlyDeep } from "type-fest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import type { IngredientSelectorProps } from "../../components/ingredients_table/IngredientSelector.tsx";
@@ -469,6 +470,7 @@ describe("RecipeEditor — new recipe form", () => {
 
   it("Save button is disabled when title is empty despite pre-filled description", async () => {
     setupNewRecipeEditor();
+    await flushAsyncEffects();
     expect(screen.getByRole("button", { name: "Save recipe" })).toBeDisabled();
   });
 
@@ -542,15 +544,16 @@ describe("RecipeEditor — initialFolderId", () => {
 });
 
 describe("RecipeEditor — folder field", () => {
-  it("does not wrap the folder selector in a <label> (would break overlay toggling on click)", () => {
+  it("does not wrap the folder selector in a <label> (would break overlay toggling on click)", async () => {
     setupNewRecipeEditor();
+    await flushAsyncEffects();
     const folderControl = screen.getByRole("combobox", { name: "Parent folder" });
     expect(folderControl.closest("label")).toBeNull();
   });
 });
 
 describe("RecipeEditor — async recipe load", () => {
-  it("re-seeds the form when the recipe finishes loading after mount", () => {
+  it("re-seeds the form when the recipe finishes loading after mount", async () => {
     const recipe = createRecipe(recipeBookDoc, {
       title: "Stew",
       description: DEFAULT_VERSION_DESCRIPTION,
@@ -567,6 +570,7 @@ describe("RecipeEditor — async recipe load", () => {
     // The recipe arrives a tick later; the form must pick up its title.
     rerender(<RecipeEditor recipe={recipe} onSave={vi.fn()} onCancel={vi.fn()} />);
     expect(screen.getByRole("textbox", { name: "Recipe title" })).toHaveValue("Stew");
+    await flushAsyncEffects();
   });
 });
 
@@ -638,8 +642,9 @@ describe("RecipeEditor — version description validation (existing recipe)", ()
   });
 
   describe("RecipeEditor — title validation", () => {
-    it("shows a required error when the title is empty", () => {
+    it("shows a required error when the title is empty", async () => {
       setupNewRecipeEditor();
+      await flushAsyncEffects();
       expect(screen.getByText("Title is required")).toBeInTheDocument();
     });
 
@@ -651,8 +656,9 @@ describe("RecipeEditor — version description validation (existing recipe)", ()
   });
 
   describe("RecipeEditor — create new version", () => {
-    it("hides the version description until Create new version is checked", () => {
+    it("hides the version description until Create new version is checked", async () => {
       setupExistingRecipeEditor("Beef Stew");
+      await flushAsyncEffects();
       expect(
         screen.queryByRole("textbox", { name: "Version description" }),
       ).not.toBeInTheDocument();
@@ -805,7 +811,7 @@ describe("RecipeEditor — version description validation (existing recipe)", ()
       setupNewRecipeEditor();
       await userEvent.click(screen.getByRole("button", { name: "Add section" }));
       await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
-      expect(screen.getByRole("textbox", { name: "Instruction text" })).toBeInTheDocument();
+      expect(screen.getByRole("textbox", { name: "Action" })).toBeInTheDocument();
     });
 
     it("can add a text block to a section", async () => {
@@ -987,5 +993,116 @@ describe("RecipeEditor — version time fields", () => {
     expect(latest?.estimated_time_seconds).toBe(900);
     expect(latest?.seconds_per_ingredient).toBe(60);
     expect(onSave).toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Uncommitted row drafts on save
+// ---------------------------------------------------------------------------
+
+describe("RecipeEditor — saving with rows still being edited", () => {
+  /** Opens an editor on a saved recipe with one instruction typed but not accepted. */
+  async function setupWithOpenInstruction() {
+    const { recipe, onSave } = setupExistingRecipeEditor("Pancakes");
+    await userEvent.click(screen.getByRole("button", { name: "Add section" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "Whisk");
+    return { recipe, onSave };
+  }
+
+  /** The sections of the latest version stored for the recipe. */
+  function latestSections(recipeId: Recipe["id"]): ReadonlyDeep<Section[]> {
+    const reloaded = getRecipe(recipeBookDoc, recipeId);
+    assertNotValidationError(reloaded);
+    const latest = reloaded.versions.at(-1);
+    if (latest === undefined) throw new Error("expected a saved version");
+    return latest.sections;
+  }
+
+  it("asks what to do instead of saving when a row is still being edited", async () => {
+    const { onSave } = await setupWithOpenInstruction();
+    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    expect(screen.getByRole("dialog", { name: "Unsaved row changes" })).toBeInTheDocument();
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("saves the row's changes when accepting all changes", async () => {
+    const { recipe, onSave } = await setupWithOpenInstruction();
+    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept all changes" }));
+
+    expect(onSave).toHaveBeenCalled();
+    expect(latestSections(recipe.id)[0]?.contents[0]).toMatchObject({
+      kind: "instruction",
+      instruction: "Whisk",
+    });
+    expect(screen.queryByRole("dialog", { name: "Unsaved row changes" })).not.toBeInTheDocument();
+  });
+
+  it("drops the newly added row when discarding all changes", async () => {
+    const { recipe, onSave } = await setupWithOpenInstruction();
+    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
+    await userEvent.click(screen.getByRole("button", { name: "Discard all changes" }));
+
+    expect(onSave).toHaveBeenCalled();
+    expect(latestSections(recipe.id)[0]?.contents).toHaveLength(0);
+  });
+
+  it("keeps an existing row's committed value when discarding all changes", async () => {
+    const { recipe } = await setupWithOpenInstruction();
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to instruction" }));
+
+    // Re-open the accepted row and type without accepting.
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Whisk" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), " gently");
+    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
+    await userEvent.click(screen.getByRole("button", { name: "Discard all changes" }));
+
+    expect(latestSections(recipe.id)[0]?.contents[0]).toMatchObject({ instruction: "Whisk" });
+  });
+
+  it("returns to the editor without saving when the prompt is cancelled", async () => {
+    const { onSave } = await setupWithOpenInstruction();
+    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
+    await userEvent.click(
+      within(screen.getByRole("dialog", { name: "Unsaved row changes" })).getByRole("button", {
+        name: "Cancel",
+      }),
+    );
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog", { name: "Unsaved row changes" })).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Action" })).toHaveValue("Whisk");
+  });
+
+  it("saves directly once every row has been accepted", async () => {
+    const { recipe, onSave } = await setupWithOpenInstruction();
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to instruction" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
+
+    expect(screen.queryByRole("dialog", { name: "Unsaved row changes" })).not.toBeInTheDocument();
+    expect(onSave).toHaveBeenCalled();
+    expect(latestSections(recipe.id)[0]?.contents[0]).toMatchObject({ instruction: "Whisk" });
+  });
+
+  it("resolves an instruction and a container that are both open in one save", async () => {
+    const { recipe } = setupExistingRecipeEditor("Pancakes");
+    await userEvent.click(screen.getByRole("button", { name: "Add section" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add container to section" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Container descriptor" }),
+      "dry ingredients",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "Whisk");
+
+    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
+    await userEvent.click(screen.getByRole("button", { name: "Accept all changes" }));
+
+    expect(latestSections(recipe.id)[0]?.contents).toMatchObject([
+      { kind: "container", descriptor: "dry ingredients" },
+      { kind: "instruction", instruction: "Whisk" },
+    ]);
   });
 });

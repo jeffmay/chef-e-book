@@ -193,7 +193,7 @@ A snapshot of a recipe's ingredients and sections at a point in time.
 - `created_at`: timestamp
 - `created_by`: string
 
-Estimation helpers live in `packages/shared/src/math/estimation.ts` (`minimumEstimatedSeconds`, `resolveEstimatedSeconds`, `computeItemWeights`, `progressFraction`); section walkers (`collectIngredientItems`, `collectInstructions`, `computeTopIngredients`, `removeSectionItemsById`) live in `packages/shared/src/types/sections.ts`.
+Estimation helpers live in `packages/shared/src/math/estimation.ts` (`minimumEstimatedSeconds`, `resolveEstimatedSeconds`, `computeItemWeights`, `progressFraction`); section walkers (`collectIngredientItems`, `collectInstructions`, `computeTopIngredients`, `removeSectionItemsById`, `applySectionItemUpdates`) live in `packages/shared/src/types/sections.ts`.
 
 #### SectionItem (recursive)
 
@@ -261,6 +261,12 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - **`ButtonMenu`** (`components/button_menu/`) — shared split button: an optional `defaultButton` performs its action directly, and a "▾" chevron opens a PrimeReact popup `Menu` listing all available actions (PrimeReact `ButtonGroup` + `Menu`). When `defaultButton` is undefined only the chevron shows. The `hideDefault` prop hides the default button and folds its action to the top of the chevron menu (so only the "▾" trigger shows) — used to compact the actions column in mobile view. Used by the bulk recipe page rows, the folder "New" menus, and the version history table.
 - **`useMobileView`** (`hooks/useMobileView.ts`) — returns whether the viewport is in "mobile view" (≤ `MOBILE_VIEW_MAX_WIDTH` = 600px), tracking `window.matchMedia` reactively (and defaulting to `false` where `matchMedia` is unavailable, e.g. jsdom). The 600px breakpoint is kept in sync with the `@media (max-width: 600px)` rules in page stylesheets.
 - **`RecipeVersionEditor`** (`components/recipe_editor/`) — the editable body of a RecipeVersion (computed Ingredients display + recursive Instructions section editor). Shared by `RecipeEditor` and the session summary; optional `skippedIds`/`onRestoreItem`/`onDismissItem` decorate skipped items with the `--background-danger` stripes, a floating "skipped" tag, and Restore/✕ actions.
+- **Inline-edit rows** — instruction and container rows collapse to a one-line summary and open into an inline editor. Edits live in a local `draft` until "✔︎" (accept); "↩" reverts, or removes the row when it was added during this editing session and never accepted. Pure helpers live in `components/recipe_editor/drafts.ts`:
+  - `isBlankInstruction` / `isBlankContainer` — a freshly-added row opens directly in edit mode
+  - `summarizeInstruction` / `summarizeContainer` — the collapsed one-liner
+  - `mergeInstructionDraft` / `mergeContainerDraft` — field-wise merge of (snapshot at open → draft) against the live item, so untouched fields keep concurrent edits. A container's `contents` always come from the live item, because its nested ingredient rows commit immediately.
+- **`pendingEdits.ts`** (`components/recipe_editor/`) — registry of rows whose inline editor holds uncommitted changes. `RecipeVersionEditor` provides it through the optional `pendingEdits` prop; a page that owns a save button creates one with `usePendingSectionEdits()`. `acceptAll()`/`discardAll()` return resolutions as data (`updates` map + `removals` set) which the page applies in a single pass via `applySectionItemUpdates` / `removeSectionItemsById` — committing row by row would let one row's `onChange` clobber another's.
+- **`PendingEditsDialog`** (`components/recipe_editor/`) — "Accept all changes" / "Discard all changes" / "Cancel" prompt shown when a save is attempted with rows still open.
 
 ### Home Page
 
@@ -274,8 +280,9 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Choose/create a parent folder with `RecipeFolderSelector` (`TreeSelect` + a "New subfolder" checkbox that requires a name; the editor creates the folder then selects it)
 - Add sections with an optional header (hidden until a `+ Add Section Header` button is clicked, which reveals and focuses the input)
 - Add/edit ingredients (with measurement editor); each ingredient row in a section shows its own measurement value next to the name (independent of the aggregate Ingredients list)
-- Add/edit containers (bowl, steamer, pot, foil) containing nested ingredients
-- Add/edit equipment instructions (bake 20 min, sear on high, mix 20 min, etc.); each instruction picks the ingredients it acts on via `InstructionIngredientSelector` — a multi-select `TreeSelect` of the recipe's own ingredients grouped by container (containers hold only ingredients; add ingredients to a section/container to make them available)
+- Add/edit containers (bowl, steamer, pot, foil) containing nested ingredients; the container header (type, descriptor, ordered) is an inline editor confirmed with ↩/✔︎, collapsing to a "Bowl — dry ingredients (ordered)" summary, while its nested ingredient rows stay visible and commit immediately
+- Add/edit equipment instructions (bake 20 min, sear on high, mix 20 min, etc.), also inline-edited with ↩/✔︎ and collapsing to a summary ("Bake the Flour in the Oven for 30 minutes"); each instruction picks the ingredients it acts on via `InstructionIngredientSelector` — a multi-select `TreeSelect` of the recipe's own ingredients grouped by container (containers hold only ingredients; add ingredients to a section/container to make them available)
+- Saving while any row is still open for editing prompts with "Accept all changes" / "Discard all changes" / "Cancel" rather than dropping those drafts (discarding also drops rows that were added but never accepted)
 - Add/edit text blocks
 - Add/edit sub-sections
 - Attach notes to any sections or section items

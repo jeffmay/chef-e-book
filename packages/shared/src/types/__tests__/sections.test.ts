@@ -10,6 +10,7 @@ import {
   SectionItemId,
 } from "../recipe.ts";
 import {
+  applySectionItemUpdates,
   collectIngredientItems,
   collectInstructions,
   computeTopIngredients,
@@ -175,5 +176,60 @@ describe("removeSectionItemsById", () => {
     removeSectionItemsById(exampleSections, new Set([BUTTER_ITEM.id, MIX.id]));
     expect(collectIngredientItems(exampleSections)).toHaveLength(2);
     expect(collectInstructions(exampleSections)).toHaveLength(2);
+  });
+});
+
+describe("applySectionItemUpdates", () => {
+  it("replaces an item at the top level of a section", () => {
+    const updated = { ...MIX, instruction: "Fold gently" } satisfies Instruction;
+    const result = applySectionItemUpdates(exampleSections, new Map([[MIX.id, updated]]));
+    expect(collectInstructions(result).map((i) => i.instruction)).toEqual(["Fold gently", "Bake"]);
+  });
+
+  it("replaces an item nested inside a sub-section", () => {
+    const updated = { ...BAKE, duration_seconds: 1800 } satisfies Instruction;
+    const result = applySectionItemUpdates(exampleSections, new Map([[BAKE.id, updated]]));
+    expect(collectInstructions(result).map((i) => i.duration_seconds)).toEqual([600, 1800]);
+  });
+
+  it("applies every update in a single pass so concurrent edits do not clobber each other", () => {
+    const mixed = { ...MIX, instruction: "Whisk" } satisfies Instruction;
+    const baked = { ...BAKE, instruction: "Roast" } satisfies Instruction;
+    const result = applySectionItemUpdates(
+      exampleSections,
+      new Map([
+        [MIX.id, mixed],
+        [BAKE.id, baked],
+      ]),
+    );
+    expect(collectInstructions(result).map((i) => i.instruction)).toEqual(["Whisk", "Roast"]);
+  });
+
+  it("replaces a whole container, keeping the contents of the replacement", () => {
+    const replacement = container("c-bowl", [BUTTER_ITEM]);
+    const result = applySectionItemUpdates(
+      exampleSections,
+      new Map([[replacement.id, { ...replacement, descriptor: "small" }]]),
+    );
+    const updatedContainer = result[0]?.contents[1];
+    expect(updatedContainer?.kind).toBe("container");
+    expect(updatedContainer).toMatchObject({ descriptor: "small" });
+    expect(collectIngredientItems(result).map((i) => i.id)).toEqual([
+      BUTTER_ITEM.id,
+      BUTTER_ITEM.id,
+    ]);
+  });
+
+  it("leaves items that have no update untouched", () => {
+    const result = applySectionItemUpdates(exampleSections, new Map());
+    expect(result).toEqual([...exampleSections]);
+  });
+
+  it("does not mutate the input sections", () => {
+    applySectionItemUpdates(exampleSections, new Map([[MIX.id, { ...MIX, instruction: "Whisk" }]]));
+    expect(collectInstructions(exampleSections).map((i) => i.instruction)).toEqual([
+      "Mix well",
+      "Bake",
+    ]);
   });
 });

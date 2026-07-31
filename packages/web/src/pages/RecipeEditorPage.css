@@ -285,6 +285,18 @@
   font-size: 0.85em;
 }
 
+/* Collapsed container header: a single summary label; click to reopen the
+   editor. Its nested ingredient rows stay visible below either way. */
+.re-container-summary {
+  flex: 1;
+  text-align: left;
+  padding: 0;
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
 .re-container-contents {
   width: 100%;
   padding-left: 2vw;
@@ -535,8 +547,13 @@ th.re-version-actions {
   padding-bottom: var(--spacing-xs);
 }
 
+.re-dialog-body {
+  font-size: 0.9em;
+}
+
 .re-dialog-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-sm);
   justify-content: flex-end;
 }

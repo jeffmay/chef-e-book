@@ -1,5 +1,6 @@
 import type { RecipeFolder } from "@recipe-book/shared";
 import {
+  applySectionItemUpdates,
   collectIngredientItems,
   computeTopIngredients,
   DEFAULT_VERSION_DESCRIPTION,
@@ -9,12 +10,16 @@ import {
   RecipeFolderId,
   type RecipeVersion,
   RecipeVersionId,
+  removeSectionItemsById,
   type Section,
 } from "@recipe-book/shared";
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import type { ReadonlyDeep } from "type-fest";
 import { ButtonMenu } from "../components/button_menu/ButtonMenu.tsx";
+import { PendingEditsDialog } from "../components/recipe_editor/PendingEditsDialog.tsx";
+import type { PendingEditResolutions } from "../components/recipe_editor/pendingEdits.ts";
+import { usePendingSectionEdits } from "../components/recipe_editor/pendingEdits.ts";
 import { RecipeVersionEditor } from "../components/recipe_editor/RecipeVersionEditor.tsx";
 import { RecipeFolderSelector } from "../components/recipe_folder/RecipeFolderSelector.tsx";
 import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.ts";
@@ -246,6 +251,11 @@ export function RecipeEditor({
   );
   const [showCopyDialog, setShowCopyDialog] = useState(false);
   const descriptionInputRef = useRef<HTMLInputElement>(null);
+  // Instruction and container rows hold their edits in a local draft until the
+  // per-row "✔︎" is pressed; saving with a draft still open asks what to do
+  // with it rather than dropping it.
+  const pendingEdits = usePendingSectionEdits();
+  const [pendingEditCount, setPendingEditCount] = useState(0);
 
   // The recipe book doc loads asynchronously from IndexedDB, so on a hard
   // refresh `recipe` is null on first render and arrives a tick later. The
@@ -289,7 +299,28 @@ export function RecipeEditor({
   }
 
   function handleSave() {
-    const computedIngredients = computeTopIngredients(form.sections);
+    const count = pendingEdits.pendingCount();
+    if (count > 0) {
+      setPendingEditCount(count);
+      return;
+    }
+    saveSections(form.sections);
+  }
+
+  /** Applies every open row's resolution in one pass, then saves the result. */
+  function saveResolvedSections(resolutions: ReadonlyDeep<PendingEditResolutions>) {
+    const updated = applySectionItemUpdates(form.sections, resolutions.updates);
+    const sections =
+      resolutions.removals.size > 0
+        ? removeSectionItemsById(updated, resolutions.removals)
+        : updated;
+    patch("sections", sections);
+    setPendingEditCount(0);
+    saveSections(sections);
+  }
+
+  function saveSections(sections: ReadonlyDeep<Section[]>) {
+    const computedIngredients = computeTopIngredients(sections);
 
     if (recipe === null) {
       const created = create({
@@ -307,7 +338,7 @@ export function RecipeEditor({
         recipe_id: recipe.id,
         description: form.version_description,
         ingredients: computedIngredients,
-        sections: form.sections,
+        sections,
         // The editor has no UI for the time fields yet; carry them over so a
         // save doesn't wipe values set from a session summary.
         ...(v?.estimated_time_seconds !== undefined && {
@@ -450,6 +481,7 @@ export function RecipeEditor({
       <RecipeVersionEditor
         sections={form.sections}
         onChange={(sections) => patch("sections", sections)}
+        pendingEdits={pendingEdits}
       />
 
       {/* Version history */}
@@ -525,6 +557,16 @@ export function RecipeEditor({
           </button>
         </div>
       </section>
+
+      {/* Uncommitted row drafts found on save */}
+      {pendingEditCount > 0 && (
+        <PendingEditsDialog
+          count={pendingEditCount}
+          onAcceptAll={() => saveResolvedSections(pendingEdits.acceptAll())}
+          onDiscardAll={() => saveResolvedSections(pendingEdits.discardAll())}
+          onCancel={() => setPendingEditCount(0)}
+        />
+      )}
 
       {/* Copy dialog */}
       {showCopyDialog && recipe && (
