@@ -1,7 +1,7 @@
 import { ButtonGroup } from "primereact/buttongroup";
 import { Menu } from "primereact/menu";
 import type { MenuItem } from "primereact/menuitem";
-import { useEffect, useRef, type FocusEvent, type SyntheticEvent } from "react";
+import { useCallback, useEffect, useRef, type SyntheticEvent } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import "./ButtonMenu.css";
 
@@ -38,10 +38,14 @@ export type ButtonMenuProps = ReadonlyDeep<{
  * + popup `Menu`).
  *
  * Outside-click detection uses `pointerdown` (not `click`) to avoid racing
- * PrimeReact's overlay listener (which uses `click`). The menu popup is
- * rendered via Portal outside `wrapperRef`, so we skip closing when the
- * click target is inside the popup — letting PrimeReact's own item-click
- * handler fire the `command` before the menu is hidden.
+ * PrimeReact's overlay listener (which uses `click`). Focus-loss detection
+ * uses a document-level `focusout` listener rather than an `onBlur` on the
+ * wrapper, since `focusout` bubbles to `document` even from the popup's
+ * portaled subtree, which never passes through the wrapper. The menu popup
+ * is rendered via Portal outside `wrapperRef`, so both listeners skip
+ * closing when the event's target/relatedTarget is inside the popup —
+ * letting PrimeReact's own item-click handler fire the `command` before the
+ * menu is hidden.
  */
 export function ButtonMenu({
   defaultButton,
@@ -52,6 +56,13 @@ export function ButtonMenu({
 }: ButtonMenuProps) {
   const menuRef = useRef<Menu>(null);
   const wrapperRef = useRef<HTMLSpanElement>(null);
+  // Tracked via the Menu's onShow/onHide (rather than derived from
+  // getElement()) so close() can cheaply no-op while already closed, instead
+  // of relying on PrimeReact's hide() being a harmless no-op — the
+  // always-active document listeners below call close() on every
+  // ButtonMenu instance on the page for any outside interaction, including
+  // ones whose menu was never opened.
+  const isOpenRef = useRef(false);
 
   // When hiding the default button, fold its action into the top of the menu.
   const showDefault = defaultButton !== undefined && !hideDefault;
@@ -64,43 +75,81 @@ export function ButtonMenu({
     ...(button.disabled !== undefined && { disabled: button.disabled }),
   }));
 
-  function close() {
+  // close/isInsideWidget are wrapped in useCallback (deps: [], since both
+  // only read stable refs) rather than left as plain render-scope functions,
+  // so the outside-click effect below can list them in its dependency array
+  // instead of relying on an empty array that captures whichever closures
+  // existed on mount. That "[]-deps effect closing over render-scope
+  // functions" pattern is otherwise easy to leave stale: if either function
+  // ever started reading state instead of only refs, an empty deps array
+  // would silently keep using the first render's version, while listing
+  // them here makes `react-hooks/exhaustive-deps` catch a missing
+  // dependency immediately.
+  const close = useCallback(() => {
+    if (!isOpenRef.current) return;
     menuRef.current?.hide({
       currentTarget: wrapperRef.current ?? document.body,
     } as unknown as SyntheticEvent);
-  }
+  }, []);
 
-  /** Close on blur (focus leaves the wrapper entirely). */
-  function handleBlur(e: FocusEvent<HTMLSpanElement>) {
-    const related = e.relatedTarget instanceof Node ? e.relatedTarget : null;
-    if (!e.currentTarget.contains(related)) close();
-  }
+  /**
+   * The menu popup is rendered via Portal outside wrapperRef (for stacking),
+   * so a node "belongs" to this widget if it's inside either the wrapper or
+   * the popup itself.
+   *
+   * Assumption: a click/focus target inside `menuRef.current?.getElement()`
+   * only happens while the popup is genuinely open. `transitionOptions={{
+   * disabled: true }}` on the `<Menu>` below means a closed popup is either
+   * unmounted or otherwise unable to receive real pointer/focus events (the
+   * exact mechanism and its timing are PrimeReact-internal and not a
+   * contract this component should depend on precisely) — so in practice
+   * this check can't be satisfied by a stale reference to a closed popup.
+   * If the popup's open/close rendering ever changes such that a closed
+   * panel remains hit-testable/focusable, this would need an explicit "is
+   * the menu open" guard alongside the containment check.
+   */
+  const isInsideWidget = useCallback((node: Node | null): boolean => {
+    if (node === null) return false;
+    if (wrapperRef.current?.contains(node) === true) return true;
+    return menuRef.current?.getElement()?.contains(node) === true;
+  }, []);
 
-  /** Close on click outside (catches non-focusable targets). */
+  /** Close on click outside and on focus leaving the widget. */
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (
-        wrapperRef.current !== null &&
-        e.target instanceof Node &&
-        !wrapperRef.current.contains(e.target) &&
-        // The menu popup is rendered via Portal outside wrapperRef, but
-        // clicking inside it should not close the menu here — PrimeReact's
-        // own item-click handler (onItemClick) fires the command, then
-        // calls hide() and stopPropagation().
-        (menuRef.current === null || !menuRef.current.getElement()?.contains(e.target))
-      ) {
+      if (e.target instanceof Node && !isInsideWidget(e.target)) {
+        close();
+      }
+    }
+    /**
+     * `focusout` (unlike React's `onBlur` on the wrapper span) bubbles all
+     * the way to `document` regardless of where in the DOM tree focus was
+     * lost — including from inside the portaled popup, which isn't a
+     * descendant of the wrapper. That matters both when the menu opens (the
+     * popup auto-focuses its list, which isInsideWidget must NOT treat as
+     * leaving the widget) and when a keyboard user tabs past the last menu
+     * item to an element outside the widget (which SHOULD close the menu,
+     * but never reached a wrapper-only blur handler).
+     */
+    function handleFocusOut(e: FocusEvent) {
+      const target = e.target instanceof Node ? e.target : null;
+      const related = e.relatedTarget instanceof Node ? e.relatedTarget : null;
+      if (target !== null && isInsideWidget(target) && !isInsideWidget(related)) {
         close();
       }
     }
     document.addEventListener("pointerdown", handleClick);
-    return () => document.removeEventListener("pointerdown", handleClick);
-  }, []);
+    document.addEventListener("focusout", handleFocusOut);
+    return () => {
+      document.removeEventListener("pointerdown", handleClick);
+      document.removeEventListener("focusout", handleFocusOut);
+    };
+  }, [close, isInsideWidget]);
 
   return (
     <span
       ref={wrapperRef}
       className={`button-menu${className !== undefined ? ` ${className}` : ""}`}
-      onBlur={handleBlur}
     >
       <ButtonGroup>
         {showDefault && defaultButton !== undefined && (
@@ -124,7 +173,23 @@ export function ButtonMenu({
           ▾
         </button>
       </ButtonGroup>
-      <Menu model={items} popup ref={menuRef} className="button-menu-popup" />
+      {/* PrimeReact CSSTransition is disabled (transitionOptions.disabled) —
+          e-ink screens never animate, and a real click landing mid-transition
+          can miss the still-scaling menu item, registering as an outside
+          click that hides the menu without running the item's action. */}
+      <Menu
+        model={items}
+        popup
+        ref={menuRef}
+        className="button-menu-popup"
+        transitionOptions={{ timeout: 0, disabled: true }}
+        onShow={() => {
+          isOpenRef.current = true;
+        }}
+        onHide={() => {
+          isOpenRef.current = false;
+        }}
+      />
     </span>
   );
 }
