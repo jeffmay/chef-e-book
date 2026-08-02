@@ -32,6 +32,7 @@ const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 `;
 
 const BUTTER = fixedId(IngredientId, "butter");
+const FLOUR = fixedId(IngredientId, "flour");
 const OVEN = fixedId(EquipmentId, "oven");
 const BOWL = fixedId(ContainerId, "bowl");
 
@@ -255,6 +256,15 @@ describe("InstructionRow — summary view", () => {
 
     expect(screen.getByRole("textbox", { name: "Action" })).toHaveValue("");
   });
+
+  it("bolds the action name in the summary", async () => {
+    setup(sectionWith([MIX_INSTRUCTION]));
+    await flushAsyncEffects();
+
+    const summary = screen.getByRole("button", { name: "Edit instruction: Mix" });
+    expect(within(summary).getByText("Mix").tagName).toBe("STRONG");
+    expect(within(summary).getByText("for 5 minutes").tagName).toBe("SPAN");
+  });
 });
 
 describe("InstructionRow — accept and cancel", () => {
@@ -395,7 +405,7 @@ describe("ContainerItemRow — summary view", () => {
     expect(screen.getByRole("button", { name: "Edit container: Bowl" })).toHaveTextContent(
       "Bowl — dry ingredients",
     );
-    expect(screen.queryByRole("textbox", { name: "Container descriptor" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Name" })).not.toBeInTheDocument();
   });
 
   it("marks ordered containers in the summary", async () => {
@@ -411,16 +421,49 @@ describe("ContainerItemRow — summary view", () => {
     setup(sectionWith([BOWL_CONTAINER]));
     await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
 
-    expect(screen.getByRole("textbox", { name: "Container descriptor" })).toHaveValue(
-      "dry ingredients",
-    );
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("dry ingredients");
   });
 
   it("opens a newly added container directly in edit mode", async () => {
     setup(sectionWith([]));
     await userEvent.click(screen.getByRole("button", { name: "Add container to section" }));
 
-    expect(screen.getByRole("textbox", { name: "Container descriptor" })).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Type" })).toBeInTheDocument();
+  });
+
+  it("hides the name input behind a + Name button until the container has one", async () => {
+    setup(sectionWith([]));
+    await userEvent.click(screen.getByRole("button", { name: "Add container to section" }));
+    expect(screen.queryByRole("textbox", { name: "Name" })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Add container name" }));
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("");
+  });
+
+  it("shows the name input straight away for a container that already has a name", async () => {
+    setup(sectionWith([BOWL_CONTAINER]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
+
+    expect(screen.queryByRole("button", { name: "Add container name" })).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("dry ingredients");
+  });
+
+  it("explains the ordered flag behind an info toggle", async () => {
+    const explanation = "Annotates that the ingredients should be added in the specified order";
+    setup(sectionWith([BOWL_CONTAINER]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
+    expect(screen.queryByText(explanation)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "What does ordered mean?" }));
+    expect(screen.getByText(explanation)).toBeInTheDocument();
+  });
+
+  it("bolds the container type in the summary", async () => {
+    setup(sectionWith([BOWL_CONTAINER]));
+    await flushAsyncEffects();
+
+    const summary = screen.getByRole("button", { name: "Edit container: Bowl" });
+    expect(within(summary).getByText("Bowl").tagName).toBe("STRONG");
   });
 
   it("keeps nested ingredients visible while the header is collapsed", async () => {
@@ -444,11 +487,8 @@ describe("ContainerItemRow — accept and cancel", () => {
   it("does not commit header edits until they are accepted", async () => {
     const { onSectionsChange } = setup(sectionWith([BOWL_CONTAINER]));
     await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
-    await userEvent.clear(screen.getByRole("textbox", { name: "Container descriptor" }));
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Container descriptor" }),
-      "wet ingredients",
-    );
+    await userEvent.clear(screen.getByRole("textbox", { name: "Name" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "wet ingredients");
 
     expect(onSectionsChange).not.toHaveBeenCalled();
   });
@@ -456,11 +496,8 @@ describe("ContainerItemRow — accept and cancel", () => {
   it("commits the draft and closes the editor on accept", async () => {
     const { onSectionsChange } = setup(sectionWith([BOWL_CONTAINER]));
     await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
-    await userEvent.clear(screen.getByRole("textbox", { name: "Container descriptor" }));
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Container descriptor" }),
-      "wet ingredients",
-    );
+    await userEvent.clear(screen.getByRole("textbox", { name: "Name" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "wet ingredients");
     await userEvent.click(screen.getByRole("button", { name: "Accept changes to container" }));
 
     expect(screen.getByRole("button", { name: "Edit container: Bowl" })).toHaveTextContent(
@@ -475,7 +512,7 @@ describe("ContainerItemRow — accept and cancel", () => {
     const { onSectionsChange } = setup(sectionWith([BOWL_CONTAINER]));
     await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
     await userEvent.selectOptions(
-      screen.getByRole("combobox", { name: "Container type" }),
+      screen.getByRole("combobox", { name: "Type" }),
       fixedId(ContainerId, "pot"),
     );
     await userEvent.click(screen.getByRole("checkbox", { name: "Ordered list" }));
@@ -490,11 +527,8 @@ describe("ContainerItemRow — accept and cancel", () => {
   it("reverts the draft and closes the editor on cancel", async () => {
     const { onSectionsChange } = setup(sectionWith([BOWL_CONTAINER]));
     await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
-    await userEvent.clear(screen.getByRole("textbox", { name: "Container descriptor" }));
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Container descriptor" }),
-      "wet ingredients",
-    );
+    await userEvent.clear(screen.getByRole("textbox", { name: "Name" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "wet ingredients");
     await userEvent.click(screen.getByRole("button", { name: "Cancel changes to container" }));
 
     expect(screen.getByRole("button", { name: "Edit container: Bowl" })).toHaveTextContent(
@@ -506,13 +540,11 @@ describe("ContainerItemRow — accept and cancel", () => {
   it("removes a newly added container when its first edit is cancelled", async () => {
     const { onSectionsChange } = setup(sectionWith([]));
     await userEvent.click(screen.getByRole("button", { name: "Add container to section" }));
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Container descriptor" }),
-      "wet ingredients",
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Add container name" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "wet ingredients");
     await userEvent.click(screen.getByRole("button", { name: "Discard new container" }));
 
-    expect(screen.queryByRole("textbox", { name: "Container descriptor" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Name" })).not.toBeInTheDocument();
     expect(lastSections(onSectionsChange)?.[0]?.contents).toHaveLength(0);
   });
 
@@ -531,14 +563,153 @@ describe("ContainerItemRow — accept and cancel", () => {
       within(newIngredient).getByRole("button", { name: /Add Butter to section/ }),
     );
 
-    await userEvent.clear(screen.getByRole("textbox", { name: "Container descriptor" }));
-    await userEvent.type(screen.getByRole("textbox", { name: "Container descriptor" }), "wet");
+    await userEvent.clear(screen.getByRole("textbox", { name: "Name" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "wet");
     await userEvent.click(screen.getByRole("button", { name: "Accept changes to container" }));
 
     expect(lastSections(onSectionsChange)?.[0]?.contents[0]).toMatchObject({
       descriptor: "wet",
       contents: [{ ingredient_id: BUTTER }],
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// IngredientItemRow
+// ---------------------------------------------------------------------------
+
+const BUTTER_ITEM = {
+  kind: "ingredient",
+  id: fixedId(SectionItemId, "i-butter"),
+  ingredient_id: BUTTER,
+} as const;
+
+/** Opens the Butter row's inline editor, waiting for the kitchenware to load. */
+async function openButterEditor() {
+  await flushAsyncEffects();
+  await userEvent.click(screen.getByRole("button", { name: "Edit ingredient: Butter" }));
+  return screen.getByRole("combobox", { name: /Change ingredient/ });
+}
+
+describe("IngredientItemRow", () => {
+  it("shows an edit button before the remove button while collapsed", async () => {
+    setup(sectionWith([BUTTER_ITEM]));
+    await flushAsyncEffects();
+
+    const row = screen.getByRole("group", { name: "Ingredient: Butter" });
+    expect(
+      within(row)
+        .getAllByRole("button")
+        .map((b) => b.getAttribute("aria-label")),
+    ).toEqual(["Edit ingredient: Butter", "Remove ingredient Butter"]);
+  });
+
+  it("replaces the edit button with accept and cancel while editing", async () => {
+    setup(sectionWith([BUTTER_ITEM]));
+    await openButterEditor();
+
+    expect(
+      screen.getByRole("button", { name: "Accept changes to ingredient" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Cancel changes to ingredient" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Edit ingredient: Butter" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a changed ingredient name immediately", async () => {
+    setup(sectionWith([BUTTER_ITEM]));
+    const selector = await openButterEditor();
+    await userEvent.selectOptions(selector, FLOUR);
+
+    expect(screen.getByRole("group", { name: "Ingredient: Flour" })).toBeInTheDocument();
+  });
+
+  it("keeps the changed ingredient on accept", async () => {
+    const { onSectionsChange } = setup(sectionWith([BUTTER_ITEM]));
+    const selector = await openButterEditor();
+    await userEvent.selectOptions(selector, FLOUR);
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to ingredient" }));
+
+    expect(screen.getByRole("button", { name: "Edit ingredient: Flour" })).toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]?.contents[0]).toMatchObject({
+      ingredient_id: FLOUR,
+    });
+  });
+
+  it("reverts the changed ingredient on cancel", async () => {
+    const { onSectionsChange } = setup(sectionWith([BUTTER_ITEM]));
+    const selector = await openButterEditor();
+    await userEvent.selectOptions(selector, FLOUR);
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes to ingredient" }));
+
+    expect(screen.getByRole("button", { name: "Edit ingredient: Butter" })).toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]?.contents[0]).toMatchObject({
+      ingredient_id: BUTTER,
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// SectionEditor — header
+// ---------------------------------------------------------------------------
+
+describe("SectionEditor — header", () => {
+  it("renders an existing header as a summary, not an input", async () => {
+    setup(sectionWith([]));
+    await flushAsyncEffects();
+
+    expect(screen.getByRole("button", { name: "Edit section header: Main" })).toHaveTextContent(
+      "Main",
+    );
+    expect(screen.queryByRole("textbox", { name: "Section header" })).not.toBeInTheDocument();
+  });
+
+  it("opens the header editor with accept and cancel buttons", async () => {
+    setup(sectionWith([]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit section header: Main" }));
+
+    expect(screen.getByRole("textbox", { name: "Section header" })).toHaveValue("Main");
+    expect(
+      screen.getByRole("button", { name: "Accept changes to section header" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Cancel changes to section header" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the edited header on accept", async () => {
+    const { onSectionsChange } = setup(sectionWith([]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit section header: Main" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Section header" }), " Dish");
+    await userEvent.click(screen.getByRole("button", { name: "Accept changes to section header" }));
+
+    expect(
+      screen.getByRole("button", { name: "Edit section header: Main Dish" }),
+    ).toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]?.header).toBe("Main Dish");
+  });
+
+  it("restores the header the section had when the editor opened on cancel", async () => {
+    const { onSectionsChange } = setup(sectionWith([]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit section header: Main" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Section header" }), " Dish");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes to section header" }));
+
+    expect(screen.getByRole("button", { name: "Edit section header: Main" })).toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]?.header).toBe("Main");
+  });
+
+  it("drops a header that was added and then cancelled", async () => {
+    const { onSectionsChange } = setup([{ kind: "section", id: SECTION_ID, contents: [] }]);
+    await userEvent.click(screen.getByRole("button", { name: "Add section header" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Section header" }), "Sauce");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes to section header" }));
+
+    expect(screen.getByRole("button", { name: "Add section header" })).toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]).not.toHaveProperty("header");
   });
 });
 
@@ -593,7 +764,7 @@ describe("pending row edits", () => {
     setup(sectionWith([BOWL_CONTAINER, MIX_INSTRUCTION]), pendingEdits);
 
     await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
-    await userEvent.type(screen.getByRole("textbox", { name: "Container descriptor" }), "!");
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "!");
     await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
 
@@ -605,7 +776,7 @@ describe("pending row edits", () => {
     setup(sectionWith([BOWL_CONTAINER, MIX_INSTRUCTION]), pendingEdits);
 
     await userEvent.click(screen.getByRole("button", { name: "Edit container: Bowl" }));
-    await userEvent.type(screen.getByRole("textbox", { name: "Container descriptor" }), "!");
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "!");
     await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing");
 

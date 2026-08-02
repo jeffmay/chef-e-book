@@ -1090,10 +1090,8 @@ describe("RecipeEditor — saving with rows still being edited", () => {
     const { recipe } = setupExistingRecipeEditor("Pancakes");
     await userEvent.click(screen.getByRole("button", { name: "Add section" }));
     await userEvent.click(screen.getByRole("button", { name: "Add container to section" }));
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Container descriptor" }),
-      "dry ingredients",
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Add container name" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "dry ingredients");
     await userEvent.click(screen.getByRole("button", { name: "Add instruction to section" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "Whisk");
 

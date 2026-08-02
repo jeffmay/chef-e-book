@@ -42,11 +42,20 @@ export function isBlankContainer(item: ReadonlyDeep<ContainerItem>): boolean {
 // Summaries — the closed (read-only) view of a row
 // ---------------------------------------------------------------------------
 
-export function summarizeInstruction(
+/** The action verb shown (in bold) at the head of an instruction summary. */
+export function instructionSummaryName(item: ReadonlyDeep<Instruction>): string {
+  return item.instruction || "Untitled instruction";
+}
+
+/**
+ * The part of an instruction summary that follows its action verb. Split from
+ * the verb so the row can render the verb in bold and the rest as plain text.
+ */
+export function instructionSummaryDetails(
   item: ReadonlyDeep<Instruction>,
   allIngredients: ReadonlyDeep<Ingredient[]>,
 ): string {
-  const parts: string[] = [item.instruction || "Untitled instruction"];
+  const parts: string[] = [];
 
   const ingredientNames = (item.ingredient_ids ?? [])
     .map((id) => allIngredients.find((ingredient) => ingredient.id === id)?.name)
@@ -70,13 +79,35 @@ export function summarizeInstruction(
   return parts.join(" ");
 }
 
-export function summarizeContainer(item: ReadonlyDeep<ContainerItem>): string {
-  const name = containerDisplayName(item);
-  const parts: string[] = [item.descriptor ? `${name} — ${item.descriptor}` : name];
+export function summarizeInstruction(
+  item: ReadonlyDeep<Instruction>,
+  allIngredients: ReadonlyDeep<Ingredient[]>,
+): string {
+  return joinSummary(instructionSummaryName(item), instructionSummaryDetails(item, allIngredients));
+}
+
+/**
+ * The part of a container summary that follows its type name. Split from the
+ * name so the row can render the container type in bold.
+ */
+export function containerSummaryDetails(item: ReadonlyDeep<ContainerItem>): string {
+  const parts: string[] = [];
+  if (item.descriptor) {
+    parts.push(`— ${item.descriptor}`);
+  }
   if (item.ordered === true) {
     parts.push("(ordered)");
   }
   return parts.join(" ");
+}
+
+export function summarizeContainer(item: ReadonlyDeep<ContainerItem>): string {
+  return joinSummary(containerDisplayName(item), containerSummaryDetails(item));
+}
+
+/** Joins a summary's bolded head with its details, omitting empty details. */
+function joinSummary(name: string, details: string): string {
+  return details === "" ? name : `${name} ${details}`;
 }
 
 // ---------------------------------------------------------------------------

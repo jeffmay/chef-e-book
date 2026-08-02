@@ -10,6 +10,9 @@ import { describe, expect, it } from "vitest";
 import { humanizeSeconds } from "../../duration/humanizeSeconds.ts";
 import {
   containerDisplayName,
+  containerSummaryDetails,
+  instructionSummaryDetails,
+  instructionSummaryName,
   isBlankContainer,
   isBlankInstruction,
   mergeContainerDraft,
@@ -159,6 +162,49 @@ describe("summarizeContainer", () => {
   it("marks ordered containers", () => {
     expect(summarizeContainer(container({ descriptor: "layers", ordered: true }))).toBe(
       "Bowl — layers (ordered)",
+    );
+  });
+});
+
+describe("instructionSummaryName", () => {
+  it("is the action verb", () => {
+    expect(instructionSummaryName(instruction({ instruction: "Mix" }))).toBe("Mix");
+  });
+
+  it("falls back to a placeholder for a blank instruction", () => {
+    expect(instructionSummaryName(instruction())).toBe("Untitled instruction");
+  });
+});
+
+describe("instructionSummaryDetails", () => {
+  it("is empty when only the action is set", () => {
+    expect(instructionSummaryDetails(instruction({ instruction: "Mix" }), ALL_INGREDIENTS)).toBe(
+      "",
+    );
+  });
+
+  it("excludes the action verb from the details", () => {
+    const details = instructionSummaryDetails(
+      instruction({
+        instruction: "Bake",
+        ingredient_ids: [FLOUR],
+        equipment_id: OVEN,
+        duration_seconds: 1800,
+      }),
+      ALL_INGREDIENTS,
+    );
+    expect(details).toBe(`the Flour in the Oven for ${humanizeSeconds(1800)}`);
+  });
+});
+
+describe("containerSummaryDetails", () => {
+  it("is empty for a container with no descriptor and no flags", () => {
+    expect(containerSummaryDetails(container())).toBe("");
+  });
+
+  it("excludes the container type from the details", () => {
+    expect(containerSummaryDetails(container({ descriptor: "layers", ordered: true }))).toBe(
+      "— layers (ordered)",
     );
   });
 });
