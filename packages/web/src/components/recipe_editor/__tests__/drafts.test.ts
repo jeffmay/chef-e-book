@@ -1,4 +1,4 @@
-import type { ContainerItem, Ingredient, Instruction } from "@recipe-book/shared";
+import type { ContainerItem, Ingredient, IngredientItem, Instruction } from "@recipe-book/shared";
 import {
   ContainerId,
   EquipmentId,
@@ -17,6 +17,7 @@ import {
   isBlankInstruction,
   mergeContainerDraft,
   mergeInstructionDraft,
+  revertIngredientItem,
   summarizeContainer,
   summarizeInstruction,
 } from "../drafts.ts";
@@ -217,6 +218,43 @@ describe("containerDisplayName", () => {
   it("falls back to the raw id for an unknown container", () => {
     const unknown = fixedId(ContainerId, "cauldron");
     expect(containerDisplayName(container({ container_id: unknown }))).toBe(unknown);
+  });
+});
+
+describe("revertIngredientItem", () => {
+  const CUP = { value: { numerator: 1, denominator: 1 }, unit: "cup" } as const;
+  const TWO_CUPS = { value: { numerator: 2, denominator: 1 }, unit: "cup" } as const;
+
+  function ingredientItem(overrides: Partial<IngredientItem> = {}): IngredientItem {
+    return {
+      kind: "ingredient",
+      id: fixedId(SectionItemId, "i-1"),
+      ingredient_id: FLOUR,
+      ...overrides,
+    };
+  }
+
+  it("restores the ingredient the row held when its editor opened", () => {
+    const snapshot = ingredientItem();
+    const live = ingredientItem({ ingredient_id: BUTTER });
+    expect(revertIngredientItem(snapshot, live)).toMatchObject({ ingredient_id: FLOUR });
+  });
+
+  it("restores the amount the row held when its editor opened", () => {
+    const snapshot = ingredientItem({ customAmount: CUP });
+    const live = ingredientItem({ customAmount: TWO_CUPS });
+    expect(revertIngredientItem(snapshot, live)).toMatchObject({ customAmount: CUP });
+  });
+
+  it("drops an amount the row did not have when its editor opened", () => {
+    const live = ingredientItem({ customAmount: CUP });
+    expect(revertIngredientItem(ingredientItem(), live)).not.toHaveProperty("customAmount");
+  });
+
+  it("keeps fields the editor cannot change from the live item", () => {
+    const snapshot = ingredientItem();
+    const live = ingredientItem({ ingredient_id: BUTTER, notes: ["sifted"] });
+    expect(revertIngredientItem(snapshot, live)).toMatchObject({ notes: ["sifted"] });
   });
 });
 

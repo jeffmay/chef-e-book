@@ -1,4 +1,4 @@
-import type { ContainerItem, Ingredient, Instruction } from "@recipe-book/shared";
+import type { ContainerItem, Ingredient, IngredientItem, Instruction } from "@recipe-book/shared";
 import isEqual from "lodash/isEqual";
 import type { ReadonlyDeep } from "type-fest";
 import { humanizeSeconds } from "../duration/humanizeSeconds.ts";
@@ -113,6 +113,29 @@ function joinSummary(name: string, details: string): string {
 // ---------------------------------------------------------------------------
 // Draft merges
 // ---------------------------------------------------------------------------
+
+/**
+ * Reverts an ingredient row to the snapshot taken when its editor opened.
+ *
+ * The row writes through as it is edited, so a cancel has to undo the fields
+ * its editor can change (`ingredient_id` and `customAmount`) rather than revert
+ * a draft. Every other field is taken from the live item, matching the merge
+ * semantics of the drafted rows: an edit made elsewhere during the edit window
+ * survives the cancel.
+ */
+export function revertIngredientItem(
+  snapshot: ReadonlyDeep<IngredientItem>,
+  live: ReadonlyDeep<IngredientItem>,
+): ReadonlyDeep<IngredientItem> {
+  // Dropped rather than overwritten: the snapshot may have had no amount at
+  // all, in which case the live one has to go away instead of being kept.
+  const { customAmount: _, ...rest } = live;
+  return {
+    ...rest,
+    ingredient_id: snapshot.ingredient_id,
+    ...(snapshot.customAmount !== undefined && { customAmount: snapshot.customAmount }),
+  };
+}
 
 /**
  * Merges an instruction draft back into the live item: fields the user changed

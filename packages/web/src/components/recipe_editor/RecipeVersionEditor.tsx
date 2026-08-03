@@ -24,7 +24,7 @@ import {
 } from "@recipe-book/shared";
 import isEqual from "lodash/isEqual";
 import type { TreeNode } from "primereact/treenode";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import { useIngredientStore } from "../../hooks/useIngredientStore.ts";
 import { useLabelStore } from "../../hooks/useLabelStore.ts";
@@ -43,6 +43,7 @@ import {
   isBlankInstruction,
   mergeContainerDraft,
   mergeInstructionDraft,
+  revertIngredientItem,
 } from "./drafts.ts";
 import { COMMON_EQUIPMENT } from "./equipment.ts";
 import { InstructionIngredientSelector } from "./InstructionIngredientSelector.tsx";
@@ -307,7 +308,7 @@ function IngredientItemRow({
   }
 
   function handleCancel() {
-    onChange(itemAtOpenRef.current);
+    onChange(revertIngredientItem(itemAtOpenRef.current, item));
     setIsEditingIngredient(false);
   }
 
@@ -500,8 +501,11 @@ function ContainerItemRow({
   const [draft, setDraft] = useState(item);
   const [accepted, setAccepted] = useState(false);
   // The name is optional: it stays hidden behind a "+ Name" button until the
-  // container has one or the user asks for it.
+  // container has one or the user asks for it. Asking for it also focuses the
+  // input, which only exists after the render that reveals it — hence the
+  // request flag consumed by an effect rather than a focus call here.
   const [showNameInput, setShowNameInput] = useState(() => item.descriptor !== "");
+  const [focusNameRequested, setFocusNameRequested] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const snapshotAtOpenRef = useRef(item);
   const containerName = containerDisplayName(item);
@@ -537,11 +541,17 @@ function ContainerItemRow({
     setEditing(true);
   }
 
+  // Runs in the commit that mounts the input, so the focus lands on a live
+  // element (and never on a row that was cancelled in the meantime).
+  useEffect(() => {
+    if (!focusNameRequested) return;
+    nameInputRef.current?.focus();
+    setFocusNameRequested(false);
+  }, [focusNameRequested]);
+
   function handleAddName() {
     setShowNameInput(true);
-    // The input mounts on this state change, so defer focus until it is in
-    // the DOM.
-    setTimeout(() => nameInputRef.current?.focus(), 0);
+    setFocusNameRequested(true);
   }
 
   function handleAccept() {
@@ -1016,12 +1026,15 @@ function SectionEditor({
     }
   }
 
+  // Runs in the commit that mounts the input, so the focus lands on a live
+  // element rather than on whatever is there a tick later.
+  useEffect(() => {
+    if (editingHeader) headerInputRef.current?.focus();
+  }, [editingHeader]);
+
   function openHeaderEditor() {
     headerAtOpenRef.current = section.header;
     setEditingHeader(true);
-    // The input mounts on this state change, so defer focus until it is in
-    // the DOM.
-    setTimeout(() => headerInputRef.current?.focus(), 0);
   }
 
   function handleCancelHeader() {
