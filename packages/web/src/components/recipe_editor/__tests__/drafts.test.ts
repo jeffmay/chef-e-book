@@ -18,8 +18,6 @@ import {
   mergeContainerDraft,
   mergeInstructionDraft,
   revertIngredientItem,
-  summarizeContainer,
-  summarizeInstruction,
 } from "../drafts.ts";
 
 const FLOUR = fixedId(IngredientId, "flour");
@@ -118,7 +116,25 @@ describe("isBlankContainer", () => {
   });
 });
 
-describe("summarizeInstruction", () => {
+/**
+ * The rows render a summary's bolded head and its details as separate elements,
+ * so nothing in production joins them back into a string. These composers keep
+ * the one-line summaries the rows are specified to show (see AGENTS.md) as
+ * readable end-to-end assertions over the two exported halves.
+ */
+function joinSummary(name: string, details: string): string {
+  return details === "" ? name : `${name} ${details}`;
+}
+
+function summarizeInstruction(item: Instruction, allIngredients: readonly Ingredient[]): string {
+  return joinSummary(instructionSummaryName(item), instructionSummaryDetails(item, allIngredients));
+}
+
+function summarizeContainer(item: ContainerItem): string {
+  return joinSummary(containerDisplayName(item), containerSummaryDetails(item));
+}
+
+describe("instruction summary (name + details)", () => {
   it("falls back to a placeholder name for a blank instruction", () => {
     expect(summarizeInstruction(instruction(), ALL_INGREDIENTS)).toBe("Untitled instruction");
   });
@@ -149,7 +165,7 @@ describe("summarizeInstruction", () => {
   });
 });
 
-describe("summarizeContainer", () => {
+describe("container summary (name + details)", () => {
   it("renders the container name alone when it has no descriptor", () => {
     expect(summarizeContainer(container())).toBe("Bowl");
   });

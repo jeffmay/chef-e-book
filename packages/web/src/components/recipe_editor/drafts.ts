@@ -40,6 +40,11 @@ export function isBlankContainer(item: ReadonlyDeep<ContainerItem>): boolean {
 
 // ---------------------------------------------------------------------------
 // Summaries — the closed (read-only) view of a row
+//
+// Each summary comes in two pieces: the head the row renders in bold (the
+// instruction's action verb, the container's type) and the details that follow
+// it. Rows render the pieces separately; joining them with a space reproduces
+// the one-line summary, which is what the tests assert against.
 // ---------------------------------------------------------------------------
 
 /** The action verb shown (in bold) at the head of an instruction summary. */
@@ -79,13 +84,6 @@ export function instructionSummaryDetails(
   return parts.join(" ");
 }
 
-export function summarizeInstruction(
-  item: ReadonlyDeep<Instruction>,
-  allIngredients: ReadonlyDeep<Ingredient[]>,
-): string {
-  return joinSummary(instructionSummaryName(item), instructionSummaryDetails(item, allIngredients));
-}
-
 /**
  * The part of a container summary that follows its type name. Split from the
  * name so the row can render the container type in bold.
@@ -99,15 +97,6 @@ export function containerSummaryDetails(item: ReadonlyDeep<ContainerItem>): stri
     parts.push("(ordered)");
   }
   return parts.join(" ");
-}
-
-export function summarizeContainer(item: ReadonlyDeep<ContainerItem>): string {
-  return joinSummary(containerDisplayName(item), containerSummaryDetails(item));
-}
-
-/** Joins a summary's bolded head with its details, omitting empty details. */
-function joinSummary(name: string, details: string): string {
-  return details === "" ? name : `${name} ${details}`;
 }
 
 // ---------------------------------------------------------------------------
