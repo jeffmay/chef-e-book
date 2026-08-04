@@ -1,0 +1,21 @@
+/* "✎" / "✕" pair, floated into the upper-right corner of the row that owns it.
+   The row reserves the space with its own `padding-right` so nothing renders
+   underneath. */
+
+.row-actions {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.row-actions-edit,
+.row-actions-remove {
+  font-size: 0.85em;
+  padding: 0 var(--spacing-xs);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+}

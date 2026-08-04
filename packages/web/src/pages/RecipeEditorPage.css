@@ -145,11 +145,14 @@
   margin-left: 2vw;
 }
 
+/* Also anchors the section's floating ✎/✕ and reserves the corner they sit in. */
 .re-section-header-row {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--spacing-sm);
+  padding-right: 5em;
   margin-bottom: var(--spacing-sm);
 }
 
@@ -168,26 +171,7 @@
   width: 100%;
 }
 
-/* Collapsed section header: click the heading text to reopen its editor. */
-.re-section-heading-summary {
-  width: 100%;
-  text-align: left;
-  padding: 0;
-  border: none;
-  background: var(--color-bg);
-  color: var(--color-fg);
-  font-family: inherit;
-  font-size: inherit;
-  font-weight: inherit;
-  cursor: pointer;
-}
-
-.re-section-header-actions {
-  display: flex;
-  gap: var(--spacing-xs);
-}
-
-/* Opens the section header editor; sits left with the remove button at right. */
+/* Opens the section header editor; sits left with the row actions at right. */
 .re-add-section-header-btn {
   font-size: 0.85em;
   margin-right: auto;
@@ -225,13 +209,23 @@
    Section Items
    ============================================================ */
 
+/* Every row anchors its floating ✎/✕ actions and reserves the corner they sit
+   in, so no row content renders underneath them. */
 .re-item {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs) var(--spacing-sm);
   padding: var(--spacing-xs) var(--spacing-sm);
+  padding-right: 5em;
   border: var(--border-width) solid var(--color-border);
   align-items: center;
+}
+
+/* A row added in this editing session and not yet accepted: dashed until its
+   "✔︎" commits it, matching the dashed new-ingredient draft row. */
+.re-item--new {
+  border-style: dashed;
 }
 
 .re-item-label {
@@ -244,44 +238,6 @@
 .re-item-amount {
   font-family: var(--font-body);
   font-size: 0.9em;
-}
-
-.re-item-remove {
-  font-size: 0.85em;
-  padding: 0 var(--spacing-xs);
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  color: var(--color-muted);
-  cursor: pointer;
-  margin-left: auto;
-}
-
-.re-item-edit {
-  font-size: 0.85em;
-  padding: 0 var(--spacing-xs);
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  color: var(--color-fg);
-  cursor: pointer;
-}
-
-/* Per-row edit + remove buttons, floating in the row's upper-right corner. */
-.re-item-actions {
-  position: absolute;
-  top: var(--spacing-xs);
-  right: var(--spacing-xs);
-  display: flex;
-  gap: var(--spacing-xs);
-}
-
-.re-item-actions .re-item-remove {
-  margin-left: 0;
-}
-
-/* Reserve room for the floating actions so row content never runs under them. */
-.re-item--ingredients {
-  position: relative;
-  padding-right: 5em;
 }
 
 /* An ingredient row is a single line, so its ↩/✔︎ stay on that line rather
@@ -317,20 +273,6 @@
 }
 
 /* Container item */
-
-/* Reserve room in the top-right corner for the floating delete button so
-   neither the header fields nor the collapsed summary render underneath it. */
-.re-item--container {
-  position: relative;
-  padding-right: 2.5em;
-}
-
-.re-item--container > .re-item-remove {
-  position: absolute;
-  top: var(--spacing-xs);
-  right: var(--spacing-xs);
-  margin-left: 0;
-}
 
 .re-container-select,
 .re-container-descriptor {
@@ -414,16 +356,10 @@
 }
 
 /* Collapsed container header: the container type in bold followed by its name
-   and flags; click to reopen the editor. Its nested ingredient rows stay
-   visible below either way. */
+   and flags; reopen the editor from the row's "✎". Its nested ingredient rows
+   stay visible below either way. */
 .re-container-summary {
   flex: 1;
-  text-align: left;
-  padding: 0;
-  border: none;
-  background: var(--color-bg);
-  color: var(--color-fg);
-  cursor: pointer;
 }
 
 .re-container-summary-name,
@@ -449,20 +385,6 @@
 }
 
 /* Instruction item */
-
-/* Reserve room in the top-right corner for the floating delete button so
-   neither the header row nor the collapsed summary render underneath it. */
-.re-item--instruction {
-  position: relative;
-  padding-right: 2.5em;
-}
-
-.re-item--instruction > .re-item-remove {
-  position: absolute;
-  top: var(--spacing-xs);
-  right: var(--spacing-xs);
-  margin-left: 0;
-}
 
 .re-instruction-action-label {
   display: flex;
@@ -500,21 +422,14 @@
   color: var(--color-fg);
 }
 
-/* Collapsed instruction: a single summary label; click to reopen the editor. */
+/* Collapsed instruction: a single summary line; reopen the editor from "✎". */
 .re-instruction-summary {
   flex: 1;
-  text-align: left;
-  padding: 0;
-  border: none;
-  background: var(--color-bg);
-  color: var(--color-fg);
-  cursor: pointer;
 }
 
+/* Taller editors give their ↩/✔︎ a row of their own, aligned right. */
 .re-item-editor-actions {
   width: 100%;
-  display: flex;
-  gap: var(--spacing-xs);
   justify-content: flex-end;
 }
 
@@ -561,6 +476,12 @@
   color: var(--color-fg);
   width: 100%;
   resize: vertical;
+}
+
+/* Collapsed text block: its own text; reopen the editor from "✎". */
+.re-text-block-summary {
+  flex: 1;
+  white-space: pre-wrap;
 }
 
 /* ============================================================
