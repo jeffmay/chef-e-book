@@ -29,9 +29,11 @@ import type { ReadonlyDeep } from "type-fest";
 import { useIngredientStore } from "../../hooks/useIngredientStore.ts";
 import { useLabelStore } from "../../hooks/useLabelStore.ts";
 import { DurationEditor } from "../duration/DurationEditor.tsx";
+import { EditActions } from "../edit_actions/EditActions.tsx";
 import { InfoTip } from "../info_tip/InfoTip.tsx";
 import { IngredientSelector } from "../ingredients_table/IngredientSelector.tsx";
 import { MeasurementEditor } from "../measurement/MeasurementEditor.tsx";
+import { RowActions } from "../row_actions/RowActions.tsx";
 import { buildInstructionIngredientTree } from "./buildInstructionIngredientTree.ts";
 import { COMMON_CONTAINERS } from "./containers.ts";
 import {
@@ -333,34 +335,17 @@ function IngredientItemRow({
               onCommit={(newAmount) => onChange({ ...item, customAmount: newAmount })}
             />
           )}
-          <div className="re-item-editor-actions">
-            <button
-              type="button"
-              className="re-ingredient-cancel"
-              onClick={handleCancel}
-              aria-label="Cancel changes to ingredient"
-            >
-              ↩
-            </button>
-            <button
-              type="button"
-              className="re-ingredient-accept"
-              onClick={handleAccept}
-              aria-label="Accept changes to ingredient"
-            >
-              ✔︎
-            </button>
-          </div>
+          <EditActions
+            className="re-item-editor-actions"
+            cancelLabel="Cancel changes to ingredient"
+            acceptLabel="Accept changes to ingredient"
+            onCancel={handleCancel}
+            onAccept={handleAccept}
+          />
         </>
       ) : (
         <>
-          <span
-            className="re-item-label"
-            title="Double-click to change ingredient"
-            onDoubleClick={openEditor}
-          >
-            {ingredientName}
-          </span>
+          <span className="re-item-label">{ingredientName}</span>
           {amount !== undefined && (
             <span className="re-item-amount">{formatAmount(amount.value, amount.unit)}</span>
           )}
@@ -369,26 +354,14 @@ function IngredientItemRow({
       {skipped === true ? (
         <SkippedRowActions itemName={ingredientName} onRestore={onRestore} onDismiss={onDismiss} />
       ) : (
-        <div className="re-item-actions">
-          {!isEditingIngredient && (
-            <button
-              type="button"
-              className="re-item-edit"
-              onClick={openEditor}
-              aria-label={`Edit ingredient: ${ingredientName}`}
-            >
-              ✎
-            </button>
-          )}
-          <button
-            type="button"
-            className="re-item-remove"
-            onClick={onRemove}
-            aria-label={`Remove ingredient ${ingredientName}`}
-          >
-            −
-          </button>
-        </div>
+        <RowActions
+          removeLabel={`Remove ingredient ${ingredientName}`}
+          onRemove={onRemove}
+          {...(!isEditingIngredient && {
+            editLabel: `Edit ingredient: ${ingredientName}`,
+            onEdit: openEditor,
+          })}
+        />
       )}
     </div>
   );
@@ -567,24 +540,20 @@ function ContainerItemRow({
     revertEditor();
   }
 
-  const removeButton = (
-    <button
-      type="button"
-      className="re-item-remove"
-      onClick={onRemove}
-      aria-label={`Remove container ${containerName}`}
-    >
-      −
-    </button>
-  );
-
   return (
     <div
-      className="re-item re-item--container"
+      className={`re-item re-item--container${discardRemovesItem ? " re-item--new" : ""}`}
       role="group"
       aria-label={`Container: ${containerName} — ${item.descriptor}`}
     >
-      {removeButton}
+      <RowActions
+        removeLabel={`Remove container ${containerName}`}
+        onRemove={onRemove}
+        {...(!editing && {
+          editLabel: `Edit container: ${containerName}`,
+          onEdit: openEditor,
+        })}
+      />
       {editing ? (
         <>
           {/* No aria-labels: the wrapping <label>s are the accessible names, so
@@ -626,26 +595,15 @@ function ContainerItemRow({
                 + Name
               </button>
             )}
-            <div className="re-item-editor-actions">
-              <button
-                type="button"
-                className="re-container-cancel"
-                onClick={handleCancel}
-                aria-label={
-                  discardRemovesItem ? "Discard new container" : "Cancel changes to container"
-                }
-              >
-                ↩
-              </button>
-              <button
-                type="button"
-                className="re-container-accept"
-                onClick={handleAccept}
-                aria-label="Accept changes to container"
-              >
-                ✔︎
-              </button>
-            </div>
+            <EditActions
+              className="re-item-editor-actions"
+              cancelLabel={
+                discardRemovesItem ? "Discard new container" : "Cancel changes to container"
+              }
+              acceptLabel="Accept changes to container"
+              onCancel={handleCancel}
+              onAccept={handleAccept}
+            />
           </div>
           <div className="re-container-ordered-row">
             <label className="re-container-ordered">
@@ -665,17 +623,12 @@ function ContainerItemRow({
         </>
       ) : (
         <div className="re-item-header">
-          <button
-            type="button"
-            className="re-container-summary"
-            onClick={openEditor}
-            aria-label={`Edit container: ${containerName}`}
-          >
+          <span className="re-container-summary">
             <strong className="re-container-summary-name">{containerName}</strong>
             {containerDetails !== "" && (
               <span className="re-container-summary-details"> {containerDetails}</span>
             )}
-          </button>
+          </span>
         </div>
       )}
       <div className="re-container-contents">
@@ -802,50 +755,52 @@ function InstructionRow({
   const instructionName = item.instruction || "instruction";
   const instructionDetails = instructionSummaryDetails(item, allIngredients);
 
-  const removeControl =
-    skipped === true ? (
+  function rowActions(showEdit: boolean) {
+    return skipped === true ? (
       <SkippedRowActions itemName={instructionName} onRestore={onRestore} onDismiss={onDismiss} />
     ) : (
-      <button
-        type="button"
-        className="re-item-remove"
-        onClick={onRemove}
-        aria-label="Remove instruction"
-      >
-        −
-      </button>
+      <RowActions
+        removeLabel="Remove instruction"
+        onRemove={onRemove}
+        {...(showEdit && {
+          editLabel: `Edit instruction: ${instructionName}`,
+          onEdit: openEditor,
+        })}
+      />
     );
+  }
+
+  const rowClassName = [
+    "re-item re-item--instruction",
+    skipped === true ? " re-item--skipped" : "",
+    discardRemovesItem ? " re-item--new" : "",
+  ].join("");
 
   if (!editing) {
     return (
       <div
-        className={`re-item re-item--instruction${skipped === true ? " re-item--skipped" : ""}`}
+        className={rowClassName}
         role="group"
         aria-label={`Instruction: ${item.instruction || "new"}`}
       >
-        {removeControl}
-        <button
-          type="button"
-          className="re-instruction-summary"
-          onClick={openEditor}
-          aria-label={`Edit instruction: ${instructionName}`}
-        >
+        {rowActions(true)}
+        <span className="re-instruction-summary">
           <strong className="re-instruction-summary-name">{instructionSummaryName(item)}</strong>
           {instructionDetails !== "" && (
             <span className="re-instruction-summary-details"> {instructionDetails}</span>
           )}
-        </button>
+        </span>
       </div>
     );
   }
 
   return (
     <div
-      className={`re-item re-item--instruction${skipped === true ? " re-item--skipped" : ""}`}
+      className={rowClassName}
       role="group"
       aria-label={`Instruction: ${item.instruction || "new"}`}
     >
-      {removeControl}
+      {rowActions(false)}
 
       <div className="re-item-header">
         {/* No aria-label: the wrapping <label> is the accessible name, so it
@@ -912,7 +867,7 @@ function InstructionRow({
             }}
             aria-label="Remove duration"
           >
-            ×
+            ✕
           </button>
         )}
       </div>
@@ -926,26 +881,15 @@ function InstructionRow({
         />
       </div>
 
-      <div className="re-item-editor-actions">
-        <button
-          type="button"
-          className="re-instruction-cancel"
-          onClick={handleCancel}
-          aria-label={
-            discardRemovesItem ? "Discard new instruction" : "Cancel changes to instruction"
-          }
-        >
-          ↩
-        </button>
-        <button
-          type="button"
-          className="re-instruction-accept"
-          onClick={handleAccept}
-          aria-label="Accept changes to instruction"
-        >
-          ✔︎
-        </button>
-      </div>
+      <EditActions
+        className="re-item-editor-actions"
+        cancelLabel={
+          discardRemovesItem ? "Discard new instruction" : "Cancel changes to instruction"
+        }
+        acceptLabel="Accept changes to instruction"
+        onCancel={handleCancel}
+        onAccept={handleAccept}
+      />
     </div>
   );
 }
@@ -954,26 +898,70 @@ function InstructionRow({
 // TextBlockRow
 // ---------------------------------------------------------------------------
 
-type TextBlockRowProps = RecipeSectionItemRowProps<TextBlock>;
+type TextBlockRowProps = RecipeSectionItemRowProps<TextBlock> & NewRowProps;
 
-function TextBlockRow({ item, onChange, onRemove }: TextBlockRowProps) {
+/**
+ * Like the ingredient row, a text block writes through as it is typed, so its
+ * "↩" restores the text the block held when its editor opened. A block added in
+ * this editing session has nothing to restore until it has been accepted once,
+ * so cancelling it drops the row instead.
+ */
+function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowProps) {
+  const [editing, setEditing] = useState(() => item.text === "");
+  const [accepted, setAccepted] = useState(false);
+  const textAtOpenRef = useRef(item.text);
+  const discardRemovesItem = isNew && !accepted;
+
+  function openEditor() {
+    textAtOpenRef.current = item.text;
+    setEditing(true);
+  }
+
+  function handleAccept() {
+    setAccepted(true);
+    setEditing(false);
+  }
+
+  function handleCancel() {
+    if (discardRemovesItem) {
+      onRemove();
+      return;
+    }
+    onChange({ ...item, text: textAtOpenRef.current });
+    setEditing(false);
+  }
+
   return (
-    <div className="re-item re-item--text-block" role="group" aria-label="Text block">
-      <textarea
-        className="re-text-block-input"
-        value={item.text}
-        onChange={(e) => onChange({ ...item, text: e.target.value })}
-        aria-label="Text block content"
-        rows={3}
+    <div
+      className={`re-item re-item--text-block${discardRemovesItem ? " re-item--new" : ""}`}
+      role="group"
+      aria-label="Text block"
+    >
+      <RowActions
+        removeLabel="Remove text block"
+        onRemove={onRemove}
+        {...(!editing && { editLabel: "Edit text block", onEdit: openEditor })}
       />
-      <button
-        type="button"
-        className="re-item-remove"
-        onClick={onRemove}
-        aria-label="Remove text block"
-      >
-        −
-      </button>
+      {editing ? (
+        <>
+          <textarea
+            className="re-text-block-input"
+            value={item.text}
+            onChange={(e) => onChange({ ...item, text: e.target.value })}
+            aria-label="Text block content"
+            rows={3}
+          />
+          <EditActions
+            className="re-item-editor-actions"
+            cancelLabel={discardRemovesItem ? "Discard new text block" : "Cancel changes to text"}
+            acceptLabel="Accept changes to text"
+            onCancel={handleCancel}
+            onAccept={handleAccept}
+          />
+        </>
+      ) : (
+        <p className="re-text-block-summary">{item.text || "Untitled text block"}</p>
+      )}
     </div>
   );
 }
@@ -1096,36 +1084,15 @@ function SectionEditor({
                 aria-label="Section header"
               />
             </Heading>
-            <div className="re-section-header-actions">
-              <button
-                type="button"
-                className="re-section-header-cancel"
-                onClick={handleCancelHeader}
-                aria-label="Cancel changes to section header"
-              >
-                ↩
-              </button>
-              <button
-                type="button"
-                className="re-section-header-accept"
-                onClick={() => setEditingHeader(false)}
-                aria-label="Accept changes to section header"
-              >
-                ✔︎
-              </button>
-            </div>
+            <EditActions
+              cancelLabel="Cancel changes to section header"
+              acceptLabel="Accept changes to section header"
+              onCancel={handleCancelHeader}
+              onAccept={() => setEditingHeader(false)}
+            />
           </>
         ) : section.header !== undefined ? (
-          <Heading className="re-section-heading">
-            <button
-              type="button"
-              className="re-section-heading-summary"
-              onClick={openHeaderEditor}
-              aria-label={`Edit section header: ${section.header}`}
-            >
-              {section.header}
-            </button>
-          </Heading>
+          <Heading className="re-section-heading">{section.header}</Heading>
         ) : (
           <button
             type="button"
@@ -1136,14 +1103,15 @@ function SectionEditor({
             + Add Section Header
           </button>
         )}
-        <button
-          type="button"
-          className="re-item-remove"
-          onClick={onRemove}
-          aria-label="Remove section"
-        >
-          −
-        </button>
+        <RowActions
+          removeLabel="Remove section"
+          onRemove={onRemove}
+          {...(!editingHeader &&
+            section.header !== undefined && {
+              editLabel: `Edit section header: ${section.header}`,
+              onEdit: openHeaderEditor,
+            })}
+        />
       </div>
 
       <div className="re-section-contents">
@@ -1200,6 +1168,7 @@ function SectionEditor({
               <TextBlockRow
                 key={item.id}
                 item={item}
+                isNew={addedItemIdsRef.current.has(item.id)}
                 onChange={(updated) => updateItem(i, updated)}
                 onRemove={() => removeItem(i)}
               />

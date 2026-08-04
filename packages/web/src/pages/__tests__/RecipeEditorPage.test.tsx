@@ -785,7 +785,7 @@ describe("RecipeEditor — version description validation (existing recipe)", ()
       expect(screen.queryByRole("group", { name: "New ingredient" })).not.toBeInTheDocument();
     });
 
-    it("double-clicking an ingredient label opens the IngredientSelector", async () => {
+    it("the ingredient row's edit button opens the IngredientSelector", async () => {
       setupNewRecipeEditor();
       await userEvent.click(screen.getByRole("button", { name: "Add section" }));
       await userEvent.click(screen.getByRole("button", { name: "Add ingredient to section" }));
@@ -800,7 +800,9 @@ describe("RecipeEditor — version description validation (existing recipe)", ()
       );
 
       const ingredientGroup = screen.getByRole("group", { name: /Ingredient: Butter/i });
-      await userEvent.dblClick(within(ingredientGroup).getByText("Butter"));
+      await userEvent.click(
+        within(ingredientGroup).getByRole("button", { name: "Edit ingredient: Butter" }),
+      );
 
       expect(
         within(ingredientGroup).getByRole("combobox", { name: /Change ingredient/i }),

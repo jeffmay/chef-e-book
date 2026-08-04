@@ -1,0 +1,16 @@
+/* "↩" / "✔︎" pair shared by every inline editor. */
+
+.edit-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.edit-actions-cancel,
+.edit-actions-accept {
+  font-size: 0.85em;
+  padding: 2px var(--spacing-xs);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+}
