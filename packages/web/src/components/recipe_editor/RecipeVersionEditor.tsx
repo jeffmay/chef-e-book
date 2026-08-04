@@ -24,23 +24,26 @@ import {
 } from "@recipe-book/shared";
 import isEqual from "lodash/isEqual";
 import type { TreeNode } from "primereact/treenode";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import { useIngredientStore } from "../../hooks/useIngredientStore.ts";
 import { useLabelStore } from "../../hooks/useLabelStore.ts";
 import { DurationEditor } from "../duration/DurationEditor.tsx";
+import { InfoTip } from "../info_tip/InfoTip.tsx";
 import { IngredientSelector } from "../ingredients_table/IngredientSelector.tsx";
 import { MeasurementEditor } from "../measurement/MeasurementEditor.tsx";
 import { buildInstructionIngredientTree } from "./buildInstructionIngredientTree.ts";
 import { COMMON_CONTAINERS } from "./containers.ts";
 import {
   containerDisplayName,
+  containerSummaryDetails,
+  instructionSummaryDetails,
+  instructionSummaryName,
   isBlankContainer,
   isBlankInstruction,
   mergeContainerDraft,
   mergeInstructionDraft,
-  summarizeContainer,
-  summarizeInstruction,
+  revertIngredientItem,
 } from "./drafts.ts";
 import { COMMON_EQUIPMENT } from "./equipment.ts";
 import { InstructionIngredientSelector } from "./InstructionIngredientSelector.tsx";
@@ -259,6 +262,12 @@ type IngredientItemRowProps = RecipeSectionItemRowProps<IngredientItem> &
   WithIngredientsProps &
   SkippedRowProps;
 
+/**
+ * An ingredient row writes its edits through immediately — the name and amount
+ * update as they are picked — so its "↩" restores the item as it was when the
+ * editor opened rather than reverting a draft. Nothing is held back from the
+ * section tree, so the row needs no entry in the pending-edits registry.
+ */
 function IngredientItemRow({
   item,
   allIngredients,
@@ -270,11 +279,17 @@ function IngredientItemRow({
   onDismiss,
 }: IngredientItemRowProps) {
   const [isEditingIngredient, setIsEditingIngredient] = useState(false);
+  const itemAtOpenRef = useRef(item);
   // The kitchenware store loads asynchronously; fall back to the raw id until
   // the ingredient arrives rather than crashing the editor.
   const ingredient = allIngredients.find((i) => i.id === item.ingredient_id);
   const ingredientName = ingredient?.name ?? item.ingredient_id;
   const amount = item.customAmount ?? ingredient?.default_measurement_value;
+
+  function openEditor() {
+    itemAtOpenRef.current = item;
+    setIsEditingIngredient(true);
+  }
 
   function handleIngredientChange(id: IngredientId | undefined) {
     if (id) {
@@ -286,6 +301,14 @@ function IngredientItemRow({
       );
       onChange({ ...item, ingredient_id: id, customAmount: newAmount });
     }
+  }
+
+  function handleAccept() {
+    setIsEditingIngredient(false);
+  }
+
+  function handleCancel() {
+    onChange(revertIngredientItem(itemAtOpenRef.current, item));
     setIsEditingIngredient(false);
   }
 
@@ -310,13 +333,31 @@ function IngredientItemRow({
               onCommit={(newAmount) => onChange({ ...item, customAmount: newAmount })}
             />
           )}
+          <div className="re-item-editor-actions">
+            <button
+              type="button"
+              className="re-ingredient-cancel"
+              onClick={handleCancel}
+              aria-label="Cancel changes to ingredient"
+            >
+              ↩
+            </button>
+            <button
+              type="button"
+              className="re-ingredient-accept"
+              onClick={handleAccept}
+              aria-label="Accept changes to ingredient"
+            >
+              ✔︎
+            </button>
+          </div>
         </>
       ) : (
         <>
           <span
             className="re-item-label"
             title="Double-click to change ingredient"
-            onDoubleClick={() => setIsEditingIngredient(true)}
+            onDoubleClick={openEditor}
           >
             {ingredientName}
           </span>
@@ -328,14 +369,26 @@ function IngredientItemRow({
       {skipped === true ? (
         <SkippedRowActions itemName={ingredientName} onRestore={onRestore} onDismiss={onDismiss} />
       ) : (
-        <button
-          type="button"
-          className="re-item-remove"
-          onClick={onRemove}
-          aria-label={`Remove ingredient ${ingredientName}`}
-        >
-          −
-        </button>
+        <div className="re-item-actions">
+          {!isEditingIngredient && (
+            <button
+              type="button"
+              className="re-item-edit"
+              onClick={openEditor}
+              aria-label={`Edit ingredient: ${ingredientName}`}
+            >
+              ✎
+            </button>
+          )}
+          <button
+            type="button"
+            className="re-item-remove"
+            onClick={onRemove}
+            aria-label={`Remove ingredient ${ingredientName}`}
+          >
+            −
+          </button>
+        </div>
       )}
     </div>
   );
@@ -447,8 +500,16 @@ function ContainerItemRow({
   const [editing, setEditing] = useState(() => isBlankContainer(item));
   const [draft, setDraft] = useState(item);
   const [accepted, setAccepted] = useState(false);
+  // The name is optional: it stays hidden behind a "+ Name" button until the
+  // container has one or the user asks for it. Asking for it also focuses the
+  // input, which only exists after the render that reveals it — hence the
+  // request flag consumed by an effect rather than a focus call here.
+  const [showNameInput, setShowNameInput] = useState(() => item.descriptor !== "");
+  const [focusNameRequested, setFocusNameRequested] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const snapshotAtOpenRef = useRef(item);
   const containerName = containerDisplayName(item);
+  const containerDetails = containerSummaryDetails(item);
 
   // A row added in this editing session has nothing to revert to until it has
   // been accepted once, so cancelling it drops the row instead.
@@ -462,6 +523,7 @@ function ContainerItemRow({
 
   function revertEditor() {
     setDraft(item);
+    setShowNameInput(item.descriptor !== "");
     setEditing(false);
   }
 
@@ -475,7 +537,21 @@ function ContainerItemRow({
   function openEditor() {
     snapshotAtOpenRef.current = item;
     setDraft(item);
+    setShowNameInput(item.descriptor !== "");
     setEditing(true);
+  }
+
+  // Runs in the commit that mounts the input, so the focus lands on a live
+  // element (and never on a row that was cancelled in the meantime).
+  useEffect(() => {
+    if (!focusNameRequested) return;
+    nameInputRef.current?.focus();
+    setFocusNameRequested(false);
+  }, [focusNameRequested]);
+
+  function handleAddName() {
+    setShowNameInput(true);
+    setFocusNameRequested(true);
   }
 
   function handleAccept() {
@@ -508,29 +584,70 @@ function ContainerItemRow({
       role="group"
       aria-label={`Container: ${containerName} — ${item.descriptor}`}
     >
+      {removeButton}
       {editing ? (
         <>
-          <div className="re-item-header">
-            <select
-              className="re-container-select"
-              value={draft.container_id}
-              onChange={(e) =>
-                setDraft({ ...draft, container_id: loadId(ContainerId, e.target.value) })
-              }
-              aria-label="Container type"
-            >
-              {COMMON_CONTAINERS.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <input
-              className="re-container-descriptor"
-              value={draft.descriptor}
-              onChange={(e) => setDraft({ ...draft, descriptor: e.target.value })}
-              aria-label="Container descriptor"
-            />
+          {/* No aria-labels: the wrapping <label>s are the accessible names, so
+              they cannot drift from the visible text. */}
+          <div className="re-container-fields">
+            <label className="re-container-field">
+              <span className="re-container-field-label">Type</span>
+              <select
+                className="re-container-select"
+                value={draft.container_id}
+                onChange={(e) =>
+                  setDraft({ ...draft, container_id: loadId(ContainerId, e.target.value) })
+                }
+              >
+                {COMMON_CONTAINERS.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {showNameInput ? (
+              <label className="re-container-field">
+                <span className="re-container-field-label">Name</span>
+                <input
+                  ref={nameInputRef}
+                  className="re-container-descriptor"
+                  value={draft.descriptor}
+                  onChange={(e) => setDraft({ ...draft, descriptor: e.target.value })}
+                />
+              </label>
+            ) : (
+              <button
+                type="button"
+                className="re-container-add-name-btn"
+                onClick={handleAddName}
+                aria-label="Add container name"
+              >
+                + Name
+              </button>
+            )}
+            <div className="re-item-editor-actions">
+              <button
+                type="button"
+                className="re-container-cancel"
+                onClick={handleCancel}
+                aria-label={
+                  discardRemovesItem ? "Discard new container" : "Cancel changes to container"
+                }
+              >
+                ↩
+              </button>
+              <button
+                type="button"
+                className="re-container-accept"
+                onClick={handleAccept}
+                aria-label="Accept changes to container"
+              >
+                ✔︎
+              </button>
+            </div>
+          </div>
+          <div className="re-container-ordered-row">
             <label className="re-container-ordered">
               <input
                 type="checkbox"
@@ -540,27 +657,10 @@ function ContainerItemRow({
               />
               ordered
             </label>
-            {removeButton}
-          </div>
-          <div className="re-item-editor-actions">
-            <button
-              type="button"
-              className="re-container-cancel"
-              onClick={handleCancel}
-              aria-label={
-                discardRemovesItem ? "Discard new container" : "Cancel changes to container"
-              }
-            >
-              ↩
-            </button>
-            <button
-              type="button"
-              className="re-container-accept"
-              onClick={handleAccept}
-              aria-label="Accept changes to container"
-            >
-              ✔︎
-            </button>
+            <InfoTip
+              label="What does ordered mean?"
+              text="Annotates that the ingredients should be added in the specified order"
+            />
           </div>
         </>
       ) : (
@@ -571,9 +671,11 @@ function ContainerItemRow({
             onClick={openEditor}
             aria-label={`Edit container: ${containerName}`}
           >
-            {summarizeContainer(item)}
+            <strong className="re-container-summary-name">{containerName}</strong>
+            {containerDetails !== "" && (
+              <span className="re-container-summary-details"> {containerDetails}</span>
+            )}
           </button>
-          {removeButton}
         </div>
       )}
       <div className="re-container-contents">
@@ -698,6 +800,7 @@ function InstructionRow({
   }
 
   const instructionName = item.instruction || "instruction";
+  const instructionDetails = instructionSummaryDetails(item, allIngredients);
 
   const removeControl =
     skipped === true ? (
@@ -727,7 +830,10 @@ function InstructionRow({
           onClick={openEditor}
           aria-label={`Edit instruction: ${instructionName}`}
         >
-          {summarizeInstruction(item, allIngredients)}
+          <strong className="re-instruction-summary-name">{instructionSummaryName(item)}</strong>
+          {instructionDetails !== "" && (
+            <span className="re-instruction-summary-details"> {instructionDetails}</span>
+          )}
         </button>
       </div>
     );
@@ -898,15 +1004,43 @@ function SectionEditor({
   onDismissItem,
 }: SectionEditorProps) {
   const [showingNewIngredient, setShowingNewIngredient] = useState(false);
-  // The header input is hidden until requested; a section that already has a
-  // header (e.g. an existing recipe) shows it straight away.
-  const [showHeaderInput, setShowHeaderInput] = useState(section.header !== undefined);
+  // The header collapses to its text (or to a "+ Add Section Header" button
+  // when unset) and opens into an inline editor. Header edits write through
+  // immediately, so "↩" restores the header the section had when the editor
+  // opened rather than reverting a draft.
+  const [editingHeader, setEditingHeader] = useState(false);
+  const headerAtOpenRef = useRef(section.header);
   const headerInputRef = useRef<HTMLInputElement>(null);
   // Rows added here (rather than loaded from the recipe) have no committed
   // state, so cancelling their first edit removes them. Stored in a ref because
   // adding a row already re-renders through `onChange`.
   const addedItemIdsRef = useRef(new Set<SectionItemId>());
   const Heading = headingForDepth(depth);
+
+  function setHeader(header: string | undefined) {
+    if (header !== undefined && header !== "") {
+      onChange({ ...section, header });
+    } else {
+      const { header: _, ...rest } = section;
+      onChange(rest);
+    }
+  }
+
+  // Runs in the commit that mounts the input, so the focus lands on a live
+  // element rather than on whatever is there a tick later.
+  useEffect(() => {
+    if (editingHeader) headerInputRef.current?.focus();
+  }, [editingHeader]);
+
+  function openHeaderEditor() {
+    headerAtOpenRef.current = section.header;
+    setEditingHeader(true);
+  }
+
+  function handleCancelHeader() {
+    setHeader(headerAtOpenRef.current);
+    setEditingHeader(false);
+  }
 
   function updateItem(index: number, updated: ReadonlyDeep<SectionItem>) {
     const newContents = section.contents.map((item, i) => (i === index ? updated : item));
@@ -951,34 +1085,52 @@ function SectionEditor({
       aria-label={`Section: ${section.header ?? "unnamed"}`}
     >
       <div className="re-section-header-row">
-        {showHeaderInput ? (
+        {editingHeader ? (
+          <>
+            <Heading className="re-section-heading">
+              <input
+                ref={headerInputRef}
+                className="re-section-header-input"
+                value={section.header ?? ""}
+                onChange={(e) => setHeader(e.target.value)}
+                aria-label="Section header"
+              />
+            </Heading>
+            <div className="re-section-header-actions">
+              <button
+                type="button"
+                className="re-section-header-cancel"
+                onClick={handleCancelHeader}
+                aria-label="Cancel changes to section header"
+              >
+                ↩
+              </button>
+              <button
+                type="button"
+                className="re-section-header-accept"
+                onClick={() => setEditingHeader(false)}
+                aria-label="Accept changes to section header"
+              >
+                ✔︎
+              </button>
+            </div>
+          </>
+        ) : section.header !== undefined ? (
           <Heading className="re-section-heading">
-            <input
-              ref={headerInputRef}
-              className="re-section-header-input"
-              value={section.header ?? ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val) {
-                  onChange({ ...section, header: val });
-                } else {
-                  const { header: _, ...rest } = section;
-                  onChange(rest as Section);
-                }
-              }}
-              aria-label="Section header"
-            />
+            <button
+              type="button"
+              className="re-section-heading-summary"
+              onClick={openHeaderEditor}
+              aria-label={`Edit section header: ${section.header}`}
+            >
+              {section.header}
+            </button>
           </Heading>
         ) : (
           <button
             type="button"
             className="re-add-section-header-btn"
-            onClick={() => {
-              setShowHeaderInput(true);
-              // The input mounts on this state change, so defer focus until
-              // it is in the DOM.
-              setTimeout(() => headerInputRef.current?.focus(), 0);
-            }}
+            onClick={openHeaderEditor}
             aria-label="Add section header"
           >
             + Add Section Header

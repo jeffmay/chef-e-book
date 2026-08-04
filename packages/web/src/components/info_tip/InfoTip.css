@@ -1,0 +1,27 @@
+/* "ⓘ" toggle plus the explanation it reveals. Kept inline with the field it
+   explains so the row simply grows when the text is showing. */
+
+.info-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.info-tip-toggle {
+  font-size: 0.9em;
+  line-height: 1;
+  padding: 0 var(--spacing-xs);
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
+.info-tip-text {
+  font-size: 0.8em;
+  font-style: italic;
+  padding: 2px var(--spacing-xs);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+}

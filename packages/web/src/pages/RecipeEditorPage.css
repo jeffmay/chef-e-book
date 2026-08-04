@@ -168,7 +168,26 @@
   width: 100%;
 }
 
-/* Reveals the section header input; sits left with the remove button at right. */
+/* Collapsed section header: click the heading text to reopen its editor. */
+.re-section-heading-summary {
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  cursor: pointer;
+}
+
+.re-section-header-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+/* Opens the section header editor; sits left with the remove button at right. */
 .re-add-section-header-btn {
   font-size: 0.85em;
   margin-right: auto;
@@ -237,6 +256,41 @@
   margin-left: auto;
 }
 
+.re-item-edit {
+  font-size: 0.85em;
+  padding: 0 var(--spacing-xs);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
+/* Per-row edit + remove buttons, floating in the row's upper-right corner. */
+.re-item-actions {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.re-item-actions .re-item-remove {
+  margin-left: 0;
+}
+
+/* Reserve room for the floating actions so row content never runs under them. */
+.re-item--ingredients {
+  position: relative;
+  padding-right: 5em;
+}
+
+/* An ingredient row is a single line, so its ↩/✔︎ stay on that line rather
+   than claiming a row of their own the way the taller editors' do. */
+.re-item--ingredients .re-item-editor-actions {
+  width: auto;
+  margin-left: auto;
+}
+
 .re-item-header {
   display: flex;
   flex-wrap: wrap;
@@ -263,6 +317,21 @@
 }
 
 /* Container item */
+
+/* Reserve room in the top-right corner for the floating delete button so
+   neither the header fields nor the collapsed summary render underneath it. */
+.re-item--container {
+  position: relative;
+  padding-right: 2.5em;
+}
+
+.re-item--container > .re-item-remove {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  margin-left: 0;
+}
+
 .re-container-select,
 .re-container-descriptor {
   font-family: var(--font-body);
@@ -278,6 +347,65 @@
   max-width: 25vw;
 }
 
+/* The type and name fields sit on one row with the ↩/✔︎ actions; they stack
+   in mobile view (breakpoint kept in sync with MOBILE_VIEW_MAX_WIDTH). */
+.re-container-fields {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs) var(--spacing-sm);
+  width: 100%;
+}
+
+.re-container-field {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.85em;
+}
+
+.re-container-field-label {
+  white-space: nowrap;
+}
+
+.re-container-fields .re-item-editor-actions {
+  width: auto;
+  margin-left: auto;
+}
+
+.re-container-add-name-btn {
+  font-size: 0.85em;
+  padding: 2px var(--spacing-xs);
+}
+
+@media (max-width: 600px) {
+  .re-container-fields {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .re-container-fields .re-item-editor-actions {
+    margin-left: 0;
+  }
+
+  .re-container-descriptor {
+    max-width: none;
+  }
+
+  .re-container-add-name-btn {
+    align-self: flex-start;
+  }
+}
+
+.re-container-ordered-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+}
+
 .re-container-ordered {
   display: flex;
   align-items: center;
@@ -285,8 +413,9 @@
   font-size: 0.85em;
 }
 
-/* Collapsed container header: a single summary label; click to reopen the
-   editor. Its nested ingredient rows stay visible below either way. */
+/* Collapsed container header: the container type in bold followed by its name
+   and flags; click to reopen the editor. Its nested ingredient rows stay
+   visible below either way. */
 .re-container-summary {
   flex: 1;
   text-align: left;
@@ -295,6 +424,11 @@
   background: var(--color-bg);
   color: var(--color-fg);
   cursor: pointer;
+}
+
+.re-container-summary-name,
+.re-instruction-summary-name {
+  font-weight: bold;
 }
 
 .re-container-contents {

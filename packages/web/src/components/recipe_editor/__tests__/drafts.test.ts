@@ -1,4 +1,4 @@
-import type { ContainerItem, Ingredient, Instruction } from "@recipe-book/shared";
+import type { ContainerItem, Ingredient, IngredientItem, Instruction } from "@recipe-book/shared";
 import {
   ContainerId,
   EquipmentId,
@@ -10,12 +10,14 @@ import { describe, expect, it } from "vitest";
 import { humanizeSeconds } from "../../duration/humanizeSeconds.ts";
 import {
   containerDisplayName,
+  containerSummaryDetails,
+  instructionSummaryDetails,
+  instructionSummaryName,
   isBlankContainer,
   isBlankInstruction,
   mergeContainerDraft,
   mergeInstructionDraft,
-  summarizeContainer,
-  summarizeInstruction,
+  revertIngredientItem,
 } from "../drafts.ts";
 
 const FLOUR = fixedId(IngredientId, "flour");
@@ -114,7 +116,25 @@ describe("isBlankContainer", () => {
   });
 });
 
-describe("summarizeInstruction", () => {
+/**
+ * The rows render a summary's bolded head and its details as separate elements,
+ * so nothing in production joins them back into a string. These composers keep
+ * the one-line summaries the rows are specified to show (see AGENTS.md) as
+ * readable end-to-end assertions over the two exported halves.
+ */
+function joinSummary(name: string, details: string): string {
+  return details === "" ? name : `${name} ${details}`;
+}
+
+function summarizeInstruction(item: Instruction, allIngredients: readonly Ingredient[]): string {
+  return joinSummary(instructionSummaryName(item), instructionSummaryDetails(item, allIngredients));
+}
+
+function summarizeContainer(item: ContainerItem): string {
+  return joinSummary(containerDisplayName(item), containerSummaryDetails(item));
+}
+
+describe("instruction summary (name + details)", () => {
   it("falls back to a placeholder name for a blank instruction", () => {
     expect(summarizeInstruction(instruction(), ALL_INGREDIENTS)).toBe("Untitled instruction");
   });
@@ -145,7 +165,7 @@ describe("summarizeInstruction", () => {
   });
 });
 
-describe("summarizeContainer", () => {
+describe("container summary (name + details)", () => {
   it("renders the container name alone when it has no descriptor", () => {
     expect(summarizeContainer(container())).toBe("Bowl");
   });
@@ -163,6 +183,49 @@ describe("summarizeContainer", () => {
   });
 });
 
+describe("instructionSummaryName", () => {
+  it("is the action verb", () => {
+    expect(instructionSummaryName(instruction({ instruction: "Mix" }))).toBe("Mix");
+  });
+
+  it("falls back to a placeholder for a blank instruction", () => {
+    expect(instructionSummaryName(instruction())).toBe("Untitled instruction");
+  });
+});
+
+describe("instructionSummaryDetails", () => {
+  it("is empty when only the action is set", () => {
+    expect(instructionSummaryDetails(instruction({ instruction: "Mix" }), ALL_INGREDIENTS)).toBe(
+      "",
+    );
+  });
+
+  it("excludes the action verb from the details", () => {
+    const details = instructionSummaryDetails(
+      instruction({
+        instruction: "Bake",
+        ingredient_ids: [FLOUR],
+        equipment_id: OVEN,
+        duration_seconds: 1800,
+      }),
+      ALL_INGREDIENTS,
+    );
+    expect(details).toBe(`the Flour in the Oven for ${humanizeSeconds(1800)}`);
+  });
+});
+
+describe("containerSummaryDetails", () => {
+  it("is empty for a container with no descriptor and no flags", () => {
+    expect(containerSummaryDetails(container())).toBe("");
+  });
+
+  it("excludes the container type from the details", () => {
+    expect(containerSummaryDetails(container({ descriptor: "layers", ordered: true }))).toBe(
+      "— layers (ordered)",
+    );
+  });
+});
+
 describe("containerDisplayName", () => {
   it("resolves a known container id to its display name", () => {
     expect(containerDisplayName(container({ container_id: POT }))).toBe("Pot");
@@ -171,6 +234,43 @@ describe("containerDisplayName", () => {
   it("falls back to the raw id for an unknown container", () => {
     const unknown = fixedId(ContainerId, "cauldron");
     expect(containerDisplayName(container({ container_id: unknown }))).toBe(unknown);
+  });
+});
+
+describe("revertIngredientItem", () => {
+  const CUP = { value: { numerator: 1, denominator: 1 }, unit: "cup" } as const;
+  const TWO_CUPS = { value: { numerator: 2, denominator: 1 }, unit: "cup" } as const;
+
+  function ingredientItem(overrides: Partial<IngredientItem> = {}): IngredientItem {
+    return {
+      kind: "ingredient",
+      id: fixedId(SectionItemId, "i-1"),
+      ingredient_id: FLOUR,
+      ...overrides,
+    };
+  }
+
+  it("restores the ingredient the row held when its editor opened", () => {
+    const snapshot = ingredientItem();
+    const live = ingredientItem({ ingredient_id: BUTTER });
+    expect(revertIngredientItem(snapshot, live)).toMatchObject({ ingredient_id: FLOUR });
+  });
+
+  it("restores the amount the row held when its editor opened", () => {
+    const snapshot = ingredientItem({ customAmount: CUP });
+    const live = ingredientItem({ customAmount: TWO_CUPS });
+    expect(revertIngredientItem(snapshot, live)).toMatchObject({ customAmount: CUP });
+  });
+
+  it("drops an amount the row did not have when its editor opened", () => {
+    const live = ingredientItem({ customAmount: CUP });
+    expect(revertIngredientItem(ingredientItem(), live)).not.toHaveProperty("customAmount");
+  });
+
+  it("keeps fields the editor cannot change from the live item", () => {
+    const snapshot = ingredientItem();
+    const live = ingredientItem({ ingredient_id: BUTTER, notes: ["sifted"] });
+    expect(revertIngredientItem(snapshot, live)).toMatchObject({ notes: ["sifted"] });
   });
 });
 

@@ -1,4 +1,4 @@
-import type { ContainerItem, Ingredient, Instruction } from "@recipe-book/shared";
+import type { ContainerItem, Ingredient, IngredientItem, Instruction } from "@recipe-book/shared";
 import isEqual from "lodash/isEqual";
 import type { ReadonlyDeep } from "type-fest";
 import { humanizeSeconds } from "../duration/humanizeSeconds.ts";
@@ -40,13 +40,27 @@ export function isBlankContainer(item: ReadonlyDeep<ContainerItem>): boolean {
 
 // ---------------------------------------------------------------------------
 // Summaries — the closed (read-only) view of a row
+//
+// Each summary comes in two pieces: the head the row renders in bold (the
+// instruction's action verb, the container's type) and the details that follow
+// it. Rows render the pieces separately; joining them with a space reproduces
+// the one-line summary, which is what the tests assert against.
 // ---------------------------------------------------------------------------
 
-export function summarizeInstruction(
+/** The action verb shown (in bold) at the head of an instruction summary. */
+export function instructionSummaryName(item: ReadonlyDeep<Instruction>): string {
+  return item.instruction || "Untitled instruction";
+}
+
+/**
+ * The part of an instruction summary that follows its action verb. Split from
+ * the verb so the row can render the verb in bold and the rest as plain text.
+ */
+export function instructionSummaryDetails(
   item: ReadonlyDeep<Instruction>,
   allIngredients: ReadonlyDeep<Ingredient[]>,
 ): string {
-  const parts: string[] = [item.instruction || "Untitled instruction"];
+  const parts: string[] = [];
 
   const ingredientNames = (item.ingredient_ids ?? [])
     .map((id) => allIngredients.find((ingredient) => ingredient.id === id)?.name)
@@ -70,9 +84,15 @@ export function summarizeInstruction(
   return parts.join(" ");
 }
 
-export function summarizeContainer(item: ReadonlyDeep<ContainerItem>): string {
-  const name = containerDisplayName(item);
-  const parts: string[] = [item.descriptor ? `${name} — ${item.descriptor}` : name];
+/**
+ * The part of a container summary that follows its type name. Split from the
+ * name so the row can render the container type in bold.
+ */
+export function containerSummaryDetails(item: ReadonlyDeep<ContainerItem>): string {
+  const parts: string[] = [];
+  if (item.descriptor) {
+    parts.push(`— ${item.descriptor}`);
+  }
   if (item.ordered === true) {
     parts.push("(ordered)");
   }
@@ -82,6 +102,29 @@ export function summarizeContainer(item: ReadonlyDeep<ContainerItem>): string {
 // ---------------------------------------------------------------------------
 // Draft merges
 // ---------------------------------------------------------------------------
+
+/**
+ * Reverts an ingredient row to the snapshot taken when its editor opened.
+ *
+ * The row writes through as it is edited, so a cancel has to undo the fields
+ * its editor can change (`ingredient_id` and `customAmount`) rather than revert
+ * a draft. Every other field is taken from the live item, matching the merge
+ * semantics of the drafted rows: an edit made elsewhere during the edit window
+ * survives the cancel.
+ */
+export function revertIngredientItem(
+  snapshot: ReadonlyDeep<IngredientItem>,
+  live: ReadonlyDeep<IngredientItem>,
+): ReadonlyDeep<IngredientItem> {
+  // Dropped rather than overwritten: the snapshot may have had no amount at
+  // all, in which case the live one has to go away instead of being kept.
+  const { customAmount: _, ...rest } = live;
+  return {
+    ...rest,
+    ingredient_id: snapshot.ingredient_id,
+    ...(snapshot.customAmount !== undefined && { customAmount: snapshot.customAmount }),
+  };
+}
 
 /**
  * Merges an instruction draft back into the live item: fields the user changed
