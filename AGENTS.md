@@ -129,6 +129,44 @@ The app uses **React Router v7 in Framework mode** via `@react-router/dev/vite` 
 - **Server:** Single `/sync` endpoint exchanges Yjs updates for a user's document and sends back updates to the default kitchenware list
 - **Conflict resolution:** On kitchenware conflicts, user is prompted to accept incoming, keep local, or rename local and accept incoming
 
+### Device-Local View State (`useLocalViewState`)
+
+Not everything belongs in the Yjs document. State that describes how _this device_ is looking at
+the book — which rows are expanded, and in future any uncommitted edit that must not sync — is kept
+in `localStorage` by `useLocalViewState` (`packages/web/src/hooks/useLocalViewState.ts`), because it
+is per-device, must not sync to other devices, and must not enter the undo history.
+
+```ts
+const { viewState, setViewState } = useLocalViewState(KEY, ViewStateCompanion, createDefault);
+```
+
+- Takes a `localStorage` key (one per view, `chefe_`-prefixed), an `arktype` `Companion` used to
+  validate whatever is already stored, and a factory for the default state.
+- Reads the stored value **lazily on the first render** rather than in an effect, so a reload paints
+  the restored view directly instead of flashing the default and correcting itself.
+- All storage access goes through `storage/safeLocalStorage.ts` (`readLocalStorage`,
+  `writeLocalStorage`, `removeLocalStorage`), which guards both hazards: the global may be missing
+  (build-time prerender) _and_ accessing it may throw even when it exists (`SecurityError` in a
+  sandboxed or privacy-blocked context, `QuotaExceededError` on write). Reads happen during the
+  first render, so an unguarded throw there would take the whole page down on load. Use these
+  helpers for any new `localStorage` access; `useActiveBookMetaStore` uses them too.
+- A stored value that is malformed JSON or no longer matches the schema is logged with
+  `console.warn` and replaced by the default, so an older build's key can never break the page.
+  The two are reported separately — "not valid JSON" and "not the shape we expect" call for
+  different fixes, and arktype would describe a corrupt string only as "not an object".
+- `setViewState(prev => next)` runs its updater **inside** `setState`, so `prev` is React's pending
+  state and consecutive updates in one tick compose. The `localStorage` write happens in the same
+  updater: React may invoke it more than once (StrictMode, an interrupted render), but the write is
+  idempotent for a given `prev` and any re-invocation is followed by the write that wins. Do not
+  reintroduce a ref written during render to track the latest state — that is what this replaced.
+- Tests that render a view backed by this hook must `localStorage.clear()` in `beforeEach`, since
+  the state deliberately outlives an unmount.
+
+**Prefer storing exceptions to the default, not the default itself.** `BulkRecipeViewState`
+(`packages/web/src/pages/bulkRecipeViewState.ts`) stores _collapsed_ ids rather than expanded ones:
+the empty state then means "fully expanded", and a folder or recipe created after the state was last
+written starts expanded like everything else instead of being absent from a stored expanded set.
+
 ## Data Models (Yjs)
 
 ### Kitchenware
@@ -382,6 +420,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 - Sort by last modified, date created, or alphabetical
 - Manual drag-and-drop reorder
 - Per-item buttons: edit recipe, expand versions, expand subgroup
+- **Expand/collapse state**: the tree starts **fully expanded** — the virtual root, every folder, and every recipe's versions. Collapsing a row persists to this device via `useLocalViewState` under `BULK_RECIPE_VIEW_KEY` (`"chefe_bulk_recipe_view"`), so the same rows are open on the next page load. `BulkRecipeViewState` stores the _collapsed_ ids (`root_collapsed`, `collapsed_folder_ids`, `collapsed_recipe_ids`) so anything created later starts expanded; `buildRows` and the row renderers therefore test `!collapsed.has(id)`. Ids of deleted folders/recipes linger harmlessly in the lists and simply never match
 - Recipe and version rows use a `ButtonMenu` — "▶ Start" is the default button (latest version on recipe rows, that version on version rows) with Start/Edit in the chevron menu
 - Folder rows (and the virtual root) use a `ButtonMenu` — "New Recipe" is the default button with New Recipe / New Folder in the chevron menu
 - **Mobile view** (`useMobileView`, ≤ 600px): the Created/Updated date columns are hidden via a `@media (max-width: 600px)` rule (leaving only Select, Name, and Actions), and every row's actions `ButtonMenu` sets `hideDefault` so only the "▾" trigger shows (its default action moves into the menu)

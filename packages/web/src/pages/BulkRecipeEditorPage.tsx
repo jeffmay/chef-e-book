@@ -8,11 +8,22 @@ import type {
 import { Fragment, type FormEvent, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { ButtonMenu } from "../components/button_menu/ButtonMenu.tsx";
+import { useLocalViewState } from "../hooks/useLocalViewState.ts";
 import { useMobileView } from "../hooks/useMobileView.ts";
 import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.ts";
 import { latestVersion, useRecipeStore } from "../hooks/useRecipeStore.ts";
 import { useStartSession } from "../hooks/useStartSession.ts";
 import "./BulkRecipeEditorPage.css";
+import {
+  BULK_RECIPE_VIEW_KEY,
+  BulkRecipeViewState,
+  collapsedFolderIds,
+  collapsedRecipeIds,
+  fullyExpandedBulkRecipeView,
+  toggleFolderCollapsed,
+  toggleRecipeCollapsed,
+  toggleRootCollapsed,
+} from "./bulkRecipeViewState.ts";
 
 // ---------------------------------------------------------------------------
 // Tree row types
@@ -123,26 +134,28 @@ function sortLevelRecipes(recipes: Recipe[]): Recipe[] {
   return [...recipes].sort((a, b) => b.updated_at - a.updated_at);
 }
 
+// Folders and recipes are expanded unless they are listed as collapsed, so anything
+// created after the view state was last written shows up expanded.
 function buildRows(
   folders: RecipeFolder[],
   allRecipes: Recipe[],
   parentFolderId: RecipeFolderId | undefined,
-  expandedFolders: ReadonlySet<RecipeFolderId>,
-  expandedRecipes: ReadonlySet<RecipeId>,
+  collapsedFolders: ReadonlySet<RecipeFolderId>,
+  collapsedRecipes: ReadonlySet<RecipeId>,
   depth: number,
 ): TreeRow[] {
   const rows: TreeRow[] = [];
 
   for (const folder of folders) {
     rows.push({ kind: "folder", folder, depth });
-    if (expandedFolders.has(folder.id)) {
+    if (!collapsedFolders.has(folder.id)) {
       rows.push(
         ...buildRows(
           folder.children ?? [],
           allRecipes,
           folder.id,
-          expandedFolders,
-          expandedRecipes,
+          collapsedFolders,
+          collapsedRecipes,
           depth + 1,
         ),
       );
@@ -155,7 +168,7 @@ function buildRows(
 
   for (const recipe of levelRecipes) {
     rows.push({ kind: "recipe", recipe, depth });
-    if (expandedRecipes.has(recipe.id)) {
+    if (!collapsedRecipes.has(recipe.id)) {
       const sorted = [...recipe.versions].reverse();
       for (const version of sorted) {
         rows.push({ kind: "version", version, recipeId: recipe.id, depth: depth + 1 });
@@ -177,9 +190,17 @@ export function BulkRecipeEditorPage() {
   const startSession = useStartSession();
   const isMobileView = useMobileView();
 
-  const [rootExpanded, setRootExpanded] = useState(true);
-  const [expandedFolders, setExpandedFolders] = useState<ReadonlySet<RecipeFolderId>>(new Set());
-  const [expandedRecipes, setExpandedRecipes] = useState<ReadonlySet<RecipeId>>(new Set());
+  // Which folders/recipes are expanded is device-local and outlives the page, so it lives in
+  // localStorage rather than in the synced Yjs doc. Nothing stored means fully expanded.
+  const { viewState, setViewState } = useLocalViewState(
+    BULK_RECIPE_VIEW_KEY,
+    BulkRecipeViewState,
+    fullyExpandedBulkRecipeView,
+  );
+  const rootExpanded = !viewState.root_collapsed;
+  const collapsedFolders = collapsedFolderIds(viewState);
+  const collapsedRecipes = collapsedRecipeIds(viewState);
+
   const [selectedRecipeIds, setSelectedRecipeIds] = useState<ReadonlySet<RecipeId>>(new Set());
   const [showMergeForm, setShowMergeForm] = useState(false);
   const [mergeName, setMergeName] = useState("");
@@ -208,7 +229,7 @@ export function BulkRecipeEditorPage() {
   });
 
   // Rows start at depth 1; depth 0 is reserved for the virtual root "Recipes" row.
-  const visibleRows = buildRows(folders, recipes, undefined, expandedFolders, expandedRecipes, 1);
+  const visibleRows = buildRows(folders, recipes, undefined, collapsedFolders, collapsedRecipes, 1);
 
   const selectedArray = [...selectedRecipeIds];
   const someSelected = selectedArray.length > 0;
@@ -216,21 +237,11 @@ export function BulkRecipeEditorPage() {
   const someRecipesSelected = recipes.some((r) => selectedRecipeIds.has(r.id));
 
   function toggleFolder(id: RecipeFolderId): void {
-    setExpandedFolders((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setViewState((prev) => toggleFolderCollapsed(prev, id));
   }
 
   function toggleRecipeExpand(id: RecipeId): void {
-    setExpandedRecipes((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setViewState((prev) => toggleRecipeCollapsed(prev, id));
   }
 
   function toggleRecipeSelect(id: RecipeId): void {
@@ -520,7 +531,7 @@ export function BulkRecipeEditorPage() {
                 <button
                   type="button"
                   className="bre-expand-btn"
-                  onClick={() => setRootExpanded((v) => !v)}
+                  onClick={() => setViewState(toggleRootCollapsed)}
                   aria-expanded={rootExpanded}
                   aria-label={`${rootExpanded ? "Collapse" : "Expand"} Recipes folder`}
                 >
@@ -573,7 +584,7 @@ export function BulkRecipeEditorPage() {
               visibleRows.map((row) => {
                 if (row.kind === "folder") {
                   const { folder, depth } = row;
-                  const isExpanded = expandedFolders.has(folder.id);
+                  const isExpanded = !collapsedFolders.has(folder.id);
                   const isCreatingHere =
                     creatingFolder.kind === "creating" && creatingFolder.parentId === folder.id;
                   return (
@@ -702,7 +713,7 @@ export function BulkRecipeEditorPage() {
 
                 if (row.kind === "recipe") {
                   const { recipe, depth } = row;
-                  const isExpanded = expandedRecipes.has(recipe.id);
+                  const isExpanded = !collapsedRecipes.has(recipe.id);
                   const isSelected = selectedRecipeIds.has(recipe.id);
                   const hasVersions = recipe.versions.length > 0;
                   const startButton = {

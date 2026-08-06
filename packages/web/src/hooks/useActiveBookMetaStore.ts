@@ -1,6 +1,11 @@
 import { Companion, randomId, RecipeBookId } from "@recipe-book/shared";
 import { type } from "arktype";
 import { useCallback, useEffect, useState } from "react";
+import {
+  readLocalStorage,
+  removeLocalStorage,
+  writeLocalStorage,
+} from "../storage/safeLocalStorage.ts";
 
 export const ACTIVE_BOOK_KEY = "ecookdeck_book" as const;
 
@@ -21,7 +26,7 @@ export const ActiveBookMeta = Companion(
 export type ActiveBookMeta = typeof ActiveBookMeta.type.infer;
 
 function loadActiveBookMeta(): ActiveBookMeta | null {
-  const bookStr = localStorage.getItem(ACTIVE_BOOK_KEY);
+  const bookStr = readLocalStorage(ACTIVE_BOOK_KEY);
   if (!bookStr) {
     return null;
   }
@@ -50,12 +55,12 @@ export function useActiveBookMeta(): ActiveBookMetaStore {
     if (book instanceof type.errors) {
       throw book.toTraversalError();
     }
-    localStorage.setItem(ACTIVE_BOOK_KEY, JSON.stringify(book));
+    writeLocalStorage(ACTIVE_BOOK_KEY, JSON.stringify(book));
     setState(book);
   }, []);
 
   const clearActiveBookMeta = useCallback(() => {
-    localStorage.removeItem(ACTIVE_BOOK_KEY);
+    removeLocalStorage(ACTIVE_BOOK_KEY);
     setState(null);
   }, []);
 
