@@ -5,10 +5,20 @@
   gap: var(--spacing-xs);
 }
 
+/* Same tap target as the per-row "✎"/"✕" (`--row-action-size`), so every glyph
+   button in a row is the same height and equally easy to hit with a stylus.
+   These stay wider than they are tall — they sit inline after the fields they
+   commit, where there is room, rather than in the row's cramped corner. */
 .edit-actions-cancel,
 .edit-actions-accept {
-  font-size: 0.85em;
-  padding: 2px var(--spacing-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--row-action-size);
+  height: var(--row-action-size);
+  padding: 0 var(--spacing-md);
+  font-size: 1.1rem;
+  line-height: 1;
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-fg);

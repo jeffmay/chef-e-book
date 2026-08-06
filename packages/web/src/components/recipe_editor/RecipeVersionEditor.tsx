@@ -771,13 +771,15 @@ function InstructionRow({
         aria-label={`Instruction: ${item.instruction || "new"}`}
       >
         <EditButton label={`Edit instruction: ${instructionName}`} onClick={openEditor} />
-        {removeControl()}
         <span className="re-instruction-summary">
           <strong className="re-instruction-summary-name">{instructionSummaryName(item)}</strong>
           {instructionDetails !== "" && (
             <span className="re-instruction-summary-details"> {instructionDetails}</span>
           )}
         </span>
+        {/* After the summary it removes, matching the container row: the
+            floated "✕" reads last rather than interrupting the row's text. */}
+        {removeControl()}
       </div>
     );
   }
@@ -968,8 +970,8 @@ function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowP
       ) : (
         <>
           <EditButton label="Edit text block" onClick={openEditor} />
-          <RemoveButton label="Remove text block" onClick={onRemove} />
           <p className="re-text-block-summary">{item.text || "Untitled text block"}</p>
+          <RemoveButton label="Remove text block" onClick={onRemove} />
         </>
       )}
     </div>

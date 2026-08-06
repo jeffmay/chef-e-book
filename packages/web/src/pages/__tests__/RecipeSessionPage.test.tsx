@@ -422,6 +422,85 @@ describe("RecipeSessionPage — summary view", () => {
     expect(afterCreate.versions).toHaveLength(1);
   });
 
+  it("prompts instead of dropping a row left open when creating a version", async () => {
+    const { recipe, session } = seedCompletedSession();
+    const user = userEvent.setup();
+    await setup(session.id);
+
+    await user.click(screen.getByRole("button", { name: "Edit text block" }));
+    await user.type(screen.getByRole("textbox", { name: "Text block content" }), " overnight");
+    await user.click(screen.getByRole("button", { name: "Create a new version" }));
+    await user.type(screen.getByRole("textbox", { name: "Version summary" }), "After session");
+    await user.click(screen.getByRole("button", { name: "✔︎ Create a new version" }));
+
+    expect(screen.getByRole("dialog", { name: "Unsaved row changes" })).toBeInTheDocument();
+    // Nothing is saved until the prompt is answered.
+    const untouched = getRecipe(recipeBookDoc, recipe.id);
+    assertNotValidationError(untouched);
+    expect(untouched.versions).toHaveLength(1);
+  });
+
+  it("keeps an open row's draft when the prompt accepts it", async () => {
+    const { recipe, session } = seedCompletedSession();
+    const user = userEvent.setup();
+    await setup(session.id);
+
+    await user.click(screen.getByRole("button", { name: "Edit text block" }));
+    await user.type(screen.getByRole("textbox", { name: "Text block content" }), " overnight");
+    await user.click(screen.getByRole("button", { name: "Create a new version" }));
+    await user.type(screen.getByRole("textbox", { name: "Version summary" }), "After session");
+    await user.click(screen.getByRole("button", { name: "✔︎ Create a new version" }));
+    await user.click(screen.getByRole("button", { name: "Accept all changes" }));
+
+    const updated = getRecipe(recipeBookDoc, recipe.id);
+    assertNotValidationError(updated);
+    const saved = updated.versions
+      .at(-1)
+      ?.sections[0]?.contents.find((item) => item.kind === "text_block");
+    expect(saved).toMatchObject({ text: "Let rest overnight" });
+  });
+
+  it("drops an open row's draft when the prompt discards it", async () => {
+    const { recipe, session } = seedCompletedSession();
+    const user = userEvent.setup();
+    await setup(session.id);
+
+    await user.click(screen.getByRole("button", { name: "Edit text block" }));
+    await user.type(screen.getByRole("textbox", { name: "Text block content" }), " overnight");
+    await user.click(screen.getByRole("button", { name: "Create a new version" }));
+    await user.type(screen.getByRole("textbox", { name: "Version summary" }), "After session");
+    await user.click(screen.getByRole("button", { name: "✔︎ Create a new version" }));
+    await user.click(screen.getByRole("button", { name: "Discard all changes" }));
+
+    const updated = getRecipe(recipeBookDoc, recipe.id);
+    assertNotValidationError(updated);
+    const saved = updated.versions
+      .at(-1)
+      ?.sections[0]?.contents.find((item) => item.kind === "text_block");
+    expect(saved).toMatchObject({ text: "Let rest" });
+  });
+
+  it("resolves an open row before creating a new recipe too", async () => {
+    const { session } = seedCompletedSession();
+    const user = userEvent.setup();
+    await setup(session.id);
+
+    await user.click(screen.getByRole("button", { name: "Edit text block" }));
+    await user.type(screen.getByRole("textbox", { name: "Text block content" }), " overnight");
+    await user.click(screen.getByRole("button", { name: "Create a new recipe" }));
+    const nameInput = screen.getByRole("textbox", { name: "New recipe name" });
+    await user.clear(nameInput);
+    await user.type(nameInput, "Pancakes (copy)");
+    await user.click(screen.getByRole("button", { name: "✔︎ Create a new recipe" }));
+    await user.click(screen.getByRole("button", { name: "Accept all changes" }));
+
+    const copy = getRecipes(recipeBookDoc).find((r) => r.title === "Pancakes (copy)");
+    const saved = copy?.versions[0]?.sections[0]?.contents.find(
+      (item) => item.kind === "text_block",
+    );
+    expect(saved).toMatchObject({ text: "Let rest overnight" });
+  });
+
   it("discards without creating anything", async () => {
     const { recipe, session } = seedCompletedSession();
     const user = userEvent.setup();
