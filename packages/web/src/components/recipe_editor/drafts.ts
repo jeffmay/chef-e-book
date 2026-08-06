@@ -1,4 +1,10 @@
-import type { ContainerItem, Ingredient, IngredientItem, Instruction } from "@recipe-book/shared";
+import type {
+  ContainerItem,
+  Ingredient,
+  IngredientItem,
+  Instruction,
+  TextBlock,
+} from "@recipe-book/shared";
 import isEqual from "lodash/isEqual";
 import type { ReadonlyDeep } from "type-fest";
 import { humanizeSeconds } from "../duration/humanizeSeconds.ts";
@@ -6,9 +12,9 @@ import { COMMON_CONTAINERS } from "./containers.ts";
 import { COMMON_EQUIPMENT } from "./equipment.ts";
 
 /**
- * Pure helpers behind the inline-edit rows (instructions and containers): each
- * row keeps a local `draft`, shows a one-line summary while closed, and merges
- * the draft back into the live item on accept.
+ * Pure helpers behind the inline-edit rows (instructions, containers, and text
+ * blocks): each row keeps a local `draft`, shows a one-line summary while
+ * closed, and merges the draft back into the live item on accept.
  */
 
 // ---------------------------------------------------------------------------
@@ -17,25 +23,6 @@ import { COMMON_EQUIPMENT } from "./equipment.ts";
 
 export function containerDisplayName(item: ReadonlyDeep<ContainerItem>): string {
   return COMMON_CONTAINERS.find((c) => c.id === item.container_id)?.name ?? item.container_id;
-}
-
-// ---------------------------------------------------------------------------
-// Blank items — opened directly in edit mode
-// ---------------------------------------------------------------------------
-
-/** A freshly-added instruction has no fields set yet. */
-export function isBlankInstruction(item: ReadonlyDeep<Instruction>): boolean {
-  return (
-    item.instruction === "" &&
-    item.equipment_id === undefined &&
-    item.duration_seconds === undefined &&
-    (item.ingredient_ids === undefined || item.ingredient_ids.length === 0)
-  );
-}
-
-/** A freshly-added container has no descriptor and no contents yet. */
-export function isBlankContainer(item: ReadonlyDeep<ContainerItem>): boolean {
-  return item.descriptor === "" && item.ordered !== true && item.contents.length === 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -156,6 +143,23 @@ export function mergeInstructionDraft(
     ...(equipment_id !== undefined && { equipment_id }),
     ...(duration_seconds !== undefined && { duration_seconds }),
     ...(ingredient_ids !== undefined && { ingredient_ids }),
+  };
+}
+
+/**
+ * Merges a text block draft back into the live item. Only `text` is drafted;
+ * everything else falls back to `live` so a concurrent edit survives the accept.
+ */
+export function mergeTextBlockDraft(
+  snapshot: ReadonlyDeep<TextBlock>,
+  draft: ReadonlyDeep<TextBlock>,
+  live: ReadonlyDeep<TextBlock>,
+): ReadonlyDeep<TextBlock> {
+  return {
+    id: live.id,
+    kind: "text_block",
+    text: snapshot.text !== draft.text ? draft.text : live.text,
+    ...(live.notes !== undefined && { notes: live.notes }),
   };
 }
 

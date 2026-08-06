@@ -1,4 +1,10 @@
-import type { ContainerItem, Ingredient, IngredientItem, Instruction } from "@recipe-book/shared";
+import type {
+  ContainerItem,
+  Ingredient,
+  IngredientItem,
+  Instruction,
+  TextBlock,
+} from "@recipe-book/shared";
 import {
   ContainerId,
   EquipmentId,
@@ -13,10 +19,9 @@ import {
   containerSummaryDetails,
   instructionSummaryDetails,
   instructionSummaryName,
-  isBlankContainer,
-  isBlankInstruction,
   mergeContainerDraft,
   mergeInstructionDraft,
+  mergeTextBlockDraft,
   revertIngredientItem,
 } from "../drafts.ts";
 
@@ -63,58 +68,6 @@ function container(overrides: Partial<ContainerItem> = {}): ContainerItem {
     ...overrides,
   };
 }
-
-describe("isBlankInstruction", () => {
-  it("is true for a freshly added instruction", () => {
-    expect(isBlankInstruction(instruction())).toBe(true);
-  });
-
-  it("is true when an empty ingredient list is the only field set", () => {
-    expect(isBlankInstruction(instruction({ ingredient_ids: [] }))).toBe(true);
-  });
-
-  it("is false once the action text is set", () => {
-    expect(isBlankInstruction(instruction({ instruction: "Mix" }))).toBe(false);
-  });
-
-  it("is false once equipment is set", () => {
-    expect(isBlankInstruction(instruction({ equipment_id: OVEN }))).toBe(false);
-  });
-
-  it("is false once a duration is set", () => {
-    expect(isBlankInstruction(instruction({ duration_seconds: 60 }))).toBe(false);
-  });
-
-  it("is false once ingredients are selected", () => {
-    expect(isBlankInstruction(instruction({ ingredient_ids: [FLOUR] }))).toBe(false);
-  });
-});
-
-describe("isBlankContainer", () => {
-  it("is true for a freshly added container", () => {
-    expect(isBlankContainer(container())).toBe(true);
-  });
-
-  it("is false once a descriptor is set", () => {
-    expect(isBlankContainer(container({ descriptor: "large" }))).toBe(false);
-  });
-
-  it("is false once it is marked ordered", () => {
-    expect(isBlankContainer(container({ ordered: true }))).toBe(false);
-  });
-
-  it("is false once it holds an ingredient", () => {
-    expect(
-      isBlankContainer(
-        container({
-          contents: [
-            { kind: "ingredient", id: fixedId(SectionItemId, "i-flour"), ingredient_id: FLOUR },
-          ],
-        }),
-      ),
-    ).toBe(false);
-  });
-});
 
 /**
  * The rows render a summary's bolded head and its details as separate elements,
@@ -353,6 +306,50 @@ describe("mergeInstructionDraft", () => {
       id: live.id,
       kind: "instruction",
       notes: ["watch closely"],
+    });
+  });
+});
+
+describe("mergeTextBlockDraft", () => {
+  function textBlock(overrides: Partial<TextBlock> = {}): TextBlock {
+    return {
+      kind: "text_block",
+      id: fixedId(SectionItemId, "t-1"),
+      text: "Rest overnight",
+      ...overrides,
+    };
+  }
+
+  it("keeps drafted text", () => {
+    const snapshot = textBlock();
+    const draft = textBlock({ text: "Rest for an hour" });
+    expect(mergeTextBlockDraft(snapshot, draft, snapshot)).toMatchObject({
+      text: "Rest for an hour",
+    });
+  });
+
+  it("takes untouched text from the live item so concurrent edits survive", () => {
+    const snapshot = textBlock();
+    const live = textBlock({ text: "Rest in the fridge" });
+    expect(mergeTextBlockDraft(snapshot, snapshot, live)).toMatchObject({
+      text: "Rest in the fridge",
+    });
+  });
+
+  it("prefers the draft over a concurrent edit to the text", () => {
+    const snapshot = textBlock();
+    const draft = textBlock({ text: "Rest for an hour" });
+    const live = textBlock({ text: "Rest in the fridge" });
+    expect(mergeTextBlockDraft(snapshot, draft, live)).toMatchObject({ text: "Rest for an hour" });
+  });
+
+  it("keeps the live id and notes", () => {
+    const snapshot = textBlock();
+    const live = textBlock({ notes: ["from the original"] });
+    expect(mergeTextBlockDraft(snapshot, snapshot, live)).toMatchObject({
+      id: live.id,
+      kind: "text_block",
+      notes: ["from the original"],
     });
   });
 });

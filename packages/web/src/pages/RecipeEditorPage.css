@@ -145,15 +145,16 @@
   margin-left: 2vw;
 }
 
-/* Also anchors the section's floating ✎/✕ and reserves the corner they sit in. */
+/* Also anchors the section's floating "✕" and reserves the corner it sits in. */
 .re-section-header-row {
   position: relative;
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--spacing-sm);
-  padding-right: 5em;
+  padding-right: calc(var(--row-action-size) + 2 * var(--spacing-sm));
   margin-bottom: var(--spacing-sm);
+  min-height: calc(var(--row-action-size) + 2 * var(--spacing-xs));
 }
 
 .re-section-heading {
@@ -173,7 +174,6 @@
 
 /* Opens the section header editor; sits left with the row actions at right. */
 .re-add-section-header-btn {
-  font-size: 0.85em;
   margin-right: auto;
 }
 
@@ -209,17 +209,22 @@
    Section Items
    ============================================================ */
 
-/* Every row anchors its floating ✎/✕ actions and reserves the corner they sit
-   in, so no row content renders underneath them. */
+/* Every row anchors its floating "✕" and reserves the corner it sits in, so no
+   row content renders underneath it. The "✎" leads the row inline instead.
+   `min-height` reserves exactly the space the floated "✕" occupies — its own
+   square plus the offset above and below it — so a row shorter than the button
+   (an empty header, an open ingredient editor) grows to fit rather than letting
+   the button spill over the row below. */
 .re-item {
   position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs) var(--spacing-sm);
   padding: var(--spacing-xs) var(--spacing-sm);
-  padding-right: 5em;
+  padding-right: calc(var(--row-action-size) + 2 * var(--spacing-sm));
   border: var(--border-width) solid var(--color-border);
   align-items: center;
+  min-height: calc(var(--row-action-size) + 2 * var(--spacing-xs) + 2 * var(--border-width));
 }
 
 /* A row added in this editing session and not yet accepted: dashed until its
@@ -238,13 +243,6 @@
 .re-item-amount {
   font-family: var(--font-body);
   font-size: 0.9em;
-}
-
-/* An ingredient row is a single line, so its ↩/✔︎ stay on that line rather
-   than claiming a row of their own the way the taller editors' do. */
-.re-item--ingredients .re-item-editor-actions {
-  width: auto;
-  margin-left: auto;
 }
 
 .re-item-header {
@@ -311,11 +309,6 @@
   white-space: nowrap;
 }
 
-.re-container-fields .re-item-editor-actions {
-  width: auto;
-  margin-left: auto;
-}
-
 .re-container-add-name-btn {
   font-size: 0.85em;
   padding: 2px var(--spacing-xs);
@@ -325,10 +318,6 @@
   .re-container-fields {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .re-container-fields .re-item-editor-actions {
-    margin-left: 0;
   }
 
   .re-container-descriptor {
@@ -425,12 +414,6 @@
 /* Collapsed instruction: a single summary line; reopen the editor from "✎". */
 .re-instruction-summary {
   flex: 1;
-}
-
-/* Taller editors give their ↩/✔︎ a row of their own, aligned right. */
-.re-item-editor-actions {
-  width: 100%;
-  justify-content: flex-end;
 }
 
 .re-instruction-duration {

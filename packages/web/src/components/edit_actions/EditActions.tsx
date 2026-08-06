@@ -8,25 +8,17 @@ export type EditActionsProps = ReadonlyDeep<{
   acceptLabel: string;
   onCancel: () => void;
   onAccept: () => void;
-  /** Extra class on the wrapper, for per-row layout overrides. */
-  className?: string | undefined;
 }>;
 
 /**
  * The "↩" (cancel changes) / "✔︎" (accept changes) pair every inline editor
  * closes with, in that left-to-right order. Shared so the glyphs, order, and
- * markup cannot drift between editors; the wrapper stacks its buttons wherever
- * a row runs out of horizontal space.
+ * markup cannot drift between editors. It follows the fields it commits inline,
+ * and wraps to the next line as one unit when the row runs out of width.
  */
-export function EditActions({
-  cancelLabel,
-  acceptLabel,
-  onCancel,
-  onAccept,
-  className,
-}: EditActionsProps) {
+export function EditActions({ cancelLabel, acceptLabel, onCancel, onAccept }: EditActionsProps) {
   return (
-    <div className={`edit-actions${className !== undefined ? ` ${className}` : ""}`}>
+    <div className="edit-actions">
       <button
         type="button"
         className="edit-actions-cancel"

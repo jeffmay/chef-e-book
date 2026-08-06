@@ -36,6 +36,13 @@
 
   --nav-height: 3em;
 
+  /* Square tap target for the per-row "✎"/"✕" buttons. Sized in `rem` — which
+     tracks the root `clamp(14px, 2vw, 18px)`, so it still scales with the
+     viewport — rather than `em`, so the box stays the same square whatever font
+     size the row it sits in uses. Rows reserve this much vertical space, so the
+     floating "✕" can never spill past the row it belongs to. */
+  --row-action-size: 2rem;
+
   /* Blank space reserved at the bottom of every page for the PineNote
      on-screen keyboard (468px) plus breathing room. */
   --keyboard-clearance: 468px;

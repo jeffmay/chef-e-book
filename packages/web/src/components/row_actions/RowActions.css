@@ -1,21 +1,34 @@
-/* "✎" / "✕" pair, floated into the upper-right corner of the row that owns it.
-   The row reserves the space with its own `padding-right` so nothing renders
-   underneath. */
+/* Shared by EditButton and RemoveButton: the two are one visual pair split
+   across the row (✎ leading the text, ✕ floated into the upper-right corner),
+   so they are styled from one file rather than drifting apart in two. */
 
-.row-actions {
-  position: absolute;
-  top: var(--spacing-xs);
-  right: var(--spacing-xs);
-  display: flex;
-  gap: var(--spacing-xs);
-}
-
-.row-actions-edit,
-.row-actions-remove {
-  font-size: 0.85em;
-  padding: 0 var(--spacing-xs);
+/* Sized for a stylus rather than a mouse: a fixed `--row-action-size` square
+   with the glyph scaled up to fill it. Both buttons are the same square, so
+   they line up across the row. */
+.row-action {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--row-action-size);
+  height: var(--row-action-size);
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-fg);
   cursor: pointer;
+}
+
+/* Sits at the top of a row that grew taller than one line (an open editor),
+   level with the floated "✕" rather than centred against the whole row. */
+.row-action--edit {
+  align-self: flex-start;
+}
+
+.row-action--remove {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
 }
