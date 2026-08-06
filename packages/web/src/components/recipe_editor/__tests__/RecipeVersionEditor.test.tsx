@@ -333,9 +333,21 @@ describe("InstructionRow — accept and cancel", () => {
     expect(lastSections(onSectionsChange)?.[0]?.contents).toHaveLength(1);
   });
 
+  it("collapses an existing blank instruction instead of opening its editor", async () => {
+    const blank = { kind: "instruction", id: MIX_ID, instruction: "" } as const;
+    setup(sectionWith([blank]));
+    await flushAsyncEffects();
+
+    expect(screen.queryByRole("textbox", { name: "Action" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Edit instruction: instruction" }),
+    ).toBeInTheDocument();
+  });
+
   it("lets an existing blank instruction be cancelled without removing it", async () => {
     const blank = { kind: "instruction", id: MIX_ID, instruction: "" } as const;
     const { onSectionsChange } = setup(sectionWith([blank]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: instruction" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "Rest");
     await userEvent.click(screen.getByRole("button", { name: "Cancel changes to instruction" }));
 
@@ -759,15 +771,45 @@ describe("TextBlockRow", () => {
     });
   });
 
-  it("restores the text the block held when its editor opened on cancel", async () => {
+  it("does not commit edits until they are accepted", async () => {
+    const { onSectionsChange } = setup(sectionWith([TEXT_BLOCK]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit text block" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Text block content" }), " in a bowl");
+
+    expect(onSectionsChange).not.toHaveBeenCalled();
+  });
+
+  it("reverts the draft and closes the editor on cancel", async () => {
     const { onSectionsChange } = setup(sectionWith([TEXT_BLOCK]));
     await userEvent.click(screen.getByRole("button", { name: "Edit text block" }));
     await userEvent.type(screen.getByRole("textbox", { name: "Text block content" }), " in a bowl");
     await userEvent.click(screen.getByRole("button", { name: "Cancel changes to text" }));
 
-    expect(lastSections(onSectionsChange)?.[0]?.contents[0]).toMatchObject({
-      text: "Rest overnight",
-    });
+    expect(screen.getByRole("group", { name: "Text block" })).toHaveTextContent("Rest overnight");
+    expect(onSectionsChange).not.toHaveBeenCalled();
+  });
+
+  it("re-opens the editor with the reverted text after a cancel", async () => {
+    setup(sectionWith([TEXT_BLOCK]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit text block" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Text block content" }), " in a bowl");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel changes to text" }));
+    await userEvent.click(screen.getByRole("button", { name: "Edit text block" }));
+
+    expect(screen.getByRole("textbox", { name: "Text block content" })).toHaveValue(
+      "Rest overnight",
+    );
+  });
+
+  it("collapses a block that was accepted while still empty", async () => {
+    const empty = { kind: "text_block", id: fixedId(SectionItemId, "t-1"), text: "" } as const;
+    setup(sectionWith([empty]));
+    await flushAsyncEffects();
+
+    expect(screen.queryByRole("textbox", { name: "Text block content" })).not.toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Text block" })).toHaveTextContent(
+      "Untitled text block",
+    );
   });
 
   it("removes a newly added block when its first edit is cancelled", async () => {

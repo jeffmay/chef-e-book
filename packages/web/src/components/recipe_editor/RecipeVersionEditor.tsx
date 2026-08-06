@@ -33,7 +33,8 @@ import { EditActions } from "../edit_actions/EditActions.tsx";
 import { InfoTip } from "../info_tip/InfoTip.tsx";
 import { IngredientSelector } from "../ingredients_table/IngredientSelector.tsx";
 import { MeasurementEditor } from "../measurement/MeasurementEditor.tsx";
-import { RowActions } from "../row_actions/RowActions.tsx";
+import { EditButton } from "../row_actions/EditButton.tsx";
+import { RemoveButton } from "../row_actions/RemoveButton.tsx";
 import { buildInstructionIngredientTree } from "./buildInstructionIngredientTree.ts";
 import { COMMON_CONTAINERS } from "./containers.ts";
 import {
@@ -41,10 +42,9 @@ import {
   containerSummaryDetails,
   instructionSummaryDetails,
   instructionSummaryName,
-  isBlankContainer,
-  isBlankInstruction,
   mergeContainerDraft,
   mergeInstructionDraft,
+  mergeTextBlockDraft,
   revertIngredientItem,
 } from "./drafts.ts";
 import { COMMON_EQUIPMENT } from "./equipment.ts";
@@ -336,7 +336,6 @@ function IngredientItemRow({
             />
           )}
           <EditActions
-            className="re-item-editor-actions"
             cancelLabel="Cancel changes to ingredient"
             acceptLabel="Accept changes to ingredient"
             onCancel={handleCancel}
@@ -345,6 +344,7 @@ function IngredientItemRow({
         </>
       ) : (
         <>
+          <EditButton label={`Edit ingredient: ${ingredientName}`} onClick={openEditor} />
           <span className="re-item-label">{ingredientName}</span>
           {amount !== undefined && (
             <span className="re-item-amount">{formatAmount(amount.value, amount.unit)}</span>
@@ -354,14 +354,7 @@ function IngredientItemRow({
       {skipped === true ? (
         <SkippedRowActions itemName={ingredientName} onRestore={onRestore} onDismiss={onDismiss} />
       ) : (
-        <RowActions
-          removeLabel={`Remove ingredient ${ingredientName}`}
-          onRemove={onRemove}
-          {...(!isEditingIngredient && {
-            editLabel: `Edit ingredient: ${ingredientName}`,
-            onEdit: openEditor,
-          })}
-        />
+        <RemoveButton label={`Remove ingredient ${ingredientName}`} onClick={onRemove} />
       )}
     </div>
   );
@@ -470,7 +463,10 @@ function ContainerItemRow({
   onDismissItem,
 }: ContainerItemRowProps) {
   const [showingNewIngredient, setShowingNewIngredient] = useState(false);
-  const [editing, setEditing] = useState(() => isBlankContainer(item));
+  // A row added in this editing session opens straight into its editor. Keyed
+  // off `isNew` rather than off the item being blank, so a row that was
+  // accepted while still blank collapses to its summary like any other.
+  const [editing, setEditing] = useState(isNew);
   const [draft, setDraft] = useState(item);
   const [accepted, setAccepted] = useState(false);
   // The name is optional: it stays hidden behind a "+ Name" button until the
@@ -546,14 +542,6 @@ function ContainerItemRow({
       role="group"
       aria-label={`Container: ${containerName} — ${item.descriptor}`}
     >
-      <RowActions
-        removeLabel={`Remove container ${containerName}`}
-        onRemove={onRemove}
-        {...(!editing && {
-          editLabel: `Edit container: ${containerName}`,
-          onEdit: openEditor,
-        })}
-      />
       {editing ? (
         <>
           {/* No aria-labels: the wrapping <label>s are the accessible names, so
@@ -596,7 +584,6 @@ function ContainerItemRow({
               </button>
             )}
             <EditActions
-              className="re-item-editor-actions"
               cancelLabel={
                 discardRemovesItem ? "Discard new container" : "Cancel changes to container"
               }
@@ -623,6 +610,7 @@ function ContainerItemRow({
         </>
       ) : (
         <div className="re-item-header">
+          <EditButton label={`Edit container: ${containerName}`} onClick={openEditor} />
           <span className="re-container-summary">
             <strong className="re-container-summary-name">{containerName}</strong>
             {containerDetails !== "" && (
@@ -631,6 +619,9 @@ function ContainerItemRow({
           </span>
         </div>
       )}
+      {/* After the header (so it follows the header's "✎" for a keyboard) but
+          before the nested ingredient rows, which have their own actions. */}
+      <RemoveButton label={`Remove container ${containerName}`} onClick={onRemove} />
       <div className="re-container-contents">
         {item.contents.map((content, i) => (
           <IngredientItemRow
@@ -697,7 +688,10 @@ function InstructionRow({
   onRestore,
   onDismiss,
 }: InstructionRowProps) {
-  const [editing, setEditing] = useState(() => isBlankInstruction(item));
+  // A row added in this editing session opens straight into its editor. Keyed
+  // off `isNew` rather than off the item being blank, so a row that was
+  // accepted while still blank collapses to its summary like any other.
+  const [editing, setEditing] = useState(isNew);
   const [draft, setDraft] = useState(item);
   const [accepted, setAccepted] = useState(false);
   const snapshotAtOpenRef = useRef(item);
@@ -755,18 +749,11 @@ function InstructionRow({
   const instructionName = item.instruction || "instruction";
   const instructionDetails = instructionSummaryDetails(item, allIngredients);
 
-  function rowActions(showEdit: boolean) {
+  function removeControl() {
     return skipped === true ? (
       <SkippedRowActions itemName={instructionName} onRestore={onRestore} onDismiss={onDismiss} />
     ) : (
-      <RowActions
-        removeLabel="Remove instruction"
-        onRemove={onRemove}
-        {...(showEdit && {
-          editLabel: `Edit instruction: ${instructionName}`,
-          onEdit: openEditor,
-        })}
-      />
+      <RemoveButton label="Remove instruction" onClick={onRemove} />
     );
   }
 
@@ -783,7 +770,8 @@ function InstructionRow({
         role="group"
         aria-label={`Instruction: ${item.instruction || "new"}`}
       >
-        {rowActions(true)}
+        <EditButton label={`Edit instruction: ${instructionName}`} onClick={openEditor} />
+        {removeControl()}
         <span className="re-instruction-summary">
           <strong className="re-instruction-summary-name">{instructionSummaryName(item)}</strong>
           {instructionDetails !== "" && (
@@ -800,7 +788,7 @@ function InstructionRow({
       role="group"
       aria-label={`Instruction: ${item.instruction || "new"}`}
     >
-      {rowActions(false)}
+      {removeControl()}
 
       <div className="re-item-header">
         {/* No aria-label: the wrapping <label> is the accessible name, so it
@@ -882,7 +870,6 @@ function InstructionRow({
       </div>
 
       <EditActions
-        className="re-item-editor-actions"
         cancelLabel={
           discardRemovesItem ? "Discard new instruction" : "Cancel changes to instruction"
         }
@@ -901,25 +888,50 @@ function InstructionRow({
 type TextBlockRowProps = RecipeSectionItemRowProps<TextBlock> & NewRowProps;
 
 /**
- * Like the ingredient row, a text block writes through as it is typed, so its
- * "↩" restores the text the block held when its editor opened. A block added in
- * this editing session has nothing to restore until it has been accepted once,
- * so cancelling it drops the row instead.
+ * Like the instruction and container rows, a text block holds its edits in a
+ * local `draft` until "✔︎", so the dashed border on an unaccepted row means
+ * what it says: nothing has reached the section tree yet. "↩" reverts, or
+ * removes the row when it was added during this editing session and never
+ * accepted.
  */
 function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowProps) {
-  const [editing, setEditing] = useState(() => item.text === "");
+  // A row added in this editing session opens straight into its editor. Keyed
+  // off `isNew` rather than off the text being empty, so a block that was
+  // accepted while still empty collapses to its summary like any other.
+  const [editing, setEditing] = useState(isNew);
+  const [draft, setDraft] = useState(item);
   const [accepted, setAccepted] = useState(false);
-  const textAtOpenRef = useRef(item.text);
+  const snapshotAtOpenRef = useRef(item);
+
   const discardRemovesItem = isNew && !accepted;
+  const pending = editing && (discardRemovesItem || !isEqual(draft, snapshotAtOpenRef.current));
+
+  function closeEditor() {
+    setAccepted(true);
+    setEditing(false);
+  }
+
+  function revertEditor() {
+    setDraft(item);
+    setEditing(false);
+  }
+
+  usePendingEdit(item.id, pending, {
+    buildAccepted: () => mergeTextBlockDraft(snapshotAtOpenRef.current, draft, item),
+    discardRemovesItem,
+    revert: revertEditor,
+    close: closeEditor,
+  });
 
   function openEditor() {
-    textAtOpenRef.current = item.text;
+    snapshotAtOpenRef.current = item;
+    setDraft(item);
     setEditing(true);
   }
 
   function handleAccept() {
-    setAccepted(true);
-    setEditing(false);
+    onChange(mergeTextBlockDraft(snapshotAtOpenRef.current, draft, item));
+    closeEditor();
   }
 
   function handleCancel() {
@@ -927,8 +939,7 @@ function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowP
       onRemove();
       return;
     }
-    onChange({ ...item, text: textAtOpenRef.current });
-    setEditing(false);
+    revertEditor();
   }
 
   return (
@@ -937,30 +948,29 @@ function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowP
       role="group"
       aria-label="Text block"
     >
-      <RowActions
-        removeLabel="Remove text block"
-        onRemove={onRemove}
-        {...(!editing && { editLabel: "Edit text block", onEdit: openEditor })}
-      />
       {editing ? (
         <>
           <textarea
             className="re-text-block-input"
-            value={item.text}
-            onChange={(e) => onChange({ ...item, text: e.target.value })}
+            value={draft.text}
+            onChange={(e) => setDraft({ ...draft, text: e.target.value })}
             aria-label="Text block content"
             rows={3}
           />
           <EditActions
-            className="re-item-editor-actions"
             cancelLabel={discardRemovesItem ? "Discard new text block" : "Cancel changes to text"}
             acceptLabel="Accept changes to text"
             onCancel={handleCancel}
             onAccept={handleAccept}
           />
+          <RemoveButton label="Remove text block" onClick={onRemove} />
         </>
       ) : (
-        <p className="re-text-block-summary">{item.text || "Untitled text block"}</p>
+        <>
+          <EditButton label="Edit text block" onClick={openEditor} />
+          <RemoveButton label="Remove text block" onClick={onRemove} />
+          <p className="re-text-block-summary">{item.text || "Untitled text block"}</p>
+        </>
       )}
     </div>
   );
@@ -1092,7 +1102,13 @@ function SectionEditor({
             />
           </>
         ) : section.header !== undefined ? (
-          <Heading className="re-section-heading">{section.header}</Heading>
+          <>
+            <EditButton
+              label={`Edit section header: ${section.header}`}
+              onClick={openHeaderEditor}
+            />
+            <Heading className="re-section-heading">{section.header}</Heading>
+          </>
         ) : (
           <button
             type="button"
@@ -1103,15 +1119,7 @@ function SectionEditor({
             + Add Section Header
           </button>
         )}
-        <RowActions
-          removeLabel="Remove section"
-          onRemove={onRemove}
-          {...(!editingHeader &&
-            section.header !== undefined && {
-              editLabel: `Edit section header: ${section.header}`,
-              onEdit: openHeaderEditor,
-            })}
-        />
+        <RemoveButton label="Remove section" onClick={onRemove} />
       </div>
 
       <div className="re-section-contents">

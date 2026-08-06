@@ -47,18 +47,11 @@ describe("EditActions", () => {
     expect(onAccept).not.toHaveBeenCalled();
   });
 
-  it("appends a caller's class to the wrapper", () => {
-    render(
-      <EditActions
-        className="re-item-editor-actions"
-        cancelLabel="Cancel"
-        acceptLabel="Accept"
-        onCancel={vi.fn()}
-        onAccept={vi.fn()}
-      />,
-    );
+  it("keeps both buttons in one wrapper, so they wrap together", () => {
+    setup();
 
-    const wrapper = screen.getByRole("button", { name: "Accept" }).parentElement;
-    expect(wrapper).toHaveClass("edit-actions", "re-item-editor-actions");
+    const wrapper = screen.getByRole("button", { name: "Accept changes to thing" }).parentElement;
+    expect(wrapper).toHaveClass("edit-actions");
+    expect(wrapper?.children).toHaveLength(2);
   });
 });
