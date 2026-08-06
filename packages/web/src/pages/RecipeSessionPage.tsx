@@ -17,6 +17,7 @@ import {
   DEFAULT_VERSION_DESCRIPTION,
   MeasurementUnit,
   RecipeVersionId,
+  applySectionItemUpdates,
   collectIngredientItems,
   collectInstructions,
   computeItemWeights,
@@ -37,6 +38,11 @@ import type { ReadonlyDeep } from "type-fest";
 import { DurationEditor } from "../components/duration/DurationEditor.tsx";
 import { humanizeSeconds } from "../components/duration/humanizeSeconds.ts";
 import { COMMON_CONTAINERS } from "../components/recipe_editor/containers.ts";
+import {
+  type PendingEditResolutions,
+  usePendingSectionEdits,
+} from "../components/recipe_editor/pendingEdits.ts";
+import { PendingEditsDialog } from "../components/recipe_editor/PendingEditsDialog.tsx";
 import { RecipeVersionEditor } from "../components/recipe_editor/RecipeVersionEditor.tsx";
 import { useBookSettings } from "../hooks/useBookSettingsStore.ts";
 import { useIngredientStore } from "../hooks/useIngredientStore.ts";
@@ -331,6 +337,11 @@ type SessionSummaryViewProps = {
   readonly version: RecipeVersion;
 };
 
+/** Which of the summary's two saves the pending-edits prompt is standing in for. */
+type SaveTarget = "version" | "recipe";
+
+type PendingSave = ReadonlyDeep<{ target: SaveTarget; count: number }>;
+
 function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProps) {
   const navigate = useNavigate();
   const { save, create } = useRecipeStore();
@@ -361,6 +372,11 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
   );
   const [versionSummary, setVersionSummary] = useState("");
   const [newRecipeName, setNewRecipeName] = useState(recipe.title);
+  // Rows hold their edits in a local draft until the per-row "✔︎" is pressed;
+  // saving with a draft still open asks what to do with it rather than dropping
+  // it. Which save was asked for is remembered so the prompt can run it after.
+  const pendingEdits = usePendingSectionEdits();
+  const [pendingSave, setPendingSave] = useState<PendingSave | null>(null);
 
   // Skipped items are dropped from the saved version unless restored.
   const finalSections = useMemo(
@@ -398,42 +414,82 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
     restoreItem(id);
   }
 
-  function buildVersion(recipeId: RecipeId, description: string): ReadonlyDeep<RecipeVersion> {
+  function buildVersion(
+    recipeId: RecipeId,
+    description: string,
+    savedSections: ReadonlyDeep<Section[]>,
+  ): ReadonlyDeep<RecipeVersion> {
+    // Skipped items are dropped from the saved version unless restored.
+    const kept = removeSectionItemsById(savedSections, skippedIds);
     return {
       id: randomId(RecipeVersionId),
       recipe_id: recipeId,
       description,
-      ingredients: computeTopIngredients(finalSections),
-      sections: finalSections,
+      ingredients: computeTopIngredients(kept),
+      sections: kept,
       estimated_time_seconds: effectiveEstimatedSeconds,
       seconds_per_ingredient: secondsPerIngredient,
       created_at: Date.now(),
     };
   }
 
-  function handleCreateVersion() {
+  function createVersion(savedSections: ReadonlyDeep<Section[]>) {
     save(recipe.id, {
       title: recipe.title,
       ...(recipe.subtitle !== undefined && { subtitle: recipe.subtitle }),
       ...(recipe.source_url !== undefined && { source_url: recipe.source_url }),
       ...(recipe.parent_folder_id !== undefined && { parent_folder_id: recipe.parent_folder_id }),
-      version: buildVersion(recipe.id, versionSummary.trim()),
+      version: buildVersion(recipe.id, versionSummary.trim(), savedSections),
       create_new_version: true,
     });
     navigate(`/recipes/${recipe.id}`);
   }
 
-  function handleCreateRecipe() {
+  function createRecipe(savedSections: ReadonlyDeep<Section[]>) {
     const created = create({
       title: newRecipeName.trim(),
       ...(recipe.parent_folder_id !== undefined && { parent_folder_id: recipe.parent_folder_id }),
     });
     save(created.id, {
       title: created.title,
-      version: buildVersion(created.id, DEFAULT_VERSION_DESCRIPTION),
+      version: buildVersion(created.id, DEFAULT_VERSION_DESCRIPTION, savedSections),
       create_new_version: false,
     });
     navigate(`/recipes/${created.id}`);
+  }
+
+  function runSave(target: SaveTarget, savedSections: ReadonlyDeep<Section[]>) {
+    if (target === "version") {
+      createVersion(savedSections);
+    } else {
+      createRecipe(savedSections);
+    }
+  }
+
+  /**
+   * Saves, asking first when any row is still open with an uncommitted draft —
+   * without this the summary would drop those edits silently, since it owns the
+   * save just as the recipe editor page does.
+   */
+  function requestSave(target: SaveTarget) {
+    const count = pendingEdits.pendingCount();
+    if (count > 0) {
+      setPendingSave({ target, count });
+      return;
+    }
+    runSave(target, sections);
+  }
+
+  /** Applies every open row's resolution in one pass, then runs the save. */
+  function saveResolved(target: SaveTarget, resolutions: ReadonlyDeep<PendingEditResolutions>) {
+    const updated = applySectionItemUpdates(sections, resolutions.updates);
+    const resolved =
+      resolutions.removals.size > 0
+        ? removeSectionItemsById(updated, resolutions.removals)
+        : updated;
+    setSections(resolved);
+    setPendingSave(null);
+    runSave(target, resolved);
   }
 
   return (
@@ -453,6 +509,7 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
       <RecipeVersionEditor
         sections={sections}
         onChange={setSections}
+        pendingEdits={pendingEdits}
         skippedIds={skippedIds}
         onRestoreItem={restoreItem}
         onDismissItem={dismissItem}
@@ -513,7 +570,7 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
             <button
               type="button"
               className="rs-summary-btn"
-              onClick={handleCreateVersion}
+              onClick={() => requestSave("version")}
               disabled={versionSummaryError !== null}
             >
               ✔︎ Create a new version
@@ -543,7 +600,7 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
             <button
               type="button"
               className="rs-summary-btn"
-              onClick={handleCreateRecipe}
+              onClick={() => requestSave("recipe")}
               disabled={newRecipeNameError !== null}
             >
               ✔︎ Create a new recipe
@@ -558,6 +615,15 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
           </AccordionTab>
         </Accordion>
       </section>
+
+      {pendingSave !== null && (
+        <PendingEditsDialog
+          count={pendingSave.count}
+          onAcceptAll={() => saveResolved(pendingSave.target, pendingEdits.acceptAll())}
+          onDiscardAll={() => saveResolved(pendingSave.target, pendingEdits.discardAll())}
+          onCancel={() => setPendingSave(null)}
+        />
+      )}
     </main>
   );
 }
