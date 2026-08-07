@@ -338,15 +338,15 @@ describe("LabelTable — delete confirmation dialog", () => {
   it("closes dialog without deleting when clicking the overlay background", async () => {
     await openDeleteDialog([]);
     // fireEvent fires directly on the overlay element (bypasses position-based dispatch),
-    // exercising the overlay's own onClick={handleDeleteCancel} handler.
-    fireEvent.click(screen.getByRole("dialog", { name: "Confirm delete labels" }));
+    // exercising the Modal's own backdrop click handler.
+    fireEvent.click(screen.getByTestId("modal-overlay"));
     expect(screen.queryByRole("dialog", { name: "Confirm delete labels" })).not.toBeInTheDocument();
     expect(onDeleteFn).not.toHaveBeenCalled();
   });
 
   it("does not close the dialog when clicking inside the dialog card", async () => {
     await openDeleteDialog([]);
-    await userEvent.click(screen.getByTestId("lt-delete-dialog-card"));
+    await userEvent.click(screen.getByRole("dialog", { name: "Confirm delete labels" }));
     expect(screen.getByRole("dialog", { name: "Confirm delete labels" })).toBeInTheDocument();
   });
 

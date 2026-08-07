@@ -1,7 +1,7 @@
 import type { IngredientId } from "@recipe-book/shared";
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
-import { useMemo, type KeyboardEvent } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import "../../styles/treeSelect.css";
 import {
@@ -30,6 +30,7 @@ export function InstructionIngredientSelector({
   onChange,
   ariaLabel = "Instruction ingredients",
 }: InstructionIngredientSelectorProps) {
+  const [panelOpen, setPanelOpen] = useState(false);
   const keyToIngredientId = useMemo(() => collectKeyToIngredientId(nodes), [nodes]);
   const selectionKeys = useMemo(
     () => ingredientIdsToSelection(nodes, selectedIds),
@@ -42,6 +43,11 @@ export function InstructionIngredientSelector({
 
   function handleKeyDown(e: KeyboardEvent<HTMLSpanElement>): void {
     if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      e.stopPropagation();
+    }
+    // While the panel is open, Escape closes it and goes no further: an
+    // enclosing AcceptOrCancelEditor must not also cancel the row.
+    if (e.key === "Escape" && panelOpen) {
       e.stopPropagation();
     }
   }
@@ -62,6 +68,8 @@ export function InstructionIngredientSelector({
         panelClassName="tree-select-panel"
         ariaLabel={ariaLabel}
         appendTo={document.body}
+        onShow={() => setPanelOpen(true)}
+        onHide={() => setPanelOpen(false)}
       />
     </span>
   );

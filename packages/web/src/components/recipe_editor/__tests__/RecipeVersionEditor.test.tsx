@@ -1038,3 +1038,85 @@ describe("pending row edits", () => {
     expect(screen.getByRole("textbox", { name: "Action" })).toHaveValue("Mixing");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Keyboard — Escape cancels the closest editor, Enter accepts it
+// ---------------------------------------------------------------------------
+
+describe("keyboard", () => {
+  it("cancels an instruction row on Escape", async () => {
+    const { onSectionsChange } = setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing{Escape}");
+
+    expect(screen.getByRole("button", { name: "Edit instruction: Mix" })).toBeInTheDocument();
+    expect(onSectionsChange).not.toHaveBeenCalled();
+  });
+
+  it("accepts an instruction row on Enter", async () => {
+    const { onSectionsChange } = setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Action" }), "ing{Enter}");
+
+    expect(screen.getByRole("button", { name: "Edit instruction: Mixing" })).toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]?.contents[0]).toMatchObject({
+      instruction: "Mixing",
+    });
+  });
+
+  it("cancels a section header on Escape", async () => {
+    const { onSectionsChange } = setup(sectionWith([]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit section header: Main" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Section header" }), " Dish{Escape}");
+
+    expect(screen.getByRole("button", { name: "Edit section header: Main" })).toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]?.header).toBe("Main");
+  });
+
+  it("accepts a section header on Enter", async () => {
+    const { onSectionsChange } = setup(sectionWith([]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit section header: Main" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Section header" }), " Dish{Enter}");
+
+    expect(
+      screen.getByRole("button", { name: "Edit section header: Main Dish" }),
+    ).toBeInTheDocument();
+    expect(lastSections(onSectionsChange)?.[0]?.header).toBe("Main Dish");
+  });
+
+  it("takes Enter as a newline in a text block, not as accept", async () => {
+    setup(sectionWith([TEXT_BLOCK]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit text block" }));
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Text block content" }),
+      "{Enter}soon",
+    );
+
+    expect(screen.getByRole("textbox", { name: "Text block content" })).toHaveValue(
+      "Rest overnight\nsoon",
+    );
+  });
+
+  it("cancels a text block on Escape", async () => {
+    const { onSectionsChange } = setup(sectionWith([TEXT_BLOCK]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit text block" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Text block content" }), "!{Escape}");
+
+    expect(screen.getByRole("button", { name: "Edit text block" })).toBeInTheDocument();
+    expect(onSectionsChange).not.toHaveBeenCalled();
+  });
+
+  it("closes only the nested measurement editor on Escape, leaving the row open", async () => {
+    setup(sectionWith([BUTTER_ITEM]));
+    await openButterEditor();
+    await userEvent.click(screen.getByRole("button", { name: "Edit measurement" }));
+    await userEvent.keyboard("{Escape}");
+
+    // The measurement editor collapsed back to its "±" toggle...
+    expect(screen.getByRole("button", { name: "Edit measurement" })).toBeInTheDocument();
+    // ...but the ingredient row it sits in is still being edited.
+    expect(
+      screen.getByRole("button", { name: "Accept changes to ingredient" }),
+    ).toBeInTheDocument();
+  });
+});

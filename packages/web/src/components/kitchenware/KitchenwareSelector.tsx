@@ -1,8 +1,8 @@
 import { type Container, type ContainerId, type KitchenwareLabelId } from "@recipe-book/shared";
 import { useState } from "react";
 import CreatableSelect from "react-select/creatable";
+import { Modal } from "../modal/Modal.tsx";
 import { KitchenwareEditor } from "./KitchenwareEditor.tsx";
-import "./KitchenwareSelector.css";
 import type { ReadonlyDeep } from "type-fest";
 
 type SelectOption = {
@@ -77,37 +77,33 @@ export function KitchenwareSelector({
       />
 
       {newContainer !== null && (
-        <div
-          className="ks-modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label="New container"
+        <Modal
+          title={`New Container: ${newContainer.container.name}`}
+          ariaLabel="New container"
+          buttons={{
+            create: { text: "Create", dangerous: false, onClick: handleSave },
+            cancel: { text: "Cancel", dangerous: false, onClick: handleCancel },
+          }}
+          onEnterClickId="create"
+          onClose={() => {
+            handleCancel();
+            return true;
+          }}
         >
-          <div className="ks-modal">
-            <h3 className="ks-modal-title">New Container: {newContainer.container.name}</h3>
-            <KitchenwareEditor
-              name={newContainer.container.name}
-              labelIds={newContainer.labelIds}
-              parentId={newContainer.parentId}
-              allLabelNames={allLabelNames}
-              containers={containers.filter((c) => c.id !== newContainer.container.id)}
-              onChangeLabels={(ids) =>
-                setNewContainer((prev) => (prev ? { ...prev, labelIds: ids } : prev))
-              }
-              onChangeParent={(id) =>
-                setNewContainer((prev) => (prev ? { ...prev, parentId: id } : prev))
-              }
-            />
-            <div className="ks-modal-actions">
-              <button type="button" className="ks-modal-create" onClick={handleSave}>
-                Create
-              </button>
-              <button type="button" className="ks-modal-cancel" onClick={handleCancel}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+          <KitchenwareEditor
+            name={newContainer.container.name}
+            labelIds={newContainer.labelIds}
+            parentId={newContainer.parentId}
+            allLabelNames={allLabelNames}
+            containers={containers.filter((c) => c.id !== newContainer.container.id)}
+            onChangeLabels={(ids) =>
+              setNewContainer((prev) => (prev ? { ...prev, labelIds: ids } : prev))
+            }
+            onChangeParent={(id) =>
+              setNewContainer((prev) => (prev ? { ...prev, parentId: id } : prev))
+            }
+          />
+        </Modal>
       )}
     </>
   );
