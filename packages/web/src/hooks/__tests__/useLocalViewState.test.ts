@@ -2,7 +2,7 @@ import { Companion } from "@recipe-book/shared";
 import { act, renderHook } from "@testing-library/react";
 import { type } from "arktype";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { loadLocalViewState, useLocalViewState } from "../useLocalViewState.ts";
+import { useLocalViewState } from "../useLocalViewState.ts";
 
 const TEST_KEY = "chefe_test_view";
 
@@ -24,52 +24,6 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-describe("loadLocalViewState", () => {
-  it("returns null when nothing is stored", () => {
-    expect(loadLocalViewState(TEST_KEY, TestViewState)).toBeNull();
-  });
-
-  it("returns the stored state when it matches the schema", () => {
-    localStorage.setItem(TEST_KEY, '{"open":false,"collapsed_ids":["abc"]}');
-    expect(loadLocalViewState(TEST_KEY, TestViewState)).toEqual({
-      open: false,
-      collapsed_ids: ["abc"],
-    });
-  });
-
-  it("returns null and warns when the stored state fails validation", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    localStorage.setItem(TEST_KEY, '{"open":"yes","collapsed_ids":[]}');
-
-    expect(loadLocalViewState(TEST_KEY, TestViewState)).toBeNull();
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("TestViewState"));
-    warn.mockRestore();
-  });
-
-  it("returns null and reports unparsable JSON as such, not as a schema failure", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    localStorage.setItem(TEST_KEY, "{not json");
-
-    expect(loadLocalViewState(TEST_KEY, TestViewState)).toBeNull();
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("Invalid JSON"),
-      expect.any(SyntaxError),
-    );
-    warn.mockRestore();
-  });
-
-  it("returns null without throwing when storage itself is unavailable", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
-      throw new DOMException("blocked", "SecurityError");
-    });
-
-    expect(loadLocalViewState(TEST_KEY, TestViewState)).toBeNull();
-    vi.restoreAllMocks();
-    warn.mockRestore();
-  });
-});
-
 describe("useLocalViewState", () => {
   it("starts from the default when nothing is stored", () => {
     const { result } = renderHook(() => useLocalViewState(TEST_KEY, TestViewState, createDefault));
@@ -80,6 +34,18 @@ describe("useLocalViewState", () => {
     localStorage.setItem(TEST_KEY, '{"open":false,"collapsed_ids":["xyz"]}');
     const { result } = renderHook(() => useLocalViewState(TEST_KEY, TestViewState, createDefault));
     expect(result.current.viewState).toEqual({ open: false, collapsed_ids: ["xyz"] });
+  });
+
+  // Storage-level failures are covered in storage/__tests__/safeLocalStorage.test.ts; this only
+  // asserts that the hook falls back to its default rather than surfacing them.
+  it("falls back to the default when the stored state is unusable", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    localStorage.setItem(TEST_KEY, '{"open":"yes","collapsed_ids":[]}');
+
+    const { result } = renderHook(() => useLocalViewState(TEST_KEY, TestViewState, createDefault));
+
+    expect(result.current.viewState).toEqual({ open: true, collapsed_ids: [] });
+    warn.mockRestore();
   });
 
   it("writes updates through to localStorage", () => {

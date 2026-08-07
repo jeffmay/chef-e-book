@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useActiveBookMeta, ACTIVE_BOOK_KEY } from "../useActiveBookMetaStore.ts";
 import { fixedId, RecipeBookId } from "@recipe-book/shared";
@@ -18,6 +18,26 @@ describe("useBook", () => {
     localStorage.setItem(ACTIVE_BOOK_KEY, `{"id":"${bookId}","name":"Alice"}`);
     const { result } = renderHook(() => useActiveBookMeta());
     expect(result.current.activeBookMeta?.name).toBe("Alice");
+  });
+
+  it("returns null instead of throwing when the stored book is not valid JSON", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    localStorage.setItem(ACTIVE_BOOK_KEY, "{truncated");
+
+    const { result } = renderHook(() => useActiveBookMeta());
+
+    expect(result.current.activeBookMeta).toBeNull();
+    warn.mockRestore();
+  });
+
+  it("returns null when the stored book no longer matches the schema", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    localStorage.setItem(ACTIVE_BOOK_KEY, '{"name":"Alice"}');
+
+    const { result } = renderHook(() => useActiveBookMeta());
+
+    expect(result.current.activeBookMeta).toBeNull();
+    warn.mockRestore();
   });
 
   it("setUserName updates state and localStorage", () => {
