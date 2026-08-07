@@ -162,4 +162,20 @@ describe("KitchenwareSelector — creating a new container", () => {
     expect(onUpdateContainer).not.toHaveBeenCalled();
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  it("closes modal without saving on Escape", async () => {
+    setup();
+    const input = screen.getByRole("combobox", { name: "Container" });
+    await userEvent.type(input, "Temp Bowl");
+    const createOption = await screen.findByText(/Create "Temp Bowl"/);
+    onCreateContainer.mockReturnValue(makeNewContainer("Temp Bowl"));
+    await userEvent.click(createOption);
+    await screen.findByRole("dialog", { name: "New container" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "New container" })).not.toBeInTheDocument(),
+    );
+    expect(onUpdateContainer).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });

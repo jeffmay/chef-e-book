@@ -21,6 +21,7 @@ import {
   type TreeTableSelectionKeysType,
 } from "primereact/treetable";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { AcceptOrCancelEditor } from "../accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import { MeasurementEditor } from "../measurement/MeasurementEditor.tsx";
 import { buildIngredientTree, IngredientRow, IngredientRows } from "./buildIngredientTree.ts";
 import { IngredientSelector } from "./IngredientSelector.tsx";
@@ -405,38 +406,41 @@ export function IngredientsTable({
       return (
         <span className="it-name-cell">
           <DepthLines depth={depth} />
-          <span className="it-editing" data-editing>
-            <input
-              type="text"
-              value={pending}
-              className="it-edit-input"
-              autoFocus
-              aria-label={`Edit name for ${row.name}`}
-              onChange={(e) => onUpdateEdit(row.id, "name", e.target.value)}
-              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === "Enter") onCommitEdit(row.id, "name");
-                if (e.key === "Escape") onCancelEdit(row.id, "name");
-              }}
-            />
-            <div className="it-edit-buttons">
-              <button
-                type="button"
-                className="it-cancel-btn"
-                onClick={() => onCancelEdit(row.id, "name")}
-                aria-label="Cancel edit"
-              >
-                ↩
-              </button>
-              <button
-                type="button"
-                className="it-confirm-btn"
-                onClick={() => onCommitEdit(row.id, "name")}
-                aria-label="Confirm edit"
-              >
-                ✔︎
-              </button>
-            </div>
-          </span>
+          <AcceptOrCancelEditor
+            cancelLabel="Cancel edit"
+            acceptLabel="Confirm edit"
+            onCancel={() => onCancelEdit(row.id, "name")}
+            onAccept={() => onCommitEdit(row.id, "name")}
+          >
+            <span className="it-editing" data-editing>
+              <input
+                type="text"
+                value={pending}
+                className="it-edit-input"
+                autoFocus
+                aria-label={`Edit name for ${row.name}`}
+                onChange={(e) => onUpdateEdit(row.id, "name", e.target.value)}
+              />
+              <div className="it-edit-buttons">
+                <button
+                  type="button"
+                  className="it-cancel-btn"
+                  onClick={() => onCancelEdit(row.id, "name")}
+                  aria-label="Cancel edit"
+                >
+                  ↩
+                </button>
+                <button
+                  type="button"
+                  className="it-confirm-btn"
+                  onClick={() => onCommitEdit(row.id, "name")}
+                  aria-label="Confirm edit"
+                >
+                  ✔︎
+                </button>
+              </div>
+            </span>
+          </AcceptOrCancelEditor>
         </span>
       );
     }
@@ -566,34 +570,41 @@ export function IngredientsTable({
     if (pending !== undefined) {
       const pendingId = pending !== "" ? loadId(IngredientId, pending) : undefined;
       return (
-        <span className="it-editing" data-editing>
-          <IngredientSelector
-            value={pendingId}
-            options={ingredients.filter((i) => i.id !== row.id)}
-            labels={labels}
-            onChange={(id) => onUpdateEdit(row.id, "parent_name", id ?? "")}
-            ariaLabel={`Edit parent for ${row.name}`}
-            placeholder="— None —"
-          />
-          <div className="it-edit-buttons">
-            <button
-              type="button"
-              className="it-cancel-btn"
-              onClick={() => onCancelEdit(row.id, "parent_name")}
-              aria-label="Cancel edit"
-            >
-              ↩
-            </button>
-            <button
-              type="button"
-              className="it-confirm-btn"
-              onClick={() => onCommitEdit(row.id, "parent_name")}
-              aria-label="Confirm edit"
-            >
-              ✔︎
-            </button>
-          </div>
-        </span>
+        <AcceptOrCancelEditor
+          cancelLabel="Cancel edit"
+          acceptLabel="Confirm edit"
+          onCancel={() => onCancelEdit(row.id, "parent_name")}
+          onAccept={() => onCommitEdit(row.id, "parent_name")}
+        >
+          <span className="it-editing" data-editing>
+            <IngredientSelector
+              value={pendingId}
+              options={ingredients.filter((i) => i.id !== row.id)}
+              labels={labels}
+              onChange={(id) => onUpdateEdit(row.id, "parent_name", id ?? "")}
+              ariaLabel={`Edit parent for ${row.name}`}
+              placeholder="— None —"
+            />
+            <div className="it-edit-buttons">
+              <button
+                type="button"
+                className="it-cancel-btn"
+                onClick={() => onCancelEdit(row.id, "parent_name")}
+                aria-label="Cancel edit"
+              >
+                ↩
+              </button>
+              <button
+                type="button"
+                className="it-confirm-btn"
+                onClick={() => onCommitEdit(row.id, "parent_name")}
+                aria-label="Confirm edit"
+              >
+                ✔︎
+              </button>
+            </div>
+          </span>
+        </AcceptOrCancelEditor>
       );
     }
     return (
@@ -766,34 +777,41 @@ export function IngredientsTable({
 
           <span className="it-bulk-action it-bulk-action--inline">
             <span className="it-bulk-label">Set parent</span>
-            <span className="it-editing" data-editing>
-              <IngredientSelector
-                value={bulkParentId !== "" ? loadId(IngredientId, bulkParentId) : undefined}
-                options={ingredients}
-                labels={labels}
-                onChange={(id) => setBulkParentId(id ?? "")}
-                ariaLabel="Bulk parent"
-                placeholder="— None —"
-              />
-              <div className="it-edit-buttons">
-                <button
-                  type="button"
-                  className="it-cancel-btn"
-                  onClick={() => setBulkParentId("")}
-                  aria-label="Cancel parent change"
-                >
-                  ↩
-                </button>
-                <button
-                  type="button"
-                  className="it-confirm-btn"
-                  onClick={applyBulkParent}
-                  aria-label="Accept parent change"
-                >
-                  ✔︎
-                </button>
-              </div>
-            </span>
+            <AcceptOrCancelEditor
+              cancelLabel="Cancel parent change"
+              acceptLabel="Accept parent change"
+              onCancel={() => setBulkParentId("")}
+              onAccept={applyBulkParent}
+            >
+              <span className="it-editing" data-editing>
+                <IngredientSelector
+                  value={bulkParentId !== "" ? loadId(IngredientId, bulkParentId) : undefined}
+                  options={ingredients}
+                  labels={labels}
+                  onChange={(id) => setBulkParentId(id ?? "")}
+                  ariaLabel="Bulk parent"
+                  placeholder="— None —"
+                />
+                <div className="it-edit-buttons">
+                  <button
+                    type="button"
+                    className="it-cancel-btn"
+                    onClick={() => setBulkParentId("")}
+                    aria-label="Cancel parent change"
+                  >
+                    ↩
+                  </button>
+                  <button
+                    type="button"
+                    className="it-confirm-btn"
+                    onClick={applyBulkParent}
+                    aria-label="Accept parent change"
+                  >
+                    ✔︎
+                  </button>
+                </div>
+              </span>
+            </AcceptOrCancelEditor>
           </span>
         </div>
       )}

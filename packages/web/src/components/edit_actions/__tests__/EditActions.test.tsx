@@ -1,18 +1,21 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { AcceptOrCancelEditor } from "../../accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import { EditActions } from "../EditActions.tsx";
 
 function setup() {
   const onCancel = vi.fn();
   const onAccept = vi.fn();
   render(
-    <EditActions
+    <AcceptOrCancelEditor
       cancelLabel="Cancel changes to thing"
       acceptLabel="Accept changes to thing"
       onCancel={onCancel}
       onAccept={onAccept}
-    />,
+    >
+      <EditActions />
+    </AcceptOrCancelEditor>,
   );
   return { onCancel, onAccept };
 }
@@ -24,7 +27,7 @@ describe("EditActions", () => {
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["↩", "✔︎"]);
   });
 
-  it("names each button from its prop", () => {
+  it("names each button from the enclosing editor's labels", () => {
     setup();
 
     expect(screen.getByRole("button", { name: "Cancel changes to thing" })).toHaveTextContent("↩");

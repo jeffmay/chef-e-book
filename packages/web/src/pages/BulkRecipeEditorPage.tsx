@@ -7,7 +7,9 @@ import type {
 } from "@recipe-book/shared";
 import { Fragment, type FormEvent, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { AcceptOrCancelEditor } from "../components/accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import { ButtonMenu } from "../components/button_menu/ButtonMenu.tsx";
+import { Modal } from "../components/modal/Modal.tsx";
 import { useLocalViewState } from "../hooks/useLocalViewState.ts";
 import { useMobileView } from "../hooks/useMobileView.ts";
 import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.ts";
@@ -83,40 +85,49 @@ type NewFolderRowProps = {
 };
 
 function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFolderRowProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+
   return (
     <tr className="bre-row bre-row--new-folder">
       <td className="bre-td bre-td--select" />
       <td className="bre-td bre-td--name" data-depth={depth}>
         <div className="bre-td-name-inner">
-          <form className="bre-new-folder-form" onSubmit={onSubmit}>
-            <input
-              type="text"
-              className="bre-new-folder-input"
-              value={name}
-              onChange={(e) => onNameChange(e.target.value)}
-              aria-label="New folder name"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Escape") onCancel();
-              }}
-            />
-            <button
-              type="submit"
-              className="bre-new-folder-confirm"
-              disabled={name.trim() === ""}
-              aria-label="Confirm new folder"
-            >
-              ✔︎
-            </button>
-            <button
-              type="button"
-              className="bre-new-folder-cancel"
-              onClick={onCancel}
-              aria-label="Cancel new folder"
-            >
-              ↩
-            </button>
-          </form>
+          {/* Enter goes through `requestSubmit` rather than straight to
+              `onSubmit`, so the disabled-while-empty confirm button still
+              decides whether the name is submittable. */}
+          <AcceptOrCancelEditor
+            cancelLabel="Cancel new folder"
+            acceptLabel="Confirm new folder"
+            onCancel={onCancel}
+            onAccept={() => formRef.current?.requestSubmit()}
+          >
+            <form ref={formRef} className="bre-new-folder-form" onSubmit={onSubmit}>
+              <input
+                type="text"
+                className="bre-new-folder-input"
+                value={name}
+                onChange={(e) => onNameChange(e.target.value)}
+                aria-label="New folder name"
+                autoFocus
+              />
+              <button
+                type="submit"
+                className="bre-new-folder-confirm"
+                disabled={name.trim() === ""}
+                aria-label="Confirm new folder"
+              >
+                ✔︎
+              </button>
+              <button
+                type="button"
+                className="bre-new-folder-cancel"
+                onClick={onCancel}
+                aria-label="Cancel new folder"
+              >
+                ↩
+              </button>
+            </form>
+          </AcceptOrCancelEditor>
         </div>
       </td>
       <td className="bre-td bre-td--date" />
@@ -215,6 +226,8 @@ export function BulkRecipeEditorPage() {
   const [editingFolder, setEditingFolder] = useState<EditingFolderState>(FOLDER_EDIT_IDLE);
 
   const deleteBtnRef = useRef<HTMLButtonElement>(null);
+  const mergeFormRef = useRef<HTMLFormElement>(null);
+  const renameFolderFormRef = useRef<HTMLFormElement>(null);
 
   // Keyed by folder id — lets us restore focus to a specific name span after rename.
   const folderNameRefs = useRef<Map<string, HTMLElement | null>>(new Map());
@@ -277,6 +290,12 @@ export function BulkRecipeEditorPage() {
   function handleDeleteCancel(): void {
     setShowDeleteConfirm(false);
     deleteBtnRef.current?.focus();
+  }
+
+  function handleMergeCancel(): void {
+    setShowMergeForm(false);
+    setMergeName("");
+    setMergeError(null);
   }
 
   function handleMergeSubmit(e: FormEvent): void {
@@ -396,51 +415,47 @@ export function BulkRecipeEditorPage() {
           {selectedArray.length >= 2 && (
             <>
               {showMergeForm ? (
-                <form className="bre-merge-form" onSubmit={handleMergeSubmit}>
-                  <input
-                    type="text"
-                    className="bre-merge-input"
-                    value={mergeName}
-                    onChange={(e) => {
-                      setMergeName(e.target.value);
-                      setMergeError(null);
-                    }}
-                    aria-label="Merged recipe name"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        setShowMergeForm(false);
-                        setMergeName("");
+                <AcceptOrCancelEditor
+                  cancelLabel="Cancel merge"
+                  acceptLabel="Confirm merge"
+                  onCancel={handleMergeCancel}
+                  onAccept={() => mergeFormRef.current?.requestSubmit()}
+                >
+                  <form ref={mergeFormRef} className="bre-merge-form" onSubmit={handleMergeSubmit}>
+                    <input
+                      type="text"
+                      className="bre-merge-input"
+                      value={mergeName}
+                      onChange={(e) => {
+                        setMergeName(e.target.value);
                         setMergeError(null);
-                      }
-                    }}
-                  />
-                  {mergeError !== null && (
-                    <span className="bre-merge-error" role="alert">
-                      {mergeError}
-                    </span>
-                  )}
-                  <button
-                    type="submit"
-                    className="bre-bulk-btn"
-                    disabled={mergeName.trim() === ""}
-                    aria-label="Confirm merge"
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    type="button"
-                    className="bre-bulk-btn"
-                    onClick={() => {
-                      setShowMergeForm(false);
-                      setMergeName("");
-                      setMergeError(null);
-                    }}
-                    aria-label="Cancel merge"
-                  >
-                    Cancel
-                  </button>
-                </form>
+                      }}
+                      aria-label="Merged recipe name"
+                      autoFocus
+                    />
+                    {mergeError !== null && (
+                      <span className="bre-merge-error" role="alert">
+                        {mergeError}
+                      </span>
+                    )}
+                    <button
+                      type="submit"
+                      className="bre-bulk-btn"
+                      disabled={mergeName.trim() === ""}
+                      aria-label="Confirm merge"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      type="button"
+                      className="bre-bulk-btn"
+                      onClick={handleMergeCancel}
+                      aria-label="Cancel merge"
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                </AcceptOrCancelEditor>
               ) : (
                 <button
                   type="button"
@@ -458,47 +473,31 @@ export function BulkRecipeEditorPage() {
 
       {/* Delete confirm dialog */}
       {showDeleteConfirm && (
-        <div
-          className="bre-delete-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Confirm delete recipes"
-          tabIndex={-1}
-          onClick={handleDeleteCancel}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") handleDeleteCancel();
+        <Modal
+          title={`Delete ${selectedArray.length} recipe${selectedArray.length !== 1 ? "s" : ""}?`}
+          ariaLabel="Confirm delete recipes"
+          buttons={{
+            cancel: {
+              text: "↩ Cancel",
+              dangerous: false,
+              onClick: handleDeleteCancel,
+              ariaLabel: "Cancel delete",
+            },
+            delete: {
+              text: "✔︎ Delete",
+              dangerous: true,
+              onClick: handleDeleteConfirm,
+              ariaLabel: "Confirm delete",
+            },
+          }}
+          onEnterClickId="cancel"
+          onClose={() => {
+            handleDeleteCancel();
+            return true;
           }}
         >
-          <div
-            className="bre-delete-dialog"
-            data-testid="bre-delete-dialog"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="bre-delete-title">
-              Delete {selectedArray.length} recipe{selectedArray.length !== 1 ? "s" : ""}?
-            </p>
-            <p className="bre-delete-subtitle">This action cannot be undone.</p>
-            <div className="bre-delete-actions">
-              <button
-                type="button"
-                className="bre-delete-btn bre-delete-btn--cancel"
-                onClick={handleDeleteCancel}
-                autoFocus
-                aria-label="Cancel delete"
-              >
-                ↩ Cancel
-              </button>
-              <button
-                type="button"
-                className="bre-delete-btn bre-delete-btn--accept"
-                onClick={handleDeleteConfirm}
-                aria-label="Confirm delete"
-              >
-                ✔︎ Delete
-              </button>
-            </div>
-          </div>
-        </div>
+          <p className="bre-delete-subtitle">This action cannot be undone.</p>
+        </Modal>
       )}
 
       {/* Table — always rendered; empty state lives inside tbody */}
@@ -609,53 +608,58 @@ export function BulkRecipeEditorPage() {
                             </span>
                             {editingFolder.kind === "editing" &&
                             editingFolder.folderId === folder.id ? (
-                              <form
-                                className="bre-rename-folder-form"
-                                onSubmit={(e) => handleRenameFolderSubmit(e, folder)}
-                                onBlur={(e) => {
-                                  const related = e.relatedTarget;
-                                  if (
-                                    !(related instanceof Node) ||
-                                    !e.currentTarget.contains(related)
-                                  ) {
-                                    handleRenameFolderCancel(false);
-                                  }
-                                }}
+                              <AcceptOrCancelEditor
+                                cancelLabel="Cancel rename folder"
+                                acceptLabel="Confirm rename folder"
+                                onCancel={() => handleRenameFolderCancel()}
+                                onAccept={() => renameFolderFormRef.current?.requestSubmit()}
                               >
-                                <input
-                                  type="text"
-                                  className="bre-rename-folder-input"
-                                  value={editingFolder.name}
-                                  onChange={(e) =>
-                                    setEditingFolder({
-                                      kind: "editing",
-                                      folderId: folder.id,
-                                      name: e.target.value,
-                                    })
-                                  }
-                                  aria-label={`Rename folder ${folder.name}`}
-                                  autoFocus
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Escape") handleRenameFolderCancel();
+                                <form
+                                  ref={renameFolderFormRef}
+                                  className="bre-rename-folder-form"
+                                  onSubmit={(e) => handleRenameFolderSubmit(e, folder)}
+                                  onBlur={(e) => {
+                                    const related = e.relatedTarget;
+                                    if (
+                                      !(related instanceof Node) ||
+                                      !e.currentTarget.contains(related)
+                                    ) {
+                                      handleRenameFolderCancel(false);
+                                    }
                                   }}
-                                />
-                                <button
-                                  type="button"
-                                  className="bre-rename-folder-cancel"
-                                  onClick={() => handleRenameFolderCancel()}
-                                  aria-label="Cancel rename folder"
                                 >
-                                  ↩
-                                </button>
-                                <button
-                                  type="submit"
-                                  className="bre-rename-folder-confirm"
-                                  disabled={editingFolder.name.trim() === ""}
-                                  aria-label="Confirm rename folder"
-                                >
-                                  ✔︎
-                                </button>
-                              </form>
+                                  <input
+                                    type="text"
+                                    className="bre-rename-folder-input"
+                                    value={editingFolder.name}
+                                    onChange={(e) =>
+                                      setEditingFolder({
+                                        kind: "editing",
+                                        folderId: folder.id,
+                                        name: e.target.value,
+                                      })
+                                    }
+                                    aria-label={`Rename folder ${folder.name}`}
+                                    autoFocus
+                                  />
+                                  <button
+                                    type="button"
+                                    className="bre-rename-folder-cancel"
+                                    onClick={() => handleRenameFolderCancel()}
+                                    aria-label="Cancel rename folder"
+                                  >
+                                    ↩
+                                  </button>
+                                  <button
+                                    type="submit"
+                                    className="bre-rename-folder-confirm"
+                                    disabled={editingFolder.name.trim() === ""}
+                                    aria-label="Confirm rename folder"
+                                  >
+                                    ✔︎
+                                  </button>
+                                </form>
+                              </AcceptOrCancelEditor>
                             ) : (
                               <span
                                 className="bre-name bre-name--editable"

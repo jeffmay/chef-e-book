@@ -1,0 +1,6 @@
+/* The wrapper only exists to catch keys bubbling out of the editor's fields, so
+   it takes itself out of the layout entirely: its children lay out as direct
+   children of whatever row contains the editor, exactly as they did before. */
+.accept-or-cancel-editor {
+  display: contents;
+}
