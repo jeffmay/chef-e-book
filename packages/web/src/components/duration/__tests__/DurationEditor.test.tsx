@@ -188,3 +188,24 @@ describe("DurationEditor — reset and commit", () => {
     expect(onCommit).toHaveBeenCalledWith(600);
   });
 });
+
+describe("DurationEditor — keyboard", () => {
+  it("commits on Enter", async () => {
+    const { onCommit } = await openEditor(FIVE_MIN);
+    await userEvent.click(screen.getByRole("button", { name: "+5 min" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Duration" }), "{Enter}");
+
+    expect(onCommit).toHaveBeenCalledWith(FIVE_MIN + 300);
+    expect(screen.getByRole("button", { name: "Edit duration" })).toBeInTheDocument();
+  });
+
+  it("reverts and closes on Escape, committing nothing", async () => {
+    const { onCommit } = await openEditor(FIVE_MIN);
+    await userEvent.click(screen.getByRole("button", { name: "+5 min" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Duration" }), "{Escape}");
+
+    expect(onCommit).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Edit duration" })).toBeInTheDocument();
+    expect(screen.getByText("5 minutes")).toBeInTheDocument();
+  });
+});

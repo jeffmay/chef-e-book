@@ -913,6 +913,24 @@ describe("RecipeEditor — version description validation (existing recipe)", ()
       await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
       expect(screen.queryByRole("dialog", { name: "Copy recipe" })).not.toBeInTheDocument();
     });
+
+    it("Escape closes the copy dialog", async () => {
+      setupExistingRecipeEditor("Soup");
+      await openCopyDialog();
+      await userEvent.keyboard("{Escape}");
+      expect(screen.queryByRole("dialog", { name: "Copy recipe" })).not.toBeInTheDocument();
+    });
+
+    it("Enter from the title field copies the recipe", async () => {
+      const { onSave } = setupExistingRecipeEditor("Soup");
+      await openCopyDialog();
+      const dialog = screen.getByRole("dialog", { name: "Copy recipe" });
+      await userEvent.type(within(dialog).getByRole("textbox", { name: "New recipe title" }), "!");
+      await userEvent.keyboard("{Enter}");
+
+      expect(screen.queryByRole("dialog", { name: "Copy recipe" })).not.toBeInTheDocument();
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ title: "Soup (copy)!" }));
+    });
   });
 });
 
@@ -1027,6 +1045,16 @@ describe("RecipeEditor — saving with rows still being edited", () => {
 
     expect(screen.getByRole("dialog", { name: "Unsaved row changes" })).toBeInTheDocument();
     expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("cancels the save on Escape, keeping the row's draft", async () => {
+    const { onSave } = await setupWithOpenInstruction();
+    await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
+    await userEvent.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog", { name: "Unsaved row changes" })).not.toBeInTheDocument();
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByRole("textbox", { name: "Action" })).toHaveValue("Whisk");
   });
 
   it("saves the row's changes when accepting all changes", async () => {

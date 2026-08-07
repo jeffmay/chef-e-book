@@ -1,22 +1,18 @@
-import type { ReadonlyDeep } from "type-fest";
+import { useAcceptOrCancel } from "../accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import "./EditActions.css";
-
-export type EditActionsProps = ReadonlyDeep<{
-  /** Accessible name for "↩", e.g. "Cancel changes to container". */
-  cancelLabel: string;
-  /** Accessible name for "✔︎", e.g. "Accept changes to container". */
-  acceptLabel: string;
-  onCancel: () => void;
-  onAccept: () => void;
-}>;
 
 /**
  * The "↩" (cancel changes) / "✔︎" (accept changes) pair every inline editor
  * closes with, in that left-to-right order. Shared so the glyphs, order, and
  * markup cannot drift between editors. It follows the fields it commits inline,
  * and wraps to the next line as one unit when the row runs out of width.
+ *
+ * It takes no props: the labels and handlers come from the enclosing
+ * `AcceptOrCancelEditor`, so pressing "✔︎" and pressing Enter always run the
+ * same action.
  */
-export function EditActions({ cancelLabel, acceptLabel, onCancel, onAccept }: EditActionsProps) {
+export function EditActions() {
+  const { cancelLabel, acceptLabel, onCancel, onAccept } = useAcceptOrCancel();
   return (
     <div className="edit-actions">
       <button

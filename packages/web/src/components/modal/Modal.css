@@ -1,0 +1,84 @@
+/* ============================================================
+   Modal — the single overlay/card/actions shell for every modal
+   window in the app. See components/modal/Modal.tsx.
+   ============================================================ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-md);
+  /* Keep the card clear of the on-screen keyboard, which a modal with a text
+     field will raise as soon as it is focused. */
+  padding-bottom: calc(var(--keyboard-clearance) + var(--spacing-md));
+}
+
+.modal-card {
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-md);
+  min-width: 25vw;
+  max-width: 90vw;
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 1.1em;
+  border-bottom: var(--border-width) solid var(--color-border);
+  padding-bottom: var(--spacing-xs);
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  font-size: 0.9em;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.modal-button {
+  font-family: var(--font-body);
+  font-size: 0.9em;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
+.modal-button:hover:enabled {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+/* Destructive actions carry the same dithered stripes used to mark skipped and
+   removed rows, since the palette has no red to spend on them. */
+.modal-button--dangerous {
+  background: var(--background-danger);
+  font-weight: bold;
+}
+
+.modal-button--dangerous:hover:enabled {
+  background-color: var(--background-subtle);
+  color: var(--color-fg);
+}
+
+.modal-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}

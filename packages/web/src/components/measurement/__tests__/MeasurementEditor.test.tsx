@@ -245,3 +245,22 @@ describe("MeasurementEditor.css — open panel background", () => {
     expect(open?.[1] ?? "").toMatch(/background:\s*var\(--color-bg\)/);
   });
 });
+
+describe("MeasurementEditor — keyboard", () => {
+  it("commits on Enter", async () => {
+    const { onCommit } = await openEditor(ONE_CUP);
+    await userEvent.click(screen.getByRole("combobox", { name: "Measurement unit" }));
+    await userEvent.keyboard("{Enter}");
+
+    expect(onCommit).toHaveBeenCalledWith({ value: makeFraction(1, 1), unit: "cup" });
+    expect(screen.getByRole("button", { name: "Edit measurement" })).toBeInTheDocument();
+  });
+
+  it("reverts and closes on Escape, committing nothing", async () => {
+    const { onCommit } = await openEditor(ONE_CUP);
+    await userEvent.keyboard("{Escape}");
+
+    expect(onCommit).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Edit measurement" })).toBeInTheDocument();
+  });
+});

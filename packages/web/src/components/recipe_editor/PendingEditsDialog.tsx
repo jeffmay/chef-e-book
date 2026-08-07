@@ -1,5 +1,5 @@
 import type { ReadonlyDeep } from "type-fest";
-import "../../pages/RecipeEditorPage.css";
+import { Modal } from "../modal/Modal.tsx";
 
 export type PendingEditsDialogProps = ReadonlyDeep<{
   /** How many rows still hold uncommitted changes. */
@@ -11,7 +11,8 @@ export type PendingEditsDialogProps = ReadonlyDeep<{
 
 /**
  * Asked before saving when instruction or container rows are still open with
- * uncommitted drafts, so a page-level save never drops them silently.
+ * uncommitted drafts, so a page-level save never drops them silently. Escape
+ * (and Enter) take the safe way out: cancel the save and leave the drafts alone.
  */
 export function PendingEditsDialog({
   count,
@@ -20,30 +21,24 @@ export function PendingEditsDialog({
   onCancel,
 }: PendingEditsDialogProps) {
   return (
-    <div
-      className="re-dialog-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Unsaved row changes"
+    <Modal
+      title="Unsaved changes"
+      ariaLabel="Unsaved row changes"
+      buttons={{
+        accept_all: { text: "Accept all changes", dangerous: false, onClick: onAcceptAll },
+        discard_all: { text: "Discard all changes", dangerous: true, onClick: onDiscardAll },
+        cancel: { text: "Cancel", dangerous: false, onClick: onCancel },
+      }}
+      onEnterClickId="cancel"
+      onClose={() => {
+        onCancel();
+        return true;
+      }}
     >
-      <div className="re-dialog">
-        <h2 className="re-dialog-title">Unsaved changes</h2>
-        <p className="re-dialog-body">
-          {count} row{count !== 1 ? "s are" : " is"} still open for editing. Accept those changes
-          into the recipe before saving, or discard them?
-        </p>
-        <div className="re-dialog-actions">
-          <button type="button" className="re-dialog-accept-all" onClick={onAcceptAll}>
-            Accept all changes
-          </button>
-          <button type="button" className="re-dialog-discard-all" onClick={onDiscardAll}>
-            Discard all changes
-          </button>
-          <button type="button" className="re-dialog-cancel" onClick={onCancel}>
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+      <p>
+        {count} row{count !== 1 ? "s are" : " is"} still open for editing. Accept those changes into
+        the recipe before saving, or discard them?
+      </p>
+    </Modal>
   );
 }

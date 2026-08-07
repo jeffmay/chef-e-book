@@ -17,6 +17,7 @@ import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import type { ReadonlyDeep } from "type-fest";
 import { ButtonMenu } from "../components/button_menu/ButtonMenu.tsx";
+import { Modal } from "../components/modal/Modal.tsx";
 import { PendingEditsDialog } from "../components/recipe_editor/PendingEditsDialog.tsx";
 import type { PendingEditResolutions } from "../components/recipe_editor/pendingEdits.ts";
 import { usePendingSectionEdits } from "../components/recipe_editor/pendingEdits.ts";
@@ -131,50 +132,52 @@ function CopyRecipeDialog({ recipe, flatFolders, onCopy, onCancel }: CopyRecipeD
   const [folderId, setFolderId] = useState<RecipeFolderId | undefined>(recipe.parent_folder_id);
 
   return (
-    <div className="re-dialog-overlay" role="dialog" aria-modal="true" aria-label="Copy recipe">
-      <div className="re-dialog">
-        <h2 className="re-dialog-title">Copy Recipe</h2>
-        <label className="re-field-label field-row">
-          <span className="field-row-label">New title</span>
-          <input
-            className="re-field-input"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            aria-label="New recipe title"
-          />
-        </label>
-        <label className="re-field-label field-row">
-          <span className="field-row-label">Parent folder</span>
-          <select
-            className="re-field-select"
-            value={folderId ?? ""}
-            onChange={(e) =>
-              setFolderId(e.target.value ? loadId(RecipeFolderId, e.target.value) : undefined)
-            }
-            aria-label="Parent folder for copy"
-          >
-            <option value="">— None —</option>
-            {flatFolders.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="re-dialog-actions">
-          <button
-            type="button"
-            onClick={() => onCopy(title, folderId)}
-            disabled={title.trim() === ""}
-          >
-            Copy
-          </button>
-          <button type="button" onClick={onCancel}>
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+    <Modal
+      title="Copy Recipe"
+      ariaLabel="Copy recipe"
+      buttons={{
+        copy: {
+          text: "Copy",
+          dangerous: false,
+          onClick: () => onCopy(title, folderId),
+          disabled: title.trim() === "",
+        },
+        cancel: { text: "Cancel", dangerous: false, onClick: onCancel },
+      }}
+      onEnterClickId="copy"
+      onClose={() => {
+        onCancel();
+        return true;
+      }}
+    >
+      <label className="re-field-label field-row">
+        <span className="field-row-label">New title</span>
+        <input
+          className="re-field-input"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          aria-label="New recipe title"
+        />
+      </label>
+      <label className="re-field-label field-row">
+        <span className="field-row-label">Parent folder</span>
+        <select
+          className="re-field-select"
+          value={folderId ?? ""}
+          onChange={(e) =>
+            setFolderId(e.target.value ? loadId(RecipeFolderId, e.target.value) : undefined)
+          }
+          aria-label="Parent folder for copy"
+        >
+          <option value="">— None —</option>
+          {flatFolders.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.label}
+            </option>
+          ))}
+        </select>
+      </label>
+    </Modal>
   );
 }
 
