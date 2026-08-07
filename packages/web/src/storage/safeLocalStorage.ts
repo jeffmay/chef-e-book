@@ -1,3 +1,6 @@
+import type { AnyCompanion } from "@recipe-book/shared";
+import { type } from "arktype";
+
 /**
  * `localStorage` access that can never crash the page.
  *
@@ -51,4 +54,47 @@ export function removeLocalStorage(key: string): void {
   } catch (error) {
     warnStorageFailure("remove from", key, error);
   }
+}
+
+/**
+ * Reads, JSON-parses, and validates the value stored under `key` against `companion`'s schema.
+ *
+ * This is how anything typed should be read out of `localStorage`. Stored data is untrusted input:
+ * it may have been written by an older build whose schema has since changed, hand-edited in
+ * devtools, or truncated. Every failure mode — storage unavailable, key absent, unparsable JSON,
+ * value no longer matching the schema — resolves to `null` so the caller can fall back to a
+ * default, and none of them can throw at the call site.
+ *
+ * The corruption cases warn separately on purpose: "not valid JSON" and "not the shape we expect"
+ * call for different fixes, and arktype would describe a corrupt string only as "must be an
+ * object" — hiding the fact that it never parsed at all.
+ *
+ * @returns the validated value, or `null` when nothing usable is stored
+ */
+export function readValidatedLocalStorage<T>(key: string, companion: AnyCompanion<T>): T | null {
+  const stored = readLocalStorage(key);
+  if (stored === null) {
+    return null;
+  }
+
+  let json: unknown;
+  try {
+    json = JSON.parse(stored);
+  } catch (error) {
+    console.warn(
+      `Invalid JSON in localStorage, key='${key}'; falling back to the default ${companion.name}:`,
+      error,
+    );
+    return null;
+  }
+
+  const parsed = companion.type(json);
+  if (parsed instanceof type.errors) {
+    console.warn(
+      `Failed to load ${companion.name} from localStorage, key='${key}': ${parsed.summary}`,
+    );
+    return null;
+  }
+  // The schema validated every field, so the parsed value is the companion's type.
+  return parsed as T;
 }
