@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   simplify,
   convertVolume,
@@ -15,6 +15,7 @@ import {
   type WeightUnit,
 } from "@recipe-book/shared";
 import type { ReadonlyDeep } from "type-fest";
+import { AcceptOrCancelEditor } from "../accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import { FractionDisplay, OpMode, OP_ROWS } from "./FractionEditor.tsx";
 import "./MeasurementEditor.css";
 
@@ -174,138 +175,135 @@ export function MeasurementEditor({
   }
 
   return (
-    <span
-      ref={rootRef}
-      tabIndex={-1}
-      className="me-root me-root--open"
-      onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          revertAndClose();
-        }
-      }}
+    <AcceptOrCancelEditor
+      cancelLabel="Cancel changes"
+      acceptLabel="Accept changes"
+      onCancel={revertAndClose}
+      onAccept={commit}
     >
-      <span className="fe-header">
-        <FractionDisplay value={current} />
-        <span className="me-unit">{UNIT_LABELS[unit]}</span>
-      </span>
+      <span ref={rootRef} tabIndex={-1} className="me-root me-root--open">
+        <span className="fe-header">
+          <FractionDisplay value={current} />
+          <span className="me-unit">{UNIT_LABELS[unit]}</span>
+        </span>
 
-      <span className="fe-op-modes" role="group" aria-label="Operation type">
-        {OpMode.values.map((mode) => (
-          <label key={mode} className="fe-mode-label">
-            <input
-              type="radio"
-              className="fe-mode-radio"
-              name="me-op-mode"
-              value={mode}
-              checked={opMode === mode}
-              onChange={() => setOpMode(mode)}
-              aria-label={mode}
-            />
-            <span className="fe-mode-symbol" aria-hidden>
-              {mode}
-            </span>
+        <span className="fe-op-modes" role="group" aria-label="Operation type">
+          {OpMode.values.map((mode) => (
+            <label key={mode} className="fe-mode-label">
+              <input
+                type="radio"
+                className="fe-mode-radio"
+                name="me-op-mode"
+                value={mode}
+                checked={opMode === mode}
+                onChange={() => setOpMode(mode)}
+                aria-label={mode}
+              />
+              <span className="fe-mode-symbol" aria-hidden>
+                {mode}
+              </span>
+            </label>
+          ))}
+        </span>
+
+        <span className="fe-op-buttons">
+          {OP_ROWS[opMode].map((op) => (
+            <button
+              key={op.label}
+              type="button"
+              className="fe-op-btn"
+              onClick={() => applyOpButton(op.label)}
+            >
+              {op.label}
+            </button>
+          ))}
+        </span>
+
+        {/* Type + unit selectors inserted between op buttons and OK */}
+        <span className="me-controls">
+          <label className="me-control-label">
+            Type
+            <select
+              className="me-select"
+              value={mtype}
+              onChange={(e) => handleTypeChange(e.target.value as MeasurementType)}
+              aria-label="Measurement type"
+            >
+              <option value="volume">Volume</option>
+              <option value="weight">Weight</option>
+              <option value="count">Count</option>
+            </select>
           </label>
-        ))}
-      </span>
 
-      <span className="fe-op-buttons">
-        {OP_ROWS[opMode].map((op) => (
+          <label className="me-control-label">
+            Unit
+            <select
+              className="me-select"
+              value={unit}
+              onChange={(e) => handleUnitChange(e.target.value as MeasurementUnit)}
+              aria-label="Measurement unit"
+            >
+              {mtype === "volume" && (
+                <>
+                  <optgroup label="US">
+                    {VOLUME_US.map((u) => (
+                      <option key={u} value={u}>
+                        {UNIT_LABELS[u]}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Metric">
+                    {VOLUME_METRIC.map((u) => (
+                      <option key={u} value={u}>
+                        {UNIT_LABELS[u]}
+                      </option>
+                    ))}
+                  </optgroup>
+                </>
+              )}
+              {mtype === "weight" && (
+                <>
+                  <optgroup label="US">
+                    {WEIGHT_US.map((u) => (
+                      <option key={u} value={u}>
+                        {UNIT_LABELS[u]}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Metric">
+                    {WEIGHT_METRIC.map((u) => (
+                      <option key={u} value={u}>
+                        {UNIT_LABELS[u]}
+                      </option>
+                    ))}
+                  </optgroup>
+                </>
+              )}
+              {mtype === "count" && (
+                <>
+                  <option value="whole">{UNIT_LABELS.whole}</option>
+                  <option value="pinch">{UNIT_LABELS.pinch}</option>
+                  <option value="dash">{UNIT_LABELS.dash}</option>
+                </>
+              )}
+            </select>
+          </label>
+        </span>
+
+        <span className="me-bottom-row">
           <button
-            key={op.label}
             type="button"
-            className="fe-op-btn"
-            onClick={() => applyOpButton(op.label)}
+            className="fe-toggle-btn"
+            onClick={revertAndClose}
+            aria-label="Cancel changes"
           >
-            {op.label}
+            ↩
           </button>
-        ))}
+          <button type="button" className="fe-ok-btn" onClick={commit} aria-label="Accept changes">
+            ✔︎
+          </button>
+        </span>
       </span>
-
-      {/* Type + unit selectors inserted between op buttons and OK */}
-      <span className="me-controls">
-        <label className="me-control-label">
-          Type
-          <select
-            className="me-select"
-            value={mtype}
-            onChange={(e) => handleTypeChange(e.target.value as MeasurementType)}
-            aria-label="Measurement type"
-          >
-            <option value="volume">Volume</option>
-            <option value="weight">Weight</option>
-            <option value="count">Count</option>
-          </select>
-        </label>
-
-        <label className="me-control-label">
-          Unit
-          <select
-            className="me-select"
-            value={unit}
-            onChange={(e) => handleUnitChange(e.target.value as MeasurementUnit)}
-            aria-label="Measurement unit"
-          >
-            {mtype === "volume" && (
-              <>
-                <optgroup label="US">
-                  {VOLUME_US.map((u) => (
-                    <option key={u} value={u}>
-                      {UNIT_LABELS[u]}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Metric">
-                  {VOLUME_METRIC.map((u) => (
-                    <option key={u} value={u}>
-                      {UNIT_LABELS[u]}
-                    </option>
-                  ))}
-                </optgroup>
-              </>
-            )}
-            {mtype === "weight" && (
-              <>
-                <optgroup label="US">
-                  {WEIGHT_US.map((u) => (
-                    <option key={u} value={u}>
-                      {UNIT_LABELS[u]}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Metric">
-                  {WEIGHT_METRIC.map((u) => (
-                    <option key={u} value={u}>
-                      {UNIT_LABELS[u]}
-                    </option>
-                  ))}
-                </optgroup>
-              </>
-            )}
-            {mtype === "count" && (
-              <>
-                <option value="whole">{UNIT_LABELS.whole}</option>
-                <option value="pinch">{UNIT_LABELS.pinch}</option>
-                <option value="dash">{UNIT_LABELS.dash}</option>
-              </>
-            )}
-          </select>
-        </label>
-      </span>
-
-      <span className="me-bottom-row">
-        <button
-          type="button"
-          className="fe-toggle-btn"
-          onClick={revertAndClose}
-          aria-label="Cancel changes"
-        >
-          ↩
-        </button>
-        <button type="button" className="fe-ok-btn" onClick={commit} aria-label="Accept changes">
-          ✔︎
-        </button>
-      </span>
-    </span>
+    </AcceptOrCancelEditor>
   );
 }

@@ -29,6 +29,7 @@ import type { ReadonlyDeep } from "type-fest";
 import { useIngredientStore } from "../../hooks/useIngredientStore.ts";
 import { useLabelStore } from "../../hooks/useLabelStore.ts";
 import { DurationEditor } from "../duration/DurationEditor.tsx";
+import { AcceptOrCancelEditor } from "../accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import { EditActions } from "../edit_actions/EditActions.tsx";
 import { InfoTip } from "../info_tip/InfoTip.tsx";
 import { IngredientSelector } from "../ingredients_table/IngredientSelector.tsx";
@@ -321,7 +322,13 @@ function IngredientItemRow({
       aria-label={`Ingredient: ${ingredientName}`}
     >
       {isEditingIngredient ? (
-        <>
+        <AcceptOrCancelEditor
+          cancelLabel="Cancel changes to ingredient"
+          acceptLabel="Accept changes to ingredient"
+          onCancel={handleCancel}
+          onAccept={handleAccept}
+          autoFocus
+        >
           <IngredientSelector
             value={item.ingredient_id}
             options={allIngredients}
@@ -335,13 +342,8 @@ function IngredientItemRow({
               onCommit={(newAmount) => onChange({ ...item, customAmount: newAmount })}
             />
           )}
-          <EditActions
-            cancelLabel="Cancel changes to ingredient"
-            acceptLabel="Accept changes to ingredient"
-            onCancel={handleCancel}
-            onAccept={handleAccept}
-          />
-        </>
+          <EditActions />
+        </AcceptOrCancelEditor>
       ) : (
         <>
           <EditButton label={`Edit ingredient: ${ingredientName}`} onClick={openEditor} />
@@ -397,40 +399,51 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
 
   return (
     <div className="re-item re-item--new-ingredient" role="group" aria-label="New ingredient">
-      <IngredientSelector
-        value={ingredient_id}
-        options={allIngredients}
-        labels={allLabels}
-        onChange={handleSelectIngredient}
-        ariaLabel="Select new ingredient"
-        placeholder="— Choose ingredient —"
-      />
-      {selectedIngredientAmount && (
-        <MeasurementEditor value={selectedIngredientAmount} onCommit={setAmount} />
-      )}
-      <div className="re-new-ingredient-actions">
-        <button
-          type="button"
-          className="re-new-ingredient-add"
-          onClick={handleAdd}
-          disabled={ingredient_id === undefined}
-          aria-label={
-            selectedIngredient !== undefined
-              ? `Add ${selectedIngredient.name} to section`
-              : "Confirm add ingredient"
-          }
-        >
-          Add
-        </button>
-        <button
-          type="button"
-          className="re-new-ingredient-cancel"
-          onClick={onCancel}
-          aria-label="Cancel adding ingredient"
-        >
-          Cancel
-        </button>
-      </div>
+      {/* Named "Add"/"Cancel" rather than "✔︎"/"↩" — this row adds an item
+          instead of committing edits to one — but it answers Enter and Escape
+          like every other editor. */}
+      <AcceptOrCancelEditor
+        cancelLabel="Cancel adding ingredient"
+        acceptLabel="Confirm add ingredient"
+        onCancel={onCancel}
+        onAccept={handleAdd}
+        autoFocus
+      >
+        <IngredientSelector
+          value={ingredient_id}
+          options={allIngredients}
+          labels={allLabels}
+          onChange={handleSelectIngredient}
+          ariaLabel="Select new ingredient"
+          placeholder="— Choose ingredient —"
+        />
+        {selectedIngredientAmount && (
+          <MeasurementEditor value={selectedIngredientAmount} onCommit={setAmount} />
+        )}
+        <div className="re-new-ingredient-actions">
+          <button
+            type="button"
+            className="re-new-ingredient-add"
+            onClick={handleAdd}
+            disabled={ingredient_id === undefined}
+            aria-label={
+              selectedIngredient !== undefined
+                ? `Add ${selectedIngredient.name} to section`
+                : "Confirm add ingredient"
+            }
+          >
+            Add
+          </button>
+          <button
+            type="button"
+            className="re-new-ingredient-cancel"
+            onClick={onCancel}
+            aria-label="Cancel adding ingredient"
+          >
+            Cancel
+          </button>
+        </div>
+      </AcceptOrCancelEditor>
     </div>
   );
 }
@@ -543,7 +556,13 @@ function ContainerItemRow({
       aria-label={`Container: ${containerName} — ${item.descriptor}`}
     >
       {editing ? (
-        <>
+        <AcceptOrCancelEditor
+          cancelLabel={discardRemovesItem ? "Discard new container" : "Cancel changes to container"}
+          acceptLabel="Accept changes to container"
+          onCancel={handleCancel}
+          onAccept={handleAccept}
+          autoFocus
+        >
           {/* No aria-labels: the wrapping <label>s are the accessible names, so
               they cannot drift from the visible text. */}
           <div className="re-container-fields">
@@ -583,14 +602,7 @@ function ContainerItemRow({
                 + Name
               </button>
             )}
-            <EditActions
-              cancelLabel={
-                discardRemovesItem ? "Discard new container" : "Cancel changes to container"
-              }
-              acceptLabel="Accept changes to container"
-              onCancel={handleCancel}
-              onAccept={handleAccept}
-            />
+            <EditActions />
           </div>
           <div className="re-container-ordered-row">
             <label className="re-container-ordered">
@@ -607,7 +619,7 @@ function ContainerItemRow({
               text="Annotates that the ingredients should be added in the specified order"
             />
           </div>
-        </>
+        </AcceptOrCancelEditor>
       ) : (
         <div className="re-item-header">
           <EditButton label={`Edit container: ${containerName}`} onClick={openEditor} />
@@ -792,93 +804,96 @@ function InstructionRow({
     >
       {removeControl()}
 
-      <div className="re-item-header">
-        {/* No aria-label: the wrapping <label> is the accessible name, so it
-            cannot drift from the visible text. */}
-        <label className="re-instruction-action-label">
-          Action
-          <input
-            className="re-instruction-text"
-            value={draft.instruction}
-            onChange={(e) => setDraft({ ...draft, instruction: e.target.value })}
-          />
-        </label>
-      </div>
-
-      <label className="re-instruction-equipment-label">
-        Equipment
-        <select
-          className="re-instruction-equipment"
-          value={draft.equipment_id ?? ""}
-          onChange={(e) => {
-            if (e.target.value) {
-              setDraft({ ...draft, equipment_id: loadId(EquipmentId, e.target.value) });
-            } else {
-              const { equipment_id: _, ...rest } = draft;
-              setDraft(rest);
-            }
-          }}
-          aria-label="Equipment"
-        >
-          <option value="">— No equipment —</option>
-          {COMMON_EQUIPMENT.map((eq) => (
-            <option key={eq.id} value={eq.id}>
-              {eq.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className="re-instruction-duration">
-        <label className="re-instruction-duration-label">
-          Duration:
-          {draft.duration_seconds !== undefined ? (
-            <DurationEditor
-              value={draft.duration_seconds}
-              onCommit={(s) => setDraft({ ...draft, duration_seconds: s })}
-            />
-          ) : (
-            <button
-              type="button"
-              className="re-instruction-add-duration"
-              onClick={() => setDraft({ ...draft, duration_seconds: 300 })}
-            >
-              + Add duration
-            </button>
-          )}
-        </label>
-        {draft.duration_seconds !== undefined && (
-          <button
-            type="button"
-            className="re-instruction-remove-duration"
-            onClick={() => {
-              const { duration_seconds: _, ...rest } = draft;
-              setDraft(rest);
-            }}
-            aria-label="Remove duration"
-          >
-            ✕
-          </button>
-        )}
-      </div>
-
-      <div className="re-instruction-ingredients">
-        <span className="re-instruction-ing-label">Ingredients:</span>
-        <InstructionIngredientSelector
-          nodes={instructionIngredientNodes}
-          selectedIds={draft.ingredient_ids ?? []}
-          onChange={handleIngredientsChange}
-        />
-      </div>
-
-      <EditActions
+      <AcceptOrCancelEditor
         cancelLabel={
           discardRemovesItem ? "Discard new instruction" : "Cancel changes to instruction"
         }
         acceptLabel="Accept changes to instruction"
         onCancel={handleCancel}
         onAccept={handleAccept}
-      />
+        autoFocus
+      >
+        <div className="re-item-header">
+          {/* No aria-label: the wrapping <label> is the accessible name, so it
+            cannot drift from the visible text. */}
+          <label className="re-instruction-action-label">
+            Action
+            <input
+              className="re-instruction-text"
+              value={draft.instruction}
+              onChange={(e) => setDraft({ ...draft, instruction: e.target.value })}
+            />
+          </label>
+        </div>
+
+        <label className="re-instruction-equipment-label">
+          Equipment
+          <select
+            className="re-instruction-equipment"
+            value={draft.equipment_id ?? ""}
+            onChange={(e) => {
+              if (e.target.value) {
+                setDraft({ ...draft, equipment_id: loadId(EquipmentId, e.target.value) });
+              } else {
+                const { equipment_id: _, ...rest } = draft;
+                setDraft(rest);
+              }
+            }}
+            aria-label="Equipment"
+          >
+            <option value="">— No equipment —</option>
+            {COMMON_EQUIPMENT.map((eq) => (
+              <option key={eq.id} value={eq.id}>
+                {eq.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="re-instruction-duration">
+          <label className="re-instruction-duration-label">
+            Duration:
+            {draft.duration_seconds !== undefined ? (
+              <DurationEditor
+                value={draft.duration_seconds}
+                onCommit={(s) => setDraft({ ...draft, duration_seconds: s })}
+              />
+            ) : (
+              <button
+                type="button"
+                className="re-instruction-add-duration"
+                onClick={() => setDraft({ ...draft, duration_seconds: 300 })}
+              >
+                + Add duration
+              </button>
+            )}
+          </label>
+          {draft.duration_seconds !== undefined && (
+            <button
+              type="button"
+              className="re-instruction-remove-duration"
+              onClick={() => {
+                const { duration_seconds: _, ...rest } = draft;
+                setDraft(rest);
+              }}
+              aria-label="Remove duration"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className="re-instruction-ingredients">
+          <span className="re-instruction-ing-label">Ingredients:</span>
+          <InstructionIngredientSelector
+            nodes={instructionIngredientNodes}
+            selectedIds={draft.ingredient_ids ?? []}
+            onChange={handleIngredientsChange}
+          />
+        </div>
+
+        <EditActions />
+      </AcceptOrCancelEditor>
     </div>
   );
 }
@@ -951,7 +966,15 @@ function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowP
       aria-label="Text block"
     >
       {editing ? (
-        <>
+        <AcceptOrCancelEditor
+          cancelLabel={discardRemovesItem ? "Discard new text block" : "Cancel changes to text"}
+          acceptLabel="Accept changes to text"
+          onCancel={handleCancel}
+          onAccept={handleAccept}
+          autoFocus
+        >
+          {/* Enter inserts a newline here rather than accepting the row — the
+              AcceptOrCancelEditor leaves a <textarea> its own Enter key. */}
           <textarea
             className="re-text-block-input"
             value={draft.text}
@@ -959,14 +982,9 @@ function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowP
             aria-label="Text block content"
             rows={3}
           />
-          <EditActions
-            cancelLabel={discardRemovesItem ? "Discard new text block" : "Cancel changes to text"}
-            acceptLabel="Accept changes to text"
-            onCancel={handleCancel}
-            onAccept={handleAccept}
-          />
+          <EditActions />
           <RemoveButton label="Remove text block" onClick={onRemove} />
-        </>
+        </AcceptOrCancelEditor>
       ) : (
         <>
           <EditButton label="Edit text block" onClick={openEditor} />
@@ -1010,7 +1028,6 @@ function SectionEditor({
   // opened rather than reverting a draft.
   const [editingHeader, setEditingHeader] = useState(false);
   const headerAtOpenRef = useRef(section.header);
-  const headerInputRef = useRef<HTMLInputElement>(null);
   // Rows added here (rather than loaded from the recipe) have no committed
   // state, so cancelling their first edit removes them. Stored in a ref because
   // adding a row already re-renders through `onChange`.
@@ -1025,12 +1042,6 @@ function SectionEditor({
       onChange(rest);
     }
   }
-
-  // Runs in the commit that mounts the input, so the focus lands on a live
-  // element rather than on whatever is there a tick later.
-  useEffect(() => {
-    if (editingHeader) headerInputRef.current?.focus();
-  }, [editingHeader]);
 
   function openHeaderEditor() {
     headerAtOpenRef.current = section.header;
@@ -1086,23 +1097,23 @@ function SectionEditor({
     >
       <div className="re-section-header-row">
         {editingHeader ? (
-          <>
+          <AcceptOrCancelEditor
+            cancelLabel="Cancel changes to section header"
+            acceptLabel="Accept changes to section header"
+            onCancel={handleCancelHeader}
+            onAccept={() => setEditingHeader(false)}
+            autoFocus
+          >
             <Heading className="re-section-heading">
               <input
-                ref={headerInputRef}
                 className="re-section-header-input"
                 value={section.header ?? ""}
                 onChange={(e) => setHeader(e.target.value)}
                 aria-label="Section header"
               />
             </Heading>
-            <EditActions
-              cancelLabel="Cancel changes to section header"
-              acceptLabel="Accept changes to section header"
-              onCancel={handleCancelHeader}
-              onAccept={() => setEditingHeader(false)}
-            />
-          </>
+            <EditActions />
+          </AcceptOrCancelEditor>
         ) : section.header !== undefined ? (
           <>
             <EditButton

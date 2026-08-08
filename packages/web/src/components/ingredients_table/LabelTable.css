@@ -111,31 +111,6 @@
 }
 
 /* Delete confirmation dialog */
-.lt-delete-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.lt-delete-dialog {
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  padding: var(--spacing-md);
-  min-width: 22em;
-  max-width: 36em;
-  font-family: var(--font-body);
-  font-size: 0.9em;
-}
-
-.lt-delete-title {
-  font-weight: bold;
-  margin: 0 0 var(--spacing-xs);
-}
-
 .lt-delete-subtitle {
   margin: 0 0 var(--spacing-xs);
   color: var(--color-muted);
@@ -148,39 +123,6 @@
   max-height: 12em;
   overflow-y: auto;
   font-size: 0.9em;
-}
-
-.lt-delete-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-  justify-content: flex-end;
-  margin-top: var(--spacing-sm);
-}
-
-.lt-delete-btn {
-  padding: 2px 12px;
-  border: var(--border-width) solid var(--color-border);
-  font-size: 0.9em;
-  cursor: pointer;
-  font-family: var(--font-body);
-}
-
-.lt-delete-btn--cancel {
-  background: var(--color-fg);
-  color: var(--color-bg);
-}
-
-.lt-delete-btn--cancel:hover {
-  opacity: 0.85;
-}
-
-.lt-delete-btn--accept {
-  background: var(--background-danger);
-  color: var(--color-fg);
-}
-
-.lt-delete-btn--accept:hover {
-  background-color: #eee;
 }
 
 .lt-merge-form {

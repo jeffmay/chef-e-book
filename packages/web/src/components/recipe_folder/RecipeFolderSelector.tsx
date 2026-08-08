@@ -8,6 +8,7 @@ import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
 import { useMemo, useState } from "react";
 import "../../styles/treeSelect.css";
+import { AcceptOrCancelEditor } from "../accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import "./RecipeFolderSelector.css";
 
 function folderToNode(folder: RecipeFolder): TreeNode {
@@ -117,37 +118,40 @@ export function RecipeFolderSelector({
         </span>
       )}
       {adding && (
-        <div className="rfs-add-row">
-          <input
-            className={`rfs-add-input${nameError !== null ? " field-input--error" : ""}`}
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") submitNewFolder();
-              if (e.key === "Escape") cancelAdd();
-            }}
-            placeholder="Subfolder name…"
-            aria-label="New folder name"
-            aria-describedby={nameError !== null ? "rfs-name-error" : undefined}
-            autoFocus
-          />
-          <button
-            type="button"
-            onClick={submitNewFolder}
-            disabled={nameError !== null}
-            aria-label="Create folder"
-          >
-            ✓
-          </button>
-          <button type="button" onClick={cancelAdd} aria-label="Cancel new folder">
-            ✕
-          </button>
-          {nameError !== null && (
-            <span id="rfs-name-error" className="field-error" role="alert">
-              {nameError}
-            </span>
-          )}
-        </div>
+        <AcceptOrCancelEditor
+          cancelLabel="Cancel new folder"
+          acceptLabel="Create folder"
+          onCancel={cancelAdd}
+          onAccept={submitNewFolder}
+        >
+          <div className="rfs-add-row">
+            <input
+              className={`rfs-add-input${nameError !== null ? " field-input--error" : ""}`}
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Subfolder name…"
+              aria-label="New folder name"
+              aria-describedby={nameError !== null ? "rfs-name-error" : undefined}
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={submitNewFolder}
+              disabled={nameError !== null}
+              aria-label="Create folder"
+            >
+              ✓
+            </button>
+            <button type="button" onClick={cancelAdd} aria-label="Cancel new folder">
+              ✕
+            </button>
+            {nameError !== null && (
+              <span id="rfs-name-error" className="field-error" role="alert">
+                {nameError}
+              </span>
+            )}
+          </div>
+        </AcceptOrCancelEditor>
       )}
     </div>
   );

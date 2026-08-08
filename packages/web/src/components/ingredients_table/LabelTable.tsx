@@ -2,6 +2,8 @@ import type { Ingredient, KitchenwareLabel, KitchenwareLabelId } from "@recipe-b
 import { RadioButton } from "primereact/radiobutton";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { ReadonlyDeep } from "type-fest";
+import { AcceptOrCancelEditor } from "../accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
+import { Modal } from "../modal/Modal.tsx";
 import "./LabelTable.css";
 
 export type LabelTableProps = ReadonlyDeep<{
@@ -114,14 +116,23 @@ export function LabelTable({
     [ingredients, selectedIds],
   );
 
-  function handleMergeSubmit(e: FormEvent): void {
-    e.preventDefault();
+  function submitMerge(): void {
     const name = mergeName.trim();
     if (name === "" || selectedArray.length < 2) return;
     onMerge(selectedArray, name);
     setMergeName("");
     setShowMergeInput(false);
     clearSelection();
+  }
+
+  function handleMergeSubmit(e: FormEvent): void {
+    e.preventDefault();
+    submitMerge();
+  }
+
+  function cancelMerge(): void {
+    setShowMergeInput(false);
+    setMergeName("");
   }
 
   function beginEdit(label: ReadonlyDeep<KitchenwareLabel>): void {
@@ -226,42 +237,40 @@ export function LabelTable({
               {selectedArray.length >= 2 && (
                 <>
                   {showMergeInput ? (
-                    <form className="lt-merge-form" onSubmit={handleMergeSubmit}>
-                      <input
-                        type="text"
-                        className="lt-merge-input"
-                        value={mergeName}
-                        onChange={(e) => setMergeName(e.target.value)}
-                        placeholder="Merged label name…"
-                        aria-label="Merged label name"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === "Escape") {
-                            setShowMergeInput(false);
-                            setMergeName("");
-                          }
-                        }}
-                      />
-                      <button
-                        type="submit"
-                        className="lt-bulk-btn"
-                        disabled={mergeName.trim() === ""}
-                        aria-label="Confirm merge"
-                      >
-                        Confirm
-                      </button>
-                      <button
-                        type="button"
-                        className="lt-bulk-btn"
-                        onClick={() => {
-                          setShowMergeInput(false);
-                          setMergeName("");
-                        }}
-                        aria-label="Cancel merge"
-                      >
-                        Cancel
-                      </button>
-                    </form>
+                    <AcceptOrCancelEditor
+                      cancelLabel="Cancel merge"
+                      acceptLabel="Confirm merge"
+                      onCancel={cancelMerge}
+                      onAccept={submitMerge}
+                    >
+                      <form className="lt-merge-form" onSubmit={handleMergeSubmit}>
+                        <input
+                          type="text"
+                          className="lt-merge-input"
+                          value={mergeName}
+                          onChange={(e) => setMergeName(e.target.value)}
+                          placeholder="Merged label name…"
+                          aria-label="Merged label name"
+                          autoFocus
+                        />
+                        <button
+                          type="submit"
+                          className="lt-bulk-btn"
+                          disabled={mergeName.trim() === ""}
+                          aria-label="Confirm merge"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          type="button"
+                          className="lt-bulk-btn"
+                          onClick={cancelMerge}
+                          aria-label="Cancel merge"
+                        >
+                          Cancel
+                        </button>
+                      </form>
+                    </AcceptOrCancelEditor>
                   ) : (
                     <button
                       type="button"
@@ -278,64 +287,45 @@ export function LabelTable({
           )}
 
           {showDeleteConfirm && (
-            <div
-              className="lt-delete-overlay"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Confirm delete labels"
-              aria-describedby="lt-delete-desc"
-              tabIndex={-1}
-              onClick={handleDeleteCancel}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") handleDeleteCancel();
+            <Modal
+              title={`Delete ${selectedIds.size} label${selectedIds.size !== 1 ? "s" : ""}?`}
+              ariaLabel="Confirm delete labels"
+              buttons={{
+                cancel: {
+                  text: "↩ Cancel",
+                  dangerous: false,
+                  onClick: handleDeleteCancel,
+                  ariaLabel: "Cancel delete",
+                },
+                delete: {
+                  text: "✔︎ Delete",
+                  dangerous: true,
+                  onClick: handleDeleteConfirm,
+                  ariaLabel: "Confirm delete",
+                },
+              }}
+              onEnterClickId="cancel"
+              onClose={() => {
+                handleDeleteCancel();
+                return true;
               }}
             >
-              <div
-                className="lt-delete-dialog"
-                data-testid="lt-delete-dialog-card"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <p className="lt-delete-title">
-                  Delete {selectedIds.size} label{selectedIds.size !== 1 ? "s" : ""}?
-                </p>
-                <div id="lt-delete-desc">
-                  {affectedIngredients.length > 0 ? (
-                    <>
-                      <p className="lt-delete-subtitle">
-                        The following ingredient{affectedIngredients.length !== 1 ? "s" : ""} will
-                        be affected:
-                      </p>
-                      <ul className="lt-delete-list">
-                        {affectedIngredients.map((ing) => (
-                          <li key={ing.id}>{ing.name}</li>
-                        ))}
-                      </ul>
-                    </>
-                  ) : (
-                    <p className="lt-delete-subtitle">No ingredients use these labels.</p>
-                  )}
-                </div>
-                <div className="lt-delete-actions">
-                  <button
-                    type="button"
-                    className="lt-delete-btn lt-delete-btn--cancel"
-                    onClick={handleDeleteCancel}
-                    autoFocus
-                    aria-label="Cancel delete"
-                  >
-                    ↩ Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="lt-delete-btn lt-delete-btn--accept"
-                    onClick={handleDeleteConfirm}
-                    aria-label="Confirm delete"
-                  >
-                    ✔︎ Delete
-                  </button>
-                </div>
-              </div>
-            </div>
+              {affectedIngredients.length > 0 ? (
+                <>
+                  <p className="lt-delete-subtitle">
+                    The following ingredient{affectedIngredients.length !== 1 ? "s" : ""} will be
+                    affected:
+                  </p>
+                  <ul className="lt-delete-list">
+                    {affectedIngredients.map((ing) => (
+                      <li key={ing.id}>{ing.name}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="lt-delete-subtitle">No ingredients use these labels.</p>
+              )}
+            </Modal>
           )}
 
           {labels.length === 0 ? (
@@ -380,36 +370,39 @@ export function LabelTable({
                     </td>
                     <td className="lt-td">
                       {editingId === label.id ? (
-                        <span className="lt-editing">
-                          <input
-                            type="text"
-                            className="lt-edit-input"
-                            value={editingName}
-                            autoFocus
-                            aria-label={`Edit label name ${label.name}`}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") commitEdit();
-                              if (e.key === "Escape") cancelEdit();
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="lt-edit-btn"
-                            onClick={cancelEdit}
-                            aria-label="Cancel rename"
-                          >
-                            ↩
-                          </button>
-                          <button
-                            type="button"
-                            className="lt-edit-btn"
-                            onClick={commitEdit}
-                            aria-label="Confirm rename"
-                          >
-                            ✔︎
-                          </button>
-                        </span>
+                        <AcceptOrCancelEditor
+                          cancelLabel="Cancel rename"
+                          acceptLabel="Confirm rename"
+                          onCancel={cancelEdit}
+                          onAccept={commitEdit}
+                        >
+                          <span className="lt-editing">
+                            <input
+                              type="text"
+                              className="lt-edit-input"
+                              value={editingName}
+                              autoFocus
+                              aria-label={`Edit label name ${label.name}`}
+                              onChange={(e) => setEditingName(e.target.value)}
+                            />
+                            <button
+                              type="button"
+                              className="lt-edit-btn"
+                              onClick={cancelEdit}
+                              aria-label="Cancel rename"
+                            >
+                              ↩
+                            </button>
+                            <button
+                              type="button"
+                              className="lt-edit-btn"
+                              onClick={commitEdit}
+                              aria-label="Confirm rename"
+                            >
+                              ✔︎
+                            </button>
+                          </span>
+                        </AcceptOrCancelEditor>
                       ) : (
                         <span
                           className="lt-name"

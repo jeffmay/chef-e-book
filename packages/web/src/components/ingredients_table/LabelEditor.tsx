@@ -3,6 +3,7 @@ import CreatableSelect from "react-select/creatable";
 import { components as SelectComponents, type SelectInstance } from "react-select";
 import type { GroupBase, MenuProps, MultiValue } from "react-select";
 import type { ReadonlyDeep } from "type-fest";
+import { AcceptOrCancelEditor } from "../accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import "./LabelEditor.css";
 
 type LabelOption = ReadonlyDeep<{
@@ -78,7 +79,7 @@ export function LabelEditor({
     onChange(newValue.map((opt) => opt.value));
   }
 
-  return (
+  const editor = (
     <span className="it-label-editor">
       <CreatableSelect<LabelOption, true>
         isMulti
@@ -99,10 +100,10 @@ export function LabelEditor({
           if (e.key === "ArrowUp" || e.key === "ArrowDown") {
             e.stopPropagation();
           }
-          if (e.key === "Escape" && !menuOpen) {
-            e.preventDefault();
+          // While the menu is open, Escape closes it and goes no further: the
+          // enclosing AcceptOrCancelEditor must not also cancel the edit.
+          if (e.key === "Escape" && menuOpen) {
             e.stopPropagation();
-            onCancel?.();
           }
         }}
       />
@@ -130,5 +131,23 @@ export function LabelEditor({
         )}
       </div>
     </span>
+  );
+
+  // Only an editor that can be both accepted and cancelled answers the keyboard.
+  // Without both handlers there is nothing for Enter or Escape to do, and
+  // swallowing them here would keep them from an editor further out.
+  if (onCommit === undefined || onCancel === undefined) return editor;
+
+  return (
+    <AcceptOrCancelEditor
+      cancelLabel="Cancel edit"
+      acceptLabel={commitAriaLabel ?? "Confirm edit"}
+      onCancel={onCancel}
+      onAccept={() => {
+        if (commitDisabled !== true) onCommit();
+      }}
+    >
+      {editor}
+    </AcceptOrCancelEditor>
   );
 }
