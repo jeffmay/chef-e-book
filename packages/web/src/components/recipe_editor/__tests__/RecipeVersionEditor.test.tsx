@@ -1044,6 +1044,28 @@ describe("pending row edits", () => {
 // ---------------------------------------------------------------------------
 
 describe("keyboard", () => {
+  // Opening a row leaves focus on its "✎", which sits outside the editor, so
+  // each editor takes focus itself — otherwise Escape would never reach it.
+  it.each([
+    ["Edit instruction: Mix", "Action"],
+    ["Edit text block", "Text block content"],
+    ["Edit section header: Main", "Section header"],
+  ])("focuses the first field when %s is pressed", async (editLabel, fieldLabel) => {
+    setup(sectionWith([MIX_INSTRUCTION, TEXT_BLOCK]));
+    await userEvent.click(screen.getByRole("button", { name: editLabel }));
+
+    expect(screen.getByRole("textbox", { name: fieldLabel })).toHaveFocus();
+  });
+
+  it("cancels a row opened from ✎ without clicking into it first", async () => {
+    const { onSectionsChange } = setup(sectionWith([MIX_INSTRUCTION]));
+    await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));
+    await userEvent.keyboard("{Escape}");
+
+    expect(screen.getByRole("button", { name: "Edit instruction: Mix" })).toBeInTheDocument();
+    expect(onSectionsChange).not.toHaveBeenCalled();
+  });
+
   it("cancels an instruction row on Escape", async () => {
     const { onSectionsChange } = setup(sectionWith([MIX_INSTRUCTION]));
     await userEvent.click(screen.getByRole("button", { name: "Edit instruction: Mix" }));

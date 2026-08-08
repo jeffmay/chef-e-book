@@ -327,6 +327,7 @@ function IngredientItemRow({
           acceptLabel="Accept changes to ingredient"
           onCancel={handleCancel}
           onAccept={handleAccept}
+          autoFocus
         >
           <IngredientSelector
             value={item.ingredient_id}
@@ -406,6 +407,7 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
         acceptLabel="Confirm add ingredient"
         onCancel={onCancel}
         onAccept={handleAdd}
+        autoFocus
       >
         <IngredientSelector
           value={ingredient_id}
@@ -559,6 +561,7 @@ function ContainerItemRow({
           acceptLabel="Accept changes to container"
           onCancel={handleCancel}
           onAccept={handleAccept}
+          autoFocus
         >
           {/* No aria-labels: the wrapping <label>s are the accessible names, so
               they cannot drift from the visible text. */}
@@ -808,6 +811,7 @@ function InstructionRow({
         acceptLabel="Accept changes to instruction"
         onCancel={handleCancel}
         onAccept={handleAccept}
+        autoFocus
       >
         <div className="re-item-header">
           {/* No aria-label: the wrapping <label> is the accessible name, so it
@@ -967,6 +971,7 @@ function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowP
           acceptLabel="Accept changes to text"
           onCancel={handleCancel}
           onAccept={handleAccept}
+          autoFocus
         >
           {/* Enter inserts a newline here rather than accepting the row — the
               AcceptOrCancelEditor leaves a <textarea> its own Enter key. */}
@@ -1023,7 +1028,6 @@ function SectionEditor({
   // opened rather than reverting a draft.
   const [editingHeader, setEditingHeader] = useState(false);
   const headerAtOpenRef = useRef(section.header);
-  const headerInputRef = useRef<HTMLInputElement>(null);
   // Rows added here (rather than loaded from the recipe) have no committed
   // state, so cancelling their first edit removes them. Stored in a ref because
   // adding a row already re-renders through `onChange`.
@@ -1038,12 +1042,6 @@ function SectionEditor({
       onChange(rest);
     }
   }
-
-  // Runs in the commit that mounts the input, so the focus lands on a live
-  // element rather than on whatever is there a tick later.
-  useEffect(() => {
-    if (editingHeader) headerInputRef.current?.focus();
-  }, [editingHeader]);
 
   function openHeaderEditor() {
     headerAtOpenRef.current = section.header;
@@ -1104,10 +1102,10 @@ function SectionEditor({
             acceptLabel="Accept changes to section header"
             onCancel={handleCancelHeader}
             onAccept={() => setEditingHeader(false)}
+            autoFocus
           >
             <Heading className="re-section-heading">
               <input
-                ref={headerInputRef}
                 className="re-section-header-input"
                 value={section.header ?? ""}
                 onChange={(e) => setHeader(e.target.value)}

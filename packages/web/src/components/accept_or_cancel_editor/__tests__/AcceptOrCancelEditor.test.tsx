@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { EditActions } from "../../edit_actions/EditActions.tsx";
 import { AcceptOrCancelEditor, useAcceptOrCancel } from "../AcceptOrCancelEditor.tsx";
@@ -141,6 +142,87 @@ describe("AcceptOrCancelEditor", () => {
 
       expect(outer.onCancel).toHaveBeenCalledTimes(1);
       expect(inner.onCancel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("autoFocus", () => {
+    function setupAutoFocus(children: ReactNode) {
+      render(
+        <AcceptOrCancelEditor
+          cancelLabel="Cancel"
+          acceptLabel="Accept"
+          onCancel={vi.fn()}
+          onAccept={vi.fn()}
+          autoFocus
+        >
+          {children}
+        </AcceptOrCancelEditor>,
+      );
+    }
+
+    it("focuses the first field, so Escape reaches the editor straight away", () => {
+      setupAutoFocus(
+        <>
+          <input aria-label="First" />
+          <input aria-label="Second" />
+        </>,
+      );
+
+      expect(screen.getByLabelText("First")).toHaveFocus();
+    });
+
+    it("skips the buttons, which are one keystroke from closing the editor", () => {
+      setupAutoFocus(
+        <>
+          <button type="button">✕</button>
+          <input aria-label="First" />
+        </>,
+      );
+
+      expect(screen.getByLabelText("First")).toHaveFocus();
+    });
+
+    it("focuses a combobox trigger that is not a real form control", () => {
+      setupAutoFocus(<div role="combobox" tabIndex={0} aria-label="Ingredient" />);
+
+      expect(screen.getByRole("combobox", { name: "Ingredient" })).toHaveFocus();
+    });
+
+    it("skips a disabled field", () => {
+      setupAutoFocus(
+        <>
+          <input aria-label="First" disabled />
+          <input aria-label="Second" />
+        </>,
+      );
+
+      expect(screen.getByLabelText("Second")).toHaveFocus();
+    });
+
+    it("leaves focus alone when a field claimed it with its own autoFocus", () => {
+      setupAutoFocus(
+        <>
+          <input aria-label="First" />
+          <input aria-label="Second" autoFocus />
+        </>,
+      );
+
+      expect(screen.getByLabelText("Second")).toHaveFocus();
+    });
+
+    it("does not move focus without autoFocus", () => {
+      render(
+        <AcceptOrCancelEditor
+          cancelLabel="Cancel"
+          acceptLabel="Accept"
+          onCancel={vi.fn()}
+          onAccept={vi.fn()}
+        >
+          <input aria-label="First" />
+        </AcceptOrCancelEditor>,
+      );
+
+      expect(screen.getByLabelText("First")).not.toHaveFocus();
     });
   });
 
