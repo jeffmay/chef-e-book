@@ -28,6 +28,7 @@ jobs:
       issues: write
       pull-requests: write
     env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v6
@@ -47,6 +48,6 @@ jobs:
 
       - uses: Barmore-Genc/opencode-pr-reviewer@v1
         with:
-          model: opencode/deepseek-v4-flash-free
+          model: openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
           pr-number: ${{ github.event.inputs.pr || github.event.pull_request.number || github.event.issue.number }}
           user-comment: ${{ github.event.inputs.pr && 'Manual review triggered via workflow_dispatch' || github.event.comment.body }}
