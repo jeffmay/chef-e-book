@@ -10,10 +10,10 @@ on:
     types: [created]
   workflow_dispatch:
     inputs:
-      pr:
-        description: The PR link (or id) to review
+      pull_request:
+        description: Pull Request ID
         required: true
-        type: string
+        type: number
 
 jobs:
   review:
@@ -44,10 +44,11 @@ jobs:
 
       # Manual dispatch runs also start on default branch; switch to PR head
       - if: github.event_name == 'workflow_dispatch'
-        run: gh pr checkout "${{ github.event.inputs.pr }}" --repo "$GITHUB_REPOSITORY"
+        run: |
+          gh pr checkout "${{ github.event.inputs.pull_request }}" --repo "$GITHUB_REPOSITORY"
 
       - uses: Barmore-Genc/opencode-pr-reviewer@v1
         with:
           model: openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-          pr-number: ${{ github.event.inputs.pr || github.event.pull_request.number || github.event.issue.number }}
-          user-comment: ${{ github.event.inputs.pr && 'Manual review triggered via workflow_dispatch' || github.event.comment.body }}
+          pr-number: ${{ github.event.inputs.pull_request || github.event.pull_request.number || github.event.issue.number }}
+          user-comment: ${{ github.event.inputs.pull_request && 'Manual review triggered via workflow_dispatch' || github.event.comment.body }}
