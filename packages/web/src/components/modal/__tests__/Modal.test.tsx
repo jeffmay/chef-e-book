@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Modal } from "../Modal.tsx";
@@ -172,5 +173,56 @@ describe("Modal", () => {
     setup();
 
     expect(screen.getByRole("dialog")).toHaveFocus();
+  });
+
+  it("returns focus to the opener when it closes", async () => {
+    function Host() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open
+          </button>
+          {open && (
+            <Modal
+              title="Confirm"
+              buttons={{ ok: { text: "OK", dangerous: false, onClick: () => setOpen(false) } }}
+              onClose={() => {
+                setOpen(false);
+                return true;
+              }}
+            />
+          )}
+        </>
+      );
+    }
+    render(<Host />);
+    await userEvent.click(screen.getByRole("button", { name: "Open" }));
+    await userEvent.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open" })).toHaveFocus();
+  });
+
+  it("keeps Tab and Shift+Tab inside the card", async () => {
+    setup();
+    const dialog = screen.getByRole("dialog");
+    const discard = screen.getByRole("button", { name: "Discard" });
+
+    await userEvent.tab({ shift: true });
+    expect(discard).toHaveFocus();
+
+    await userEvent.tab();
+    expect(screen.getByLabelText("Name")).toHaveFocus();
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+  });
+
+  it("leaves Escape to a control whose dropdown is open", () => {
+    const { onClose } = setup();
+    const trigger = screen.getByLabelText("Name");
+    trigger.setAttribute("aria-expanded", "true");
+    fireEvent.keyDown(trigger, { key: "Escape" });
+
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

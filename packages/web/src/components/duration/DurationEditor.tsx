@@ -106,7 +106,10 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
       cancelLabel="Cancel changes"
       acceptLabel="Accept changes"
       onCancel={revertAndClose}
-      onAccept={commit}
+      onAccept={() => {
+        // Enter on text that did not parse must not silently keep the old value.
+        if (!inputError) commit();
+      }}
     >
       <span className="de-root de-root--open">
         <span className="de-header">

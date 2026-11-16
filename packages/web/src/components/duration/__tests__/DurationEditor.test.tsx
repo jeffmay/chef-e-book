@@ -208,4 +208,14 @@ describe("DurationEditor — keyboard", () => {
     expect(screen.getByRole("button", { name: "Edit duration" })).toBeInTheDocument();
     expect(screen.getByText("5 minutes")).toBeInTheDocument();
   });
+
+  it("ignores Enter while the typed duration does not parse", async () => {
+    const { onCommit } = await openEditor(FIVE_MIN);
+    const input = screen.getByRole("textbox", { name: "Duration" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "5 banana{Enter}");
+
+    expect(onCommit).not.toHaveBeenCalled();
+    expect(screen.getByRole("textbox", { name: "Duration" })).toBeInTheDocument();
+  });
 });

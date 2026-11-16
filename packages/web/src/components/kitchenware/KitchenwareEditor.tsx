@@ -42,8 +42,6 @@ export function KitchenwareEditor({
           allLabelNames={[...allLabelNames]}
           ariaLabel="Container labels"
           onChange={(names) => onChangeLabels(names as KitchenwareLabelId[])}
-          onCommit={() => undefined}
-          onCancel={() => undefined}
         />
       </div>
       <div className="ke-field">
