@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ReadonlyDeep } from "type-fest";
+import { isEnterPassthrough, isEscapeForOpenPopup } from "./keyboard.ts";
 import "./AcceptOrCancelEditor.css";
 
 export type AcceptOrCancelActions = ReadonlyDeep<{
@@ -45,9 +46,6 @@ export function useAcceptOrCancel(): AcceptOrCancelActions {
   return actions;
 }
 
-/** Controls that take Enter as their own input, so the editor must not steal it. */
-const ENTER_PASSTHROUGH_TAGS: ReadonlySet<string> = new Set(["TEXTAREA", "BUTTON", "A"]);
-
 /**
  * The editor's fields, in document order — what `autoFocus` hands focus to.
  * Buttons are left out on purpose: "↩"/"✔︎" and a row's "✕" are also focusable,
@@ -74,11 +72,11 @@ const EDITOR_FIELD_SELECTOR = [
  * hand the same two actions to `EditActions` through context, so the buttons and
  * the keys can never drift apart.
  *
- * A field that consumes Escape itself (a `react-select` closing its menu, a
- * `TreeSelect` closing its panel) must stop propagation while it is open, or the
- * key would both close the dropdown and cancel the editor around it. Enter needs
- * no such care: those components `preventDefault` when they consume it, which
- * this checks.
+ * Escape pressed in a field whose dropdown is open (a `react-select` menu, a
+ * `TreeSelect` panel) is left to that field, which closes the dropdown (see
+ * `isEscapeForOpenPopup`), so no field has to cooperate to avoid cancelling the
+ * editor as well. Enter needs no such care: those components `preventDefault`
+ * when they consume it, which this checks.
  */
 export function AcceptOrCancelEditor({
   cancelLabel,
@@ -104,6 +102,7 @@ export function AcceptOrCancelEditor({
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
     if (event.nativeEvent.isComposing) return;
     if (event.key === "Escape") {
+      if (isEscapeForOpenPopup(event.target)) return;
       event.preventDefault();
       event.stopPropagation();
       onCancel();
@@ -111,8 +110,7 @@ export function AcceptOrCancelEditor({
     }
     if (event.key !== "Enter") return;
     if (event.defaultPrevented) return;
-    const target = event.target;
-    if (target instanceof HTMLElement && ENTER_PASSTHROUGH_TAGS.has(target.tagName)) return;
+    if (isEnterPassthrough(event.target)) return;
     event.preventDefault();
     event.stopPropagation();
     onAccept();

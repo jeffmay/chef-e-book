@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, type MouseEvent } from "react";
+import { useMemo, useRef, useEffect, type MouseEvent } from "react";
 import CreatableSelect from "react-select/creatable";
 import { components as SelectComponents, type SelectInstance } from "react-select";
 import type { GroupBase, MenuProps, MultiValue } from "react-select";
@@ -30,18 +30,28 @@ function LabelEditorMenu(props: MenuProps<LabelOption, true, GroupBase<LabelOpti
   );
 }
 
-export type LabelEditorProps = ReadonlyDeep<{
+type LabelEditorBaseProps = ReadonlyDeep<{
   selectedLabelNames: string[];
   allLabelNames: string[];
   ariaLabel: string;
   placeholder?: string;
   onChange: (names: readonly string[]) => void;
-  onCommit?: () => void;
-  onCancel?: () => void;
   commitAriaLabel?: string;
   commitDisabled?: boolean;
   autoFocus?: boolean;
 }>;
+
+/**
+ * Accept and cancel come as a pair: the editor answers Enter and Escape only
+ * when it can do both, so a lone handler would be silently ignored by the keys.
+ * Pass neither and the editor is a plain field that leaves both keys to the
+ * editor or modal around it.
+ */
+export type LabelEditorProps = LabelEditorBaseProps &
+  (
+    | { readonly onCommit: () => void; readonly onCancel: () => void }
+    | { readonly onCommit?: undefined; readonly onCancel?: undefined }
+  );
 
 export function LabelEditor({
   selectedLabelNames,
@@ -55,7 +65,6 @@ export function LabelEditor({
   commitDisabled,
   autoFocus = false,
 }: LabelEditorProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const selectRef = useRef<SelectInstance<LabelOption, true>>(null);
 
   useEffect(() => {
@@ -94,15 +103,8 @@ export function LabelEditor({
         classNamePrefix="le"
         ref={selectRef}
         components={{ Menu: LabelEditorMenu }}
-        onMenuOpen={() => setMenuOpen(true)}
-        onMenuClose={() => setMenuOpen(false)}
         onKeyDown={(e) => {
           if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-            e.stopPropagation();
-          }
-          // While the menu is open, Escape closes it and goes no further: the
-          // enclosing AcceptOrCancelEditor must not also cancel the edit.
-          if (e.key === "Escape" && menuOpen) {
             e.stopPropagation();
           }
         }}

@@ -92,9 +92,9 @@ function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFold
       <td className="bre-td bre-td--select" />
       <td className="bre-td bre-td--name" data-depth={depth}>
         <div className="bre-td-name-inner">
-          {/* Enter goes through `requestSubmit` rather than straight to
-              `onSubmit`, so the disabled-while-empty confirm button still
-              decides whether the name is submittable. */}
+          {/* Enter goes through `requestSubmit` so the form's own `onSubmit`
+              runs; `requestSubmit` ignores the disabled confirm button, so
+              that handler must itself reject an empty name. */}
           <AcceptOrCancelEditor
             cancelLabel="Cancel new folder"
             acceptLabel="Confirm new folder"

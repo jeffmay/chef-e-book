@@ -140,6 +140,7 @@ describe("LabelEditor — arrow key propagation", () => {
           ariaLabel="Edit labels for Flour"
           onChange={vi.fn()}
           onCommit={vi.fn()}
+          onCancel={vi.fn()}
         />
       </div>,
     );
@@ -159,6 +160,7 @@ describe("LabelEditor — arrow key propagation", () => {
           ariaLabel="Edit labels for Flour"
           onChange={vi.fn()}
           onCommit={vi.fn()}
+          onCancel={vi.fn()}
         />
       </div>,
     );
@@ -177,6 +179,7 @@ describe("LabelEditor — arrow key propagation", () => {
           ariaLabel="Edit labels for Flour"
           onChange={vi.fn()}
           onCommit={vi.fn()}
+          onCancel={vi.fn()}
         />
       </div>,
     );
