@@ -61,7 +61,7 @@
 
 ## In Progress
 
-- [ ] Single-document recipe books (`docs/single-document-book-plan.md`). Step 1a done: one `Y.Doc` per book (`useBookDoc` + `BookDocContext`, IndexedDB `book-<id>`), replacing the separate kitchenware/recipes docs. Next: 1b legacy-data migration (required before release), then `book_meta`, device book registry, atomic undo, name keys, export, import
+- [ ] Single-document recipe books (`docs/single-document-book-plan.md`). Steps 1a and 1b done: one `Y.Doc` per book (`useBookDoc` + `BookDocContext`, IndexedDB `book-<id>`), with data from the old separate kitchenware/recipes databases merged in on open. Next: `book_meta`, device book registry, atomic undo, name keys, export, import
 
 ---
 

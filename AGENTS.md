@@ -125,7 +125,7 @@ The app uses **React Router v7 in Framework mode** via `@react-router/dev/vite` 
 ### State & Sync
 
 - **One document per book:** a recipe book is a single `Y.Doc` holding every root map (`ingredients`, `containers`, `labels`, `recipes`, `recipe_folders`, `sessions`, `session_item_states`, `book_settings`). `useBookDoc(bookId)` (`hooks/useYjsDoc.ts`) creates it and provides it through `BookDocContext` (`contexts/docContext.ts`); every `use*Store` hook reads it with `useBookDoc()` from that context. See `docs/single-document-book-plan.md` for the roadmap (migration, `book_meta`, device book registry, undo, export/import).
-- **Local persistence:** `y-indexeddb` (browser IndexedDB), one database named `book-<book_id>`. Data written by earlier builds under `kitchenware-<book_id>` and `recipes-<book_id>` is **not read yet**; the legacy-data migration (plan step 1b) must land before this ships to users
+- **Local persistence:** `y-indexeddb` (browser IndexedDB), one database named `book-<book_id>`. Data written by earlier builds under `kitchenware-<book_id>` and `recipes-<book_id>` is merged into the book document on open (`storage/legacyBookMigration.ts`, idempotent, written with `MIGRATION_ORIGIN` so it is never undoable) before `whenSynced` resolves; the old databases are left in place until a later release removes them
 - **Cross-browser sync:** Optional Node.js server; URL configurable via Vite env var (`VITE_SYNC_SERVER_URL`) stored in localStorage
 - **Server:** Single `/sync` endpoint exchanges Yjs updates for a user's document and sends back updates to the default kitchenware list
 - **Conflict resolution:** On kitchenware conflicts, user is prompted to accept incoming, keep local, or rename local and accept incoming
