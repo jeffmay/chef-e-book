@@ -4,7 +4,7 @@ test.describe("Ingredient Editor", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/", { waitUntil: "networkidle" });
     await page.fill('input[type="text"]', "TestUser");
-    await page.click('button:has-text("Get Started")');
+    await page.click('button:has-text("Create book")');
     await page.waitForTimeout(1000);
     await page.click("text=/☰/");
     await page.waitForTimeout(500);

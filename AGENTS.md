@@ -130,6 +130,16 @@ The app uses **React Router v7 in Framework mode** via `@react-router/dev/vite` 
 - **Server:** Single `/sync` endpoint exchanges Yjs updates for a user's document and sends back updates to the default kitchenware list
 - **Conflict resolution:** On kitchenware conflicts, user is prompted to accept incoming, keep local, or rename local and accept incoming
 
+### Books on This Device (`useBookRegistry`)
+
+Which books exist on this device, and which one is open, is device-local state kept in `localStorage` under `chefe_books` as `{ books: [{ id, name, created_at, last_opened_at }], active_book_id? }` (`packages/web/src/storage/bookRegistry.ts`, validated by `BookRegistry`). Each book's content is its own Yjs document in IndexedDB (`book-<id>`); the registry only says which exist here. One key holds the list and the active id so they cannot disagree.
+
+- `useBookRegistry()` (`hooks/useBookRegistry.ts`) returns `books` (most recently opened first), `activeBook` (`null` shows the picker), and `createBook`, `openBook`, `closeBook`, `renameBook`, `deleteBook`. It reads once on the first render and writes every change through. An earlier build's single `ecookdeck_book` key is adopted as the open book and then removed.
+- **The document's name leads; the registry's name is a cache** so the picker and header can show it before the document loads. `useSyncBookName` copies `book_meta.name` into the cache when the document syncs and whenever it changes. The open book is renamed with `setBookName(doc, …)` (`RootContext.onRename`); a book that is not open with `writeBookName(id, name)`. Renaming never changes a book's id.
+- `loadBookDoc(bookId)` (`storage/bookDatabases.ts`) opens another book's document without making it the open one, and its `dispose()` waits for pending writes. Never use it for the book open in this tab — use the live document. `deleteBookDatabases(id)` removes a book's document and the legacy databases; deleting is only offered from the picker, where no book is open.
+- `SelectBookPage` is the picker (list, "✎" rename, "✕" delete behind a confirmation `Modal` whose Enter key cancels, and a "Create book" form). The header's "Books" button returns to it.
+- Tabs do not listen for `storage` events, so two tabs can disagree about the open book until reload.
+
 ### Device-Local View State (`useLocalViewState`)
 
 Not everything belongs in the Yjs document. State that describes how _this device_ is looking at
@@ -150,7 +160,7 @@ const { viewState, setViewState } = useLocalViewState(KEY, ViewStateCompanion, c
   (build-time prerender) _and_ accessing it may throw even when it exists (`SecurityError` in a
   sandboxed or privacy-blocked context, `QuotaExceededError` on write). Reads happen during the
   first render, so an unguarded throw there would take the whole page down on load. Use these
-  helpers for any new `localStorage` access; `useActiveBookMetaStore` uses them too.
+  helpers for any new `localStorage` access; the book registry (`storage/bookRegistry.ts`) uses them too.
 - A stored value that is malformed JSON or no longer matches the schema is logged with
   `console.warn` and replaced by the default, so an older build's key can never break the page.
   The two are reported separately — "not valid JSON" and "not the shape we expect" call for
@@ -461,6 +471,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 ### Top Nav Bar
 
 - "☰" hamburger menu to navigate between pages
+- "Books" button: leaves the open book for the book picker (see Books on This Device)
 - "↩ Undo" button (Yjs undo manager)
 
 ## Design System

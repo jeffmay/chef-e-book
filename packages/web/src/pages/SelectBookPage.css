@@ -47,3 +47,57 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.book-list-section {
+  width: 100%;
+  max-width: 40vw;
+}
+
+.book-list-heading {
+  font-size: 1.1em;
+  margin-bottom: var(--spacing-sm);
+}
+
+.book-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: 0;
+  margin: 0;
+}
+
+/* A row reserves the corner the floated "✕" sits in (padding-right) and is at least as tall as the
+   square it occupies, so the button can never spill onto the row below. */
+.book-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: calc(var(--row-action-size) + 2 * var(--spacing-xs));
+  padding: var(--spacing-xs);
+  padding-right: calc(var(--row-action-size) + 2 * var(--spacing-xs));
+  border: var(--border-width) solid var(--color-border);
+}
+
+.book-open {
+  flex: 1;
+  text-align: left;
+  border: none;
+  background: transparent;
+  font-size: 1.1em;
+  overflow-wrap: anywhere;
+}
+
+.book-rename-input {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .book-list-section,
+  .select-user-form,
+  .select-user-page > .page-title {
+    max-width: 90vw;
+  }
+}
