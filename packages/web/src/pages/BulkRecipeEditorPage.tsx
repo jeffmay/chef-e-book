@@ -9,7 +9,9 @@ import { Fragment, type FormEvent, useLayoutEffect, useRef, useState } from "rea
 import { useNavigate } from "react-router";
 import { AcceptOrCancelEditor } from "../components/accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import { ButtonMenu } from "../components/button_menu/ButtonMenu.tsx";
+import { ExportNotice } from "../components/export_notice/ExportNotice.tsx";
 import { Modal } from "../components/modal/Modal.tsx";
+import { useBookExport } from "../hooks/useBookExport.ts";
 import { useLocalViewState } from "../hooks/useLocalViewState.ts";
 import { useMobileView } from "../hooks/useMobileView.ts";
 import { useRecipeFolderStore } from "../hooks/useRecipeFolderStore.ts";
@@ -197,6 +199,7 @@ function buildRows(
 export function BulkRecipeEditorPage() {
   const navigate = useNavigate();
   const { recipes, removeAll, merge } = useRecipeStore();
+  const { exportRecipesFile, summary: exportSummary, dismissSummary } = useBookExport();
   const { folders, createFolder, updateFolder } = useRecipeFolderStore();
   const startSession = useStartSession();
   const isMobileView = useMobileView();
@@ -404,6 +407,14 @@ export function BulkRecipeEditorPage() {
           </button>
           <span className="bre-bulk-count">{selectedArray.length} selected</span>
           <button
+            type="button"
+            className="bre-bulk-btn"
+            onClick={() => exportRecipesFile(selectedArray)}
+            aria-label="Export selected recipes"
+          >
+            Export
+          </button>
+          <button
             ref={deleteBtnRef}
             type="button"
             className="bre-bulk-btn"
@@ -469,6 +480,10 @@ export function BulkRecipeEditorPage() {
             </>
           )}
         </div>
+      )}
+
+      {exportSummary !== null && (
+        <ExportNotice summary={exportSummary} onDismiss={dismissSummary} />
       )}
 
       {/* Delete confirm dialog */}

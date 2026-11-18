@@ -14,7 +14,9 @@ import {
 } from "../components/ingredients_table/IngredientsTable.tsx";
 import { LabelEditor } from "../components/ingredients_table/LabelEditor.tsx";
 import { LabelTable } from "../components/ingredients_table/LabelTable.tsx";
+import { ExportNotice } from "../components/export_notice/ExportNotice.tsx";
 import { useBookDoc } from "../contexts/docContext.ts";
+import { useBookExport } from "../hooks/useBookExport.ts";
 import { useIngredientStore } from "../hooks/useIngredientStore.ts";
 import { useLabelStore } from "../hooks/useLabelStore.ts";
 import "./BulkIngredientEditorPage.css";
@@ -50,6 +52,7 @@ const EMPTY_ADD_FORM = {
 
 export function BulkIngredientEditorPage() {
   const { doc } = useBookDoc();
+  const { exportIngredientsFile, summary: exportSummary, dismissSummary } = useBookExport();
 
   const {
     ingredients,
@@ -247,7 +250,17 @@ export function BulkIngredientEditorPage() {
         >
           + New ingredient
         </button>
+        <button
+          className="bie-export-btn"
+          onClick={() => exportIngredientsFile("all")}
+          aria-label="Export all ingredients"
+        >
+          Export all
+        </button>
       </div>
+      {exportSummary !== null && (
+        <ExportNotice summary={exportSummary} onDismiss={dismissSummary} />
+      )}
 
       {/* Label table (expandable) */}
       <LabelTable
@@ -268,6 +281,7 @@ export function BulkIngredientEditorPage() {
         {...(externalLabelFilter !== undefined && { external_label_filter: externalLabelFilter })}
         nameError={ingredientNameError}
         duplicateIds={duplicateIds}
+        onExport={exportIngredientsFile}
         onRename={renameIngredient}
         onSetMeasurementValue={(id, value) => setMeasurementValue([id], value)}
         onSetLabels={handleSetLabels}
