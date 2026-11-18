@@ -16,6 +16,12 @@ export type LabelTableProps = ReadonlyDeep<{
   onDelete: (label_ids: readonly KitchenwareLabelId[]) => void;
   onMerge: (label_ids: readonly KitchenwareLabelId[], new_name: string) => void;
   onRename: (id: KitchenwareLabelId, name: string) => void;
+  /**
+   * Why `name` cannot be used (another label already has it), or `undefined` if it can. `exclude`
+   * is the label being renamed, or the labels being merged: they never clash with the new name.
+   * While it returns a message, the rename or merge shows it and is not committed.
+   */
+  nameError?: (name: string, exclude: readonly KitchenwareLabelId[]) => string | undefined;
 }>;
 
 export function LabelTable({
@@ -27,6 +33,7 @@ export function LabelTable({
   onDelete,
   onMerge,
   onRename,
+  nameError,
 }: LabelTableProps) {
   const [expanded, setExpanded] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<KitchenwareLabelId>>(new Set());
@@ -116,9 +123,16 @@ export function LabelTable({
     [ingredients, selectedIds],
   );
 
+  const mergeError =
+    mergeName.trim() === "" ? undefined : nameError?.(mergeName.trim(), selectedArray);
+  const editingError =
+    editingId === null || editingName.trim() === ""
+      ? undefined
+      : nameError?.(editingName.trim(), [editingId]);
+
   function submitMerge(): void {
     const name = mergeName.trim();
-    if (name === "" || selectedArray.length < 2) return;
+    if (name === "" || selectedArray.length < 2 || mergeError !== undefined) return;
     onMerge(selectedArray, name);
     setMergeName("");
     setShowMergeInput(false);
@@ -142,6 +156,8 @@ export function LabelTable({
 
   function commitEdit(): void {
     const name = editingName.trim();
+    // A name that is taken keeps the editor open, with its message showing, instead of renaming.
+    if (editingError !== undefined) return;
     if (name !== "" && editingId !== null) {
       onRename(editingId, name);
     }
@@ -251,12 +267,18 @@ export function LabelTable({
                           onChange={(e) => setMergeName(e.target.value)}
                           placeholder="Merged label name…"
                           aria-label="Merged label name"
+                          aria-invalid={mergeError !== undefined}
                           autoFocus
                         />
+                        {mergeError !== undefined && (
+                          <span className="field-error" role="alert">
+                            {mergeError}
+                          </span>
+                        )}
                         <button
                           type="submit"
                           className="lt-bulk-btn"
-                          disabled={mergeName.trim() === ""}
+                          disabled={mergeName.trim() === "" || mergeError !== undefined}
                           aria-label="Confirm merge"
                         >
                           Confirm
@@ -383,8 +405,14 @@ export function LabelTable({
                               value={editingName}
                               autoFocus
                               aria-label={`Edit label name ${label.name}`}
+                              aria-invalid={editingError !== undefined}
                               onChange={(e) => setEditingName(e.target.value)}
                             />
+                            {editingError !== undefined && (
+                              <span className="field-error" role="alert">
+                                {editingError}
+                              </span>
+                            )}
                             <button
                               type="button"
                               className="lt-edit-btn"

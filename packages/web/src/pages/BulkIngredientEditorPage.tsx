@@ -1,5 +1,11 @@
 import type { KitchenwareKind, KitchenwareLabelId } from "@recipe-book/shared";
-import { findOrCreateLabel, IngredientId, loadId, type Measurement } from "@recipe-book/shared";
+import {
+  describeNameClash,
+  findOrCreateLabel,
+  IngredientId,
+  loadId,
+  type Measurement,
+} from "@recipe-book/shared";
 import { useState } from "react";
 import { MeasurementEditor } from "../components/measurement/MeasurementEditor.tsx";
 import {
@@ -47,6 +53,8 @@ export function BulkIngredientEditorPage() {
 
   const {
     ingredients,
+    nameClash: ingredientNameClash,
+    duplicateIds,
     createIngredient,
     renameIngredient,
     addLabels,
@@ -56,13 +64,36 @@ export function BulkIngredientEditorPage() {
     setParent,
   } = useIngredientStore();
 
-  const { labels, renameLabel, deleteLabels, mergeLabels } = useLabelStore();
+  const {
+    labels,
+    nameClash: labelNameClash,
+    renameLabel,
+    deleteLabels,
+    mergeLabels,
+  } = useLabelStore();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState<AddFormState>(EMPTY_ADD_FORM);
   const [externalLabelFilter, setExternalLabelFilter] = useState<ExternalLabelFilter | undefined>(
     undefined,
   );
+
+  /** The message to show when `name` is taken by another ingredient, or `undefined` if it is free. */
+  function ingredientNameError(id: IngredientId | undefined, name: string): string | undefined {
+    const clash = ingredientNameClash(name, id);
+    return clash === undefined ? undefined : describeNameClash("ingredient", clash);
+  }
+
+  function labelNameError(
+    name: string,
+    exclude: readonly KitchenwareLabelId[],
+  ): string | undefined {
+    const clash = labelNameClash(name, exclude);
+    return clash === undefined ? undefined : describeNameClash("label", clash);
+  }
+
+  const addNameError =
+    addForm.name.trim() === "" ? undefined : ingredientNameError(undefined, addForm.name.trim());
 
   function resolveLabelNames(labelNames: readonly string[]): readonly KitchenwareLabelId[] {
     return labelNames.map((name) => findOrCreateLabel(doc, name, ingredientKinds));
@@ -71,7 +102,7 @@ export function BulkIngredientEditorPage() {
   function handleAddSubmit(e: { preventDefault(): void }): void {
     e.preventDefault();
     const labelName = addForm.name.trim();
-    if (labelName === "") return;
+    if (labelName === "" || addNameError !== undefined) return;
     const labelNames = addForm.labels;
     const input: {
       name: string;
@@ -145,9 +176,15 @@ export function BulkIngredientEditorPage() {
               onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
               required
               aria-label="New ingredient name"
+              aria-invalid={addNameError !== undefined}
               autoFocus
             />
           </label>
+          {addNameError !== undefined && (
+            <p className="field-error" role="alert">
+              {addNameError}
+            </p>
+          )}
           <label className="bie-add-label field-row">
             <span className="field-row-label">Default measurement</span>
             <MeasurementEditor
@@ -182,7 +219,10 @@ export function BulkIngredientEditorPage() {
             </select>
           </label>
           <div className="bie-add-actions">
-            <button type="submit" disabled={addForm.name.trim() === ""}>
+            <button
+              type="submit"
+              disabled={addForm.name.trim() === "" || addNameError !== undefined}
+            >
               Add
             </button>
             <button
@@ -218,6 +258,7 @@ export function BulkIngredientEditorPage() {
         onDelete={(ids) => deleteLabels(ids)}
         onMerge={mergeLabels}
         onRename={renameLabel}
+        nameError={labelNameError}
       />
 
       {/* Ingredient table */}
@@ -225,6 +266,8 @@ export function BulkIngredientEditorPage() {
         ingredients={ingredients}
         labels={labels}
         {...(externalLabelFilter !== undefined && { external_label_filter: externalLabelFilter })}
+        nameError={ingredientNameError}
+        duplicateIds={duplicateIds}
         onRename={renameIngredient}
         onSetMeasurementValue={(id, value) => setMeasurementValue([id], value)}
         onSetLabels={handleSetLabels}

@@ -63,6 +63,7 @@ function setup({
   onDelete = onDeleteFn,
   onMerge = onMergeFn,
   onRename = onRenameFn,
+  nameError,
 }: Partial<LabelTableProps> = {}) {
   return render(
     <LabelTable
@@ -74,6 +75,7 @@ function setup({
       onDelete={onDelete}
       onMerge={onMerge}
       onRename={onRename}
+      {...(nameError && { nameError })}
     />,
   );
 }
@@ -497,5 +499,83 @@ describe("LabelTable.css — inline editor stacking", () => {
     const focused = /\.lt-editing:focus-within\s*\{([\s\S]*?)\}/.exec(css);
     expect(focused).not.toBeNull();
     expect(focused?.[1] ?? "").toMatch(/z-index:\s*20\b/);
+  });
+});
+
+describe("LabelTable — name uniqueness", () => {
+  const TAKEN = 'A label named "solid" already exists';
+  const defaultLabels = [FAT, SOLID, BAKING] as const;
+
+  /** Refuses "solid" for anything that is not (only) the solid label itself. */
+  const nameError = vi.fn((name: string, exclude: readonly KitchenwareLabelId[]) =>
+    name.toLowerCase() === "solid" && !exclude.includes(SOLID.id) ? TAKEN : undefined,
+  );
+
+  async function startRenamingFat() {
+    setup({ labels: defaultLabels, nameError });
+    await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
+    await userEvent.dblClick(screen.getByRole("button", { name: "Rename label fat" }));
+    const input = screen.getByRole("textbox", { name: "Edit label name fat" });
+    await userEvent.clear(input);
+    return input;
+  }
+
+  it("shows the message while a rename's name is taken", async () => {
+    const input = await startRenamingFat();
+    await userEvent.type(input, "Solid");
+    expect(screen.getByRole("alert")).toHaveTextContent(TAKEN);
+    expect(input).toBeInvalid();
+  });
+
+  it("does not rename while the name is taken, and keeps the editor open", async () => {
+    const input = await startRenamingFat();
+    await userEvent.type(input, "solid");
+    await userEvent.click(screen.getByRole("button", { name: "Confirm rename" }));
+    expect(onRenameFn).not.toHaveBeenCalled();
+    expect(screen.getByRole("textbox", { name: "Edit label name fat" })).toBeInTheDocument();
+  });
+
+  it("does not rename on Enter while the name is taken", async () => {
+    const input = await startRenamingFat();
+    await userEvent.type(input, "SOLID{Enter}");
+    expect(onRenameFn).not.toHaveBeenCalled();
+  });
+
+  it("renames once the name is free, asking with the label's own id excluded", async () => {
+    const input = await startRenamingFat();
+    await userEvent.type(input, "saturated{Enter}");
+    expect(nameError).toHaveBeenCalledWith("saturated", [FAT.id]);
+    expect(onRenameFn).toHaveBeenCalledWith(FAT.id, "saturated");
+  });
+
+  describe("merging", () => {
+    async function startMergingFatAndBaking() {
+      setup({ labels: defaultLabels, nameError });
+      await userEvent.click(screen.getByRole("button", { name: /Labels/ }));
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select label fat" }));
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select label baking" }));
+      await userEvent.click(screen.getByRole("button", { name: "Merge selected labels" }));
+      return screen.getByRole("textbox", { name: "Merged label name" });
+    }
+
+    it("shows the message and disables Confirm while the merged name is taken", async () => {
+      const input = await startMergingFatAndBaking();
+      await userEvent.type(input, "solid");
+      expect(screen.getByRole("alert")).toHaveTextContent(TAKEN);
+      expect(screen.getByRole("button", { name: "Confirm merge" })).toBeDisabled();
+    });
+
+    it("does not merge on Enter while the merged name is taken", async () => {
+      const input = await startMergingFatAndBaking();
+      await userEvent.type(input, "solid{Enter}");
+      expect(onMergeFn).not.toHaveBeenCalled();
+    });
+
+    it("merges under a free name, asking with the merged labels excluded", async () => {
+      const input = await startMergingFatAndBaking();
+      await userEvent.type(input, "pantry{Enter}");
+      expect(nameError).toHaveBeenCalledWith("pantry", expect.arrayContaining([FAT.id, BAKING.id]));
+      expect(onMergeFn).toHaveBeenCalledWith(expect.arrayContaining([FAT.id, BAKING.id]), "pantry");
+    });
   });
 });

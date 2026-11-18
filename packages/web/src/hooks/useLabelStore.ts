@@ -1,12 +1,15 @@
 import {
   addLabel,
   deleteLabels as deleteLabelsInDoc,
+  findLabelNameClash,
   findOrCreateLabel,
   getLabels,
   getLabelsYmap,
   type KitchenwareKind,
   type KitchenwareLabel,
   KitchenwareLabelId,
+  type NameClash,
+  NameClashError,
   removeLabelFromAllIngredients,
   renameLabel as renameLabelInDoc,
   replaceLabelInAllIngredients,
@@ -18,10 +21,23 @@ import { useBookDoc } from "../contexts/docContext.ts";
 
 export interface LabelStore {
   labels: KitchenwareLabel[];
+  /**
+   * The label that already holds `name` — in any case, ignoring surrounding whitespace, but **not**
+   * as a plural: "Spices" and "Spice" are different labels — or `undefined` if it is free.
+   * `exclude` is the label being renamed, or the labels being merged: they never clash.
+   */
+  nameClash: (
+    name: string,
+    exclude?: KitchenwareLabelId | readonly KitchenwareLabelId[],
+  ) => NameClash<KitchenwareLabelId> | undefined;
+  /** @throws NameClashError if another label already holds the name. */
   createLabel: (name: string, kinds: ReadonlySet<KitchenwareKind>) => KitchenwareLabelId;
+  /** Reuses the label that holds `name` (in any case), or creates it. Never clashes. */
   findOrCreate: (name: string, kinds: ReadonlySet<KitchenwareKind>) => KitchenwareLabelId;
+  /** @throws NameClashError if another label already holds the name. */
   renameLabel: (id: KitchenwareLabelId, name: string) => void;
   deleteLabels: (ids: readonly KitchenwareLabelId[]) => void;
+  /** @throws NameClashError if a label outside `ids` already holds the new name. */
   mergeLabels: (ids: readonly KitchenwareLabelId[], new_name: string) => KitchenwareLabelId;
 }
 
@@ -48,13 +64,18 @@ export function useLabelStore(): LabelStore {
 
   return {
     labels,
+    nameClash: (name, exclude) => findLabelNameClash(doc, name, exclude),
     createLabel(name, kinds) {
+      const clash = findLabelNameClash(doc, name);
+      if (clash !== undefined) throw new NameClashError("label", clash);
       return addLabel(doc, name, kinds);
     },
     findOrCreate(name, kinds) {
       return findOrCreateLabel(doc, name, kinds);
     },
     renameLabel(id, name) {
+      const clash = findLabelNameClash(doc, name, id);
+      if (clash !== undefined) throw new NameClashError("label", clash);
       renameLabelInDoc(doc, id, name);
     },
     deleteLabels(ids) {
@@ -67,6 +88,8 @@ export function useLabelStore(): LabelStore {
       });
     },
     mergeLabels(idsToMerge, newName) {
+      const clash = findLabelNameClash(doc, newName, idsToMerge);
+      if (clash !== undefined) throw new NameClashError("label", clash);
       const newId = randomId(KitchenwareLabelId);
 
       // Collect kinds from all merging labels

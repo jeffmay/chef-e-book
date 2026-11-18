@@ -157,3 +157,68 @@ describe("BulkIngredientEditorPage — bulk actions", () => {
     expect(screen.getByRole("combobox", { name: "Labels to remove" })).toHaveValue("");
   });
 });
+
+describe("BulkIngredientEditorPage — name uniqueness", () => {
+  async function openAddForm() {
+    await setupAndWait();
+    await userEvent.click(screen.getByLabelText("Add new ingredient"));
+    return screen.getByLabelText("New ingredient name");
+  }
+
+  it("shows no message for a free name, and lets it be added", async () => {
+    const input = await openAddForm();
+    await userEvent.type(input, "Oregano");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add" })).toBeEnabled();
+  });
+
+  it("refuses a name another ingredient holds, whatever its case or number", async () => {
+    const input = await openAddForm();
+    await userEvent.type(input, "  BUTTERS ");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      'An ingredient named "Butter" already exists',
+    );
+    expect(input).toBeInvalid();
+    expect(screen.getByRole("button", { name: "Add" })).toBeDisabled();
+  });
+
+  it("does not add the ingredient on Enter while the name is taken", async () => {
+    const input = await openAddForm();
+    await userEvent.type(input, "Cheese{Enter}");
+    expect(within(getTable()).getAllByText("Cheese")).toHaveLength(1);
+    expect(screen.getByLabelText("New ingredient name")).toBeInTheDocument();
+  });
+
+  it("clears the message once the name is changed to a free one", async () => {
+    const input = await openAddForm();
+    await userEvent.type(input, "Butter");
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    await userEvent.type(input, " Cookies");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add" })).toBeEnabled();
+  });
+
+  it("refuses to rename an ingredient in the table to a name another holds", async () => {
+    await setupAndWait();
+    await userEvent.dblClick(screen.getByRole("button", { name: "Edit name for Cheese" }));
+    const input = screen.getByRole("textbox", { name: "Edit name for Cheese" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "butters{Enter}");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      'An ingredient named "Butter" already exists',
+    );
+    expect(screen.getByRole("textbox", { name: "Edit name for Cheese" })).toBeInTheDocument();
+  });
+
+  it("lets an ingredient be renamed to another spelling of its own name", async () => {
+    await setupAndWait();
+    await userEvent.dblClick(screen.getByRole("button", { name: "Edit name for Cheese" }));
+    const input = screen.getByRole("textbox", { name: "Edit name for Cheese" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "Cheeses{Enter}");
+    expect(
+      await screen.findByRole("button", { name: "Edit name for Cheeses" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});

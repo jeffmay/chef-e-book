@@ -1,6 +1,10 @@
 import { type } from "arktype";
 import type * as Y from "yjs";
 import type { KitchenwareTemplate } from "../fixtures/kitchenware.ts";
+import { buildNameIndex, findNameClash, type NameIndex } from "../names/nameIndex.ts";
+import { ingredientNameKey } from "../names/nameKey.ts";
+import type { NameClash } from "../names/nameClash.ts";
+import { readNameKey, readStoredNameKey } from "../names/storedName.ts";
 import { Companion } from "../types/companion.ts";
 import { loadId } from "../types/ids.ts";
 import type { Ingredient, KitchenwareKind } from "../types/kitchenware.ts";
@@ -33,12 +37,15 @@ const StoredIngredient = Companion(
     default_measurement_value: Measurement.type,
     labels: setOf<KitchenwareLabelId>(KitchenwareLabelId.type),
     "parent_id?": IngredientId.type,
+    "name_key?": "string",
   }),
 );
 
+/** Every write goes through here, so the stored `name_key` is always derived from the name. */
 function toStored(i: Ingredient) {
   return {
     name: i.name,
+    name_key: ingredientNameKey(i.name),
     default_measurement_value: {
       value: {
         numerator: i.default_measurement_value.value.numerator,
@@ -68,6 +75,45 @@ function validateStoredOrLog(id: IngredientId, raw: unknown): Ingredient | Valid
     labels: result.labels,
     ...(result.parent_id !== undefined && { parent_id: result.parent_id }),
   };
+}
+
+/** The ids by name key, from the keys stored with each ingredient. */
+export function getIngredientNameIndex(doc: Y.Doc): NameIndex<IngredientId> {
+  const entries: Array<{ id: IngredientId; key: string }> = [];
+  getIngredientYmap(doc).forEach((value, id) => {
+    const key = readNameKey(value, ingredientNameKey);
+    if (key !== undefined) entries.push({ id: loadId(IngredientId, id), key });
+  });
+  return buildNameIndex(entries);
+}
+
+/**
+ * The existing ingredient that already holds `name` (as singular or plural, any case), or
+ * `undefined` if the name is free. `excludeId` is the ingredient being renamed: it never clashes
+ * with itself, so "Tomato" can become "Tomatoes".
+ */
+export function findIngredientNameClash(
+  doc: Y.Doc,
+  name: string,
+  excludeId?: IngredientId,
+): NameClash<IngredientId> | undefined {
+  const id = findNameClash(getIngredientNameIndex(doc), ingredientNameKey(name), excludeId);
+  if (id === undefined) return undefined;
+  const existing = validateStoredOrLog(id, getIngredientYmap(doc).get(id));
+  return isInvalid(existing) ? undefined : { id, name: existing.name };
+}
+
+/** Rewrites every ingredient whose stored `name_key` is missing or differs from the current rules. */
+export function rekeyIngredients(doc: Y.Doc): void {
+  const map = getIngredientYmap(doc);
+  doc.transact(() => {
+    map.forEach((value, id) => {
+      const ingredient = validateStoredOrLog(loadId(IngredientId, id), value);
+      if (isInvalid(ingredient)) return;
+      if (readStoredNameKey(value) === ingredientNameKey(ingredient.name)) return;
+      map.set(id, toStored(ingredient));
+    });
+  });
 }
 
 export function getIngredients(doc: Y.Doc): Ingredient[] {

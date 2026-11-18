@@ -34,6 +34,7 @@ export const BookMeta = Companion(
     created_at: "number",
     schema_version: "number.integer >= 1",
     "seeded_defaults?": "boolean",
+    "name_key_version?": "number.integer >= 1",
   }),
 );
 
@@ -106,6 +107,20 @@ export function isDefaultKitchenwareSeeded(doc: Y.Doc): boolean {
 /** Records that the default kitchenware has been dealt with, so it is never seeded again. */
 export function markDefaultKitchenwareSeeded(doc: Y.Doc): void {
   doc.transact(() => getBookMetaYmap(doc).set("seeded_defaults", true), SETUP_ORIGIN);
+}
+
+/**
+ * The `NAME_KEY_VERSION` this book's stored name keys were written with, or `undefined` if it has
+ * never been keyed (a book from before name keys existed).
+ */
+export function getNameKeyVersion(doc: Y.Doc): number | undefined {
+  const version = getBookMetaYmap(doc).get("name_key_version");
+  return typeof version === "number" ? version : undefined;
+}
+
+/** Records the `NAME_KEY_VERSION` the book's keys are now written with. Never undoable. */
+export function setNameKeyVersion(doc: Y.Doc, version: number): void {
+  doc.transact(() => getBookMetaYmap(doc).set("name_key_version", version), SETUP_ORIGIN);
 }
 
 /** Renames the book. This is a user edit, so (unlike `ensureBookMeta`) it can be undone. */
