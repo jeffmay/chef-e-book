@@ -172,7 +172,7 @@ written starts expanded like everything else instead of being absent from a stor
 
 ### Kitchenware
 
-Kitchenware (ingredients, containers, equipment) lives in a global shared list with defaults shipped as a CSV static asset (`packages/web/public/kitchenware.csv`). On page load, if IndexedDB is empty, `use_ingredient_store` fetches `/kitchenware.csv`, parses it via `parse_kitchenware_csv`, and calls `init_from_kitchenware_templates` to populate the Yjs doc.
+Kitchenware (ingredients, containers, equipment) lives in a global shared list with defaults shipped as a CSV static asset (`packages/web/public/kitchenware.csv`). The defaults are put into a book **exactly once**: on first open, `useSeedDefaultKitchenware` (run from `AuthenticatedShell` after the legacy-data merge and `ensureBookMeta`) fetches `/kitchenware.csv` via `loadDefaultKitchenware` (`storage/defaultKitchenware.ts`) and calls `seedDefaultKitchenware` (`packages/shared/src/yjs/defaultKitchenware.ts`), which checks, seeds, and records `book_meta.seeded_defaults` in one `SETUP_ORIGIN` transaction. Because the flag is kept, a user who deletes every ingredient is not given the defaults back; a book that already holds ingredients or labels is marked without being touched; the CSV is only fetched when the book actually needs it, and a failed or empty fetch leaves the book unmarked so the next open retries. `useIngredientStore` no longer seeds anything. Tests that need ingredients call `seedKitchenwareFromCsv(doc, csv)` from `src/testUtils.ts` rather than stubbing `fetch`.
 
 **CSV columns:** `Unique ID` (left-padded to 12 chars with `"-"`), `Type`, `Description`, `Default Measurement Type`, `Labels` ("+"-separated)
 
@@ -281,6 +281,7 @@ Descriptive data about the book, stored in the `"book_meta"` Yjs map (`packages/
 - `name`: string — the display name
 - `created_at`: timestamp (for books that predate `book_meta`, the first time this build opened them)
 - `schema_version`: integer (`BOOK_SCHEMA_VERSION`, currently `1`) — the layout version of the document; a newer value than the build understands is warned about and left alone
+- `seeded_defaults?`: boolean — set once the default kitchenware has been dealt with (see Kitchenware); never cleared
 
 `ensureBookMeta` fills in missing keys on every open (via `useEnsureBookMeta`, after the legacy-data merge) and never overwrites existing ones; it writes with `SETUP_ORIGIN` so it can never be undone, while `setBookName` is an ordinary undoable edit. **`book_meta` is advisory display data, not authorization:** any writer to a Yjs document can edit any map in it, so the authoritative access list must live server-side (or in an owner-only document), never here.
 
@@ -488,8 +489,8 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 
 Doc-backed hooks/components (e.g. `useIngredientStore`, `useContainerStore`) schedule
 state updates from promise callbacks that resolve **after** a synchronous test body
-returns — the `whenSynced.then(() => setState(...))` re-read and the async CSV import
-chain. When those `setState` calls land outside `act(...)`, React logs:
+returns — the `whenSynced.then(() => setState(...))` re-read and any async seeding or
+migration chain. When those `setState` calls land outside `act(...)`, React logs:
 
 ```
 An update to <Component> inside a test was not wrapped in act(...).

@@ -33,6 +33,7 @@ export const BookMeta = Companion(
     name: "string > 0",
     created_at: "number",
     schema_version: "number.integer >= 1",
+    "seeded_defaults?": "boolean",
   }),
 );
 
@@ -95,6 +96,16 @@ export function ensureBookMeta(
       if (!map.has(key)) map.set(key, value);
     }
   }, SETUP_ORIGIN);
+}
+
+/** Whether the default kitchenware has already been put into this book (see `defaultKitchenware.ts`). */
+export function isDefaultKitchenwareSeeded(doc: Y.Doc): boolean {
+  return getBookMetaYmap(doc).get("seeded_defaults") === true;
+}
+
+/** Records that the default kitchenware has been dealt with, so it is never seeded again. */
+export function markDefaultKitchenwareSeeded(doc: Y.Doc): void {
+  doc.transact(() => getBookMetaYmap(doc).set("seeded_defaults", true), SETUP_ORIGIN);
 }
 
 /** Renames the book. This is a user edit, so (unlike `ensureBookMeta`) it can be undone. */

@@ -61,7 +61,7 @@
 
 ## In Progress
 
-- [ ] Single-document recipe books (`docs/single-document-book-plan.md`). Steps 1a–1c done: one `Y.Doc` per book (`useBookDoc` + `BookDocContext`, IndexedDB `book-<id>`), data from the old separate kitchenware/recipes databases merged in on open, and a `book_meta` map (id, name, created_at, schema version) ensured on open. Next: seed-once defaults, device book registry, atomic undo, name keys, export, import
+- [ ] Single-document recipe books (`docs/single-document-book-plan.md`). Steps 1a–1d done (1d: default kitchenware seeded exactly once via `book_meta.seeded_defaults`): one `Y.Doc` per book (`useBookDoc` + `BookDocContext`, IndexedDB `book-<id>`), data from the old separate kitchenware/recipes databases merged in on open, and a `book_meta` map (id, name, created_at, schema version) ensured on open. Next: device book registry, atomic undo, name keys, export, import
 
 ---
 

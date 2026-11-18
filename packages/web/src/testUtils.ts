@@ -1,4 +1,6 @@
+import { initFromKitchenwareTemplates, parseKitchenwareCsv } from "@recipe-book/shared";
 import { act } from "@testing-library/react";
+import type * as Y from "yjs";
 
 /**
  * Flushes pending asynchronous effects inside React's `act(...)`.
@@ -18,4 +20,12 @@ export async function flushAsyncEffects(): Promise<void> {
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
+}
+
+/**
+ * Fills a document with default kitchenware parsed from `csv`, the way a freshly seeded book looks,
+ * without fetching anything. Use it in place of stubbing `fetch` for tests that need ingredients.
+ */
+export function seedKitchenwareFromCsv(doc: Y.Doc, csv: string): void {
+  initFromKitchenwareTemplates(doc, parseKitchenwareCsv(csv));
 }

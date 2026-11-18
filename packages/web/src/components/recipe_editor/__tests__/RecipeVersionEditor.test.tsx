@@ -13,10 +13,10 @@ import userEvent from "@testing-library/user-event";
 import type { TreeNode } from "primereact/treenode";
 import { createElement, type ReactNode, useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import { BookDocContext } from "../../../contexts/docContext.ts";
-import { flushAsyncEffects } from "../../../testUtils.ts";
+import { flushAsyncEffects, seedKitchenwareFromCsv } from "../../../testUtils.ts";
 import type { IngredientSelectorProps } from "../../ingredients_table/IngredientSelector.tsx";
 import type { InstructionIngredientSelectorProps } from "../InstructionIngredientSelector.tsx";
 import {
@@ -120,11 +120,7 @@ let bookDoc: Y.Doc;
 
 beforeEach(() => {
   bookDoc = new Y.Doc();
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }));
-});
-
-afterEach(() => {
-  vi.unstubAllGlobals();
+  seedKitchenwareFromCsv(bookDoc, MOCK_CSV);
 });
 
 function makeWrapper(bookDoc: Y.Doc) {

@@ -21,4 +21,5 @@ export * from "./yjs/recipeFolderStore.ts";
 export * from "./yjs/sessionStore.ts";
 export * from "./yjs/bookSettingsStore.ts";
 export * from "./yjs/bookMetaStore.ts";
+export * from "./yjs/defaultKitchenware.ts";
 export * from "./yjs/origins.ts";

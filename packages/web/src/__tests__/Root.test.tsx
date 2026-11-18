@@ -47,7 +47,7 @@ function makeStub(initialEntries = ["/dashboard"]) {
 
 beforeEach(() => {
   localStorage.clear();
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve("") }));
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: () => Promise.resolve("") }));
 });
 
 afterEach(() => {
