@@ -43,14 +43,16 @@ Ship as separate, individually-mergeable steps. Each ends with typecheck/test/fo
 
 ### 1b. Legacy data migration
 
-- On first open of a book, if `book-${id}` is empty and `kitchenware-${id}` / `recipes-${id}` databases exist: open each, `Y.applyUpdate(bookDoc, Y.encodeStateAsUpdate(legacyDoc))`, then record `book_meta.migrated_legacy = true` in the doc.
-- The migration must finish **before** `whenSynced` resolves for consumers, so default seeding cannot observe an empty doc mid-migration.
+- **Status: implemented** in `packages/web/src/storage/legacyBookMigration.ts` (`mergeLegacyBookData`), called from `useBookDoc` after IndexedDB loads and **before** `whenSynced` resolves.
+- On every open of a book, for each of `kitchenware-${id}` / `recipes-${id}` that exists (probed with `indexedDbExists`, which aborts the creating upgrade so a missing database is never created): load it and `Y.applyUpdate(bookDoc, Y.encodeStateAsUpdate(legacyDoc), MIGRATION_ORIGIN)`.
+- **No "migrated" flag.** Merging is idempotent — a Yjs update the doc already holds is a no-op, and an entry deleted after the first run is not resurrected — so a flag would only be an optimization. An in-doc flag (`book_meta.migrated_legacy`, as first drafted) would also be wrong: the legacy databases are per-device, and once docs sync, a flag set on device A would stop device B from migrating its own legacy data. A device-local flag was rejected because it could be written before the merged data reaches the book database. The cost is one cheap probe per open until the legacy databases are removed.
+- Because `whenSynced` waits for the merge, default seeding cannot observe an empty doc mid-migration. A failed merge is logged and does not block the app; a cancelled run (StrictMode, unmount) leaves resolving to the next run.
 - Do not delete the legacy IndexedDB databases in this release (they are the rollback path); add a follow-up to remove them later.
-- Tests: legacy docs with disjoint maps merge into one; migration is idempotent; empty legacy + empty new doc yields an empty book.
+- Tests (`legacyBookMigration.test.ts`, using `fake-indexeddb`; hook ordering in `useYjsDoc.test.ts`): disjoint legacy docs merge into one; either database alone merges; existing book entries are kept; the legacy databases are left in place; idempotent and no resurrection of deleted entries; `MIGRATION_ORIGIN` on every write; persisted to the book database across a reload; cancellation; a read failure propagates; `whenSynced` waits for the merge, survives a failed merge, and never resolves for a cancelled run.
 
 ### 1c. `book_meta` map and schema version
 
-- New `packages/shared/src/yjs/bookMetaStore.ts` with a `"book_meta"` root map: `id` (`RecipeBookId`), `name`, `created_at`, `schema_version` (start at `1`), `migrated_legacy?`, `seeded_defaults?`.
+- New `packages/shared/src/yjs/bookMetaStore.ts` with a `"book_meta"` root map: `id` (`RecipeBookId`), `name`, `created_at`, `schema_version` (start at `1`), `seeded_defaults?`.
 - Put the display name in the doc so it travels with the book; the device registry (1e) caches it.
 - Reserve — but do not yet implement — an `acl` map. Because any writer to a Yjs doc can edit any of its maps, the **authoritative** ACL must live server-side (or in an owner-only doc); anything in `book_meta` is advisory display data. Record this in `AGENTS.md` when implemented.
 
