@@ -7,3 +7,9 @@
 
 /** Data copied in from an older storage layout (e.g. the pre-1a `kitchenware-*` / `recipes-*` docs). */
 export const MIGRATION_ORIGIN = "migration" as const;
+
+/**
+ * Bookkeeping the app writes on the user's behalf rather than as an edit: initialising `book_meta`
+ * and (later) seeding the default kitchenware.
+ */
+export const SETUP_ORIGIN = "setup" as const;

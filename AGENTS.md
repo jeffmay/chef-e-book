@@ -124,7 +124,7 @@ The app uses **React Router v7 in Framework mode** via `@react-router/dev/vite` 
 
 ### State & Sync
 
-- **One document per book:** a recipe book is a single `Y.Doc` holding every root map (`ingredients`, `containers`, `labels`, `recipes`, `recipe_folders`, `sessions`, `session_item_states`, `book_settings`). `useBookDoc(bookId)` (`hooks/useYjsDoc.ts`) creates it and provides it through `BookDocContext` (`contexts/docContext.ts`); every `use*Store` hook reads it with `useBookDoc()` from that context. See `docs/single-document-book-plan.md` for the roadmap (migration, `book_meta`, device book registry, undo, export/import).
+- **One document per book:** a recipe book is a single `Y.Doc` holding every root map (`book_meta`, `ingredients`, `containers`, `labels`, `recipes`, `recipe_folders`, `sessions`, `session_item_states`, `book_settings`). `useBookDoc(bookId)` (`hooks/useYjsDoc.ts`) creates it and provides it through `BookDocContext` (`contexts/docContext.ts`); every `use*Store` hook reads it with `useBookDoc()` from that context. See `docs/single-document-book-plan.md` for the roadmap (migration, `book_meta`, device book registry, undo, export/import).
 - **Local persistence:** `y-indexeddb` (browser IndexedDB), one database named `book-<book_id>`. Data written by earlier builds under `kitchenware-<book_id>` and `recipes-<book_id>` is merged into the book document on open (`storage/legacyBookMigration.ts`, idempotent, written with `MIGRATION_ORIGIN` so it is never undoable) before `whenSynced` resolves; the old databases are left in place until a later release removes them
 - **Cross-browser sync:** Optional Node.js server; URL configurable via Vite env var (`VITE_SYNC_SERVER_URL`) stored in localStorage
 - **Server:** Single `/sync` endpoint exchanges Yjs updates for a user's document and sends back updates to the default kitchenware list
@@ -272,6 +272,17 @@ An "active session" is a started recipe run. Stored in the `"sessions"` Yjs map 
 - `session_notes?: string`
 
 `completeSession` records `completed_at` and marks any item that is neither checked nor skipped as skipped, so the summary can offer to remove or keep it.
+
+### Book Meta
+
+Descriptive data about the book, stored in the `"book_meta"` Yjs map (`packages/shared/src/yjs/bookMetaStore.ts`) so it travels with the document.
+
+- `id`: `RecipeBookId` — must match the book the document is opened as
+- `name`: string — the display name
+- `created_at`: timestamp (for books that predate `book_meta`, the first time this build opened them)
+- `schema_version`: integer (`BOOK_SCHEMA_VERSION`, currently `1`) — the layout version of the document; a newer value than the build understands is warned about and left alone
+
+`ensureBookMeta` fills in missing keys on every open (via `useEnsureBookMeta`, after the legacy-data merge) and never overwrites existing ones; it writes with `SETUP_ORIGIN` so it can never be undone, while `setBookName` is an ordinary undoable edit. **`book_meta` is advisory display data, not authorization:** any writer to a Yjs document can edit any map in it, so the authoritative access list must live server-side (or in an owner-only document), never here.
 
 ### Book Settings
 
