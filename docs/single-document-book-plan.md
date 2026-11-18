@@ -52,7 +52,9 @@ Ship as separate, individually-mergeable steps. Each ends with typecheck/test/fo
 
 ### 1c. `book_meta` map and schema version
 
-- New `packages/shared/src/yjs/bookMetaStore.ts` with a `"book_meta"` root map: `id` (`RecipeBookId`), `name`, `created_at`, `schema_version` (start at `1`), `seeded_defaults?`.
+- **Status: implemented.** New `packages/shared/src/yjs/bookMetaStore.ts` with a `"book_meta"` root map: `id` (`RecipeBookId`), `name`, `created_at`, `schema_version` (`BOOK_SCHEMA_VERSION`, starting at `1`). `seeded_defaults` is added by 1d, which is its only user (the schema is additive).
+- `ensureBookMeta(doc, { id, name })` runs on every open from `useEnsureBookMeta` (called in `AuthenticatedShell`) **after** `whenSynced`, so after the legacy merge. It fills in only what is missing and never overwrites, so it is safe on every open, repairs a partial map, and cannot clobber a rename made on another device. It writes with `SETUP_ORIGIN` (never undoable). A doc whose stored `id` is another book's is left untouched with a warning; a newer `schema_version` than this build understands is warned about, not downgraded. Pre-`book_meta` books get `created_at` = first open by this build.
+- `setBookName(doc, name)` renames the book (a normal, undoable edit). Nothing reads `book_meta` in the UI yet: the header still shows the name from the localStorage registry, and the reactive read hook, the rename flow, and registry caching land with 1e.
 - Put the display name in the doc so it travels with the book; the device registry (1e) caches it.
 - Reserve — but do not yet implement — an `acl` map. Because any writer to a Yjs doc can edit any of its maps, the **authoritative** ACL must live server-side (or in an owner-only doc); anything in `book_meta` is advisory display data. Record this in `AGENTS.md` when implemented.
 
