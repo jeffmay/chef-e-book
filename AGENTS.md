@@ -196,10 +196,20 @@ Kitchenware (ingredients, containers, equipment) lives in a global shared list w
 
 **CSV columns:** `Unique ID` (left-padded to 12 chars with `"-"`), `Type`, `Description`, `Default Measurement Type`, `Labels` ("+"-separated)
 
+#### Names and uniqueness
+
+Ingredient, container, and label names are matched through a **name key** stored with each entry (`name_key`, derived from `name` by `toStored` — callers never write it, so it cannot drift, and a rename updates both atomically). The display `name` is never altered.
+
+- `ingredientNameKey` (ingredients, containers, equipment): trim, NFKC-normalize, lowercase, collapse whitespace, then singularize the **last word** (via `pluralize`, with a `NOT_PLURAL` exceptions set such as "molasses" and "hummus"), so "Cherry Tomatoes" and "cherry tomato" share a key. `labelNameKey`: the same **without** singularizing — "Spices" and "Spice" are different labels. Accents are not folded. Both live in `packages/shared/src/names/nameKey.ts`; bump `NAME_KEY_VERSION` whenever they or the exceptions change.
+- **Unique per kind across the whole book** (not per parent). Identity is the id, never the name: a rename keeps the id, so recipe references, `parent_id`, and label sets stay valid, and an entry never clashes with itself (Tomato → Tomatoes is allowed).
+- The index (`getIngredientNameIndex`, `getContainerNameIndex`, `getLabelNameIndex`) is derived in memory from the stored keys, never stored: Yjs cannot enforce uniqueness across concurrent writers, so a stored `name_key → id` map would be last-writer-wins. Duplicates that already exist are tolerated (the index lists them, lowest id first, and `IngredientsTable` flags them with `duplicateIds`) and resolved by renaming one.
+- **Enforcement is in the hooks.** `useIngredientStore` / `useContainerStore` / `useLabelStore` expose `nameClash(name, exclude?)` and **throw `NameClashError`** from create / rename / merge, so no path creates a duplicate; forms check first and show `describeNameClash(...)` with the shared `.field-error` / `.field-input--error` styling. The raw shared store functions stay permissive on purpose.
+- Every book carries `book_meta.name_key_version`; `useRekeyBookNames` rewrites stale or missing keys on open in one `SETUP_ORIGIN` transaction (see `rekeyBookNames`).
+
 #### ItemLabel
 
 - `id`: `ItemLabelId` (branded nanoid, 7 chars)
-- `name`: string
+- `name`: string — unique by `labelNameKey` (case-insensitive, not singularized)
 - `kinds`: `ReadonlySet<ItemKind>` — which item types this label applies to
 
 Labels are stored in the `"labels"` Yjs map on the document root. Deleting a label cascades to remove it from all ingredient label sets (via Yjs observer in `use_label_store`). Merging replaces multiple old IDs with a single new ID transactionally.
@@ -207,7 +217,7 @@ Labels are stored in the `"labels"` Yjs map on the document root. Deleting a lab
 #### Ingredient
 
 - `id`: `IngredientId` (branded nanoid, 12 chars)
-- `name`: string
+- `name`: string — unique per book by `ingredientNameKey`
 - `default_measurement_value`: `Measurement` — a full value like `{ value: {1,1}, unit: "cup" }` (migrated from old `default_measurement_type`)
 - `labels`: `ReadonlySet<ItemLabelId>` (stored as `string[]` in Yjs, reconstructed as Set on read)
 - `parent_id?`: `IngredientId` (supports subtypes; e.g. "Shredded Cheddar" → "Shredded Cheese" → "Cheese")

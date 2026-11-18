@@ -752,3 +752,108 @@ describe("IngredientsTable — select all", () => {
     expect(screen.queryByRole("region", { name: "Bulk actions" })).not.toBeInTheDocument();
   });
 });
+
+describe("IngredientsTable — name uniqueness", () => {
+  const TAKEN = 'An ingredient named "Butter" already exists';
+
+  /** Renders the table with a name check that refuses "Butter" for anything but Butter itself. */
+  function setupChecked(extra: { duplicateIds?: ReadonlySet<IngredientId> } = {}) {
+    const nameError = vi.fn((id: IngredientId, name: string) =>
+      name.toLowerCase() === "butter" && id !== BUTTER.id ? TAKEN : undefined,
+    );
+    render(
+      <IngredientsTable
+        ingredients={[FLOUR, BUTTER]}
+        labels={[]}
+        nameError={nameError}
+        {...extra}
+        onRename={onRename}
+        onSetMeasurementValue={onSetMeasurementValue}
+        onSetLabels={onSetLabels}
+        onSetParent={onSetParent}
+        onAddLabels={onAddLabels}
+        onRemoveLabels={onRemoveLabels}
+        onBulkSetMeasurementValue={onBulkSetMeasurementValue}
+        onBulkSetParent={onBulkSetParent}
+      />,
+    );
+    return nameError;
+  }
+
+  async function startRenamingFlour() {
+    await screen.findByRole("button", { name: "Edit name for Flour" });
+    await userEvent.dblClick(screen.getByRole("button", { name: "Edit name for Flour" }));
+    const input = screen.getByRole("textbox", { name: "Edit name for Flour" });
+    await userEvent.clear(input);
+    return input;
+  }
+
+  it("shows the message and marks the field invalid while the name is taken", async () => {
+    setupChecked();
+    const input = await startRenamingFlour();
+    await userEvent.type(input, "Butter");
+    expect(screen.getByRole("alert")).toHaveTextContent(TAKEN);
+    expect(input).toBeInvalid();
+    expect(input).toHaveClass("field-input--error");
+  });
+
+  it("does not rename on ✔︎ while the name is taken, and keeps the editor open", async () => {
+    setupChecked();
+    const input = await startRenamingFlour();
+    await userEvent.type(input, "butter");
+    await userEvent.click(screen.getByRole("button", { name: "Confirm edit" }));
+    expect(onRename).not.toHaveBeenCalled();
+    expect(screen.getByRole("textbox", { name: "Edit name for Flour" })).toBeInTheDocument();
+  });
+
+  it("does not rename on Enter while the name is taken", async () => {
+    setupChecked();
+    const input = await startRenamingFlour();
+    await userEvent.type(input, "Butter{Enter}");
+    expect(onRename).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+  });
+
+  it("clears the message and renames once the name is free", async () => {
+    setupChecked();
+    const input = await startRenamingFlour();
+    await userEvent.type(input, "Butter");
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    await userEvent.type(input, " Flour{Enter}");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(onRename).toHaveBeenCalledWith(FLOUR.id, "Butter Flour");
+  });
+
+  it("asks about this ingredient's own id, so it can take another spelling of its own name", async () => {
+    const nameError = setupChecked();
+    await screen.findByRole("button", { name: "Edit name for Butter" });
+    await userEvent.dblClick(screen.getByRole("button", { name: "Edit name for Butter" }));
+    const input = screen.getByRole("textbox", { name: "Edit name for Butter" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "butter{Enter}");
+    expect(nameError).toHaveBeenCalledWith(BUTTER.id, "butter");
+    expect(onRename).toHaveBeenCalledWith(BUTTER.id, "butter");
+  });
+
+  it("shows no message for a blank name", async () => {
+    setupChecked();
+    await startRenamingFlour();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("flags ingredients that share a name with another", async () => {
+    setupChecked({ duplicateIds: new Set([BUTTER.id]) });
+    await screen.findByRole("button", { name: "Edit name for Butter" });
+    expect(screen.getAllByText("duplicate name")).toHaveLength(1);
+    const row = screen.getByRole("button", { name: "Edit name for Butter" }).closest("tr");
+    expect(row).not.toBeNull();
+    if (row !== null) expect(within(row).getByText("duplicate name")).toBeInTheDocument();
+  });
+
+  it("flags nothing when there are no duplicates", async () => {
+    setupChecked();
+    await screen.findByRole("button", { name: "Edit name for Butter" });
+    expect(screen.queryByText("duplicate name")).not.toBeInTheDocument();
+  });
+});

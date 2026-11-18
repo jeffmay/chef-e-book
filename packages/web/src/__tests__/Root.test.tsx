@@ -31,7 +31,7 @@ function AddIngredientPage() {
       <button
         onClick={() =>
           createIngredient({
-            name: "Butter",
+            name: "Vanilla",
             default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
             label_names: [],
           })

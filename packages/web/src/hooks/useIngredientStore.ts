@@ -2,10 +2,16 @@ import type { Ingredient, KitchenwareKind, KitchenwareLabelId } from "@recipe-bo
 import {
   addIngredient,
   addLabelsToIngredients,
+  buildNameIndex,
+  duplicateIds,
+  findIngredientNameClash,
   findOrCreateLabel,
   getIngredients,
   IngredientId,
+  ingredientNameKey,
   type Measurement,
+  type NameClash,
+  NameClashError,
   randomId,
   removeLabelsFromIngredients,
   renameIngredient as renameIngredientInDoc,
@@ -13,7 +19,7 @@ import {
   setMeasurementValueForIngredients,
   setParentForIngredients,
 } from "@recipe-book/shared";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import { useBookDoc } from "../contexts/docContext.ts";
 
@@ -28,7 +34,16 @@ export type NewIngredientInput = {
 
 export interface IngredientStore {
   ingredients: Ingredient[];
+  /**
+   * The ingredient that already holds `name` — as singular or plural, in any case — or `undefined`
+   * if it is free. Pass the ingredient's own id when renaming it: it never clashes with itself.
+   */
+  nameClash: (name: string, excludeId?: IngredientId) => NameClash<IngredientId> | undefined;
+  /** Ingredients that share a name with another (older data, or edits made on two devices). */
+  duplicateIds: ReadonlySet<IngredientId>;
+  /** @throws NameClashError if another ingredient already holds the name. */
   createIngredient: (input: ReadonlyDeep<NewIngredientInput>) => IngredientId;
+  /** @throws NameClashError if another ingredient already holds the name. */
   renameIngredient: (id: IngredientId, name: string) => void;
   addLabels: (ids: readonly IngredientId[], labelIds: readonly KitchenwareLabelId[]) => void;
   removeLabels: (ids: readonly IngredientId[], labelIds: readonly KitchenwareLabelId[]) => void;
@@ -50,9 +65,21 @@ export function useIngredientStore(): IngredientStore {
     return () => map.unobserve(handler);
   }, [doc, whenSynced]);
 
+  const duplicates = useMemo(
+    () =>
+      duplicateIds(
+        buildNameIndex(ingredients.map((i) => ({ id: i.id, key: ingredientNameKey(i.name) }))),
+      ),
+    [ingredients],
+  );
+
   return {
     ingredients,
+    nameClash: (name, excludeId) => findIngredientNameClash(doc, name, excludeId),
+    duplicateIds: duplicates,
     createIngredient(input) {
+      const clash = findIngredientNameClash(doc, input.name);
+      if (clash !== undefined) throw new NameClashError("ingredient", clash);
       const id = randomId(IngredientId);
       // Creating any missing labels and the ingredient itself is one action, so one undo step.
       doc.transact(() => {
@@ -72,6 +99,8 @@ export function useIngredientStore(): IngredientStore {
       return id;
     },
     renameIngredient(id, name) {
+      const clash = findIngredientNameClash(doc, name, id);
+      if (clash !== undefined) throw new NameClashError("ingredient", clash);
       renameIngredientInDoc(doc, id, name);
     },
     addLabels(ids, label_ids) {

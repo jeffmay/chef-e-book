@@ -188,6 +188,13 @@ export type IngredientsTableProps = ReadonlyDeep<{
   ingredients: readonly Ingredient[];
   labels: readonly KitchenwareLabel[];
   external_label_filter?: ExternalLabelFilter;
+  /**
+   * Why `name` cannot be used for this ingredient (e.g. another ingredient already has it), or
+   * `undefined` if it can. While it returns a message, the rename shows it and is not committed.
+   */
+  nameError?: (id: IngredientId, name: string) => string | undefined;
+  /** Ingredients that share a name with another; each is flagged so it can be renamed. */
+  duplicateIds?: ReadonlySet<IngredientId>;
   onRename: (id: IngredientId, name: string) => void;
   onSetMeasurementValue: (id: IngredientId, value: Measurement) => void;
   onSetLabels: (id: IngredientId, label_names: readonly string[]) => void;
@@ -206,6 +213,8 @@ export function IngredientsTable({
   ingredients,
   labels,
   external_label_filter,
+  nameError,
+  duplicateIds,
   onRename,
   onSetMeasurementValue,
   onSetLabels,
@@ -369,6 +378,8 @@ export function IngredientsTable({
 
     if (colId === "name") {
       const trimmed = value.trim();
+      // A name that is taken keeps the editor open, with its message showing, instead of renaming.
+      if (trimmed !== "" && nameError?.(ingredientId, trimmed) !== undefined) return;
       if (trimmed !== "") onRename(ingredientId, trimmed);
     } else if (colId === "labels") {
       onSetLabels(ingredientId, parseLabels(value));
@@ -403,6 +414,8 @@ export function IngredientsTable({
     const depth = depthByKey.get(row.id) ?? 0;
     const pending = pendingEdits.get(pkey(row.id, "name"));
     if (pending !== undefined) {
+      const error = pending.trim() === "" ? undefined : nameError?.(row.id, pending.trim());
+      const errorId = `it-name-error-${row.id}`;
       return (
         <span className="it-name-cell">
           <DepthLines depth={depth} />
@@ -416,9 +429,11 @@ export function IngredientsTable({
               <input
                 type="text"
                 value={pending}
-                className="it-edit-input"
+                className={`it-edit-input${error === undefined ? "" : " field-input--error"}`}
                 autoFocus
                 aria-label={`Edit name for ${row.name}`}
+                aria-invalid={error !== undefined}
+                aria-describedby={error === undefined ? undefined : errorId}
                 onChange={(e) => onUpdateEdit(row.id, "name", e.target.value)}
               />
               <div className="it-edit-buttons">
@@ -439,6 +454,11 @@ export function IngredientsTable({
                   ✔︎
                 </button>
               </div>
+              {error !== undefined && (
+                <span id={errorId} className="field-error" role="alert">
+                  {error}
+                </span>
+              )}
             </span>
           </AcceptOrCancelEditor>
         </span>
@@ -493,6 +513,9 @@ export function IngredientsTable({
         >
           {row.name}
         </span>
+        {duplicateIds?.has(row.id) === true && (
+          <span className="field-error it-duplicate">duplicate name</span>
+        )}
       </span>
     );
   }

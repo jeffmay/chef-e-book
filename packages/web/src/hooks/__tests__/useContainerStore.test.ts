@@ -5,6 +5,7 @@ import {
   getContainerYmap,
   KitchenwareLabelId,
   fixedId,
+  NameClashError,
 } from "@recipe-book/shared";
 import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
@@ -129,5 +130,36 @@ describe("useContainerStore — setParent", () => {
       map.set(BOWL_ID, { name: "External Update", labels: [] });
     });
     expect(result.current.containers.find((c) => c.id === BOWL_ID)?.name).toBe("External Update");
+  });
+});
+
+describe("useContainerStore — name uniqueness", () => {
+  it("reports the container that holds a name, as singular, plural, or any case", async () => {
+    addContainer(doc, BOWL);
+    const { result } = await renderStore(doc);
+    expect(result.current.nameClash("Steamer")).toBeUndefined();
+    expect(result.current.nameClash("BOWLS")).toEqual({ id: BOWL_ID, name: "Bowl" });
+    expect(result.current.nameClash("Bowls", BOWL_ID)).toBeUndefined();
+  });
+
+  it("refuses to add or rename a container to a name another holds", async () => {
+    addContainer(doc, BOWL);
+    const { result } = await renderStore(doc);
+    expect(() => act(() => result.current.addContainer({ name: "bowl" }))).toThrow(NameClashError);
+    let pot!: ContainerId;
+    act(() => {
+      pot = result.current.addContainer({ name: "Pot" }).id;
+    });
+    expect(() => act(() => result.current.renameContainer(pot, "Bowls"))).toThrow(
+      'A container named "Bowl" already exists',
+    );
+    expect(result.current.containers.map((c) => c.name).sort()).toEqual(["Bowl", "Pot"]);
+  });
+
+  it("lets a container be renamed to another spelling of its own name", async () => {
+    addContainer(doc, BOWL);
+    const { result } = await renderStore(doc);
+    act(() => result.current.renameContainer(BOWL_ID, "Bowls"));
+    expect(result.current.containers.map((c) => c.id)).toEqual([BOWL_ID]);
   });
 });

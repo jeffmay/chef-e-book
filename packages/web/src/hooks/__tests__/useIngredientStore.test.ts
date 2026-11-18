@@ -3,6 +3,7 @@ import {
   addIngredient,
   createBookUndoManager,
   findOrCreateLabel,
+  NameClashError,
   getLabels,
   IngredientId,
   loadId,
@@ -219,5 +220,81 @@ describe("useIngredientStore — setParent", () => {
     expect(result.current.ingredients.find((i) => i.id === BUTTER_ID)?.parent_id).toBe(dairyId);
     act(() => result.current.setParent([butter.id], undefined));
     expect(result.current.ingredients.find((i) => i.id === BUTTER_ID)?.parent_id).toBeUndefined();
+  });
+});
+
+describe("useIngredientStore — name uniqueness", () => {
+  // `doc` already holds BUTTER.
+  it("reports the ingredient that already holds a name, as singular, plural, or any case", async () => {
+    const { result } = await renderStore(doc);
+    expect(result.current.nameClash("Oregano")).toBeUndefined();
+    expect(result.current.nameClash("butter")?.id).toBe(BUTTER_ID);
+    expect(result.current.nameClash("  BUTTERS  ")).toEqual({ id: BUTTER_ID, name: "Butter" });
+  });
+
+  it("does not report an ingredient as clashing with itself", async () => {
+    const { result } = await renderStore(doc);
+    expect(result.current.nameClash("Butters", BUTTER_ID)).toBeUndefined();
+  });
+
+  it("refuses to create an ingredient whose name is taken", async () => {
+    const { result } = await renderStore(doc);
+    const before = result.current.ingredients.length;
+    expect(() =>
+      act(() =>
+        result.current.createIngredient({
+          name: "butters",
+          default_measurement_value: DEFAULT_MEASUREMENT,
+          label_names: ["new-label"],
+        }),
+      ),
+    ).toThrow(NameClashError);
+    expect(result.current.ingredients).toHaveLength(before);
+    // Nothing was written, not even the labels it would have created.
+    expect(getLabels(doc).find((l) => l.name === "new-label")).toBeUndefined();
+  });
+
+  it("refuses to rename an ingredient to a name another ingredient holds", async () => {
+    const { result } = await renderStore(doc);
+    act(() =>
+      result.current.createIngredient({
+        name: "Margarine",
+        default_measurement_value: DEFAULT_MEASUREMENT,
+        label_names: [],
+      }),
+    );
+    const margarine = result.current.ingredients.find((i) => i.name === "Margarine");
+    if (margarine === undefined) throw new Error("ingredient not found");
+
+    expect(() => act(() => result.current.renameIngredient(margarine.id, "Butter"))).toThrow(
+      'An ingredient named "Butter" already exists',
+    );
+    expect(result.current.ingredients.find((i) => i.id === margarine.id)?.name).toBe("Margarine");
+  });
+
+  it("lets an ingredient be renamed to another spelling of its own name, keeping its id", async () => {
+    const { result } = await renderStore(doc);
+    act(() => result.current.renameIngredient(BUTTER_ID, "Butters"));
+    expect(result.current.ingredients.find((i) => i.id === BUTTER_ID)?.name).toBe("Butters");
+    expect(result.current.ingredients).toHaveLength(1);
+    // The stored key follows the rename, so lookups by the new name find it.
+    expect(result.current.nameClash("Butter")?.id).toBe(BUTTER_ID);
+  });
+
+  it("lists ingredients that already share a name, instead of hiding them", async () => {
+    addIngredient(doc, {
+      ...BUTTER,
+      id: fixedId(IngredientId, "butter2"),
+      name: "Butters",
+    });
+    const { result } = await renderStore(doc);
+    expect(result.current.duplicateIds).toEqual(
+      new Set([BUTTER_ID, fixedId(IngredientId, "butter2")]),
+    );
+  });
+
+  it("lists no duplicates when every name is unique", async () => {
+    const { result } = await renderStore(doc);
+    expect(result.current.duplicateIds.size).toBe(0);
   });
 });

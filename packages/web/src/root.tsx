@@ -12,6 +12,7 @@ import { writeBookName } from "./storage/bookDatabases.ts";
 import { useBookDoc } from "./hooks/useYjsDoc.ts";
 import { useEnsureBookMeta } from "./hooks/useEnsureBookMeta.ts";
 import { useSeedDefaultKitchenware } from "./hooks/useSeedDefaultKitchenware.ts";
+import { useRekeyBookNames } from "./hooks/useRekeyBookNames.ts";
 import { BookDocContext } from "./contexts/docContext.ts";
 import { BookUndoContext } from "./contexts/undoContext.ts";
 import { useBookUndoManager } from "./hooks/useBookUndoManager.ts";
@@ -57,6 +58,7 @@ function AuthenticatedShell({ book, onSwitchBook, onBookNameChange }: Authentica
   // Order matters: book_meta must exist before the seeded flag is recorded in it.
   useEnsureBookMeta(bookDoc, book);
   useSeedDefaultKitchenware(bookDoc);
+  useRekeyBookNames(bookDoc);
   useSyncBookName(bookDoc, book, onBookNameChange);
   // One history for the whole book; it lives here so it survives page navigation.
   const bookUndo = useBookUndoManager(bookDoc.doc);

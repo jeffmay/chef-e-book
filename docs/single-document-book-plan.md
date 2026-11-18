@@ -91,6 +91,15 @@ Ship as separate, individually-mergeable steps. Each ends with typecheck/test/fo
 
 ### 1g. Stored name keys and name uniqueness
 
+**Status: implemented.** What was built, where it differs from the design below, and what is left:
+
+- Shared: `names/nameKey.ts` (`ingredientNameKey`, `labelNameKey`, `NAME_KEY_VERSION = 1`, built on the `pluralize` library with a `NOT_PLURAL` exceptions set and a `SINGULAR_OVERRIDES` map), `names/nameIndex.ts` (`buildNameIndex`, `findNameClash`, `duplicateIds`), `names/nameClash.ts` (`NameClash`, `describeNameClash`, `NameClashError`), `names/storedName.ts` (`readNameKey`, `readStoredNameKey`), `yjs/nameKeys.ts` (`rekeyBookNames`), and per-store `getXNameIndex` / `findXNameClash` / `rekeyX` for ingredients, containers, and labels. `book_meta` gained `name_key_version`.
+- Every `toStored` writes `name_key` derived from `name`. A rename keeps the id and rewrites name and key in one entry. `findLabelByName` now matches by label key (case-insensitive, normalized) instead of exact text, so `findOrCreateLabel("DAIRY")` reuses "dairy".
+- `useRekeyBookNames` (in `AuthenticatedShell`, after `useSeedDefaultKitchenware`) runs `rekeyBookNames` once the book has synced: it rewrites every stale or missing key and records the version in one `SETUP_ORIGIN` transaction (atomic, never undoable); a book keyed by a newer build is left alone with a warning.
+- **Enforcement is in the hooks, not the raw store functions.** The shared `addIngredient` / `renameIngredient` / … stay permissive, because duplicates must be representable (older data, concurrent edits, sync). `useIngredientStore`, `useContainerStore`, and `useLabelStore` expose `nameClash(name, exclude?)` and throw `NameClashError` from create / rename / merge when another entry already holds the name, so no UI path can create a duplicate. Merge excludes the labels being merged, so labels can be merged into the name of one of them.
+- UI: the Add-ingredient form shows the clash (`.field-error`, `.field-input--error`, `aria-invalid`) and disables Add; the ingredients table's inline name edit and the label table's rename and merge show it and do not commit; `IngredientsTable` flags existing duplicates with a "duplicate name" marker. The default-kitchenware CSV is asserted to have no duplicate keys.
+- **Not done:** containers have the store and hook support but no UI creates or renames them yet; equipment has a key function but no store; the recipe editor has no inline ingredient creation to wire. The cross-book lookup and import matching that read these keys are Phase 3 and the deferred fallback. Accents are not folded ("jalapeño" ≠ "jalapeno"), and only the last whitespace-separated word is singularized, so a trailing note such as "Tomatoes (canned)" does not match "Tomato (canned)".
+
 Names are matched in three places (create/rename clash checks, import matching, and the deferred cross-book ingredient fallback), so the normalized form is **stored** rather than recomputed on every lookup.
 
 - New pure module `packages/shared/src/names/nameKey.ts`:
