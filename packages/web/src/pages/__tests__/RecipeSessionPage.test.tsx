@@ -26,7 +26,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import type { IngredientSelectorProps } from "../../components/ingredients_table/IngredientSelector.tsx";
 import type { InstructionIngredientSelectorProps } from "../../components/recipe_editor/InstructionIngredientSelector.tsx";
-import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
+import { BookDocContext } from "../../contexts/docContext.ts";
 import { flushAsyncEffects } from "../../testUtils.ts";
 import { RecipeSessionPage } from "../RecipeSessionPage.tsx";
 
@@ -93,26 +93,20 @@ const ALL_ITEM_IDS = [ITEM_BUTTER, ITEM_FLOUR, ITEM_MIX];
 const ONE_CUP: Measurement = { value: { numerator: 1, denominator: 1 }, unit: "cup" };
 const TWO_CUPS: Measurement = { value: { numerator: 2, denominator: 1 }, unit: "cup" };
 
-function makeWrapper(kitchenwareDoc: Y.Doc, recipeBookDoc: Y.Doc) {
+function makeWrapper(bookDoc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
-      KitchenwareDocContext.Provider,
-      { value: { doc: kitchenwareDoc, whenSynced: Promise.resolve() } },
-      createElement(
-        RecipeBookDocContext.Provider,
-        { value: { doc: recipeBookDoc, whenSynced: Promise.resolve() } },
-        children,
-      ),
+      BookDocContext.Provider,
+      { value: { doc: bookDoc, whenSynced: Promise.resolve() } },
+      children,
     );
   };
 }
 
-let kitchenwareDoc: Y.Doc;
-let recipeBookDoc: Y.Doc;
+let bookDoc: Y.Doc;
 
 beforeEach(() => {
-  kitchenwareDoc = new Y.Doc();
-  recipeBookDoc = new Y.Doc();
+  bookDoc = new Y.Doc();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }));
   mockNavigate.mockClear();
 });
@@ -133,7 +127,7 @@ function seedRecipe(versionOverrides: Partial<RecipeVersion> = {}): {
   recipe: Recipe;
   version: RecipeVersion;
 } {
-  const created = createRecipe(recipeBookDoc, { title: "Pancakes", description: "v1" });
+  const created = createRecipe(bookDoc, { title: "Pancakes", description: "v1" });
   const version: RecipeVersion = {
     id: fixedId(RecipeVersionId, "v-1"),
     recipe_id: created.id,
@@ -168,25 +162,25 @@ function seedRecipe(versionOverrides: Partial<RecipeVersion> = {}): {
     created_at: Date.now(),
     ...versionOverrides,
   };
-  saveRecipe(recipeBookDoc, created.id, {
+  saveRecipe(bookDoc, created.id, {
     title: created.title,
     version,
     create_new_version: false,
   });
-  const saved = getRecipe(recipeBookDoc, created.id);
+  const saved = getRecipe(bookDoc, created.id);
   assertNotValidationError(saved);
   return { recipe: saved, version };
 }
 
 function seedSession(): { recipe: Recipe; version: RecipeVersion; session: Session } {
   const { recipe, version } = seedRecipe();
-  const session = createSession(recipeBookDoc, recipe.id, version.id);
+  const session = createSession(bookDoc, recipe.id, version.id);
   return { recipe, version, session };
 }
 
 async function setup(sessionId: string) {
   const view = render(<RecipeSessionPage sessionId={sessionId} />, {
-    wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc),
+    wrapper: makeWrapper(bookDoc),
   });
   await flushAsyncEffects();
   return view;
@@ -282,9 +276,9 @@ describe("RecipeSessionPage — summary view", () => {
   function seedCompletedSession(checkedIds: readonly string[] = [ITEM_BUTTER]) {
     const seeded = seedSession();
     for (const id of checkedIds) {
-      updateSessionItemState(recipeBookDoc, seeded.session.id, id, { checked: true });
+      updateSessionItemState(bookDoc, seeded.session.id, id, { checked: true });
     }
-    completeSession(recipeBookDoc, seeded.session.id, ALL_ITEM_IDS);
+    completeSession(bookDoc, seeded.session.id, ALL_ITEM_IDS);
     return seeded;
   }
 
@@ -360,7 +354,7 @@ describe("RecipeSessionPage — summary view", () => {
     await user.type(screen.getByRole("textbox", { name: "Version summary" }), "After session");
     await user.click(screen.getByRole("button", { name: "✔︎ Create a new version" }));
 
-    const updated = getRecipe(recipeBookDoc, recipe.id);
+    const updated = getRecipe(bookDoc, recipe.id);
     assertNotValidationError(updated);
     expect(updated.versions).toHaveLength(2);
     const latest = updated.versions.at(-1);
@@ -405,7 +399,7 @@ describe("RecipeSessionPage — summary view", () => {
     await user.type(nameInput, "Pancakes (copy)");
     await user.click(screen.getByRole("button", { name: "✔︎ Create a new recipe" }));
 
-    const all = getRecipes(recipeBookDoc);
+    const all = getRecipes(bookDoc);
     expect(all).toHaveLength(2);
     const copy = all.find((r) => r.title === "Pancakes (copy)");
     expect(copy).toBeDefined();
@@ -417,7 +411,7 @@ describe("RecipeSessionPage — summary view", () => {
     ).toEqual([BUTTER]);
     expect(mockNavigate).toHaveBeenCalledWith(`/recipes/${copy?.id}`);
     // the original recipe is untouched
-    const afterCreate = getRecipe(recipeBookDoc, recipe.id);
+    const afterCreate = getRecipe(bookDoc, recipe.id);
     assertNotValidationError(afterCreate);
     expect(afterCreate.versions).toHaveLength(1);
   });
@@ -435,7 +429,7 @@ describe("RecipeSessionPage — summary view", () => {
 
     expect(screen.getByRole("dialog", { name: "Unsaved row changes" })).toBeInTheDocument();
     // Nothing is saved until the prompt is answered.
-    const untouched = getRecipe(recipeBookDoc, recipe.id);
+    const untouched = getRecipe(bookDoc, recipe.id);
     assertNotValidationError(untouched);
     expect(untouched.versions).toHaveLength(1);
   });
@@ -452,7 +446,7 @@ describe("RecipeSessionPage — summary view", () => {
     await user.click(screen.getByRole("button", { name: "✔︎ Create a new version" }));
     await user.click(screen.getByRole("button", { name: "Accept all changes" }));
 
-    const updated = getRecipe(recipeBookDoc, recipe.id);
+    const updated = getRecipe(bookDoc, recipe.id);
     assertNotValidationError(updated);
     const saved = updated.versions
       .at(-1)
@@ -472,7 +466,7 @@ describe("RecipeSessionPage — summary view", () => {
     await user.click(screen.getByRole("button", { name: "✔︎ Create a new version" }));
     await user.click(screen.getByRole("button", { name: "Discard all changes" }));
 
-    const updated = getRecipe(recipeBookDoc, recipe.id);
+    const updated = getRecipe(bookDoc, recipe.id);
     assertNotValidationError(updated);
     const saved = updated.versions
       .at(-1)
@@ -494,7 +488,7 @@ describe("RecipeSessionPage — summary view", () => {
     await user.click(screen.getByRole("button", { name: "✔︎ Create a new recipe" }));
     await user.click(screen.getByRole("button", { name: "Accept all changes" }));
 
-    const copy = getRecipes(recipeBookDoc).find((r) => r.title === "Pancakes (copy)");
+    const copy = getRecipes(bookDoc).find((r) => r.title === "Pancakes (copy)");
     const saved = copy?.versions[0]?.sections[0]?.contents.find(
       (item) => item.kind === "text_block",
     );
@@ -513,24 +507,24 @@ describe("RecipeSessionPage — summary view", () => {
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     expect(mockNavigate).toHaveBeenCalledWith("/recipes");
-    const afterDiscard = getRecipe(recipeBookDoc, recipe.id);
+    const afterDiscard = getRecipe(bookDoc, recipe.id);
     assertNotValidationError(afterDiscard);
     expect(afterDiscard.versions).toHaveLength(1);
-    expect(getRecipes(recipeBookDoc)).toHaveLength(1);
+    expect(getRecipes(bookDoc)).toHaveLength(1);
   });
 
   it("defaults the per-ingredient time to the version's own config", async () => {
     const { recipe, version } = seedRecipe();
-    saveRecipe(recipeBookDoc, recipe.id, {
+    saveRecipe(bookDoc, recipe.id, {
       title: recipe.title,
       version: { ...version, seconds_per_ingredient: 60 },
       create_new_version: false,
     });
-    const session = createSession(recipeBookDoc, recipe.id, version.id);
+    const session = createSession(bookDoc, recipe.id, version.id);
     for (const id of ALL_ITEM_IDS) {
-      updateSessionItemState(recipeBookDoc, session.id, id, { checked: true });
+      updateSessionItemState(bookDoc, session.id, id, { checked: true });
     }
-    completeSession(recipeBookDoc, session.id, ALL_ITEM_IDS);
+    completeSession(bookDoc, session.id, ALL_ITEM_IDS);
     await setup(session.id);
 
     // Everything completed → 60s per ingredient → minimum = 600 + 2×60 = 720.

@@ -16,7 +16,7 @@ import {
   saveRecipe,
 } from "@recipe-book/shared";
 import type { RecipeFolderId } from "@recipe-book/shared";
-import { useRecipeBookDoc } from "../contexts/docContext.ts";
+import { useBookDoc } from "../contexts/docContext.ts";
 import type { ReadonlyDeep } from "type-fest";
 
 export interface RecipeStore {
@@ -30,7 +30,7 @@ export interface RecipeStore {
 }
 
 export function useRecipeStore(): RecipeStore {
-  const { doc, whenSynced } = useRecipeBookDoc();
+  const { doc, whenSynced } = useBookDoc();
   const [recipes, setRecipes] = useState<Recipe[]>(() => getRecipes(doc));
 
   useEffect(() => {

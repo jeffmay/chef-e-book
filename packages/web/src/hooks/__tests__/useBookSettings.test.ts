@@ -4,7 +4,7 @@ import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
 import { BUILD_SECONDS_PER_INGREDIENT } from "../../config.ts";
-import { RecipeBookDocContext } from "../../contexts/docContext.ts";
+import { BookDocContext } from "../../contexts/docContext.ts";
 import { flushAsyncEffects } from "../../testUtils.ts";
 import { useBookSettings } from "../useBookSettingsStore.ts";
 
@@ -14,11 +14,11 @@ beforeEach(() => {
   doc = new Y.Doc();
 });
 
-function makeWrapper(recipeBookDoc: Y.Doc) {
+function makeWrapper(doc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
-      RecipeBookDocContext.Provider,
-      { value: { doc: recipeBookDoc, whenSynced: Promise.resolve() } },
+      BookDocContext.Provider,
+      { value: { doc, whenSynced: Promise.resolve() } },
       children,
     );
   };

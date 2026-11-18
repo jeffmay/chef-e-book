@@ -7,8 +7,8 @@ import "primeicons/primeicons.css";
 import "./styles/global.css";
 import type { ActiveBookMeta } from "./hooks/useActiveBookMetaStore.ts";
 import { useActiveBookMeta } from "./hooks/useActiveBookMetaStore.ts";
-import { useKitchenwareDoc, useRecipeBookDoc } from "./hooks/useYjsDoc.ts";
-import { KitchenwareDocContext, RecipeBookDocContext } from "./contexts/docContext.ts";
+import { useBookDoc } from "./hooks/useYjsDoc.ts";
+import { BookDocContext } from "./contexts/docContext.ts";
 import { NavMenu } from "./components/NavMenu.tsx";
 import { SelectBookPage } from "./pages/SelectBookPage.tsx";
 import type { RecipeBookId } from "@recipe-book/shared";
@@ -44,29 +44,26 @@ type AuthenticatedShellProps = ReadonlyDeep<{
 }>;
 
 function AuthenticatedShell({ book, onRename }: AuthenticatedShellProps) {
-  const kitchenwareDoc = useKitchenwareDoc(book.id);
-  const recipeBookDoc = useRecipeBookDoc(book.id);
+  const bookDoc = useBookDoc(book.id);
   // const navigate = useNavigate();
 
   return (
-    <KitchenwareDocContext.Provider value={kitchenwareDoc}>
-      <RecipeBookDocContext.Provider value={recipeBookDoc}>
-        <div className="app">
-          <header className="top-nav">
-            <NavMenu />
-            <h1 className="book-name">{book.name}</h1>
-            <div className="nav-right">
-              <button className="undo-btn" aria-label="Undo">
-                ↩ Undo
-              </button>
-              {/* TODO: Add this back once we have user authentication */}
-              {/* <UserMenu userName={unknown} onProfile={() => navigate("/profile")} /> */}
-            </div>
-          </header>
-          <Outlet context={{ bookId: book.id, onRename } satisfies RootContext} />
-        </div>
-      </RecipeBookDocContext.Provider>
-    </KitchenwareDocContext.Provider>
+    <BookDocContext.Provider value={bookDoc}>
+      <div className="app">
+        <header className="top-nav">
+          <NavMenu />
+          <h1 className="book-name">{book.name}</h1>
+          <div className="nav-right">
+            <button className="undo-btn" aria-label="Undo">
+              ↩ Undo
+            </button>
+            {/* TODO: Add this back once we have user authentication */}
+            {/* <UserMenu userName={unknown} onProfile={() => navigate("/profile")} /> */}
+          </div>
+        </header>
+        <Outlet context={{ bookId: book.id, onRename } satisfies RootContext} />
+      </div>
+    </BookDocContext.Provider>
   );
 }
 

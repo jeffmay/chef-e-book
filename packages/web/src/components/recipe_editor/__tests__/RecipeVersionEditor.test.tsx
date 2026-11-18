@@ -15,7 +15,7 @@ import { createElement, type ReactNode, useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
-import { KitchenwareDocContext, RecipeBookDocContext } from "../../../contexts/docContext.ts";
+import { BookDocContext } from "../../../contexts/docContext.ts";
 import { flushAsyncEffects } from "../../../testUtils.ts";
 import type { IngredientSelectorProps } from "../../ingredients_table/IngredientSelector.tsx";
 import type { InstructionIngredientSelectorProps } from "../InstructionIngredientSelector.tsx";
@@ -116,12 +116,10 @@ vi.mock("../InstructionIngredientSelector.tsx", () => ({
   },
 }));
 
-let kitchenwareDoc: Y.Doc;
-let recipeBookDoc: Y.Doc;
+let bookDoc: Y.Doc;
 
 beforeEach(() => {
-  kitchenwareDoc = new Y.Doc();
-  recipeBookDoc = new Y.Doc();
+  bookDoc = new Y.Doc();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }));
 });
 
@@ -129,16 +127,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function makeWrapper(kitchenware: Y.Doc, recipeBook: Y.Doc) {
+function makeWrapper(bookDoc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
-      KitchenwareDocContext.Provider,
-      { value: { doc: kitchenware, whenSynced: Promise.resolve() } },
-      createElement(
-        RecipeBookDocContext.Provider,
-        { value: { doc: recipeBook, whenSynced: Promise.resolve() } },
-        children,
-      ),
+      BookDocContext.Provider,
+      { value: { doc: bookDoc, whenSynced: Promise.resolve() } },
+      children,
     );
   };
 }
@@ -174,7 +168,7 @@ function setup(sections: ReadonlyDeep<Section[]>, pendingEdits?: PendingSectionE
       pendingEdits={pendingEdits}
       onSectionsChange={onSectionsChange}
     />,
-    { wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc) },
+    { wrapper: makeWrapper(bookDoc) },
   );
   return { onSectionsChange };
 }

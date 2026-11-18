@@ -11,7 +11,7 @@ import {
   setParentForContainer,
 } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
-import { useKitchenwareDoc } from "../contexts/docContext.ts";
+import { useBookDoc } from "../contexts/docContext.ts";
 import type { ReadonlyDeep } from "type-fest";
 
 export type NewContainerInput = {
@@ -29,7 +29,7 @@ export type UseContainerStoreResult = {
 };
 
 export function useContainerStore(): UseContainerStoreResult {
-  const { doc, whenSynced } = useKitchenwareDoc();
+  const { doc, whenSynced } = useBookDoc();
   const [containers, setContainers] = useState<Container[]>(() => getContainers(doc));
 
   useEffect(() => {

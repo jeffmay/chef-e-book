@@ -39,10 +39,11 @@ function useYjsDocForName(name: string): DocContextValue {
   return { doc: docRef.current, whenSynced: syncRef.current.promise };
 }
 
-export function useKitchenwareDoc(userName: string): DocContextValue {
-  return useYjsDocForName(`kitchenware-${userName}`);
-}
-
-export function useRecipeBookDoc(userName: string): DocContextValue {
-  return useYjsDocForName(`recipes-${userName}`);
+/**
+ * The one Yjs document for a recipe book: ingredients, containers, labels,
+ * recipes, folders, sessions and settings all live in it, so a single
+ * `Y.UndoManager` can later cover the whole book.
+ */
+export function useBookDoc(bookId: string): DocContextValue {
+  return useYjsDocForName(`book-${bookId}`);
 }

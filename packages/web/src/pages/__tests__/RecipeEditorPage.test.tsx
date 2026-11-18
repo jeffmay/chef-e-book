@@ -25,7 +25,7 @@ import * as Y from "yjs";
 import type { IngredientSelectorProps } from "../../components/ingredients_table/IngredientSelector.tsx";
 import type { InstructionIngredientSelectorProps } from "../../components/recipe_editor/InstructionIngredientSelector.tsx";
 import type { RecipeFolderSelectorProps } from "../../components/recipe_folder/RecipeFolderSelector.tsx";
-import { KitchenwareDocContext, RecipeBookDocContext } from "../../contexts/docContext.ts";
+import { BookDocContext } from "../../contexts/docContext.ts";
 import { flushAsyncEffects } from "../../testUtils.ts";
 import {
   computeTopIngredients,
@@ -159,26 +159,20 @@ vi.mock("../../components/recipe_editor/InstructionIngredientSelector.tsx", () =
   },
 }));
 
-function makeWrapper(kitchenwareDoc: Y.Doc, recipeBookDoc: Y.Doc) {
+function makeWrapper(bookDoc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
-      KitchenwareDocContext.Provider,
-      { value: { doc: kitchenwareDoc, whenSynced: Promise.resolve() } },
-      createElement(
-        RecipeBookDocContext.Provider,
-        { value: { doc: recipeBookDoc, whenSynced: Promise.resolve() } },
-        children,
-      ),
+      BookDocContext.Provider,
+      { value: { doc: bookDoc, whenSynced: Promise.resolve() } },
+      children,
     );
   };
 }
 
-let kitchenwareDoc: Y.Doc;
-let recipeBookDoc: Y.Doc;
+let bookDoc: Y.Doc;
 
 beforeEach(() => {
-  kitchenwareDoc = new Y.Doc();
-  recipeBookDoc = new Y.Doc();
+  bookDoc = new Y.Doc();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }));
   mockNavigate.mockClear();
 });
@@ -191,17 +185,17 @@ function setupNewRecipeEditor() {
   const onSave = vi.fn();
   const onCancel = vi.fn();
   render(<RecipeEditor recipe={null} onSave={onSave} onCancel={onCancel} />, {
-    wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc),
+    wrapper: makeWrapper(bookDoc),
   });
   return { onSave, onCancel };
 }
 
 function setupExistingRecipeEditor(title: string) {
-  const recipe = createRecipe(recipeBookDoc, { title, description: DEFAULT_VERSION_DESCRIPTION });
+  const recipe = createRecipe(bookDoc, { title, description: DEFAULT_VERSION_DESCRIPTION });
   const onSave = vi.fn();
   const onCancel = vi.fn();
   render(<RecipeEditor recipe={recipe} onSave={onSave} onCancel={onCancel} />, {
-    wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc),
+    wrapper: makeWrapper(bookDoc),
   });
   return { recipe, onSave, onCancel };
 }
@@ -515,7 +509,7 @@ describe("RecipeEditor — initialFolderId", () => {
     const ghostId = fixedId(RecipeFolderId, "ghost");
     render(
       <RecipeEditor recipe={null} initialFolderId={ghostId} onSave={vi.fn()} onCancel={vi.fn()} />,
-      { wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc) },
+      { wrapper: makeWrapper(bookDoc) },
     );
     await flushAsyncEffects();
     const select = screen.getByRole("combobox", { name: "Parent folder" }) as HTMLSelectElement;
@@ -523,7 +517,7 @@ describe("RecipeEditor — initialFolderId", () => {
   });
 
   it("pre-selects the folder when initialFolderId is provided", async () => {
-    const folder = createRecipeFolder(recipeBookDoc, "Desserts");
+    const folder = createRecipeFolder(bookDoc, "Desserts");
     const onSave = vi.fn();
     const onCancel = vi.fn();
     render(
@@ -534,7 +528,7 @@ describe("RecipeEditor — initialFolderId", () => {
         onCancel={onCancel}
       />,
       {
-        wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc),
+        wrapper: makeWrapper(bookDoc),
       },
     );
     await flushAsyncEffects();
@@ -554,11 +548,11 @@ describe("RecipeEditor — folder field", () => {
 
 describe("RecipeEditor — async recipe load", () => {
   it("re-seeds the form when the recipe finishes loading after mount", async () => {
-    const recipe = createRecipe(recipeBookDoc, {
+    const recipe = createRecipe(bookDoc, {
       title: "Stew",
       description: DEFAULT_VERSION_DESCRIPTION,
     });
-    const wrapper = makeWrapper(kitchenwareDoc, recipeBookDoc);
+    const wrapper = makeWrapper(bookDoc);
     // First render mimics a hard refresh where the doc has not synced yet, so
     // the editor receives recipe={null} and shows a blank form.
     const { rerender } = render(
@@ -951,7 +945,7 @@ describe("RecipeEditor — start session", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Start session for Pancakes" }));
 
-    const sessions = getSessions(recipeBookDoc);
+    const sessions = getSessions(bookDoc);
     expect(sessions).toHaveLength(1);
     expect(sessions[0]?.recipe_id).toBe(recipe.id);
     expect(sessions[0]?.recipe_version_id).toBe(recipe.versions.at(-1)?.id);
@@ -973,7 +967,7 @@ describe("RecipeEditor — start session", () => {
     );
     await userEvent.click(await screen.findByRole("menuitem", { name: "▶ Start" }));
 
-    const sessions = getSessions(recipeBookDoc);
+    const sessions = getSessions(bookDoc);
     expect(sessions).toHaveLength(1);
     expect(sessions[0]?.recipe_version_id).toBe(versionId);
     expect(mockNavigate).toHaveBeenCalledWith(`/sessions/${sessions[0]?.id}`);
@@ -986,28 +980,28 @@ describe("RecipeEditor — start session", () => {
 
 describe("RecipeEditor — version time fields", () => {
   it("preserves estimated time fields when saving in place", async () => {
-    const recipe = createRecipe(recipeBookDoc, {
+    const recipe = createRecipe(bookDoc, {
       title: "Pancakes",
       description: DEFAULT_VERSION_DESCRIPTION,
     });
     const base = recipe.versions[0];
     if (base === undefined) throw new Error("expected an initial version");
-    saveRecipe(recipeBookDoc, recipe.id, {
+    saveRecipe(bookDoc, recipe.id, {
       title: recipe.title,
       version: { ...base, estimated_time_seconds: 900, seconds_per_ingredient: 60 },
       create_new_version: false,
     });
-    const seeded = getRecipe(recipeBookDoc, recipe.id);
+    const seeded = getRecipe(bookDoc, recipe.id);
     assertNotValidationError(seeded);
 
     const onSave = vi.fn();
     render(<RecipeEditor recipe={seeded} onSave={onSave} onCancel={vi.fn()} />, {
-      wrapper: makeWrapper(kitchenwareDoc, recipeBookDoc),
+      wrapper: makeWrapper(bookDoc),
     });
     await flushAsyncEffects();
     await userEvent.click(screen.getByRole("button", { name: "Save recipe" }));
 
-    const reloaded = getRecipe(recipeBookDoc, recipe.id);
+    const reloaded = getRecipe(bookDoc, recipe.id);
     assertNotValidationError(reloaded);
     const latest = reloaded.versions.at(-1);
     expect(latest?.estimated_time_seconds).toBe(900);
@@ -1032,7 +1026,7 @@ describe("RecipeEditor — saving with rows still being edited", () => {
 
   /** The sections of the latest version stored for the recipe. */
   function latestSections(recipeId: Recipe["id"]): ReadonlyDeep<Section[]> {
-    const reloaded = getRecipe(recipeBookDoc, recipeId);
+    const reloaded = getRecipe(bookDoc, recipeId);
     assertNotValidationError(reloaded);
     const latest = reloaded.versions.at(-1);
     if (latest === undefined) throw new Error("expected a saved version");
