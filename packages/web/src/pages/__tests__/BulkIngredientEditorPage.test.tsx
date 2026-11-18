@@ -1,10 +1,10 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
 import { BookDocContext } from "../../contexts/docContext.ts";
-import { flushAsyncEffects } from "../../testUtils.ts";
+import { flushAsyncEffects, seedKitchenwareFromCsv } from "../../testUtils.ts";
 import { BulkIngredientEditorPage } from "../BulkIngredientEditorPage.tsx";
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
@@ -26,11 +26,7 @@ let doc: Y.Doc;
 
 beforeEach(() => {
   doc = new Y.Doc();
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }));
-});
-
-afterEach(() => {
-  vi.unstubAllGlobals();
+  seedKitchenwareFromCsv(doc, MOCK_CSV);
 });
 
 function setup() {

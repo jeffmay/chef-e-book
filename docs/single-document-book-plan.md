@@ -60,8 +60,11 @@ Ship as separate, individually-mergeable steps. Each ends with typecheck/test/fo
 
 ### 1d. Seed defaults exactly once
 
-- Move the default-kitchenware CSV import out of `useIngredientStore` into a `seedDefaultKitchenware(doc)` step run at book creation / first open, guarded by `book_meta.seeded_defaults`. This stops it from re-seeding a book whose user deliberately deleted everything.
-- Run the seed in a transaction with a **non-tracked origin** (see 1f) so Undo can never remove the defaults.
+- **Status: implemented.** The CSV import moved out of `useIngredientStore` into `seedDefaultKitchenware(doc, templates)` (`packages/shared/src/yjs/defaultKitchenware.ts`), driven by `useSeedDefaultKitchenware` in `AuthenticatedShell`, after `useEnsureBookMeta` (so `book_meta` exists before the flag is recorded in it).
+- It checks, seeds, and sets `book_meta.seeded_defaults` in **one transaction with `SETUP_ORIGIN`**: concurrent callers cannot both seed, and Undo can never remove the defaults. Outcomes: `seeded`, `already_seeded`, `book_has_data` (an existing book or one filled by a sync/import is marked without being touched).
+- This stops re-seeding a book whose user deliberately deleted everything. Books that existed before 1d and are currently empty get the defaults once.
+- The CSV is fetched only when `needsDefaultKitchenware(doc)`; a failed, non-OK, or empty fetch leaves the book unmarked so the next open retries.
+- Tests moved from stubbing `fetch` to a `seedKitchenwareFromCsv(doc, csv)` helper in `testUtils.ts`; seeding itself is covered in `defaultKitchenware.test.ts` (shared) and `useSeedDefaultKitchenware.test.ts` (web).
 
 ### 1e. Device book registry (goal 2)
 

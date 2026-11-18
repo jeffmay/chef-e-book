@@ -12,7 +12,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import { BookDocContext } from "../../contexts/docContext.ts";
-import { flushAsyncEffects } from "../../testUtils.ts";
+import { flushAsyncEffects, seedKitchenwareFromCsv } from "../../testUtils.ts";
 import { BulkRecipeEditorPage } from "../BulkRecipeEditorPage.tsx";
 import { BULK_RECIPE_VIEW_KEY } from "../bulkRecipeViewState.ts";
 
@@ -47,11 +47,12 @@ beforeEach(() => {
   // The tree's expand/collapse state persists in localStorage, so it must not leak between tests.
   localStorage.clear();
   bookDoc = new Y.Doc();
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }));
+  seedKitchenwareFromCsv(bookDoc, MOCK_CSV);
   mockNavigate.mockClear();
 });
 
 afterEach(() => {
+  // The mobile-view tests stub matchMedia; it must not leak into later tests.
   vi.unstubAllGlobals();
 });
 

@@ -9,6 +9,7 @@ import type { ActiveBookMeta } from "./hooks/useActiveBookMetaStore.ts";
 import { useActiveBookMeta } from "./hooks/useActiveBookMetaStore.ts";
 import { useBookDoc } from "./hooks/useYjsDoc.ts";
 import { useEnsureBookMeta } from "./hooks/useEnsureBookMeta.ts";
+import { useSeedDefaultKitchenware } from "./hooks/useSeedDefaultKitchenware.ts";
 import { BookDocContext } from "./contexts/docContext.ts";
 import { NavMenu } from "./components/NavMenu.tsx";
 import { SelectBookPage } from "./pages/SelectBookPage.tsx";
@@ -46,7 +47,9 @@ type AuthenticatedShellProps = ReadonlyDeep<{
 
 function AuthenticatedShell({ book, onRename }: AuthenticatedShellProps) {
   const bookDoc = useBookDoc(book.id);
+  // Order matters: book_meta must exist before the seeded flag is recorded in it.
   useEnsureBookMeta(bookDoc, book);
+  useSeedDefaultKitchenware(bookDoc);
   // const navigate = useNavigate();
 
   return (

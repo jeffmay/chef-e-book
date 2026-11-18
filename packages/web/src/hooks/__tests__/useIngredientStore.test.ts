@@ -8,20 +8,15 @@ import {
   type Ingredient,
   type KitchenwareKind,
 } from "@recipe-book/shared";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import { BookDocContext } from "../../contexts/docContext.ts";
 import { flushAsyncEffects } from "../../testUtils.ts";
 import { useIngredientStore } from "../useIngredientStore.ts";
 
 const ingredientKinds: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
-
-// A small CSV returned by the mocked fetch
-const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
-------butter,ingredient,Butter,volume,fat+solid
-`;
 
 const BUTTER_ID = loadId(IngredientId, "------butter");
 
@@ -57,31 +52,18 @@ let doc: Y.Doc;
 
 beforeEach(() => {
   doc = new Y.Doc();
-  // Pre-populate so the hook skips async init in most tests
   addIngredient(doc, BUTTER);
-
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }));
 });
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
-
-describe("useIngredientStore — async default loading", () => {
-  it("initialises from the CSV when the store is empty", async () => {
+describe("useIngredientStore — defaults", () => {
+  it("does not load the default kitchenware itself", async () => {
     const emptyDoc = new Y.Doc();
-    const { result } = renderHook(() => useIngredientStore(), {
-      wrapper: makeWrapper(emptyDoc),
-    });
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    const { result } = await renderStore(emptyDoc);
     expect(result.current.ingredients).toHaveLength(0);
-    await waitFor(() => expect(result.current.ingredients).toHaveLength(1));
-    expect(result.current.ingredients[0]?.name).toBe("Butter");
-  });
-
-  it("does not fetch when the store already has data", async () => {
-    // doc is pre-populated with BUTTER in beforeEach
-    await renderStore(doc);
-    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 });
 

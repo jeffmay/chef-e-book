@@ -5,9 +5,7 @@ import {
   findOrCreateLabel,
   getIngredients,
   IngredientId,
-  initFromKitchenwareTemplates,
   type Measurement,
-  parseKitchenwareCsv,
   randomId,
   removeLabelsFromIngredients,
   renameIngredient as renameIngredientInDoc,
@@ -42,32 +40,6 @@ export interface IngredientStore {
 export function useIngredientStore(): IngredientStore {
   const { doc, whenSynced } = useBookDoc();
   const [ingredients, setIngredients] = useState<Ingredient[]>(() => getIngredients(doc));
-
-  // Load defaults from static CSV asset if the store is empty after IndexedDB sync
-  useEffect(() => {
-    (async function syncIngredientStore() {
-      try {
-        await whenSynced;
-      } catch (e) {
-        console.error("failed to sync with server: ", e);
-        console.warn("skipping import of default kitchenware...");
-        return;
-      }
-      try {
-        const ingredientMap = doc.getMap("ingredients");
-        const labelsMap = doc.getMap("labels");
-        if (ingredientMap.size > 0 || labelsMap.size > 0) return;
-
-        const r = await fetch("/kitchenware.csv");
-        const csv = await r.text();
-        const templates = parseKitchenwareCsv(csv);
-        initFromKitchenwareTemplates(doc, templates);
-        console.debug("server synchronize complete.");
-      } catch (e) {
-        console.warn("failed to import default kitchenware from server: ", e);
-      }
-    })();
-  }, [doc, whenSynced]);
 
   useEffect(() => {
     const map = doc.getMap("ingredients");

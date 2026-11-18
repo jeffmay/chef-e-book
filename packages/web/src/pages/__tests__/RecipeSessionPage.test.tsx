@@ -22,12 +22,12 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TreeNode } from "primereact/treenode";
 import { createElement, type ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import type { IngredientSelectorProps } from "../../components/ingredients_table/IngredientSelector.tsx";
 import type { InstructionIngredientSelectorProps } from "../../components/recipe_editor/InstructionIngredientSelector.tsx";
 import { BookDocContext } from "../../contexts/docContext.ts";
-import { flushAsyncEffects } from "../../testUtils.ts";
+import { flushAsyncEffects, seedKitchenwareFromCsv } from "../../testUtils.ts";
 import { RecipeSessionPage } from "../RecipeSessionPage.tsx";
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
@@ -107,12 +107,8 @@ let bookDoc: Y.Doc;
 
 beforeEach(() => {
   bookDoc = new Y.Doc();
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ text: () => Promise.resolve(MOCK_CSV) }));
+  seedKitchenwareFromCsv(bookDoc, MOCK_CSV);
   mockNavigate.mockClear();
-});
-
-afterEach(() => {
-  vi.unstubAllGlobals();
 });
 
 /**

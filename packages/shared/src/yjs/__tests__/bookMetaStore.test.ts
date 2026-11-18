@@ -7,6 +7,8 @@ import {
   ensureBookMeta,
   getBookMeta,
   getBookMetaYmap,
+  isDefaultKitchenwareSeeded,
+  markDefaultKitchenwareSeeded,
   setBookName,
 } from "../bookMetaStore.ts";
 
@@ -136,5 +138,33 @@ describe("setBookName", () => {
     expect(undoManager.canUndo()).toBe(true);
     undoManager.undo();
     expect(getBookMeta(doc)?.name).toBe("Family Recipes");
+  });
+});
+
+describe("default kitchenware flag", () => {
+  it("is not set for a new book", () => {
+    ensureBookMeta(doc, { id: BOOK_ID, name: "Family Recipes" }, NOW);
+    expect(isDefaultKitchenwareSeeded(doc)).toBe(false);
+    expect(getBookMeta(doc)?.seeded_defaults).toBeUndefined();
+  });
+
+  it("is recorded in book_meta, which stays valid", () => {
+    ensureBookMeta(doc, { id: BOOK_ID, name: "Family Recipes" }, NOW);
+    markDefaultKitchenwareSeeded(doc);
+    expect(isDefaultKitchenwareSeeded(doc)).toBe(true);
+    expect(getBookMeta(doc)?.seeded_defaults).toBe(true);
+  });
+
+  it("survives ensureBookMeta running again", () => {
+    markDefaultKitchenwareSeeded(doc);
+    ensureBookMeta(doc, { id: BOOK_ID, name: "Family Recipes" }, NOW);
+    expect(isDefaultKitchenwareSeeded(doc)).toBe(true);
+    expect(getBookMeta(doc)?.name).toBe("Family Recipes");
+  });
+
+  it("can never be undone", () => {
+    const undoManager = new Y.UndoManager(getBookMetaYmap(doc));
+    markDefaultKitchenwareSeeded(doc);
+    expect(undoManager.canUndo()).toBe(false);
   });
 });
