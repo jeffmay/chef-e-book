@@ -23,3 +23,4 @@ export * from "./yjs/bookSettingsStore.ts";
 export * from "./yjs/bookMetaStore.ts";
 export * from "./yjs/defaultKitchenware.ts";
 export * from "./yjs/origins.ts";
+export * from "./yjs/undo.ts";

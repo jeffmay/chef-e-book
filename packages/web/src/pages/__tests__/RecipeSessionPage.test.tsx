@@ -5,6 +5,7 @@ import {
   collectInstructions,
   completeSession,
   ContainerId,
+  createBookUndoManager,
   createRecipe,
   createSession,
   DEFAULT_VERSION_DESCRIPTION,
@@ -18,7 +19,7 @@ import {
   SectionItemId,
   updateSessionItemState,
 } from "@recipe-book/shared";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TreeNode } from "primereact/treenode";
 import { createElement, type ReactNode } from "react";
@@ -410,6 +411,30 @@ describe("RecipeSessionPage — summary view", () => {
     const afterCreate = getRecipe(bookDoc, recipe.id);
     assertNotValidationError(afterCreate);
     expect(afterCreate.versions).toHaveLength(1);
+  });
+
+  it("makes creating a new recipe a single undo step, with its first version", async () => {
+    const { session } = seedCompletedSession();
+    const user = userEvent.setup();
+    await setup(session.id);
+    const undoManager = createBookUndoManager(bookDoc);
+    undoManager.stopCapturing();
+
+    await user.click(screen.getByRole("button", { name: "Create a new recipe" }));
+    const nameInput = screen.getByRole("textbox", { name: "New recipe name" });
+    await user.clear(nameInput);
+    await user.type(nameInput, "Pancakes (copy)");
+    let updates = 0;
+    bookDoc.on("update", () => updates++);
+    await user.click(screen.getByRole("button", { name: "✔︎ Create a new recipe" }));
+
+    // The recipe and its first version were written together…
+    expect(updates).toBe(1);
+    expect(getRecipes(bookDoc)).toHaveLength(2);
+    // …so one Undo removes the whole new recipe, not just its version.
+    act(() => undoManager.undo());
+    expect(getRecipes(bookDoc).map((r) => r.title)).toEqual(["Pancakes"]);
+    undoManager.destroy();
   });
 
   it("prompts instead of dropping a row left open when creating a version", async () => {

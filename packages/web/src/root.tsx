@@ -13,6 +13,8 @@ import { useBookDoc } from "./hooks/useYjsDoc.ts";
 import { useEnsureBookMeta } from "./hooks/useEnsureBookMeta.ts";
 import { useSeedDefaultKitchenware } from "./hooks/useSeedDefaultKitchenware.ts";
 import { BookDocContext } from "./contexts/docContext.ts";
+import { BookUndoContext } from "./contexts/undoContext.ts";
+import { useBookUndoManager } from "./hooks/useBookUndoManager.ts";
 import { NavMenu } from "./components/NavMenu.tsx";
 import { SelectBookPage } from "./pages/SelectBookPage.tsx";
 import { setBookName, type RecipeBookId } from "@recipe-book/shared";
@@ -56,6 +58,8 @@ function AuthenticatedShell({ book, onSwitchBook, onBookNameChange }: Authentica
   useEnsureBookMeta(bookDoc, book);
   useSeedDefaultKitchenware(bookDoc);
   useSyncBookName(bookDoc, book, onBookNameChange);
+  // One history for the whole book; it lives here so it survives page navigation.
+  const bookUndo = useBookUndoManager(bookDoc.doc);
   // const navigate = useNavigate();
 
   // Renaming writes the book's own document, which keeps the book's id; the registry's cached name
@@ -64,23 +68,30 @@ function AuthenticatedShell({ book, onSwitchBook, onBookNameChange }: Authentica
 
   return (
     <BookDocContext.Provider value={bookDoc}>
-      <div className="app">
-        <header className="top-nav">
-          <NavMenu />
-          <h1 className="book-name">{book.name}</h1>
-          <div className="nav-right">
-            <button className="switch-book-btn" onClick={onSwitchBook}>
-              Books
-            </button>
-            <button className="undo-btn" aria-label="Undo">
-              ↩ Undo
-            </button>
-            {/* TODO: Add this back once we have user authentication */}
-            {/* <UserMenu userName={unknown} onProfile={() => navigate("/profile")} /> */}
-          </div>
-        </header>
-        <Outlet context={{ bookId: book.id, onRename } satisfies RootContext} />
-      </div>
+      <BookUndoContext.Provider value={bookUndo}>
+        <div className="app">
+          <header className="top-nav">
+            <NavMenu />
+            <h1 className="book-name">{book.name}</h1>
+            <div className="nav-right">
+              <button className="switch-book-btn" onClick={onSwitchBook}>
+                Books
+              </button>
+              <button
+                className="undo-btn"
+                aria-label="Undo"
+                onClick={bookUndo.undo}
+                disabled={!bookUndo.canUndo}
+              >
+                ↩ Undo
+              </button>
+              {/* TODO: Add this back once we have user authentication */}
+              {/* <UserMenu userName={unknown} onProfile={() => navigate("/profile")} /> */}
+            </div>
+          </header>
+          <Outlet context={{ bookId: book.id, onRename } satisfies RootContext} />
+        </div>
+      </BookUndoContext.Provider>
     </BookDocContext.Provider>
   );
 }

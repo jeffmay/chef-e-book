@@ -46,6 +46,7 @@ import { PendingEditsDialog } from "../components/recipe_editor/PendingEditsDial
 import { RecipeVersionEditor } from "../components/recipe_editor/RecipeVersionEditor.tsx";
 import { useBookSettings } from "../hooks/useBookSettingsStore.ts";
 import { useIngredientStore } from "../hooks/useIngredientStore.ts";
+import { useBookDoc } from "../contexts/docContext.ts";
 import { useRecipeStore } from "../hooks/useRecipeStore.ts";
 import { useSessionStore } from "../hooks/useSessionStore.ts";
 import "./RecipeSessionPage.css";
@@ -344,6 +345,7 @@ type PendingSave = ReadonlyDeep<{ target: SaveTarget; count: number }>;
 
 function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProps) {
   const navigate = useNavigate();
+  const { doc } = useBookDoc();
   const { save, create } = useRecipeStore();
   const { secondsPerIngredient: bookSecondsPerIngredient } = useBookSettings();
 
@@ -446,14 +448,20 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
   }
 
   function createRecipe(savedSections: ReadonlyDeep<Section[]>) {
-    const created = create({
-      title: newRecipeName.trim(),
-      ...(recipe.parent_folder_id !== undefined && { parent_folder_id: recipe.parent_folder_id }),
-    });
-    save(created.id, {
-      title: created.title,
-      version: buildVersion(created.id, DEFAULT_VERSION_DESCRIPTION, savedSections),
-      create_new_version: false,
+    // Creating the recipe and writing its first version is one action, so one undo step.
+    const created = doc.transact(() => {
+      const newRecipe = create({
+        title: newRecipeName.trim(),
+        ...(recipe.parent_folder_id !== undefined && {
+          parent_folder_id: recipe.parent_folder_id,
+        }),
+      });
+      save(newRecipe.id, {
+        title: newRecipe.title,
+        version: buildVersion(newRecipe.id, DEFAULT_VERSION_DESCRIPTION, savedSections),
+        create_new_version: false,
+      });
+      return newRecipe;
     });
     navigate(`/recipes/${created.id}`);
   }
