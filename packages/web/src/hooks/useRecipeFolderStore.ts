@@ -9,7 +9,7 @@ import {
   getRecipeFoldersFlat,
   updateRecipeFolder,
 } from "@recipe-book/shared";
-import { useRecipeBookDoc } from "../contexts/docContext.ts";
+import { useBookDoc } from "../contexts/docContext.ts";
 
 export interface RecipeFolderStore {
   folders: RecipeFolder[];
@@ -20,7 +20,7 @@ export interface RecipeFolderStore {
 }
 
 export function useRecipeFolderStore(): RecipeFolderStore {
-  const { doc, whenSynced } = useRecipeBookDoc();
+  const { doc, whenSynced } = useBookDoc();
   const [folders, setFolders] = useState<RecipeFolder[]>(() => getRecipeFolders(doc));
   const [flatFolders, setFlatFolders] = useState(() => getRecipeFoldersFlat(doc));
 

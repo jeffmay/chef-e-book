@@ -13,7 +13,7 @@ import {
 } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
-import { useRecipeBookDoc } from "../contexts/docContext.ts";
+import { useBookDoc } from "../contexts/docContext.ts";
 
 export interface SessionStore {
   sessions: Session[];
@@ -27,7 +27,7 @@ export interface SessionStore {
 }
 
 export function useSessionStore(): SessionStore {
-  const { doc, whenSynced } = useRecipeBookDoc();
+  const { doc, whenSynced } = useBookDoc();
   const [sessions, setSessions] = useState<Session[]>(() => getSessions(doc));
 
   useEffect(() => {

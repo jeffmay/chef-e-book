@@ -8,7 +8,7 @@ import {
 } from "../components/ingredients_table/IngredientsTable.tsx";
 import { LabelEditor } from "../components/ingredients_table/LabelEditor.tsx";
 import { LabelTable } from "../components/ingredients_table/LabelTable.tsx";
-import { useKitchenwareDoc } from "../contexts/docContext.ts";
+import { useBookDoc } from "../contexts/docContext.ts";
 import { useIngredientStore } from "../hooks/useIngredientStore.ts";
 import { useLabelStore } from "../hooks/useLabelStore.ts";
 import "./BulkIngredientEditorPage.css";
@@ -43,7 +43,7 @@ const EMPTY_ADD_FORM = {
 // ---------------------------------------------------------------------------
 
 export function BulkIngredientEditorPage() {
-  const { doc } = useKitchenwareDoc();
+  const { doc } = useBookDoc();
 
   const {
     ingredients,

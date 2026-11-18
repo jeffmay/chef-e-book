@@ -12,7 +12,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
-import { KitchenwareDocContext } from "../../contexts/docContext.ts";
+import { BookDocContext } from "../../contexts/docContext.ts";
 import { flushAsyncEffects } from "../../testUtils.ts";
 import { useIngredientStore } from "../useIngredientStore.ts";
 
@@ -38,7 +38,7 @@ const BUTTER: Ingredient = {
 function makeWrapper(doc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
-      KitchenwareDocContext.Provider,
+      BookDocContext.Provider,
       { value: { doc, whenSynced: Promise.resolve() } },
       children,
     );

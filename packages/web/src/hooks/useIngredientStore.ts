@@ -17,7 +17,7 @@ import {
 } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
-import { useKitchenwareDoc } from "../contexts/docContext.ts";
+import { useBookDoc } from "../contexts/docContext.ts";
 
 const ingredientKinds: ReadonlySet<KitchenwareKind> = new Set(["ingredient"]);
 
@@ -40,7 +40,7 @@ export interface IngredientStore {
 }
 
 export function useIngredientStore(): IngredientStore {
-  const { doc, whenSynced } = useKitchenwareDoc();
+  const { doc, whenSynced } = useBookDoc();
   const [ingredients, setIngredients] = useState<Ingredient[]>(() => getIngredients(doc));
 
   // Load defaults from static CSV asset if the store is empty after IndexedDB sync

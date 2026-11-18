@@ -61,13 +61,13 @@
 
 ## In Progress
 
-_(none)_
+- [ ] Single-document recipe books (`docs/single-document-book-plan.md`). Step 1a done: one `Y.Doc` per book (`useBookDoc` + `BookDocContext`, IndexedDB `book-<id>`), replacing the separate kitchenware/recipes docs. Next: 1b legacy-data migration (required before release), then `book_meta`, device book registry, atomic undo, name keys, export, import
 
 ---
 
 ## Completed
 
-- [x] Document separation: kitchenware (ingredients, containers, labels) and recipes/folders are now separate Y.Doc instances (`useKitchenwareDoc` + `KitchenwareDocContext` and `useRecipeBookDoc` + `RecipeBookDocContext`)
+- [x] ~~Document separation~~ (superseded by the single-document book above): kitchenware and recipes were once separate Y.Doc instances (`useKitchenwareDoc` / `useRecipeBookDoc`)
 - [x] Branded `UserId`, `RecipeBookId`, `RecipeBookName` types in shared package; `snakeCaseName` unbranded arktype (trims + normalizes to snake_case via `string-ts` `snakeCase`, brandable for different types)
 - [x] Server storage layer: `DocumentStore` interface with three backends — `LocalMemoryStore` (in-memory Map, default for tests), `LocalFileStore` (filesystem, `./data/{bookId}.yjs`), `NetlifyBlobStore` (Netlify Blobs, store `"recipe-books"`, key `book-{bookId}`)
 - [x] `POST /sync` updated: removed `:user_id` URL param; body is now `{ book_id: string, update?: string }`; loads/saves through `DocumentStore` interface

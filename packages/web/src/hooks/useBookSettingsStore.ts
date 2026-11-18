@@ -6,7 +6,7 @@ import {
 } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
 import { BUILD_SECONDS_PER_INGREDIENT } from "../config.ts";
-import { useRecipeBookDoc } from "../contexts/docContext.ts";
+import { useBookDoc } from "../contexts/docContext.ts";
 
 export interface BookSettingsStore {
   /** The book's per-ingredient prep time, falling back to the build default. */
@@ -18,7 +18,7 @@ export interface BookSettingsStore {
 }
 
 export function useBookSettings(): BookSettingsStore {
-  const { doc, whenSynced } = useRecipeBookDoc();
+  const { doc, whenSynced } = useBookDoc();
   const [settings, setSettings] = useState<BookSettings>(() => getBookSettings(doc));
 
   useEffect(() => {

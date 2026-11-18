@@ -10,7 +10,7 @@ import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
-import { KitchenwareDocContext } from "../../contexts/docContext.ts";
+import { BookDocContext } from "../../contexts/docContext.ts";
 import { flushAsyncEffects } from "../../testUtils.ts";
 import { useContainerStore } from "../useContainerStore.ts";
 
@@ -27,7 +27,7 @@ const BOWL: Container = {
 function makeWrapper(doc: Y.Doc) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
-      KitchenwareDocContext.Provider,
+      BookDocContext.Provider,
       { value: { doc, whenSynced: Promise.resolve() } },
       children,
     );

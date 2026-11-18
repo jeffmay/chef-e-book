@@ -14,7 +14,7 @@ import {
 import { loadId, randomId } from "@recipe-book/shared";
 import { useEffect, useState } from "react";
 import type * as Y from "yjs";
-import { useKitchenwareDoc } from "../contexts/docContext.ts";
+import { useBookDoc } from "../contexts/docContext.ts";
 
 export interface LabelStore {
   labels: KitchenwareLabel[];
@@ -26,7 +26,7 @@ export interface LabelStore {
 }
 
 export function useLabelStore(): LabelStore {
-  const { doc, whenSynced } = useKitchenwareDoc();
+  const { doc, whenSynced } = useBookDoc();
   const [labels, setLabels] = useState<KitchenwareLabel[]>(() => getLabels(doc));
 
   useEffect(() => {
