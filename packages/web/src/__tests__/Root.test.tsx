@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createRoutesStub } from "react-router";
+import { flushAsyncEffects } from "../testUtils.ts";
 import { randomId, RecipeBookId } from "@recipe-book/shared";
 import {
   BOOK_REGISTRY_KEY,
@@ -19,7 +20,28 @@ vi.mock("y-indexeddb", () => ({
 
 const { default: Root } = await import("../root.tsx");
 const { default: Dashboard } = await import("../routes/dashboard.tsx");
+const { useIngredientStore } = await import("../hooks/useIngredientStore.ts");
 // const { default: Profile } = await import("../routes/profile.ts");
+
+/** A page that edits the book, to exercise the header's Undo. */
+function AddIngredientPage() {
+  const { createIngredient } = useIngredientStore();
+  return (
+    <main>
+      <button
+        onClick={() =>
+          createIngredient({
+            name: "Butter",
+            default_measurement_value: { value: { numerator: 1, denominator: 1 }, unit: "cup" },
+            label_names: [],
+          })
+        }
+      >
+        Add ingredient
+      </button>
+    </main>
+  );
+}
 
 function makeStub(initialEntries = ["/dashboard"]) {
   const Stub = createRoutesStub([
@@ -30,6 +52,10 @@ function makeStub(initialEntries = ["/dashboard"]) {
         {
           path: "dashboard",
           Component: Dashboard,
+        },
+        {
+          path: "add",
+          Component: AddIngredientPage,
         },
         {
           path: "ingredients",
@@ -157,6 +183,50 @@ describe("Root — book already stored", () => {
   it("shows the open book's name in the header", () => {
     render(makeStub());
     expect(screen.getByRole("heading", { name: "Bob" })).toBeInTheDocument();
+  });
+
+  describe("undo", () => {
+    it("has nothing to undo in a freshly opened book, whatever the app set up itself", async () => {
+      render(makeStub());
+      // Let the book finish loading: its metadata is written and the default kitchenware seeded.
+      await flushAsyncEffects();
+      expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+    });
+
+    it("undoes an edit to the book, then has nothing left to undo", async () => {
+      render(makeStub(["/add"]));
+      await flushAsyncEffects();
+      await userEvent.click(screen.getByRole("button", { name: "Add ingredient" }));
+      expect(screen.getByRole("button", { name: "Undo" })).toBeEnabled();
+
+      await userEvent.click(screen.getByRole("button", { name: "Undo" }));
+      expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+    });
+
+    it("keeps the history when navigating to another page", async () => {
+      render(makeStub(["/add"]));
+      await flushAsyncEffects();
+      await userEvent.click(screen.getByRole("button", { name: "Add ingredient" }));
+
+      await userEvent.click(screen.getByLabelText("Navigation menu"));
+      await userEvent.click(screen.getByRole("link", { name: "Ingredients" }));
+
+      expect(screen.getByRole("heading", { name: "Ingredients" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Undo" })).toBeEnabled();
+    });
+
+    it("starts a book with an empty history each time it is opened", async () => {
+      render(makeStub(["/add"]));
+      await flushAsyncEffects();
+      await userEvent.click(screen.getByRole("button", { name: "Add ingredient" }));
+      expect(screen.getByRole("button", { name: "Undo" })).toBeEnabled();
+
+      await userEvent.click(screen.getByRole("button", { name: "Books" }));
+      await userEvent.click(screen.getByRole("button", { name: "Open book Bob" }));
+      await flushAsyncEffects();
+
+      expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+    });
   });
 
   describe("switching books", () => {

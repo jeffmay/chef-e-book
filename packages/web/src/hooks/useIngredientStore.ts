@@ -54,18 +54,21 @@ export function useIngredientStore(): IngredientStore {
     ingredients,
     createIngredient(input) {
       const id = randomId(IngredientId);
-      const labelIds = new Set(
-        input.label_names.map((name) => findOrCreateLabel(doc, name, ingredientKinds)),
-      );
-      const ingredient: Ingredient = {
-        kind: "ingredient",
-        id,
-        name: input.name,
-        default_measurement_value: input.default_measurement_value,
-        labels: labelIds,
-        ...(input.parent_id && { parent_id: input.parent_id }),
-      };
-      addIngredient(doc, ingredient);
+      // Creating any missing labels and the ingredient itself is one action, so one undo step.
+      doc.transact(() => {
+        const labelIds = new Set(
+          input.label_names.map((name) => findOrCreateLabel(doc, name, ingredientKinds)),
+        );
+        const ingredient: Ingredient = {
+          kind: "ingredient",
+          id,
+          name: input.name,
+          default_measurement_value: input.default_measurement_value,
+          labels: labelIds,
+          ...(input.parent_id && { parent_id: input.parent_id }),
+        };
+        addIngredient(doc, ingredient);
+      });
       return id;
     },
     renameIngredient(id, name) {

@@ -244,6 +244,12 @@ svg.p-checkbox-icon > path {
   padding: var(--spacing-xs);
 }
 
+/* Text stays full black on e-ink, so a disabled control is struck through rather than greyed. */
+.undo-btn:disabled {
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
 .page-title {
   text-align: center;
   font-family: var(--font-display);

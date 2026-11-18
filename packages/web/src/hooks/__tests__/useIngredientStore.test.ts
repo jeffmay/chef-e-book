@@ -1,7 +1,9 @@
 import type { KitchenwareLabelId } from "@recipe-book/shared";
 import {
   addIngredient,
+  createBookUndoManager,
   findOrCreateLabel,
+  getLabels,
   IngredientId,
   loadId,
   fixedId,
@@ -80,6 +82,46 @@ describe("useIngredientStore — createIngredient", () => {
     );
     expect(result.current.ingredients.length).toBe(before + 1);
     expect(result.current.ingredients.find((i) => i.name === "Almond Milk")).toBeDefined();
+  });
+});
+
+describe("useIngredientStore — createIngredient and undo", () => {
+  it("writes the new labels and the ingredient in a single transaction", async () => {
+    const { result } = await renderStore(doc);
+    let updates = 0;
+    doc.on("update", () => updates++);
+
+    act(() =>
+      result.current.createIngredient({
+        name: "Almond Milk",
+        default_measurement_value: DEFAULT_MEASUREMENT,
+        label_names: ["liquid", "dairy-free"],
+      }),
+    );
+
+    expect(updates).toBe(1);
+  });
+
+  it("undoes the new ingredient and the labels it created in one step", async () => {
+    const { result } = await renderStore(doc);
+    const undoManager = createBookUndoManager(doc);
+    undoManager.stopCapturing();
+    const labelsBefore = getLabels(doc).length;
+
+    act(() =>
+      result.current.createIngredient({
+        name: "Almond Milk",
+        default_measurement_value: DEFAULT_MEASUREMENT,
+        label_names: ["liquid", "dairy-free"],
+      }),
+    );
+    expect(getLabels(doc).length).toBe(labelsBefore + 2);
+
+    act(() => undoManager.undo());
+
+    expect(result.current.ingredients.find((i) => i.name === "Almond Milk")).toBeUndefined();
+    expect(getLabels(doc).length).toBe(labelsBefore);
+    undoManager.destroy();
   });
 });
 

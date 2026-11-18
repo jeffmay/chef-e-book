@@ -140,6 +140,16 @@ Which books exist on this device, and which one is open, is device-local state k
 - `SelectBookPage` is the picker (list, "✎" rename, "✕" delete behind a confirmation `Modal` whose Enter key cancels, and a "Create book" form). The header's "Books" button returns to it.
 - Tabs do not listen for `storage` events, so two tabs can disagree about the open book until reload.
 
+### Undo (`useBookUndoManager`)
+
+One `Y.UndoManager` covers the whole book, so a single history spans the ingredients list and the recipes tree. It is created by `useBookUndoManager(doc)` in `AuthenticatedShell` — so it survives page navigation and every book open starts empty — and provided through `BookUndoContext` (`useBookUndo()` gives `{ undo, redo, canUndo, canRedo, stopCapturing }`); the header's "↩ Undo" button drives it. The scope (`getBookUndoScope`, `packages/shared/src/yjs/undo.ts`) is `ingredients`, `containers`, `labels`, `recipes`, `recipe_folders`, `book_settings` and `book_meta`.
+
+- **Sessions are not undoable.** `sessions` and `session_item_states` are outside the scope on purpose: ticking a step while cooking is run-state, not an edit to the book. Saving a recipe version from a session writes to `recipes` and is undoable. A new root map is outside the history until it is added to `getBookUndoScope`.
+- **Only local edits are tracked** (the default `null` origin). Writes the app makes on the user's behalf use `SETUP_ORIGIN` (book setup, default kitchenware) or `MIGRATION_ORIGIN` (legacy data), and what IndexedDB loads or a sync provider applies has its own origin, so none of it can be undone, and undoing never reverts another device's edit. Use one of those origins for any new non-user write.
+- **One user action is one step.** Write a multi-step action inside a single `doc.transact(...)` (creating an ingredient with new labels; deleting a label _and_ removing it from every ingredient; creating a recipe _and_ its first version). Edits within Yjs's default 500 ms of each other also merge into one step. A transaction started from inside an observer is a _separate_ transaction, so do cascades explicitly in the originating transaction rather than in an observer. `runAsUndoStep(undoManager, doc, fn)` makes `fn` exactly one step that never merges with its neighbours (for imports).
+- Stores write whole JSON objects per id, so Undo restores a whole entry, not a single field.
+- Tests that call `undoManager.undo()`/`redo()` on a document a rendered component is observing must wrap it in `act(...)`.
+
 ### Device-Local View State (`useLocalViewState`)
 
 Not everything belongs in the Yjs document. State that describes how _this device_ is looking at
@@ -472,7 +482,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 
 - "☰" hamburger menu to navigate between pages
 - "Books" button: leaves the open book for the book picker (see Books on This Device)
-- "↩ Undo" button (Yjs undo manager)
+- "↩ Undo" button: undoes the last edit to the open book (see Undo); disabled, and struck through, when there is nothing to undo
 
 ## Design System
 

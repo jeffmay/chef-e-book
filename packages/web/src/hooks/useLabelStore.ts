@@ -58,7 +58,13 @@ export function useLabelStore(): LabelStore {
       renameLabelInDoc(doc, id, name);
     },
     deleteLabels(ids) {
-      deleteLabelsInDoc(doc, ids);
+      // Deleting a label also takes it off every ingredient. Doing both in one transaction makes
+      // them one undo step; the observer above still does the same clean-up for deletions that
+      // arrive from elsewhere, and finds nothing left to do here.
+      doc.transact(() => {
+        deleteLabelsInDoc(doc, ids);
+        for (const id of ids) removeLabelFromAllIngredients(doc, id);
+      });
     },
     mergeLabels(idsToMerge, newName) {
       const newId = randomId(KitchenwareLabelId);
