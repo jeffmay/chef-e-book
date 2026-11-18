@@ -857,3 +857,62 @@ describe("IngredientsTable — name uniqueness", () => {
     expect(screen.queryByText("duplicate name")).not.toBeInTheDocument();
   });
 });
+
+describe("IngredientsTable — export", () => {
+  function setupExport(withExport: boolean) {
+    const onExport = vi.fn();
+    render(
+      <IngredientsTable
+        ingredients={[FLOUR, BUTTER]}
+        labels={[]}
+        {...(withExport && { onExport })}
+        onRename={onRename}
+        onSetMeasurementValue={onSetMeasurementValue}
+        onSetLabels={onSetLabels}
+        onSetParent={onSetParent}
+        onAddLabels={onAddLabels}
+        onRemoveLabels={onRemoveLabels}
+        onBulkSetMeasurementValue={onBulkSetMeasurementValue}
+        onBulkSetParent={onBulkSetParent}
+      />,
+    );
+    return onExport;
+  }
+
+  async function selectRow(name: string) {
+    const nameCell = await screen.findByRole("button", { name: `Edit name for ${name}` });
+    await userEvent.click(within(nameCell.closest("tr")!).getAllByRole("checkbox")[0]!);
+  }
+
+  it("offers to export once something is selected, and exports exactly the selection", async () => {
+    const onExport = setupExport(true);
+    await selectRow("Flour");
+    await userEvent.click(screen.getByRole("button", { name: "Export selected ingredients" }));
+    expect(onExport).toHaveBeenCalledWith([FLOUR.id]);
+  });
+
+  it("exports every selected row", async () => {
+    const onExport = setupExport(true);
+    await selectRow("Flour");
+    await selectRow("Butter");
+    await userEvent.click(screen.getByRole("button", { name: "Export selected ingredients" }));
+    expect(onExport).toHaveBeenCalledWith(expect.arrayContaining([FLOUR.id, BUTTER.id]));
+    expect(onExport.mock.calls[0]?.[0]).toHaveLength(2);
+  });
+
+  it("offers nothing to export while nothing is selected", async () => {
+    setupExport(true);
+    await screen.findByText("Flour");
+    expect(
+      screen.queryByRole("button", { name: "Export selected ingredients" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("has no export button when it is not given a way to export", async () => {
+    setupExport(false);
+    await selectRow("Flour");
+    expect(
+      screen.queryByRole("button", { name: "Export selected ingredients" }),
+    ).not.toBeInTheDocument();
+  });
+});

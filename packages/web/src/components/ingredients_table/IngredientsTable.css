@@ -397,6 +397,22 @@
   line-height: 1;
 }
 
+.it-bulk-export,
+.it-bulk-clear {
+  background: none;
+  border: var(--border-width) solid var(--color-border);
+  padding: 1px 6px;
+  font-size: 0.85em;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+}
+
+.it-bulk-export:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
 .it-bulk-clear {
   margin-left: auto;
   background: none;

@@ -1,11 +1,23 @@
+import { parseRecipeBookExport } from "@recipe-book/shared";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as Y from "yjs";
 import { BookDocContext } from "../../contexts/docContext.ts";
 import { flushAsyncEffects, seedKitchenwareFromCsv } from "../../testUtils.ts";
 import { BulkIngredientEditorPage } from "../BulkIngredientEditorPage.tsx";
+
+const mockDownload = vi.hoisted(() => vi.fn());
+vi.mock("../../utils/downloadTextFile.ts", () => ({ downloadTextFile: mockDownload }));
+
+/** The file the page last asked to download: its name, and its text read back as an export. */
+function downloaded() {
+  const [filename, text] = mockDownload.mock.calls.at(-1) ?? [];
+  const parsed = parseRecipeBookExport(String(text));
+  if (!parsed.ok) throw new Error(parsed.error);
+  return { filename: String(filename), text: String(text), book: parsed.value };
+}
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------butter,ingredient,Butter,volume,fat+solid
@@ -220,5 +232,49 @@ describe("BulkIngredientEditorPage — name uniqueness", () => {
       await screen.findByRole("button", { name: "Edit name for Cheeses" }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
+describe("BulkIngredientEditorPage — export", () => {
+  beforeEach(() => {
+    mockDownload.mockClear();
+  });
+
+  it("exports every ingredient from the Export all button, as a file", async () => {
+    await setupAndWait();
+    await userEvent.click(screen.getByRole("button", { name: "Export all ingredients" }));
+
+    const { filename, text, book } = downloaded();
+    expect(mockDownload).toHaveBeenCalledOnce();
+    expect(filename).toMatch(/^recipe-book-ingredients-\d{4}-\d{2}-\d{2}\.json$/);
+    expect(book.ingredients.map((i) => i.name)).toEqual(["Butter", "Cheese"]);
+    expect(text).not.toContain("name_key");
+  });
+
+  it("says what was exported, until dismissed", async () => {
+    await setupAndWait();
+    await userEvent.click(screen.getByRole("button", { name: "Export all ingredients" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Exported 2 ingredients.");
+
+    await userEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("exports only the selected ingredients from the bulk bar", async () => {
+    await setupAndWait();
+    const cheeseCell = screen.getByRole("button", { name: "Edit name for Cheese" });
+    await userEvent.click(within(cheeseCell.closest("tr")!).getAllByRole("checkbox")[0]!);
+    await userEvent.click(screen.getByRole("button", { name: "Export selected ingredients" }));
+
+    expect(downloaded().book.ingredients.map((i) => i.name)).toEqual(["Cheese"]);
+    expect(screen.getByRole("status")).toHaveTextContent("Exported 1 ingredient.");
+  });
+
+  it("carries the labels the exported ingredients have", async () => {
+    await setupAndWait();
+    await userEvent.click(screen.getByRole("button", { name: "Export all ingredients" }));
+    expect(downloaded().book.labels.map((l) => l.name)).toEqual(
+      expect.arrayContaining(["fat", "solid"]),
+    );
   });
 });

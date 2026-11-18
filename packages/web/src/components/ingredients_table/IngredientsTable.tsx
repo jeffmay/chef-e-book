@@ -195,6 +195,8 @@ export type IngredientsTableProps = ReadonlyDeep<{
   nameError?: (id: IngredientId, name: string) => string | undefined;
   /** Ingredients that share a name with another; each is flagged so it can be renamed. */
   duplicateIds?: ReadonlySet<IngredientId>;
+  /** When given, the bulk-action bar offers to export the selected ingredients. */
+  onExport?: (ids: readonly IngredientId[]) => void;
   onRename: (id: IngredientId, name: string) => void;
   onSetMeasurementValue: (id: IngredientId, value: Measurement) => void;
   onSetLabels: (id: IngredientId, label_names: readonly string[]) => void;
@@ -215,6 +217,7 @@ export function IngredientsTable({
   external_label_filter,
   nameError,
   duplicateIds,
+  onExport,
   onRename,
   onSetMeasurementValue,
   onSetLabels,
@@ -713,6 +716,16 @@ export function IngredientsTable({
         <div className="it-bulk-bar" role="region" aria-label="Bulk actions">
           <div className="it-bulk-header">
             <span className="it-bulk-count">{selectedIds.length} selected</span>
+            {onExport !== undefined && (
+              <button
+                type="button"
+                className="it-bulk-export"
+                aria-label="Export selected ingredients"
+                onClick={() => onExport(selectedIds)}
+              >
+                Export
+              </button>
+            )}
             <button type="button" className="it-bulk-clear" onClick={() => setSelectionKeys({})}>
               Clear
             </button>

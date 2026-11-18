@@ -1,5 +1,6 @@
 import {
   createRecipe,
+  parseRecipeBookExport,
   createRecipeFolder,
   DEFAULT_VERSION_DESCRIPTION,
   deleteRecipe,
@@ -15,6 +16,17 @@ import { BookDocContext } from "../../contexts/docContext.ts";
 import { flushAsyncEffects, seedKitchenwareFromCsv } from "../../testUtils.ts";
 import { BulkRecipeEditorPage } from "../BulkRecipeEditorPage.tsx";
 import { BULK_RECIPE_VIEW_KEY } from "../bulkRecipeViewState.ts";
+
+const mockDownload = vi.hoisted(() => vi.fn());
+vi.mock("../../utils/downloadTextFile.ts", () => ({ downloadTextFile: mockDownload }));
+
+/** The file the page last asked to download: its name, and its text read back as an export. */
+function downloaded() {
+  const [filename, text] = mockDownload.mock.calls.at(-1) ?? [];
+  const parsed = parseRecipeBookExport(String(text));
+  if (!parsed.ok) throw new Error(parsed.error);
+  return { filename: String(filename), text: String(text), book: parsed.value };
+}
 
 const MOCK_CSV = `Unique ID,Type,Description,Default Measurement Type,Labels
 ------butter,ingredient,Butter,volume,fat+solid
@@ -758,5 +770,84 @@ describe("BulkRecipeEditorPage — start session", () => {
     expect(sessions).toHaveLength(1);
     expect(sessions[0]?.recipe_version_id).toBe(version?.id);
     expect(mockNavigate).toHaveBeenCalledWith(`/sessions/${sessions[0]?.id}`);
+  });
+});
+
+describe("BulkRecipeEditorPage — export", () => {
+  beforeEach(() => {
+    mockDownload.mockClear();
+  });
+
+  async function select(title: string) {
+    await userEvent.click(screen.getByRole("checkbox", { name: `Select recipe ${title}` }));
+  }
+
+  it("offers to export only once a recipe is selected", async () => {
+    createRecipe(bookDoc, { title: "Tacos" });
+    setup();
+    await flushAsyncEffects();
+    expect(
+      screen.queryByRole("button", { name: "Export selected recipes" }),
+    ).not.toBeInTheDocument();
+
+    await select("Tacos");
+    expect(screen.getByRole("button", { name: "Export selected recipes" })).toBeInTheDocument();
+  });
+
+  it("downloads the selected recipes only, as a file named for what it holds", async () => {
+    createRecipe(bookDoc, { title: "Tacos" });
+    createRecipe(bookDoc, { title: "Pie" });
+    setup();
+    await flushAsyncEffects();
+    await select("Tacos");
+    await userEvent.click(screen.getByRole("button", { name: "Export selected recipes" }));
+
+    const { filename, book } = downloaded();
+    expect(filename).toMatch(/^recipe-book-recipes-\d{4}-\d{2}-\d{2}\.json$/);
+    expect(book.recipes.map((r) => r.title)).toEqual(["Tacos"]);
+    expect(book.recipes[0]?.versions).toHaveLength(1);
+  });
+
+  it("downloads every selected recipe", async () => {
+    createRecipe(bookDoc, { title: "Tacos" });
+    createRecipe(bookDoc, { title: "Pie" });
+    setup();
+    await flushAsyncEffects();
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all recipes" }));
+    await userEvent.click(screen.getByRole("button", { name: "Export selected recipes" }));
+
+    expect(downloaded().book.recipes.map((r) => r.title)).toEqual(["Pie", "Tacos"]);
+  });
+
+  it("brings the folder a recipe sits in", async () => {
+    const folder = createRecipeFolder(bookDoc, "Dinner");
+    createRecipe(bookDoc, { title: "Tacos", parent_folder_id: folder.id });
+    setup();
+    await flushAsyncEffects();
+    await select("Tacos");
+    await userEvent.click(screen.getByRole("button", { name: "Export selected recipes" }));
+
+    expect(downloaded().book.recipe_folders.map((f) => f.name)).toEqual(["Dinner"]);
+  });
+
+  it("says what was exported, until dismissed", async () => {
+    createRecipe(bookDoc, { title: "Tacos" });
+    setup();
+    await flushAsyncEffects();
+    await select("Tacos");
+    await userEvent.click(screen.getByRole("button", { name: "Export selected recipes" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Exported 1 recipe with 0 ingredients.");
+
+    await userEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("keeps the selection after exporting, since exporting changes nothing", async () => {
+    createRecipe(bookDoc, { title: "Tacos" });
+    setup();
+    await flushAsyncEffects();
+    await select("Tacos");
+    await userEvent.click(screen.getByRole("button", { name: "Export selected recipes" }));
+    expect(screen.getByRole("checkbox", { name: "Select recipe Tacos" })).toBeChecked();
   });
 });

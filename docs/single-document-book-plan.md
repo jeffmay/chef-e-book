@@ -124,6 +124,17 @@ Update `AGENTS.md` (architecture, Yjs data model, `book_meta`, registry, undo sc
 
 ## Phase 2 — Export
 
+**Status: implemented.** Shared logic is in `packages/shared/src/export/` (`recipeBookExport.ts`: format, `serializeRecipeBookExport`, `parseRecipeBookExport`; `buildExport.ts`: the pure closure, `buildIngredientExport` / `buildRecipeExport`; `exportFromDoc.ts`: `exportIngredients` / `exportRecipes`, `summarizeExport`, `exportFileName`). The web side is `downloadTextFile` (`utils/`), `useBookExport`, and `ExportNotice`. Where it differs from the design below:
+
+- **No options dialog and no Modal.** Export downloads immediately; what it did (and anything it could not find) shows in an `ExportNotice` status under the actions, until dismissed.
+- **Recipes are selected by id only.** The recipe tree can only select recipes, not folders, so there is no folder-subtree expansion; `buildRecipeExport` takes recipe ids.
+- **Ingredient export is ingredients only** — "Export all" brings every ingredient (with ancestors and labels) but not containers; containers travel with the recipes that use them.
+- **Equipment is not exported.** There is no equipment store; instructions refer to equipment by id into a list the app ships (`COMMON_EQUIPMENT`), so those ids simply stay inside the recipes and are never "missing".
+- **`parseRecipeBookExport` was built here, not in Phase 3**, because the round-trip tests need it. It never throws: bad JSON, a file that is not an export, a **newer `format_version`** (refused with "Update the app"), and schema failures each come back as a readable message. Phase 3 reuses it.
+- **Dangling references are repaired in the copies, and recorded.** An ingredient or container `parent_id`, a label id, or a folder id that names nothing in the book is dropped from the exported entry (so the file never points at something it lacks) and added to `missing_references` once; a selected id that names nothing is recorded with `referenced_by: { kind: "selection" }`. A recipe that fails the export schema (e.g. a malformed `source_url`) is left out with a `console.warn`, and what only it needed is not dragged in.
+- The files are deterministic: lists are sorted by name (recipes by title) then id, so the same selection always exports the same text.
+- Labels are validated in their array form (the schemas turn arrays into Sets); `serializeRecipeBookExport` writes Sets back as arrays.
+
 All export logic is pure and lives in a new `packages/shared/src/export/` so it is shared by the web app, tests, and (later) the server. The UI only calls it and downloads the result.
 
 ### 2a. Export format

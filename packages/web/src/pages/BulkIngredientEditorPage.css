@@ -42,11 +42,12 @@
 /* Actions bar */
 .bie-actions {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
 }
 
-.bie-add-btn {
+.bie-add-btn,
+.bie-export-btn {
   align-self: flex-start;
 }
