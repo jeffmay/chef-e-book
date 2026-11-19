@@ -81,6 +81,21 @@ describe("ingredientNameKey", () => {
     });
   });
 
+  it.each([
+    "constructor",
+    "__proto__",
+    "toString",
+    "valueOf",
+    "hasOwnProperty",
+    "__defineGetter__",
+  ])("treats the name %s as plain text, not as a property of the override table", (name) => {
+    expect(ingredientNameKey(name)).toBe(name.toLowerCase());
+  });
+
+  it("does not make unrelated prototype-named ingredients collide", () => {
+    expect(ingredientNameKey("__proto__")).not.toBe(ingredientNameKey("__defineGetter__"));
+  });
+
   it("keeps words that are the same in both numbers", () => {
     expect(ingredientNameKey("Fish")).toBe("fish");
     expect(ingredientNameKey("Rice")).toBe("rice");

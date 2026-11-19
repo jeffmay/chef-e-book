@@ -224,6 +224,23 @@ describe("labels", () => {
     expect(getLabels(doc)).toHaveLength(3);
   });
 
+  it("record the new kind when reused for another kind of thing", () => {
+    const id = addLabel(doc, "Solid", new Set(["container" as const]));
+    expect(findOrCreateLabel(doc, "solid", new Set(["ingredient" as const]))).toBe(id);
+    expect([...(getLabels(doc).find((l) => l.id === id)?.kinds ?? [])].sort()).toEqual([
+      "container",
+      "ingredient",
+    ]);
+  });
+
+  it("are left alone when reused for a kind they already have", () => {
+    const id = addLabel(doc, "Solid", new Set(["ingredient" as const]));
+    const before = JSON.stringify(getLabelsYmap(doc).toJSON());
+    findOrCreateLabel(doc, "SOLID", new Set(["ingredient" as const]));
+    expect(JSON.stringify(getLabelsYmap(doc).toJSON())).toBe(before);
+    expect(getLabels(doc).find((l) => l.id === id)?.name).toBe("Solid");
+  });
+
   it("rewrite the key on rename and expose it in the index", () => {
     const id = addLabel(doc, "Dairy", KINDS);
     renameLabel(doc, id, "Dairy Products");

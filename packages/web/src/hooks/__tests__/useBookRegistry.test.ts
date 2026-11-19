@@ -141,15 +141,38 @@ describe("useBookRegistry — deleteBook", () => {
     expect(mockDeleteBookDatabases).toHaveBeenCalledWith(A);
   });
 
-  it("still removes the book, and logs, when its data cannot be deleted", async () => {
+  it("keeps the book listed, logs, and rejects when its data cannot be deleted", async () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
     mockDeleteBookDatabases.mockRejectedValue(new Error("blocked"));
     store({ books: [entry(A, "Alice")] });
     const { result } = renderHook(() => useBookRegistry());
     await act(async () => {
-      await result.current.deleteBook(A);
+      await expect(result.current.deleteBook(A)).rejects.toThrow("blocked");
+    });
+    expect(result.current.books.map((b) => b.id)).toEqual([A]);
+    expect(stored().books.map((b) => b.id)).toEqual([A]);
+    expect(error).toHaveBeenCalled();
+  });
+
+  it("forgets the book only after its data is gone", async () => {
+    let finishDelete!: () => void;
+    mockDeleteBookDatabases.mockReturnValue(
+      new Promise<void>((resolve) => {
+        finishDelete = resolve;
+      }),
+    );
+    store({ books: [entry(A, "Alice")] });
+    const { result } = renderHook(() => useBookRegistry());
+    let deleting!: Promise<void>;
+    act(() => {
+      deleting = result.current.deleteBook(A);
+    });
+    expect(result.current.books).toHaveLength(1);
+
+    await act(async () => {
+      finishDelete();
+      await deleting;
     });
     expect(result.current.books).toEqual([]);
-    expect(error).toHaveBeenCalled();
   });
 });

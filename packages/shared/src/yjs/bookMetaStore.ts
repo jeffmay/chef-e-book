@@ -32,6 +32,7 @@ export const BookMeta = Companion(
     id: RecipeBookId.type,
     name: "string > 0",
     created_at: "number",
+    "updated_at?": "number",
     schema_version: "number.integer >= 1",
     "seeded_defaults?": "boolean",
     "name_key_version?": "number.integer >= 1",
@@ -61,7 +62,8 @@ export function getBookMeta(doc: Y.Doc): BookMeta | undefined {
  * device. Written with `SETUP_ORIGIN`, so it can never be undone.
  *
  * Books that predate `book_meta` get `created_at: now`, which is when they were first opened by
- * this build, not when they were really created.
+ * this build, not when they were really created. `updated_at` starts equal to `created_at`; a book
+ * that has `created_at` but predates `updated_at` is given one on its next open.
  *
  * A document whose stored `id` is a different book's is left untouched (it is not this book's
  * metadata to fill in), and one with a newer `schema_version` than this build understands is only
@@ -90,6 +92,7 @@ export function ensureBookMeta(
     id: book.id,
     name: book.name,
     created_at: now,
+    updated_at: now,
     schema_version: BOOK_SCHEMA_VERSION,
   };
   doc.transact(() => {
@@ -123,7 +126,17 @@ export function setNameKeyVersion(doc: Y.Doc, version: number): void {
   doc.transact(() => getBookMetaYmap(doc).set("name_key_version", version), SETUP_ORIGIN);
 }
 
-/** Renames the book. This is a user edit, so (unlike `ensureBookMeta`) it can be undone. */
-export function setBookName(doc: Y.Doc, name: string): void {
-  getBookMetaYmap(doc).set("name", name);
+/**
+ * Renames the book and stamps `updated_at`. This is a user edit, so (unlike `ensureBookMeta`) it can
+ * be undone, and the name and the timestamp change in one transaction, so one Undo restores both.
+ *
+ * Only renames move `updated_at`: setup writes (seeding, re-keying, migration) are not the user's
+ * edits and leave it alone.
+ */
+export function setBookName(doc: Y.Doc, name: string, now: number = Date.now()): void {
+  const map = getBookMetaYmap(doc);
+  doc.transact(() => {
+    map.set("name", name);
+    map.set("updated_at", now);
+  });
 }

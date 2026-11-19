@@ -11,6 +11,11 @@ export interface BookUndo {
    * (edits within half a second of each other otherwise undo together).
    */
   stopCapturing: () => void;
+  /**
+   * Runs `fn` as exactly one undo step that never merges with the edit before or after it
+   * (`runAsUndoStep`). Used for an import.
+   */
+  runAsStep: <T>(fn: () => T) => T;
 }
 
 export const BookUndoContext = createContext<BookUndo | null>(null);

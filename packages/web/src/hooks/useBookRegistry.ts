@@ -32,7 +32,7 @@ export interface BookRegistryStore {
    * written separately (`writeBookName`, or `setBookName` for the open book).
    */
   renameBook: (id: RecipeBookId, name: string) => void;
-  /** Removes a book from the list and deletes its data from this device. */
+  /** Deletes a book's data from this device, then removes it from the list. Rejects, leaving the book listed, if the data cannot be deleted. */
   deleteBook: (id: RecipeBookId) => Promise<void>;
 }
 
@@ -100,12 +100,15 @@ export function useBookRegistry(): BookRegistryStore {
 
   const deleteBook = useCallback(
     async (id: RecipeBookId) => {
-      update((prev) => removeBookEntry(prev, id));
+      // Delete the data first, and only forget the book once it is gone: if the delete fails the
+      // book stays listed, so it can be retried instead of leaving data nobody can reach.
       try {
         await deleteBookDatabases(id);
       } catch (e) {
         console.error(`failed to delete the stored data for book ${id}: `, e);
+        throw e;
       }
+      update((prev) => removeBookEntry(prev, id));
     },
     [update],
   );

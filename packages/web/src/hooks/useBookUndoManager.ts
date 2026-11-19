@@ -1,5 +1,5 @@
-import { createBookUndoManager } from "@recipe-book/shared";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createBookUndoManager, runAsUndoStep } from "@recipe-book/shared";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as Y from "yjs";
 import type { BookUndo } from "../contexts/undoContext.ts";
 
@@ -24,7 +24,12 @@ export function useBookUndoManager(doc: Y.Doc): BookUndo {
     const manager = createBookUndoManager(doc);
     managerRef.current = manager;
     function refresh() {
-      setAvailability({ canUndo: manager.canUndo(), canRedo: manager.canRedo() });
+      const next = { canUndo: manager.canUndo(), canRedo: manager.canRedo() };
+      // Keep the same object when nothing changed, so an edit that does not change what the Undo
+      // button can do does not re-render everything that reads this context.
+      setAvailability((prev) =>
+        prev.canUndo === next.canUndo && prev.canRedo === next.canRedo ? prev : next,
+      );
     }
     manager.on("stack-item-added", refresh);
     manager.on("stack-item-popped", refresh);
@@ -49,5 +54,16 @@ export function useBookUndoManager(doc: Y.Doc): BookUndo {
     managerRef.current?.stopCapturing();
   }, []);
 
-  return { undo, redo, stopCapturing, ...availability };
+  const runAsStep = useCallback(
+    <T>(fn: () => T): T => {
+      const manager = managerRef.current;
+      return manager === null ? doc.transact(fn) : runAsUndoStep(manager, doc, fn);
+    },
+    [doc],
+  );
+
+  return useMemo(
+    () => ({ undo, redo, stopCapturing, runAsStep, ...availability }),
+    [undo, redo, stopCapturing, runAsStep, availability],
+  );
 }

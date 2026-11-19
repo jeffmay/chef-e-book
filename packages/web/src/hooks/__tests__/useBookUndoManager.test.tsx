@@ -24,6 +24,8 @@ function ingredient(key: string, name: string): Ingredient {
 
 const BUTTER = ingredient("butter", "Butter");
 const FLOUR = ingredient("flour", "Flour");
+const SUGAR = ingredient("sugar", "Sugar");
+const EGG = ingredient("egg", "Egg");
 const names = (doc: Y.Doc) => getIngredients(doc).map((i) => i.name);
 
 afterEach(() => {
@@ -60,6 +62,26 @@ describe("useBookUndoManager", () => {
     expect(result.current.canRedo).toBe(false);
   });
 
+  it("keeps the same returned object when an edit does not change what Undo can do", () => {
+    const doc = new Y.Doc();
+    const { result } = renderHook(() => useBookUndoManager(doc));
+    act(() => addIngredient(doc, BUTTER));
+    act(() => result.current.stopCapturing());
+    const before = result.current;
+
+    // A second, separate step: canUndo was already true and still is.
+    act(() => addIngredient(doc, FLOUR));
+    expect(result.current).toBe(before);
+  });
+
+  it("returns the same object across plain re-renders", () => {
+    const doc = new Y.Doc();
+    const { result, rerender } = renderHook(() => useBookUndoManager(doc));
+    const before = result.current;
+    rerender();
+    expect(result.current).toBe(before);
+  });
+
   it("does nothing when there is nothing to undo", () => {
     const doc = new Y.Doc();
     const { result } = renderHook(() => useBookUndoManager(doc));
@@ -74,6 +96,24 @@ describe("useBookUndoManager", () => {
     act(() => result.current.stopCapturing());
     act(() => addIngredient(doc, FLOUR));
 
+    act(() => result.current.undo());
+    expect(names(doc)).toEqual(["Butter"]);
+  });
+
+  it("runAsStep makes everything it writes one step that never merges with its neighbours", () => {
+    const doc = new Y.Doc();
+    const { result } = renderHook(() => useBookUndoManager(doc));
+    act(() => addIngredient(doc, BUTTER));
+    act(() => {
+      result.current.runAsStep(() => {
+        addIngredient(doc, FLOUR);
+        addIngredient(doc, SUGAR);
+      });
+    });
+    act(() => addIngredient(doc, EGG));
+
+    act(() => result.current.undo());
+    expect(names(doc).sort()).toEqual(["Butter", "Flour", "Sugar"]);
     act(() => result.current.undo());
     expect(names(doc)).toEqual(["Butter"]);
   });
@@ -133,6 +173,7 @@ describe("useBookUndo", () => {
       undo: vi.fn(),
       redo: vi.fn(),
       stopCapturing: vi.fn(),
+      runAsStep: vi.fn(),
       canUndo: true,
       canRedo: false,
     };

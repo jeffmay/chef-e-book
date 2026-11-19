@@ -289,6 +289,35 @@ describe("restrictBundleToIngredients", () => {
     );
     expect(restricted.ingredients[0]?.labels).toBeInstanceOf(Set);
   });
+
+  it("returns a copy that shares nothing with the bundle it was given", () => {
+    const original = makeBundle({
+      ingredients: [FLOUR],
+      labels: [label(BAKING_ID, "baking")],
+    });
+    const restricted = restrictBundleToIngredients(original);
+    expect(restricted.ingredients[0]).toEqual(original.ingredients[0]);
+    expect(restricted.ingredients[0]).not.toBe(original.ingredients[0]);
+    expect(restricted.ingredients[0]?.labels).not.toBe(original.ingredients[0]?.labels);
+    expect(restricted.ingredients[0]?.default_measurement_value).not.toBe(
+      original.ingredients[0]?.default_measurement_value,
+    );
+    expect(restricted.labels[0]?.kinds).not.toBe(original.labels[0]?.kinds);
+    restricted.ingredients[0]?.labels.clear();
+    expect(original.ingredients[0]?.labels.size).toBe(1);
+  });
+
+  it("keeps the header and the missing references", () => {
+    const original = makeBundle({
+      ingredients: [FLOUR],
+      missing_references: [
+        { kind: "label", id: "gone", referenced_by: { kind: "ingredient", id: FLOUR.id } },
+      ],
+    });
+    const restricted = restrictBundleToIngredients(original);
+    expect(restricted.exported_at).toBe(original.exported_at);
+    expect(restricted.missing_references).toEqual(original.missing_references);
+  });
 });
 
 describe("readImportFile", () => {

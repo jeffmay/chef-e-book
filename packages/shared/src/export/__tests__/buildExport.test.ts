@@ -339,6 +339,26 @@ describe("buildRecipeExport — validation", () => {
     expect(warn).toHaveBeenCalledOnce();
   });
 
+  it("drops a label that fails its schema from what carries it, and records it", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const broken = Object.assign(label(DAIRY_ID, "dairy"), { kinds: new Set(["nonsense"]) });
+    const result = buildIngredientExport(
+      source({
+        ingredients: [CHEESE],
+        labels: [broken, label(BAKING_ID, "baking")],
+      }),
+      [CHEESE.id],
+      INFO,
+    );
+
+    expect(names(result.labels)).toEqual([]);
+    expect([...(result.ingredients[0]?.labels ?? [])]).toEqual([]);
+    expect(result.missing_references).toEqual([
+      { kind: "label", id: DAIRY_ID, referenced_by: { kind: "ingredient", id: CHEESE.id } },
+    ]);
+    expect(warn).toHaveBeenCalledOnce();
+  });
+
   it("produces a file that validates against the export schema", () => {
     const result = buildRecipeExport(source(), [CAKE.id, PIE.id], INFO);
     expect(RecipeBookExport.type(JSON.parse(serializeRecipeBookExport(result)))).not.toHaveProperty(

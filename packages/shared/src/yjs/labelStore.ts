@@ -1,10 +1,9 @@
 import { type } from "arktype";
 import type { ReadonlyDeep } from "type-fest";
 import type * as Y from "yjs";
-import { buildNameIndex, findNameClash, type NameIndex } from "../names/nameIndex.ts";
+import type { NameIndex } from "../names/nameIndex.ts";
 import { labelNameKey } from "../names/nameKey.ts";
 import type { NameClash } from "../names/nameClash.ts";
-import { readNameKey, readStoredNameKey } from "../names/storedName.ts";
 import { Companion } from "../types/companion.ts";
 import { loadId, randomId } from "../types/ids.ts";
 import {
@@ -13,6 +12,7 @@ import {
   type KitchenwareLabel,
 } from "../types/kitchenware.ts";
 import { setOf } from "../types/sets.ts";
+import { type NamedStore, nameClashIn, nameIndexOf, rekeyIn } from "./storedNames.ts";
 import type { ValidationError } from "./validation.ts";
 import { isInvalid, isValid, validate } from "./validation.ts";
 
@@ -68,21 +68,21 @@ export function addLabel(
   return id;
 }
 
-/** The ids by name key, from the keys stored with each label. */
-export function getLabelNameIndex(doc: Y.Doc): NameIndex<KitchenwareLabelId> {
-  const entries: Array<{ id: KitchenwareLabelId; key: string }> = [];
-  getLabelsYmap(doc).forEach((value, id) => {
-    const key = readNameKey(value, labelNameKey);
-    if (key !== undefined) entries.push({ id: loadId(KitchenwareLabelId, id), key });
-  });
-  return buildNameIndex(entries);
+function namedStore(doc: Y.Doc): NamedStore<KitchenwareLabelId, KitchenwareLabel> {
+  return {
+    map: getLabelsYmap(doc),
+    keyOf: labelNameKey,
+    toId: (raw) => loadId(KitchenwareLabelId, raw),
+    read: validateLabel,
+    write: (label) => getLabelsYmap(doc).set(label.id, toStored(label)),
+  };
 }
 
-/**
- * The existing label that already holds `name` — ignoring case, surrounding whitespace, and
- * Unicode form, but **not** plurals: "Spices" and "Spice" are different labels — or `undefined`
- * if the name is free. `exclude` is the label being renamed, or the labels being merged.
- */
+/** The ids by name key, from the keys stored with each label. */
+export function getLabelNameIndex(doc: Y.Doc): NameIndex<KitchenwareLabelId> {
+  return nameIndexOf(namedStore(doc));
+}
+
 /** Writes a label under its own id (used by import, which keeps ids when it can). */
 export function putLabel(doc: Y.Doc, label: ReadonlyDeep<KitchenwareLabel>): void {
   getLabelsYmap(doc).set(label.id, toStored(label));
@@ -99,15 +99,17 @@ export function setLabelKinds(
   getLabelsYmap(doc).set(id, toStored({ ...label, kinds }));
 }
 
+/**
+ * The existing label that already holds `name` — ignoring case, surrounding whitespace, and
+ * Unicode form, but **not** plurals: "Spices" and "Spice" are different labels — or `undefined`
+ * if the name is free. `exclude` is the label being renamed, or the labels being merged.
+ */
 export function findLabelNameClash(
   doc: Y.Doc,
   name: string,
   exclude?: KitchenwareLabelId | readonly KitchenwareLabelId[],
 ): NameClash<KitchenwareLabelId> | undefined {
-  const id = findNameClash(getLabelNameIndex(doc), labelNameKey(name), exclude);
-  if (id === undefined) return undefined;
-  const existing = validateLabel(id, getLabelsYmap(doc).get(id));
-  return isInvalid(existing) ? undefined : { id, name: existing.name };
+  return nameClashIn(namedStore(doc), name, exclude);
 }
 
 /** The label that holds `name` by the label-name rules (see `findLabelNameClash`), or `null`. */
@@ -120,15 +122,7 @@ export function findLabelByName(doc: Y.Doc, name: string): KitchenwareLabel | nu
 
 /** Rewrites every label whose stored `name_key` is missing or differs from the current rules. */
 export function rekeyLabels(doc: Y.Doc): void {
-  const map = getLabelsYmap(doc);
-  doc.transact(() => {
-    map.forEach((value, id) => {
-      const label = validateLabel(id, value);
-      if (isInvalid(label)) return;
-      if (readStoredNameKey(value) === labelNameKey(label.name)) return;
-      map.set(id, toStored(label));
-    });
-  });
+  rekeyIn(doc, namedStore(doc));
 }
 
 export function findOrCreateLabel(
@@ -137,7 +131,13 @@ export function findOrCreateLabel(
   kinds: ReadonlySet<KitchenwareKind>,
 ): KitchenwareLabelId {
   const existing = findLabelByName(doc, name);
-  if (existing !== null) return existing.id;
+  if (existing !== null) {
+    // Reusing a label for another kind of thing records that it applies to that kind too.
+    if ([...kinds].some((kind) => !existing.kinds.has(kind))) {
+      setLabelKinds(doc, existing.id, new Set([...existing.kinds, ...kinds]));
+    }
+    return existing.id;
+  }
   return addLabel(doc, name, kinds);
 }
 

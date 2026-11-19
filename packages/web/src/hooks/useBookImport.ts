@@ -12,8 +12,8 @@ import type { BookUndo } from "../contexts/undoContext.ts";
 export interface BookImport {
   /**
    * Imports into the open book. The plan is made against the book as it is *now* (not as it was
-   * when a preview was shown) and written in one transaction; the book's undo history is told to end
-   * its current step before and after, so one Undo takes back exactly the import.
+   * when a preview was shown) and written in one transaction, run through the book's undo history
+   * as its own step (`runAsStep`), so one Undo takes back exactly the import.
    */
   importNow: (
     bundle: ReadonlyDeep<RecipeBookExport>,
@@ -25,12 +25,10 @@ export interface BookImport {
 export function useBookImport(): BookImport {
   const { doc } = useBookDoc();
   const importNow = useCallback<BookImport["importNow"]>(
-    (bundle, options, undo) => {
-      undo?.stopCapturing();
-      const plan = importBundle(doc, bundle, options);
-      undo?.stopCapturing();
-      return plan;
-    },
+    (bundle, options, undo) =>
+      undo === null
+        ? importBundle(doc, bundle, options)
+        : undo.runAsStep(() => importBundle(doc, bundle, options)),
     [doc],
   );
   return { importNow };

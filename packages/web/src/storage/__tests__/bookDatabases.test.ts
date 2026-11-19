@@ -107,6 +107,16 @@ describe("writeBookName", () => {
     expect(meta).toMatchObject({ id: BOOK_ID, name: "New Name", created_at: 1234 });
   });
 
+  it("stamps updated_at when it renames, keeping created_at", async () => {
+    await seedBook(BOOK_ID, (doc) => ensureBookMeta(doc, { id: BOOK_ID, name: "Old Name" }, 1234));
+    const before = Date.now();
+    await writeBookName(BOOK_ID, "New Name");
+
+    const meta = getBookMeta(await readIndexedDbDoc(bookDatabaseName(BOOK_ID)));
+    expect(meta?.created_at).toBe(1234);
+    expect(meta?.updated_at).toBeGreaterThanOrEqual(before);
+  });
+
   it("leaves the rest of the book alone", async () => {
     await seedBook(BOOK_ID, (doc) => {
       addIngredient(doc, BUTTER);
@@ -143,5 +153,21 @@ describe("deleteBookDatabases", () => {
 
   it("succeeds for a book that has no stored data", async () => {
     await expect(deleteBookDatabases(BOOK_ID)).resolves.toBeUndefined();
+  });
+});
+
+describe("deleteBookDatabases — a database another tab holds open", () => {
+  it("rejects instead of pretending the data is gone", async () => {
+    await seedBook(BOOK_ID, (doc) => addIngredient(doc, BUTTER));
+    // Another tab: a connection that does not close when asked to.
+    const held = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(bookDatabaseName(BOOK_ID));
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    held.onversionchange = () => undefined;
+
+    await expect(deleteBookDatabases(BOOK_ID)).rejects.toThrow("still open in another tab");
+    held.close();
   });
 });

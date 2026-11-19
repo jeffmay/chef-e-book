@@ -219,9 +219,24 @@ function gatherKitchenware(
     if (valid !== undefined) labels.push(valid);
   }
 
+  // A label left out above (it failed its schema) must not stay listed on what carries it.
+  const kept = new Set(labels.map((l) => l.id));
+  const withoutLeftOutLabels = <T extends Ingredient | Container>(item: T): T => {
+    const missingLabels = [...item.labels].filter((id) => !kept.has(id));
+    if (missingLabels.length === 0) return item;
+    for (const id of missingLabels) {
+      missing.add({
+        kind: "label",
+        id,
+        referenced_by: { kind: item.kind, id: item.id },
+      });
+    }
+    return { ...item, labels: new Set([...item.labels].filter((id) => kept.has(id))) };
+  };
+
   return {
-    ingredients: ingredients.sort(byNameThenId),
-    containers: containers.sort(byNameThenId),
+    ingredients: ingredients.map(withoutLeftOutLabels).sort(byNameThenId),
+    containers: containers.map(withoutLeftOutLabels).sort(byNameThenId),
     labels: labels.sort(byNameThenId),
   };
 }

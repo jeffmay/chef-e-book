@@ -29,6 +29,17 @@ export function SelectBookPage({
   const [renamingId, setRenamingId] = useState<RecipeBookId | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
   const [deleting, setDeleting] = useState<BookRegistryEntry | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  /** Runs a rename or delete, showing why it failed instead of dropping the rejection. */
+  async function run(what: string, action: () => void | Promise<void>) {
+    setActionError(null);
+    try {
+      await action();
+    } catch (e) {
+      setActionError(`Could not ${what}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
 
   function handleCreate(e: FormEvent) {
     e.preventDefault();
@@ -44,12 +55,20 @@ export function SelectBookPage({
   function acceptRename(book: ReadonlyDeep<BookRegistryEntry>) {
     const trimmed = renameDraft.trim();
     setRenamingId(null);
-    if (trimmed !== "" && trimmed !== book.name) void Promise.resolve(onRename(book.id, trimmed));
+    if (trimmed !== "" && trimmed !== book.name) {
+      void run(`rename "${book.name}"`, () => onRename(book.id, trimmed));
+    }
   }
 
   return (
     <main className="select-user-page">
       <h1 className="page-title">{name || "Recipe Book"}</h1>
+
+      {actionError !== null && (
+        <p className="field-error" role="alert">
+          {actionError}
+        </p>
+      )}
 
       {books.length > 0 && (
         <section className="book-list-section" aria-labelledby="book-list-heading">
@@ -139,7 +158,7 @@ export function SelectBookPage({
               onClick: () => {
                 const book = deleting;
                 setDeleting(null);
-                void Promise.resolve(onDelete(book.id));
+                void run(`delete "${book.name}"`, () => onDelete(book.id));
               },
             },
           }}

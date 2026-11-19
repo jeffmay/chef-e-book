@@ -10,6 +10,7 @@ import { putRecipeFolder } from "../yjs/recipeFolderStore.ts";
 import { addRecipe, appendRecipeVersion } from "../yjs/recipeStore.ts";
 import { runAsUndoStep } from "../yjs/undo.ts";
 import {
+  copyMeasurement,
   type ImportOptions,
   type ImportPlan,
   isEmptyImportPlan,
@@ -57,9 +58,12 @@ export function planImportIntoDoc(
 }
 
 /**
- * Plans against the book's current state and applies, in one step. Planning and writing happen
- * together, so a book that changed since a preview was shown cannot be written with a stale plan.
- * Returns the plan that was applied.
+ * Plans against the book's current state and applies, in one step. Planning and writing run in one
+ * synchronous call, so nothing — not a remote Yjs update, not another tab — can change the book
+ * between them, and a book that changed since a preview was shown cannot be written with a stale
+ * plan. (Call it directly from the confirming click: awaiting anything between a plan you made
+ * earlier and `applyImportPlan` is what would reintroduce a stale plan.) Returns the plan that was
+ * applied.
  */
 export function importBundle(
   doc: Y.Doc,
@@ -80,27 +84,44 @@ export function restrictBundleToIngredients(
   bundle: ReadonlyDeep<RecipeBookExport>,
 ): RecipeBookExport {
   const used = new Set(bundle.ingredients.flatMap((i) => [...i.labels]));
-  const parsed = parseRecipeBookExport(
-    JSON.stringify({
-      ...bundle,
-      ingredients: bundle.ingredients.map((i) => ({ ...i, labels: [...i.labels] })),
-      containers: [],
-      labels: bundle.labels
-        .filter((l) => used.has(l.id))
-        .map((l) => ({ ...l, kinds: [...l.kinds] })),
-      recipe_folders: [],
-      recipes: [],
-    }),
-  );
-  if (!parsed.ok) throw new Error(parsed.error);
-  return parsed.value;
+  return {
+    format: bundle.format,
+    format_version: bundle.format_version,
+    exported_at: bundle.exported_at,
+    ...(bundle.source_book !== undefined && { source_book: { ...bundle.source_book } }),
+    ingredients: bundle.ingredients.map((i) => ({
+      kind: i.kind,
+      id: i.id,
+      name: i.name,
+      default_measurement_value: copyMeasurement(i.default_measurement_value),
+      labels: new Set(i.labels),
+      ...(i.parent_id !== undefined && { parent_id: i.parent_id }),
+    })),
+    containers: [],
+    labels: bundle.labels
+      .filter((l) => used.has(l.id))
+      .map((l) => ({ ...l, kinds: new Set(l.kinds) })),
+    recipe_folders: [],
+    recipes: [],
+    missing_references: bundle.missing_references.map((m) => ({
+      ...m,
+      referenced_by: { ...m.referenced_by },
+    })),
+  };
 }
 
 export type ReadImportFileResult =
   | { readonly ok: true; readonly bundle: RecipeBookExport }
   | { readonly ok: false; readonly error: string };
 
-/** Reads an export file's text for import, refusing one that is too large before parsing it. */
+/**
+ * Reads an export file's text for import, refusing one that is too large before parsing it.
+ *
+ * `sizeBytes` should be the file's real size in bytes (callers pass `File.size`). The `text.length`
+ * default counts UTF-16 code units, which is only a stand-in: it matches the byte count for ASCII
+ * and undercounts text with non-ASCII characters, so a caller that has the file should always pass
+ * its size.
+ */
 export function readImportFile(
   text: string,
   sizeBytes: number = text.length,

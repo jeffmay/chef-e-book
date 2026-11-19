@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useCallback, useMemo } from "react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import type { ReadonlyDeep } from "type-fest";
 import "primereact/resources/themes/lara-light-indigo/theme.css";
@@ -55,10 +55,10 @@ type AuthenticatedShellProps = ReadonlyDeep<{
 
 function AuthenticatedShell({ book, onSwitchBook, onBookNameChange }: AuthenticatedShellProps) {
   const bookDoc = useBookDoc(book.id);
-  // Order matters: book_meta must exist before the seeded flag is recorded in it.
-  useEnsureBookMeta(bookDoc, book);
-  useSeedDefaultKitchenware(bookDoc);
-  useRekeyBookNames(bookDoc);
+  // Seeding and re-keying record a flag in book_meta, so they wait for it to exist.
+  const metaReady = useEnsureBookMeta(bookDoc, book);
+  useSeedDefaultKitchenware(bookDoc, metaReady);
+  useRekeyBookNames(bookDoc, metaReady);
   useSyncBookName(bookDoc, book, onBookNameChange);
   // One history for the whole book; it lives here so it survives page navigation.
   const bookUndo = useBookUndoManager(bookDoc.doc);
@@ -66,7 +66,12 @@ function AuthenticatedShell({ book, onSwitchBook, onBookNameChange }: Authentica
 
   // Renaming writes the book's own document, which keeps the book's id; the registry's cached name
   // follows through `useSyncBookName`.
-  const onRename = (name: string) => setBookName(bookDoc.doc, name);
+  const { doc } = bookDoc;
+  const onRename = useCallback((name: string) => setBookName(doc, name), [doc]);
+  const outletContext = useMemo(
+    () => ({ bookId: book.id, onRename }) satisfies RootContext,
+    [book.id, onRename],
+  );
 
   return (
     <BookDocContext.Provider value={bookDoc}>
@@ -91,7 +96,7 @@ function AuthenticatedShell({ book, onSwitchBook, onBookNameChange }: Authentica
               {/* <UserMenu userName={unknown} onProfile={() => navigate("/profile")} /> */}
             </div>
           </header>
-          <Outlet context={{ bookId: book.id, onRename } satisfies RootContext} />
+          <Outlet context={outletContext} />
         </div>
       </BookUndoContext.Provider>
     </BookDocContext.Provider>

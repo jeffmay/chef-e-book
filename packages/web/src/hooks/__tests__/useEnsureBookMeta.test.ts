@@ -25,6 +25,37 @@ describe("useEnsureBookMeta", () => {
     expect(getBookMeta(doc)).toMatchObject({ id: BOOK_ID, name: "Family Recipes" });
   });
 
+  it("returns a promise that resolves only once the metadata is in place", async () => {
+    let finishSync!: () => void;
+    const whenSynced = new Promise<void>((resolve) => {
+      finishSync = resolve;
+    });
+    const { result } = renderHook(() =>
+      useEnsureBookMeta({ doc, whenSynced }, { id: BOOK_ID, name: "Family" }),
+    );
+    let ready = false;
+    void result.current.then(() => {
+      ready = true;
+    });
+    await flushAsyncEffects();
+    expect(ready).toBe(false);
+    expect(getBookMeta(doc)).toBeUndefined();
+
+    finishSync();
+    await flushAsyncEffects();
+    expect(ready).toBe(true);
+    expect(getBookMeta(doc)?.name).toBe("Family");
+  });
+
+  it("returns the same promise across re-renders", () => {
+    const { result, rerender } = renderHook(() =>
+      useEnsureBookMeta({ doc, whenSynced: Promise.resolve() }, { id: BOOK_ID, name: "Family" }),
+    );
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+  });
+
   it("writes nothing until the document has synced", async () => {
     let finishSync!: () => void;
     const whenSynced = new Promise<void>((resolve) => {

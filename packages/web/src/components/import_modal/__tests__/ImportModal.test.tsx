@@ -24,6 +24,7 @@ import {
   type Ingredient,
   type RecipeBookExport,
   RecipeVersionId,
+  runAsUndoStep,
   SectionItemId,
 } from "@recipe-book/shared";
 import { act, render, screen, within } from "@testing-library/react";
@@ -115,6 +116,7 @@ function makeUndo(): BookUndo {
     undo: () => undoManager.undo(),
     redo: () => undoManager.redo(),
     stopCapturing: () => undoManager.stopCapturing(),
+    runAsStep: (fn) => runAsUndoStep(undoManager, doc, fn),
     canUndo: true,
     canRedo: false,
   };
@@ -233,6 +235,26 @@ describe("ImportModal — a file", () => {
     );
     expect(await screen.findByRole("alert")).toHaveTextContent("This file is not valid JSON.");
     expect(screen.getByLabelText("Export file")).toBeInTheDocument();
+  });
+
+  it("says so when the file cannot be read, and clears the input so it can be chosen again", async () => {
+    renderModal("recipes");
+    const unreadable = new File(["{}"], "gone.json", { type: "application/json" });
+    Object.defineProperty(unreadable, "text", {
+      value: () => Promise.reject(new Error("disk gone")),
+    });
+    const input = screen.getByLabelText<HTMLInputElement>("Export file");
+    await userEvent.upload(input, unreadable);
+    expect(await screen.findByRole("alert")).toHaveTextContent('Could not read "gone.json"');
+    expect(input.value).toBe("");
+  });
+
+  it("clears the file input after a file is read, so the same file can be chosen again", async () => {
+    renderModal("recipes");
+    const input = screen.getByLabelText<HTMLInputElement>("Export file");
+    await userEvent.upload(input, new File(["{nope"], "bad.json", { type: "application/json" }));
+    await screen.findByRole("alert");
+    expect(input.value).toBe("");
   });
 
   it("rejects JSON that is not a recipe book export", async () => {
@@ -582,6 +604,17 @@ describe("ImportModal — overwriting my kitchenware", () => {
     expect(
       screen.getByRole("checkbox", { name: "Overwrite my kitchenware with the file's versions" }),
     ).not.toBeChecked();
+  });
+
+  it("does not run the import when Enter is pressed on the overwrite checkbox", async () => {
+    await toRecipePreview();
+    screen
+      .getByRole("checkbox", { name: "Overwrite my kitchenware with the file's versions" })
+      .focus();
+    await userEvent.keyboard("{Enter}");
+    expect(unitOfFlour(doc)).toBe("tsp");
+    expect(titles(doc)).toEqual([]);
+    expect(screen.getByRole("button", { name: "Import" })).toBeInTheDocument();
   });
 
   it("keeps the book's own ingredient when left unticked", async () => {

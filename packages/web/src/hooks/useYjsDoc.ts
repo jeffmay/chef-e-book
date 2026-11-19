@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
 import type { DocContextValue } from "../contexts/docContext.ts";
@@ -58,5 +58,8 @@ export function useBookDoc(bookId: string): DocContextValue {
     };
   }, [bookId]);
 
-  return { doc: docRef.current, whenSynced: syncRef.current.promise };
+  const whenSynced = syncRef.current.promise;
+  // The same object every render, so the context it is provided through does not change identity
+  // (and re-render every consumer) whenever the shell re-renders.
+  return useMemo(() => ({ doc: docRef.current, whenSynced }), [whenSynced]);
 }

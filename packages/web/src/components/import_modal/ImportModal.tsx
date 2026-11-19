@@ -143,15 +143,23 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
 
   // ----- step: source -----------------------------------------------------------------------
   async function handleFile(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+    const input = event.target;
+    const file = input.files?.[0];
     if (file === undefined) return;
     setError(null);
-    const result = readImportFile(await file.text(), file.size);
-    if (!result.ok) {
-      setError(result.error);
-      return;
+    try {
+      const result = readImportFile(await file.text(), file.size);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      acceptBundle(result.bundle, { label: file.name, source: null, bundle: result.bundle });
+    } catch (e) {
+      setError(`Could not read "${file.name}": ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      // So choosing the same file again fires another change event.
+      input.value = "";
     }
-    acceptBundle(result.bundle, { label: file.name, source: null, bundle: result.bundle });
   }
 
   async function handleBook(book: ReadonlyDeep<BookRegistryEntry>) {
@@ -462,7 +470,6 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
       <Modal
         title={title}
         onClose={close}
-        onEnterClickId="import"
         buttons={{
           back: {
             text: "Back",

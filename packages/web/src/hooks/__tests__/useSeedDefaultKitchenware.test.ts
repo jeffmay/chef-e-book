@@ -56,6 +56,22 @@ describe("useSeedDefaultKitchenware", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
+  it("waits for the book's metadata before seeding, so the flag lands in a complete book_meta", async () => {
+    let metaReady!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      metaReady = resolve;
+    });
+    renderHook(() => useSeedDefaultKitchenware({ doc, whenSynced: Promise.resolve() }, ready));
+    await flushAsyncEffects();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(isDefaultKitchenwareSeeded(doc)).toBe(false);
+
+    metaReady();
+    await flushAsyncEffects();
+    expect(names(doc)).toEqual(["Butter", "Cheese"]);
+    expect(isDefaultKitchenwareSeeded(doc)).toBe(true);
+  });
+
   it("does nothing until the document has synced", async () => {
     let finishSync!: () => void;
     const whenSynced = new Promise<void>((resolve) => {

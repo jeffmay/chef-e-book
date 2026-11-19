@@ -65,15 +65,23 @@ function deleteDatabase(name: string): Promise<void> {
     const request = indexedDB.deleteDatabase(name);
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error ?? new Error(`failed to delete ${name}`));
-    // Another connection still has it open. The browser finishes the delete once that connection
-    // closes, so this is not a failure — but it is worth knowing about.
-    request.onblocked = () => console.warn(`deleting ${name} is blocked until it is closed`);
+    // Another connection (another tab or window) still has it open. The browser finishes the delete
+    // once that connection closes, but until then the data is not gone: report it, so the book stays
+    // listed and the delete can be tried again.
+    request.onblocked = () =>
+      reject(new Error(`${name} is still open in another tab or window; close it and try again.`));
   });
 }
 
 /**
  * Deletes everything this device stores for a book: its document and the legacy databases an
  * earlier build kept. Close the book first — an open connection delays the delete.
+ *
+ * Known limitation: the deletes are started together and the call rejects on the first failure.
+ * If another tab holds one of the legacy databases open, that delete is reported blocked and the
+ * call rejects (so the book stays listed and the delete can be retried), but the book's own
+ * database may already be gone. The legacy databases only ever held data that was merged into the
+ * book's document on open, so what survives is a stale copy, never the only copy.
  */
 export async function deleteBookDatabases(bookId: RecipeBookId): Promise<void> {
   if (typeof indexedDB === "undefined") return;

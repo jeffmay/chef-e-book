@@ -52,6 +52,13 @@ describe("useBookDoc", () => {
     expect(result.current.doc).toBe(first);
   });
 
+  it("returns the same object on every render, so a context it feeds does not churn", () => {
+    const { result, rerender } = renderHook(() => useBookDoc("book1"));
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+  });
+
   it("shares one doc between kitchenware and recipe data", () => {
     const { result } = renderHook(() => useBookDoc("book1"));
     const { doc } = result.current;
