@@ -114,7 +114,7 @@ export function isEmptyImportPlan(plan: ReadonlyDeep<ImportPlan>): boolean {
 const byNameThenId = <T extends { readonly id: string; readonly name: string }>(a: T, b: T) =>
   a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
 
-function copyMeasurement(m: ReadonlyDeep<Measurement>): Measurement {
+export function copyMeasurement(m: ReadonlyDeep<Measurement>): Measurement {
   return {
     value: { numerator: m.value.numerator, denominator: m.value.denominator },
     unit: m.unit,
@@ -134,10 +134,6 @@ class IdAllocator<Id extends string> {
     existing: Iterable<string>,
   ) {
     this.used = new Set(existing);
-  }
-
-  public has(id: string): boolean {
-    return this.used.has(id);
   }
 
   /** `preferred` if it is free, otherwise a new random id. */
@@ -403,12 +399,19 @@ export function planImport(
 
       let name = existing.name;
       if (item.name !== existing.name) {
-        if (findNameClash(index, ingredientNameKey(item.name), existing.id) !== undefined) {
+        const newKey = ingredientNameKey(item.name);
+        // The index is the book as it was; entries created or renamed earlier in this import
+        // are in `createdByKey`, so check both.
+        const takenByOther =
+          findNameClash(index, newKey, existing.id) !== undefined ||
+          (createdByKey.get(newKey) ?? existing.id) !== existing.id;
+        if (takenByOther) {
           warn(
             `"${existing.name}" was not renamed to "${item.name}": another ${args.entity} in the book already has that name.`,
           );
         } else {
           name = item.name;
+          createdByKey.set(newKey, existing.id);
           changed.push("name");
         }
       }
@@ -601,6 +604,9 @@ export function planImport(
     target.recipe_folders.map((f) => f.id),
   );
   const foldersById = new Map(target.recipe_folders.map((f) => [f.id, f]));
+  // Folders (and recipe titles) are matched by `labelNameKey` on purpose: case and spacing are
+  // ignored, but nothing is singularized, so "Dessert" and "Desserts" stay two folders — unlike
+  // ingredients, where "Tomato" and "Tomatoes" are the same thing.
   const childKey = (parent: RecipeFolderId | undefined, name: string) =>
     `${parent ?? ""}|${labelNameKey(name)}`;
   const folderChildren = new Map<string, RecipeFolderId>();
@@ -618,7 +624,7 @@ export function planImport(
   ): { id: RecipeFolderId; created: boolean } {
     const existing = folderChildren.get(childKey(parent, name));
     if (existing !== undefined) return { id: existing, created: false };
-    const id = folderIds.claim(template?.id ?? folderIds.fresh());
+    const id = template === undefined ? folderIds.fresh() : folderIds.claim(template.id);
     createdFolders.set(id, {
       id,
       name,
@@ -660,8 +666,12 @@ export function planImport(
         folder.parent_folder_id === undefined
           ? destinationRoot
           : (folderMap.get(folder.parent_folder_id) ?? destinationRoot);
-      // The same folder id already in the book (a folder imported before) is the same folder.
-      const sameId = foldersById.has(folder.id) ? folder.id : undefined;
+      // The same folder id already in the book (a folder imported before) is the same folder,
+      // but only where the user asked for it: under another parent it is not reused.
+      const sameId =
+        foldersById.get(folder.id)?.parent_folder_id === parent && foldersById.has(folder.id)
+          ? folder.id
+          : undefined;
       const resolved =
         sameId !== undefined
           ? { id: sameId, created: false }
@@ -696,6 +706,9 @@ export function planImport(
     ingredient: (id: IngredientId): IngredientId => ingredientPlan.map.get(id) ?? id,
     container: (id: ContainerId): ContainerId => containerPlan.map.get(id) ?? id,
   };
+  // The file is the source of truth for an import, so a reference that is in neither the file nor the
+  // book means the file itself is incomplete (a hand-edited export, or one made from a book that had
+  // lost the ingredient). The warning is about that, not about something missing from the user's book.
   function remapped(
     recipe: ReadonlyDeep<Recipe>,
     version: ReadonlyDeep<RecipeVersion>,

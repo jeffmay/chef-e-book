@@ -198,3 +198,40 @@ describe("SelectBookPage — deleting a book", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
+
+describe("SelectBookPage — when a rename or delete fails", () => {
+  it("shows why a rename failed, instead of dropping the error", async () => {
+    const onRename = vi.fn().mockRejectedValue(new Error("storage is blocked"));
+    renderPage({ books: [ALICE], onRename });
+    await userEvent.click(screen.getByRole("button", { name: "Rename book Alice" }));
+    await userEvent.type(screen.getByLabelText("New name for Alice"), "x{Enter}");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      'Could not rename "Alice": storage is blocked',
+    );
+  });
+
+  it("shows why a delete failed", async () => {
+    const onDelete = vi.fn().mockRejectedValue(new Error("still open in another tab"));
+    renderPage({ books: [ALICE], onDelete });
+    await userEvent.click(screen.getByRole("button", { name: "Delete book Alice" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete book" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      'Could not delete "Alice": still open in another tab',
+    );
+  });
+
+  it("clears the message when the next action is tried", async () => {
+    const onRename = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("blocked"))
+      .mockResolvedValue(undefined);
+    renderPage({ books: [ALICE], onRename });
+    await userEvent.click(screen.getByRole("button", { name: "Rename book Alice" }));
+    await userEvent.type(screen.getByLabelText("New name for Alice"), "x{Enter}");
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Rename book Alice" }));
+    await userEvent.type(screen.getByLabelText("New name for Alice"), "y{Enter}");
+    await vi.waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+  });
+});

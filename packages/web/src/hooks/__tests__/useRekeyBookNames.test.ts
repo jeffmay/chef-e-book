@@ -33,6 +33,20 @@ describe("useRekeyBookNames", () => {
     expect(getNameKeyVersion(doc)).toBe(NAME_KEY_VERSION);
   });
 
+  it("waits for the book's metadata to be in place before recording the version", async () => {
+    let metaReady!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      metaReady = resolve;
+    });
+    renderHook(() => useRekeyBookNames({ doc, whenSynced: Promise.resolve() }, ready));
+    await flushAsyncEffects();
+    expect(getNameKeyVersion(doc)).toBeUndefined();
+
+    metaReady();
+    await flushAsyncEffects();
+    expect(getNameKeyVersion(doc)).toBe(NAME_KEY_VERSION);
+  });
+
   it("does nothing until the document has synced", async () => {
     let finishSync!: () => void;
     const whenSynced = new Promise<void>((resolve) => {

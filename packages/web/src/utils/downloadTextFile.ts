@@ -18,6 +18,9 @@ export function downloadTextFile(
   document.body.append(link);
   link.click();
   link.remove();
-  // Revoke once the click has been handed to the browser.
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  // The browser reads the blob after the click returns, so give it time before releasing it.
+  setTimeout(() => URL.revokeObjectURL(url), REVOKE_DELAY_MS);
 }
+
+/** How long a download's object URL stays valid; long enough for the browser to start reading it. */
+export const REVOKE_DELAY_MS = 60_000;

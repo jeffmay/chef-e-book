@@ -194,3 +194,48 @@ describe("readBookRegistry", () => {
     });
   });
 });
+
+describe("readBookRegistry — one bad entry", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("drops only the invalid entry, keeping the other books reachable", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    localStorage.setItem(
+      BOOK_REGISTRY_KEY,
+      JSON.stringify({
+        books: [
+          entry(A, "Alice"),
+          { id: "short", name: "Broken" },
+          { ...entry(B, "Bob"), name: "" },
+          entry(C, "Carol"),
+        ],
+        active_book_id: C,
+      }),
+    );
+    const { registry } = readBookRegistry();
+    expect(registry.books.map((b) => b.name)).toEqual(["Alice", "Carol"]);
+    expect(registry.active_book_id).toBe(C);
+    expect(warn).toHaveBeenCalledTimes(2);
+  });
+
+  it("drops an active id that is not valid, without losing the books", () => {
+    localStorage.setItem(
+      BOOK_REGISTRY_KEY,
+      JSON.stringify({ books: [entry(A, "Alice")], active_book_id: 42 }),
+    );
+    const { registry } = readBookRegistry();
+    expect(registry.books).toHaveLength(1);
+    expect(registry.active_book_id).toBeUndefined();
+  });
+
+  it("falls back when the stored value is not a registry at all", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    localStorage.setItem(BOOK_REGISTRY_KEY, JSON.stringify({ books: "nope" }));
+    expect(readBookRegistry().registry).toEqual({ books: [] });
+  });
+});

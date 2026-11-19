@@ -40,14 +40,30 @@ describe("getBookMeta", () => {
 });
 
 describe("ensureBookMeta", () => {
-  it("writes the id, name, creation time and schema version into a new book", () => {
+  it("writes the id, name, creation and update time and schema version into a new book", () => {
     ensureBookMeta(doc, { id: BOOK_ID, name: "Family Recipes" }, NOW);
     expect(getBookMeta(doc)).toEqual({
       id: BOOK_ID,
       name: "Family Recipes",
       created_at: NOW,
+      updated_at: NOW,
       schema_version: BOOK_SCHEMA_VERSION,
     });
+  });
+
+  it("gives a book that predates updated_at one, equal to nothing it already has", () => {
+    const map = getBookMetaYmap(doc);
+    map.set("id", BOOK_ID);
+    map.set("name", "Old Book");
+    map.set("created_at", NOW - 5000);
+    map.set("schema_version", BOOK_SCHEMA_VERSION);
+    // Valid as it is: updated_at is optional, so older documents are not rejected.
+    expect(getBookMeta(doc)?.updated_at).toBeUndefined();
+    expect(getBookMeta(doc)?.name).toBe("Old Book");
+
+    ensureBookMeta(doc, { id: BOOK_ID, name: "Old Book" }, NOW);
+
+    expect(getBookMeta(doc)).toMatchObject({ created_at: NOW - 5000, updated_at: NOW });
   });
 
   it("starts the schema version at 1", () => {
@@ -61,6 +77,7 @@ describe("ensureBookMeta", () => {
       id: BOOK_ID,
       name: "Family Recipes",
       created_at: NOW,
+      updated_at: NOW,
       schema_version: BOOK_SCHEMA_VERSION,
     });
   });
@@ -82,6 +99,7 @@ describe("ensureBookMeta", () => {
       id: BOOK_ID,
       name: "Kept Name",
       created_at: NOW,
+      updated_at: NOW,
       schema_version: BOOK_SCHEMA_VERSION,
     });
   });
@@ -129,6 +147,37 @@ describe("setBookName", () => {
     ensureBookMeta(doc, { id: BOOK_ID, name: "Family Recipes" }, NOW);
     setBookName(doc, "Grandma's Recipes");
     expect(getBookMeta(doc)?.name).toBe("Grandma's Recipes");
+  });
+
+  it("stamps updated_at, leaving created_at alone", () => {
+    ensureBookMeta(doc, { id: BOOK_ID, name: "Family Recipes" }, NOW);
+    setBookName(doc, "Grandma's Recipes", NOW + 5000);
+    expect(getBookMeta(doc)).toMatchObject({ created_at: NOW, updated_at: NOW + 5000 });
+  });
+
+  it("stamps updated_at with the current time by default", () => {
+    ensureBookMeta(doc, { id: BOOK_ID, name: "Family Recipes" }, NOW);
+    const before = Date.now();
+    setBookName(doc, "Grandma's Recipes");
+    const stamped = getBookMeta(doc)?.updated_at;
+    expect(stamped).toBeGreaterThanOrEqual(before);
+    expect(stamped).toBeLessThanOrEqual(Date.now());
+  });
+
+  it("is one undo step that restores both the name and the timestamp", () => {
+    const undoManager = new Y.UndoManager(getBookMetaYmap(doc));
+    ensureBookMeta(doc, { id: BOOK_ID, name: "Family Recipes" }, NOW);
+    setBookName(doc, "Grandma's Recipes", NOW + 5000);
+    undoManager.undo();
+    expect(getBookMeta(doc)).toMatchObject({ name: "Family Recipes", updated_at: NOW });
+    expect(undoManager.canUndo()).toBe(false);
+  });
+
+  it("is not moved by setup writes, which are not the user's edits", () => {
+    ensureBookMeta(doc, { id: BOOK_ID, name: "Family Recipes" }, NOW);
+    markDefaultKitchenwareSeeded(doc);
+    ensureBookMeta(doc, { id: BOOK_ID, name: "Family Recipes" }, NOW + 9000);
+    expect(getBookMeta(doc)?.updated_at).toBe(NOW);
   });
 
   it("can be undone, back to the previous name", () => {

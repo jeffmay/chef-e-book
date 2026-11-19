@@ -5,6 +5,7 @@ import {
   findOrCreateLabel,
   getLabels,
   getLabelsYmap,
+  putLabel,
   type KitchenwareKind,
   type KitchenwareLabel,
   KitchenwareLabelId,
@@ -113,7 +114,7 @@ export function useLabelStore(): LabelStore {
 
       doc.transact(() => {
         // Create new merged label
-        labelsMap.set(newId, { name: newName, kinds: [...mergedKinds] });
+        putLabel(doc, { id: newId, name: newName, kinds: mergedKinds });
         // Update all ingredient references before deleting old labels
         replaceLabelInAllIngredients(doc, idsToMerge, newId);
         // Delete old labels (cascade delete observer is a no-op since refs are already updated)

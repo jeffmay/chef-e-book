@@ -15,11 +15,16 @@ import { loadDefaultKitchenware } from "../storage/defaultKitchenware.ts";
  * The defaults are only fetched when the book actually needs them. If the fetch fails, or yields
  * nothing, the book is left unmarked so the next open tries again.
  */
-export function useSeedDefaultKitchenware({ doc, whenSynced }: DocContextValue): void {
+export function useSeedDefaultKitchenware(
+  { doc, whenSynced }: DocContextValue,
+  /** Resolves once `book_meta` exists (see `useEnsureBookMeta`), which the seeded flag is written into. */
+  metaReady: Promise<unknown> = Promise.resolve(),
+): void {
   useEffect(() => {
     let cancelled = false;
     (async function seed() {
       await whenSynced;
+      await metaReady;
       if (cancelled || isDefaultKitchenwareSeeded(doc)) return;
       try {
         const templates = needsDefaultKitchenware(doc) ? await loadDefaultKitchenware() : [];
@@ -36,5 +41,5 @@ export function useSeedDefaultKitchenware({ doc, whenSynced }: DocContextValue):
     return () => {
       cancelled = true;
     };
-  }, [doc, whenSynced]);
+  }, [doc, whenSynced, metaReady]);
 }

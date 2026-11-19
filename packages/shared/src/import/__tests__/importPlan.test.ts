@@ -15,6 +15,7 @@ import {
   version,
 } from "../../export/__tests__/fixtures.ts";
 import type { ExportSource } from "../../export/buildExport.ts";
+import { ingredientNameKey } from "../../names/nameKey.ts";
 import { fixedId } from "../../types/ids.ts";
 import { EquipmentId, IngredientId, KitchenwareLabelId } from "../../types/kitchenware.ts";
 import { RecipeId } from "../../types/recipe.ts";
@@ -275,6 +276,16 @@ describe("planImport — folders", () => {
     const plan = planImport(target({ recipe_folders: [renamed] }), bundle(), makeOptions());
     expect(names(plan.folders_to_create)).toEqual(["Cakes"]);
     expect(plan.folders_to_create[0]?.parent_folder_id).toBe(DESSERTS.id);
+  });
+
+  it("retain: does not reuse a folder with the file's id that lives under another parent", () => {
+    const elsewhere = folder("cakes", "Cakes");
+    const plan = planImport(target({ recipe_folders: [elsewhere] }), bundle(), makeOptions());
+    const cakes = plan.folders_to_create.find((f) => f.name === "Cakes");
+    const desserts = plan.folders_to_create.find((f) => f.name === "Desserts");
+    expect(cakes?.id).not.toBe(elsewhere.id);
+    expect(cakes?.parent_folder_id).toBe(desserts?.id);
+    expect(plan.recipes_to_create[0]?.parent_folder_id).toBe(cakes?.id);
   });
 
   it("flatten: ignores the file's folders and puts every recipe in the chosen folder", () => {
@@ -808,6 +819,40 @@ describe("planImport — overwriting ingredients", () => {
     expect(plan.ingredients_to_update[0]).toMatchObject({ id: tomato.id, name: "Tomato" });
     expect(plan.ingredients_to_update[0]?.default_measurement_value).toEqual(HALF_TSP);
     expect(plan.warnings).toEqual([expect.stringContaining('was not renamed to "Roma"')]);
+  });
+
+  it("renames only one of two ingredients that would take the same name", () => {
+    const a = ingredient("a", "Apple");
+    const b = ingredient("b", "Banana");
+    const plan = planImport(
+      target({ ingredients: [a, b] }),
+      makeBundle({
+        ingredients: [
+          { ...a, name: "Cherry" },
+          { ...b, name: "Cherries" },
+        ],
+      }),
+      overwrite,
+    );
+    // One takes the name; the other keeps its own (nothing else changed, so it is not rewritten).
+    expect(plan.ingredients_to_update).toHaveLength(1);
+    expect(plan.ingredients_to_update[0]?.name).toMatch(/^Cherr/);
+    expect(plan.warnings).toEqual([expect.stringContaining("was not renamed to")]);
+  });
+
+  it("never leaves an overwritten and a newly created ingredient with the same name", () => {
+    const a = ingredient("a", "Apple");
+    const plan = planImport(
+      target({ ingredients: [a] }),
+      makeBundle({ ingredients: [{ ...a, name: "Cherry" }, ingredient("new", "Cherries")] }),
+      overwrite,
+    );
+    const finalNames = [
+      ...plan.ingredients_to_update.map((i) => i.name),
+      ...plan.ingredients_to_create.map((i) => i.name),
+    ];
+    const keys = finalNames.map((n) => ingredientNameKey(n));
+    expect(new Set(keys).size).toBe(keys.length);
   });
 
   it("overwrites once when two ingredients in the file match the same one", () => {

@@ -1,10 +1,9 @@
 import { type } from "arktype";
 import type * as Y from "yjs";
 import type { KitchenwareTemplate } from "../fixtures/kitchenware.ts";
-import { buildNameIndex, findNameClash, type NameIndex } from "../names/nameIndex.ts";
+import type { NameIndex } from "../names/nameIndex.ts";
 import { ingredientNameKey } from "../names/nameKey.ts";
 import type { NameClash } from "../names/nameClash.ts";
-import { readNameKey, readStoredNameKey } from "../names/storedName.ts";
 import { Companion } from "../types/companion.ts";
 import { loadId } from "../types/ids.ts";
 import type { Ingredient, KitchenwareKind } from "../types/kitchenware.ts";
@@ -13,6 +12,7 @@ import type { MeasurementType } from "../types/measurement.ts";
 import { Measurement } from "../types/measurement.ts";
 import { setOf } from "../types/sets.ts";
 import { findOrCreateLabel, getLabelsYmap } from "./labelStore.ts";
+import { type NamedStore, nameClashIn, nameIndexOf, rekeyIn } from "./storedNames.ts";
 import type { ValidationError } from "./validation.ts";
 import { isInvalid, isValid, validateByIdOrLog } from "./validation.ts";
 
@@ -77,14 +77,19 @@ function validateStoredOrLog(id: IngredientId, raw: unknown): Ingredient | Valid
   };
 }
 
+function namedStore(doc: Y.Doc): NamedStore<IngredientId, Ingredient> {
+  return {
+    map: getIngredientYmap(doc),
+    keyOf: ingredientNameKey,
+    toId: (raw) => loadId(IngredientId, raw),
+    read: validateStoredOrLog,
+    write: (ingredient) => getIngredientYmap(doc).set(ingredient.id, toStored(ingredient)),
+  };
+}
+
 /** The ids by name key, from the keys stored with each ingredient. */
 export function getIngredientNameIndex(doc: Y.Doc): NameIndex<IngredientId> {
-  const entries: Array<{ id: IngredientId; key: string }> = [];
-  getIngredientYmap(doc).forEach((value, id) => {
-    const key = readNameKey(value, ingredientNameKey);
-    if (key !== undefined) entries.push({ id: loadId(IngredientId, id), key });
-  });
-  return buildNameIndex(entries);
+  return nameIndexOf(namedStore(doc));
 }
 
 /**
@@ -97,23 +102,12 @@ export function findIngredientNameClash(
   name: string,
   excludeId?: IngredientId,
 ): NameClash<IngredientId> | undefined {
-  const id = findNameClash(getIngredientNameIndex(doc), ingredientNameKey(name), excludeId);
-  if (id === undefined) return undefined;
-  const existing = validateStoredOrLog(id, getIngredientYmap(doc).get(id));
-  return isInvalid(existing) ? undefined : { id, name: existing.name };
+  return nameClashIn(namedStore(doc), name, excludeId);
 }
 
 /** Rewrites every ingredient whose stored `name_key` is missing or differs from the current rules. */
 export function rekeyIngredients(doc: Y.Doc): void {
-  const map = getIngredientYmap(doc);
-  doc.transact(() => {
-    map.forEach((value, id) => {
-      const ingredient = validateStoredOrLog(loadId(IngredientId, id), value);
-      if (isInvalid(ingredient)) return;
-      if (readStoredNameKey(value) === ingredientNameKey(ingredient.name)) return;
-      map.set(id, toStored(ingredient));
-    });
-  });
+  rekeyIn(doc, namedStore(doc));
 }
 
 export function getIngredients(doc: Y.Doc): Ingredient[] {

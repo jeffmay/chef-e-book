@@ -4,6 +4,7 @@ import {
   fixedId,
   getIngredients,
   getLabels,
+  getLabelsYmap,
   IngredientId,
   type Ingredient,
   type KitchenwareKind,
@@ -182,6 +183,25 @@ describe("useLabelStore — name uniqueness", () => {
       result.current.mergeLabels([fat, fats], "Fat");
     });
     expect(getLabels(doc).map((l) => l.name)).toEqual(["Fat"]);
+  });
+
+  it("stores the merged label with its name key, so it can be matched by name later", async () => {
+    const { result } = await renderStore();
+    let fat!: KitchenwareLabelId;
+    let oil!: KitchenwareLabelId;
+    act(() => {
+      fat = result.current.createLabel("Fat", INGREDIENT_KINDS);
+      oil = result.current.createLabel("Oil", INGREDIENT_KINDS);
+    });
+    let merged!: KitchenwareLabelId;
+    act(() => {
+      merged = result.current.mergeLabels([fat, oil], "  Fats And Oils ");
+    });
+    expect(getLabelsYmap(doc).get(merged)).toMatchObject({
+      name: "  Fats And Oils ",
+      name_key: "fats and oils",
+    });
+    expect(result.current.nameClash("fats and oils")?.id).toBe(merged);
   });
 
   it("refuses to merge labels into the name of a label outside the merge", async () => {

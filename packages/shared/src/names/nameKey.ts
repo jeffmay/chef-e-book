@@ -28,9 +28,7 @@ const NOT_PLURAL: ReadonlySet<string> = new Set([
 ]);
 
 /** Plurals the inflection library gets wrong, mapped to the singular the rest of the rules agree on. */
-const SINGULAR_OVERRIDES: Readonly<Record<string, string>> = {
-  chilies: "chili",
-};
+const SINGULAR_OVERRIDES: ReadonlyMap<string, string> = new Map([["chilies", "chili"]]);
 
 /**
  * Trim, Unicode-normalize (NFKC), lowercase, and collapse runs of whitespace to one space.
@@ -46,7 +44,7 @@ function normalizeName(name: string): string {
 /** The singular of one lowercase word, leaving words that merely end in "s" alone. */
 function singularizeWord(word: string): string {
   if (NOT_PLURAL.has(word)) return word;
-  return SINGULAR_OVERRIDES[word] ?? pluralize.singular(word);
+  return SINGULAR_OVERRIDES.get(word) ?? pluralize.singular(word);
 }
 
 /**

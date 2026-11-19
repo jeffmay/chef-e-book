@@ -1,14 +1,14 @@
 import { type } from "arktype";
 import type * as Y from "yjs";
-import { buildNameIndex, findNameClash, type NameIndex } from "../names/nameIndex.ts";
+import type { NameIndex } from "../names/nameIndex.ts";
 import { ingredientNameKey } from "../names/nameKey.ts";
 import type { NameClash } from "../names/nameClash.ts";
-import { readNameKey, readStoredNameKey } from "../names/storedName.ts";
 import { Companion } from "../types/companion.ts";
 import { loadId } from "../types/ids.ts";
 import type { Container } from "../types/kitchenware.ts";
 import { ContainerId, KitchenwareLabelId } from "../types/kitchenware.ts";
 import { setOf } from "../types/sets.ts";
+import { type NamedStore, nameClashIn, nameIndexOf, rekeyIn } from "./storedNames.ts";
 import type { ValidationError } from "./validation.ts";
 import { isInvalid, isValid, validateByIdOrLog } from "./validation.ts";
 
@@ -52,14 +52,19 @@ function validateStoredOrLog(id: ContainerId, raw: unknown): Container | Validat
   };
 }
 
+function namedStore(doc: Y.Doc): NamedStore<ContainerId, Container> {
+  return {
+    map: getContainerYmap(doc),
+    keyOf: ingredientNameKey,
+    toId: (raw) => loadId(ContainerId, raw),
+    read: validateStoredOrLog,
+    write: (container) => getContainerYmap(doc).set(container.id, toStored(container)),
+  };
+}
+
 /** The ids by name key, from the keys stored with each container. */
 export function getContainerNameIndex(doc: Y.Doc): NameIndex<ContainerId> {
-  const entries: Array<{ id: ContainerId; key: string }> = [];
-  getContainerYmap(doc).forEach((value, id) => {
-    const key = readNameKey(value, ingredientNameKey);
-    if (key !== undefined) entries.push({ id: loadId(ContainerId, id), key });
-  });
-  return buildNameIndex(entries);
+  return nameIndexOf(namedStore(doc));
 }
 
 /**
@@ -71,23 +76,12 @@ export function findContainerNameClash(
   name: string,
   excludeId?: ContainerId,
 ): NameClash<ContainerId> | undefined {
-  const id = findNameClash(getContainerNameIndex(doc), ingredientNameKey(name), excludeId);
-  if (id === undefined) return undefined;
-  const existing = validateStoredOrLog(id, getContainerYmap(doc).get(id));
-  return isInvalid(existing) ? undefined : { id, name: existing.name };
+  return nameClashIn(namedStore(doc), name, excludeId);
 }
 
 /** Rewrites every container whose stored `name_key` is missing or differs from the current rules. */
 export function rekeyContainers(doc: Y.Doc): void {
-  const map = getContainerYmap(doc);
-  doc.transact(() => {
-    map.forEach((value, id) => {
-      const container = validateStoredOrLog(loadId(ContainerId, id), value);
-      if (isInvalid(container)) return;
-      if (readStoredNameKey(value) === ingredientNameKey(container.name)) return;
-      map.set(id, toStored(container));
-    });
-  });
+  rekeyIn(doc, namedStore(doc));
 }
 
 export function getContainers(doc: Y.Doc): Container[] {

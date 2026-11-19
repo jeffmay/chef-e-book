@@ -8,14 +8,20 @@ import type { DocContextValue } from "../contexts/docContext.ts";
  * Idempotent and never undoable; see `rekeyBookNames`. It runs after the legacy-data merge, so the
  * data from an older build is keyed too.
  */
-export function useRekeyBookNames({ doc, whenSynced }: DocContextValue): void {
+export function useRekeyBookNames(
+  { doc, whenSynced }: DocContextValue,
+  /** Resolves once `book_meta` exists (see `useEnsureBookMeta`), which the name-key version is written into. */
+  metaReady: Promise<unknown> = Promise.resolve(),
+): void {
   useEffect(() => {
     let cancelled = false;
-    whenSynced.then(() => {
-      if (!cancelled) rekeyBookNames(doc);
-    });
+    whenSynced
+      .then(() => metaReady)
+      .then(() => {
+        if (!cancelled) rekeyBookNames(doc);
+      });
     return () => {
       cancelled = true;
     };
-  }, [doc, whenSynced]);
+  }, [doc, whenSynced, metaReady]);
 }

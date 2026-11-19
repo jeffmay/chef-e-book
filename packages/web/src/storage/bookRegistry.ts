@@ -1,7 +1,7 @@
 import { Companion, RecipeBookId } from "@recipe-book/shared";
 import { type } from "arktype";
 import type { ReadonlyDeep } from "type-fest";
-import { readValidatedLocalStorage } from "./safeLocalStorage.ts";
+import { readLocalStorage, readValidatedLocalStorage } from "./safeLocalStorage.ts";
 
 /** Where the list of books on this device lives. One key, so the list and the active id stay in step. */
 export const BOOK_REGISTRY_KEY = "chefe_books" as const;
@@ -142,6 +142,44 @@ export type ReadBookRegistryResult = {
   migratedFromLegacy: boolean;
 };
 
+const StoredRegistryShape = type({ books: "unknown[]", "active_book_id?": "unknown" });
+
+/**
+ * The stored registry, keeping every entry that is valid and dropping (with a warning) only the ones
+ * that are not — one malformed entry must not make the other books unreachable. `null` when nothing
+ * usable is stored at all.
+ */
+function readStoredRegistry(): BookRegistry | null {
+  const raw = readLocalStorage(BOOK_REGISTRY_KEY);
+  if (raw === null) return null;
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch (error) {
+    console.warn(`Invalid JSON in localStorage, key='${BOOK_REGISTRY_KEY}':`, error);
+    return null;
+  }
+  const shape = StoredRegistryShape(json);
+  if (shape instanceof type.errors) {
+    console.warn(`Failed to load BookRegistry from localStorage: ${shape.summary}`);
+    return null;
+  }
+  const books: BookRegistryEntry[] = [];
+  for (const candidate of shape.books) {
+    const entry = BookRegistryEntry.type(candidate);
+    if (entry instanceof type.errors) {
+      console.warn(`Dropping an invalid book from localStorage: ${entry.summary}`);
+    } else {
+      books.push(entry);
+    }
+  }
+  const active = RecipeBookId.type(shape.active_book_id);
+  return normalizeBookRegistry({
+    books,
+    ...(!(active instanceof type.errors) && { active_book_id: active }),
+  });
+}
+
 /**
  * Reads the registry from `localStorage`, never throwing. Anything unusable (absent, unreadable,
  * corrupt, stale) falls back to the legacy single-book key if that holds a book, and otherwise to an
@@ -149,10 +187,8 @@ export type ReadBookRegistryResult = {
  * legacy key.
  */
 export function readBookRegistry(now: number = Date.now()): ReadBookRegistryResult {
-  const stored = readValidatedLocalStorage(BOOK_REGISTRY_KEY, BookRegistry);
-  if (stored !== null) {
-    return { registry: normalizeBookRegistry(stored), migratedFromLegacy: false };
-  }
+  const stored = readStoredRegistry();
+  if (stored !== null) return { registry: stored, migratedFromLegacy: false };
   const legacy = readValidatedLocalStorage(LEGACY_ACTIVE_BOOK_KEY, LegacyActiveBook);
   if (legacy === null) {
     return { registry: emptyBookRegistry(), migratedFromLegacy: false };

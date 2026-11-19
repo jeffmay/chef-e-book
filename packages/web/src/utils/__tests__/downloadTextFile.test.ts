@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { downloadTextFile } from "../downloadTextFile.ts";
+import { downloadTextFile, REVOKE_DELAY_MS } from "../downloadTextFile.ts";
 
 type Clicked = { href: string; download: string; connected: boolean };
 
@@ -56,10 +56,12 @@ describe("downloadTextFile", () => {
     expect(document.querySelector("a[download]")).toBeNull();
   });
 
-  it("releases the object URL once the click has been handed to the browser", () => {
+  it("keeps the object URL alive long enough for the browser to read it, then releases it", () => {
     downloadTextFile("a.json", "{}");
     expect(revoked).toEqual([]);
-    vi.runAllTimers();
+    vi.advanceTimersByTime(REVOKE_DELAY_MS - 1);
+    expect(revoked).toEqual([]);
+    vi.advanceTimersByTime(1);
     expect(revoked).toEqual(["blob:test/1"]);
   });
 });
