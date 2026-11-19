@@ -18,6 +18,22 @@ describe("ButtonMenu", () => {
     expect(onStart).toHaveBeenCalledTimes(1);
   });
 
+  it("shows a ▾ on the menu trigger by default, and the icon it is given otherwise", () => {
+    const { rerender } = render(
+      <ButtonMenu buttons={[{ label: "Start", onSelect: vi.fn() }]} menuLabel="More actions" />,
+    );
+    expect(screen.getByRole("button", { name: "More actions" })).toHaveTextContent("▾");
+
+    rerender(
+      <ButtonMenu
+        buttons={[{ label: "Start", onSelect: vi.fn() }]}
+        menuLabel="More actions"
+        icon="☰"
+      />,
+    );
+    expect(screen.getByRole("button", { name: "More actions" })).toHaveTextContent("☰");
+  });
+
   it("shows only the chevron when defaultButton is undefined", () => {
     render(
       <ButtonMenu buttons={[{ label: "Start", onSelect: vi.fn() }]} menuLabel="More actions" />,

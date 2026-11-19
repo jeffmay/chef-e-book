@@ -47,13 +47,23 @@ export function Layout({ children }: { children: ReactNode }) {
 
 type AuthenticatedShellProps = ReadonlyDeep<{
   book: BookRegistryEntry;
+  /** Every book on this device, for the menu's "Switch Books" list. */
+  books: BookRegistryEntry[];
   /** Leaves this book for the book picker. */
   onSwitchBook: () => void;
+  /** Opens another book on this device directly. */
+  onOpenBook: (id: RecipeBookId) => void;
   /** The book's own document renamed it (here, on another device, or by an undo). */
   onBookNameChange: (id: RecipeBookId, name: string) => void;
 }>;
 
-function AuthenticatedShell({ book, onSwitchBook, onBookNameChange }: AuthenticatedShellProps) {
+function AuthenticatedShell({
+  book,
+  books,
+  onSwitchBook,
+  onOpenBook,
+  onBookNameChange,
+}: AuthenticatedShellProps) {
   const bookDoc = useBookDoc(book.id);
   // Seeding and re-keying record a flag in book_meta, so they wait for it to exist.
   const metaReady = useEnsureBookMeta(bookDoc, book);
@@ -78,19 +88,21 @@ function AuthenticatedShell({ book, onSwitchBook, onBookNameChange }: Authentica
       <BookUndoContext.Provider value={bookUndo}>
         <div className="app">
           <header className="top-nav">
-            <NavMenu />
+            <NavMenu
+              books={books}
+              activeBookId={book.id}
+              onSwitchBook={onSwitchBook}
+              onOpenBook={onOpenBook}
+            />
             <h1 className="book-name">{book.name}</h1>
             <div className="nav-right">
-              <button className="switch-book-btn" onClick={onSwitchBook}>
-                Books
-              </button>
               <button
                 className="undo-btn"
                 aria-label="Undo"
                 onClick={bookUndo.undo}
                 disabled={!bookUndo.canUndo}
               >
-                ↩ Undo
+                {bookUndo.canUndo ? "↩ Undo" : "✕ Undo"}
               </button>
               {/* TODO: Add this back once we have user authentication */}
               {/* <UserMenu userName={unknown} onProfile={() => navigate("/profile")} /> */}
@@ -127,7 +139,9 @@ export default function Root() {
     <AuthenticatedShell
       key={activeBook.id}
       book={activeBook}
+      books={books}
       onSwitchBook={closeBook}
+      onOpenBook={openBook}
       onBookNameChange={renameBook}
     />
   );

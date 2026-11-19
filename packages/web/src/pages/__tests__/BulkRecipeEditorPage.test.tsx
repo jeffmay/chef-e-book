@@ -856,6 +856,27 @@ describe("BulkRecipeEditorPage — export", () => {
 });
 
 describe("BulkRecipeEditorPage — import", () => {
+  it("puts '↳ Import' to the left of '➕ Recipe' in the header", async () => {
+    setup();
+    await flushAsyncEffects();
+    const importButton = screen.getByRole("button", { name: "Import recipes" });
+    const newButton = screen.getByRole("button", { name: "New Recipe" });
+    expect(importButton).toHaveTextContent("↳ Import");
+    expect(
+      importButton.compareDocumentPosition(newButton) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows a ☰ on a recipe row's menu, and keeps ▾ on the folder menus", async () => {
+    createRecipe(bookDoc, { title: "Soup", description: DEFAULT_VERSION_DESCRIPTION });
+    setup();
+    await flushAsyncEffects();
+    expect(screen.getByRole("button", { name: "More actions for recipe Soup" })).toHaveTextContent(
+      "☰",
+    );
+    expect(screen.getByRole("button", { name: "New item in Recipes" })).toHaveTextContent("▾");
+  });
+
   it("opens the import dialog for recipes, and closes it again", async () => {
     setup();
     await flushAsyncEffects();

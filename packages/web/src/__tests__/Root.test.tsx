@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createRoutesStub } from "react-router";
@@ -99,6 +99,12 @@ function storeRegistry(id: RecipeBookId, name: string) {
   );
 }
 
+/** Opens the navigation menu and chooses "Switch Books", which leaves the open book for the picker. */
+async function switchToPicker() {
+  await userEvent.click(screen.getByLabelText("Navigation menu"));
+  await userEvent.click(screen.getByRole("button", { name: "Switch Books" }));
+}
+
 beforeEach(() => {
   localStorage.clear();
   vi.stubGlobal(
@@ -161,6 +167,7 @@ describe("Root — book stored by an earlier build", () => {
 
 describe("Root — book already stored", () => {
   const bookId = randomId(RecipeBookId);
+  const otherBookId = randomId(RecipeBookId);
 
   beforeEach(() => {
     storeRegistry(bookId, "Bob");
@@ -221,7 +228,7 @@ describe("Root — book already stored", () => {
       await userEvent.click(screen.getByRole("button", { name: "Add ingredient" }));
       expect(screen.getByRole("button", { name: "Undo" })).toBeEnabled();
 
-      await userEvent.click(screen.getByRole("button", { name: "Books" }));
+      await switchToPicker();
       await userEvent.click(screen.getByRole("button", { name: "Open book Bob" }));
       await flushAsyncEffects();
 
@@ -229,10 +236,70 @@ describe("Root — book already stored", () => {
     });
   });
 
+  describe("undo button", () => {
+    it("shows an ✕ when there is nothing to undo, and an ↩ once there is", async () => {
+      render(makeStub(["/add"]));
+      await flushAsyncEffects();
+      expect(screen.getByRole("button", { name: "Undo" })).toHaveTextContent("✕ Undo");
+
+      await userEvent.click(screen.getByRole("button", { name: "Add ingredient" }));
+      expect(screen.getByRole("button", { name: "Undo" })).toHaveTextContent("↩ Undo");
+    });
+  });
+
   describe("switching books", () => {
+    it("has no separate Books button in the header any more", () => {
+      render(makeStub());
+      expect(screen.queryByRole("button", { name: "Books" })).not.toBeInTheDocument();
+    });
+
+    it("lists this device's books under Switch Books, marking the open one", async () => {
+      localStorage.setItem(
+        BOOK_REGISTRY_KEY,
+        JSON.stringify({
+          books: [
+            { id: bookId, name: "Bob", created_at: 1, last_opened_at: 2 },
+            { id: otherBookId, name: "Carol", created_at: 1, last_opened_at: 1 },
+          ],
+          active_book_id: bookId,
+        }),
+      );
+      render(makeStub());
+      await userEvent.click(screen.getByLabelText("Navigation menu"));
+      const list = screen.getByRole("list", { name: "Books on this device" });
+      expect(
+        within(list)
+          .getAllByRole("button")
+          .map((b) => b.textContent),
+      ).toEqual(["✔︎ Bob", "Carol"]);
+      expect(screen.getByRole("button", { name: "Bob (open book)" })).toHaveAttribute(
+        "aria-current",
+      );
+    });
+
+    it("opens another book straight from the submenu", async () => {
+      localStorage.setItem(
+        BOOK_REGISTRY_KEY,
+        JSON.stringify({
+          books: [
+            { id: bookId, name: "Bob", created_at: 1, last_opened_at: 2 },
+            { id: otherBookId, name: "Carol", created_at: 1, last_opened_at: 1 },
+          ],
+          active_book_id: bookId,
+        }),
+      );
+      render(makeStub());
+      await userEvent.click(screen.getByLabelText("Navigation menu"));
+      await userEvent.click(screen.getByRole("button", { name: "Open book Carol" }));
+      await flushAsyncEffects();
+
+      expect(screen.getByRole("heading", { name: "Carol" })).toBeInTheDocument();
+      expect(storedRegistry().active_book_id).toBe(otherBookId);
+    });
+
     it("goes to the picker, listing this device's books, from the Books button", async () => {
       render(makeStub());
-      await userEvent.click(screen.getByRole("button", { name: "Books" }));
+      await switchToPicker();
       expect(screen.getByRole("heading", { name: "Your books" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Open book Bob" })).toBeInTheDocument();
       expect(storedRegistry().active_book_id).toBeUndefined();
@@ -240,7 +307,7 @@ describe("Root — book already stored", () => {
 
     it("opens a book chosen from the picker", async () => {
       render(makeStub());
-      await userEvent.click(screen.getByRole("button", { name: "Books" }));
+      await switchToPicker();
       await userEvent.click(screen.getByRole("button", { name: "Open book Bob" }));
       expect(screen.getByLabelText("Navigation menu")).toBeInTheDocument();
       expect(storedRegistry().active_book_id).toBe(bookId);
@@ -248,7 +315,7 @@ describe("Root — book already stored", () => {
 
     it("creates a second book from the picker and opens it, keeping the first", async () => {
       render(makeStub());
-      await userEvent.click(screen.getByRole("button", { name: "Books" }));
+      await switchToPicker();
       await userEvent.type(screen.getByLabelText("Book name"), "Carol");
       await userEvent.click(screen.getByRole("button", { name: "Create book" }));
 
@@ -259,7 +326,7 @@ describe("Root — book already stored", () => {
 
     it("renames a book from the picker without changing its id", async () => {
       render(makeStub());
-      await userEvent.click(screen.getByRole("button", { name: "Books" }));
+      await switchToPicker();
       await userEvent.click(screen.getByRole("button", { name: "Rename book Bob" }));
       const input = screen.getByLabelText("New name for Bob");
       await userEvent.clear(input);
@@ -273,7 +340,7 @@ describe("Root — book already stored", () => {
 
     it("deletes a book from the picker after confirmation", async () => {
       render(makeStub());
-      await userEvent.click(screen.getByRole("button", { name: "Books" }));
+      await switchToPicker();
       await userEvent.click(screen.getByRole("button", { name: "Delete book Bob" }));
       await userEvent.click(screen.getByRole("button", { name: "Delete book" }));
 

@@ -23,6 +23,8 @@
   background: var(--color-bg);
   border: var(--border-width) solid var(--color-border);
   min-width: 14vw;
+  max-width: 50vw;
+  overflow-wrap: anywhere;
   z-index: 20;
   display: flex;
   flex-direction: column;
@@ -41,4 +43,86 @@
 
 .nav-menu-item:last-child {
   border-bottom: none;
+}
+
+/* A button styled as a menu row (e.g. "Switch Books"). */
+.nav-menu-item--button {
+  background: var(--color-bg);
+  font-size: 1em;
+}
+
+/* Wraps a menu item with its sub-menu, anchoring the flyout to the item's top edge. */
+.nav-menu-group {
+  position: relative;
+}
+
+.nav-menu-group:last-child > .nav-menu-item--parent {
+  border-bottom: none;
+}
+
+/* Label on the left, arrow on the right, on one line (a float drops below the text). */
+.nav-menu-item--parent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.nav-menu-arrow {
+  display: none;
+}
+
+/* Many books scroll inside the list rather than running off the page. */
+.nav-menu-submenu {
+  list-style: none;
+  border-top: 1px solid var(--color-border);
+  max-height: 60vw;
+  overflow-y: auto;
+}
+
+/* Books under "Switch Books". Separators go on top of every row but the first, so the
+   `.nav-menu-item:last-child` rule (each button is its `li`'s only child) cannot remove them. */
+.nav-menu-subitem {
+  border: none;
+  padding-left: calc(var(--spacing-md) + var(--spacing-lg));
+  background: var(--color-bg);
+}
+
+.nav-menu-submenu li + li .nav-menu-subitem {
+  border-top: 1px solid var(--color-border);
+}
+
+.nav-menu-subitem[aria-current] {
+  font-weight: bold;
+}
+
+/* Hover (a mouse, or the Wacom EMR pen hovering over the PineNote): the books float to the
+   right of "Switch Books", top-aligned with it, and a "▸" says there is more to see. The
+   flyout starts at the dropdown's edge so the pointer never leaves the group on its way in.
+   Touch has no hover, so it falls back to the always-open list above. */
+@media (hover: hover) {
+  .nav-menu-arrow {
+    display: block;
+  }
+
+  .nav-menu-submenu {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 100%;
+    min-width: 100%;
+    max-width: 50vw;
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    z-index: 21;
+  }
+
+  .nav-menu-group:hover > .nav-menu-submenu,
+  .nav-menu-group:focus-within > .nav-menu-submenu {
+    display: block;
+  }
+
+  .nav-menu-subitem {
+    padding-left: var(--spacing-md);
+  }
 }
