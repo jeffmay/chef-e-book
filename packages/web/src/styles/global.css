@@ -238,16 +238,17 @@ svg.p-checkbox-icon > path {
 }
 
 .nav-menu-btn,
-.switch-book-btn,
 .undo-btn {
   border: none;
   font-size: 1.1em;
   padding: var(--spacing-xs);
 }
 
-/* Text stays full black on e-ink, so a disabled control is struck through rather than greyed. */
+/* Text stays full black on e-ink, so an unavailable Undo greys its background (dithered on the
+   tablet) and swaps its glyph to "✕" instead of greying the text. */
 .undo-btn:disabled {
-  text-decoration: line-through;
+  background: var(--color-checked);
+  color: var(--color-fg);
   cursor: not-allowed;
 }
 

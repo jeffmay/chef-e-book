@@ -1,8 +1,22 @@
 import { useEffect, useRef, type FocusEvent } from "react";
 import { Link } from "react-router";
+import type { ReadonlyDeep } from "type-fest";
+import type { RecipeBookId } from "@recipe-book/shared";
+import type { BookRegistryEntry } from "../storage/bookRegistry.ts";
 import "./NavMenu.css";
 
-export function NavMenu() {
+export type NavMenuProps = ReadonlyDeep<{
+  /** Every book on this device. */
+  books: BookRegistryEntry[];
+  /** The open book, marked in the list. */
+  activeBookId: RecipeBookId;
+  /** "Switch Books": leaves the open book for the book picker. */
+  onSwitchBook: () => void;
+  /** A book in the list: opens it directly. */
+  onOpenBook: (id: RecipeBookId) => void;
+}>;
+
+export function NavMenu({ books, activeBookId, onSwitchBook, onOpenBook }: NavMenuProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
   function close() {
@@ -48,6 +62,46 @@ export function NavMenu() {
         <Link className="nav-menu-item" to="/ingredients" onClick={close}>
           Ingredients
         </Link>
+        {/* The books fly out to the right of "Switch Books" on hover or keyboard focus. Where
+            there is no hover (touch), the list stays open beneath it instead. */}
+        <div className="nav-menu-group">
+          <button
+            type="button"
+            className="nav-menu-item nav-menu-item--button nav-menu-item--parent"
+            aria-haspopup="true"
+            onClick={() => {
+              close();
+              onSwitchBook();
+            }}
+          >
+            Switch Books
+            <span className="nav-menu-arrow" aria-hidden="true">
+              ▸
+            </span>
+          </button>
+          <ul className="nav-menu-submenu" aria-label="Books on this device">
+            {books.map((book) => {
+              const isActive = book.id === activeBookId;
+              return (
+                <li key={book.id}>
+                  <button
+                    type="button"
+                    className="nav-menu-item nav-menu-subitem"
+                    aria-label={isActive ? `${book.name} (open book)` : `Open book ${book.name}`}
+                    aria-current={isActive || undefined}
+                    onClick={() => {
+                      close();
+                      if (!isActive) onOpenBook(book.id);
+                    }}
+                  >
+                    {isActive ? "✔︎ " : ""}
+                    {book.name}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </nav>
     </details>
   );

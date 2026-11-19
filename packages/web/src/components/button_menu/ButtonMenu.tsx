@@ -5,6 +5,9 @@ import { useCallback, useEffect, useRef, type SyntheticEvent } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import "./ButtonMenu.css";
 
+/** The glyph on a `ButtonMenu`'s trigger unless it is given another. */
+export const DEFAULT_MENU_ICON = "▾";
+
 export type ButtonMenuItem = ReadonlyDeep<{
   label: string;
   onSelect: () => void;
@@ -25,10 +28,12 @@ export type ButtonMenuProps = ReadonlyDeep<{
   menuLabel: string;
   /**
    * When true, the default button is not rendered and its action is instead
-   * moved to the top of the chevron menu — so only the "▾" trigger shows.
+   * moved to the top of the chevron menu — so only the trigger shows.
    * Useful in constrained layouts (e.g. mobile view).
    */
   hideDefault?: boolean;
+  /** The glyph on the menu trigger. Defaults to "▾". */
+  icon?: string;
   className?: string;
 }>;
 
@@ -52,6 +57,7 @@ export function ButtonMenu({
   buttons,
   menuLabel,
   hideDefault = false,
+  icon = DEFAULT_MENU_ICON,
   className,
 }: ButtonMenuProps) {
   const menuRef = useRef<Menu>(null);
@@ -170,7 +176,7 @@ export function ButtonMenu({
           aria-label={menuLabel}
           aria-haspopup="true"
         >
-          ▾
+          {icon}
         </button>
       </ButtonGroup>
       {/* PrimeReact CSSTransition is disabled (transitionOptions.disabled) —

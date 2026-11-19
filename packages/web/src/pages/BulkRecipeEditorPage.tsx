@@ -394,18 +394,18 @@ export function BulkRecipeEditorPage() {
         <button
           type="button"
           className="bre-new-btn"
-          onClick={() => navigate("/recipes/new")}
-          aria-label="New Recipe"
+          onClick={() => setShowImport(true)}
+          aria-label="Import recipes"
         >
-          ➕ Recipe
+          ↳ Import
         </button>
         <button
           type="button"
           className="bre-new-btn"
-          onClick={() => setShowImport(true)}
-          aria-label="Import recipes"
+          onClick={() => navigate("/recipes/new")}
+          aria-label="New Recipe"
         >
-          Import
+          ➕ Recipe
         </button>
       </div>
       {showImport && <ImportModal scope="recipes" onClose={() => setShowImport(false)} />}
@@ -810,6 +810,7 @@ export function BulkRecipeEditorPage() {
                           buttons={others}
                           menuLabel={`More actions for recipe ${recipe.title}`}
                           hideDefault={isMobileView}
+                          icon="☰"
                         />
                       </td>
                     </tr>
