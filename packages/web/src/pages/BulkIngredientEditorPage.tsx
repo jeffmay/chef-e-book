@@ -15,6 +15,7 @@ import {
 import { LabelEditor } from "../components/ingredients_table/LabelEditor.tsx";
 import { LabelTable } from "../components/ingredients_table/LabelTable.tsx";
 import { ExportNotice } from "../components/export_notice/ExportNotice.tsx";
+import { ImportModal } from "../components/import_modal/ImportModal.tsx";
 import { useBookDoc } from "../contexts/docContext.ts";
 import { useBookExport } from "../hooks/useBookExport.ts";
 import { useIngredientStore } from "../hooks/useIngredientStore.ts";
@@ -76,6 +77,7 @@ export function BulkIngredientEditorPage() {
   } = useLabelStore();
 
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [addForm, setAddForm] = useState<AddFormState>(EMPTY_ADD_FORM);
   const [externalLabelFilter, setExternalLabelFilter] = useState<ExternalLabelFilter | undefined>(
     undefined,
@@ -257,7 +259,15 @@ export function BulkIngredientEditorPage() {
         >
           Export all
         </button>
+        <button
+          className="bie-import-btn"
+          onClick={() => setShowImport(true)}
+          aria-label="Import ingredients"
+        >
+          Import
+        </button>
       </div>
+      {showImport && <ImportModal scope="ingredients" onClose={() => setShowImport(false)} />}
       {exportSummary !== null && (
         <ExportNotice summary={exportSummary} onDismiss={dismissSummary} />
       )}

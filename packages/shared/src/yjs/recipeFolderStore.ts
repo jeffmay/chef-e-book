@@ -105,6 +105,11 @@ export function createRecipeFolder(
   return folder;
 }
 
+/** Writes a folder under its own id, creating it if need be (used by import). */
+export function putRecipeFolder(doc: Y.Doc, folder: RecipeFolder): void {
+  getRecipeFolderYmap(doc).set(folder.id, toStored(folder));
+}
+
 export function updateRecipeFolder(doc: Y.Doc, folder: RecipeFolder): void {
   const map = getRecipeFolderYmap(doc);
   if (!map.has(folder.id)) return;

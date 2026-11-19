@@ -10,6 +10,7 @@ import { useNavigate } from "react-router";
 import { AcceptOrCancelEditor } from "../components/accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import { ButtonMenu } from "../components/button_menu/ButtonMenu.tsx";
 import { ExportNotice } from "../components/export_notice/ExportNotice.tsx";
+import { ImportModal } from "../components/import_modal/ImportModal.tsx";
 import { Modal } from "../components/modal/Modal.tsx";
 import { useBookExport } from "../hooks/useBookExport.ts";
 import { useLocalViewState } from "../hooks/useLocalViewState.ts";
@@ -215,6 +216,7 @@ export function BulkRecipeEditorPage() {
   const collapsedFolders = collapsedFolderIds(viewState);
   const collapsedRecipes = collapsedRecipeIds(viewState);
 
+  const [showImport, setShowImport] = useState(false);
   const [selectedRecipeIds, setSelectedRecipeIds] = useState<ReadonlySet<RecipeId>>(new Set());
   const [showMergeForm, setShowMergeForm] = useState(false);
   const [mergeName, setMergeName] = useState("");
@@ -397,7 +399,16 @@ export function BulkRecipeEditorPage() {
         >
           ➕ Recipe
         </button>
+        <button
+          type="button"
+          className="bre-new-btn"
+          onClick={() => setShowImport(true)}
+          aria-label="Import recipes"
+        >
+          Import
+        </button>
       </div>
+      {showImport && <ImportModal scope="recipes" onClose={() => setShowImport(false)} />}
 
       {/* Bulk action bar */}
       {someSelected && (

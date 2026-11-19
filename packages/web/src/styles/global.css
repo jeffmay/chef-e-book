@@ -111,9 +111,10 @@ select {
    ============================================================================
 */
 
-/* Native checkboxes: reset the global input width/border/padding and
+/* Native checkboxes and radios: reset the global input width/border/padding and
    render the box and its checkmark in solid black. */
-input[type="checkbox"] {
+input[type="checkbox"],
+input[type="radio"] {
   width: auto;
   padding: 0;
   border: none;

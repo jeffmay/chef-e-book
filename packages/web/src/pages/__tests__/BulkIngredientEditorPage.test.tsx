@@ -1,4 +1,8 @@
-import { parseRecipeBookExport } from "@recipe-book/shared";
+import {
+  exportIngredients,
+  parseRecipeBookExport,
+  serializeRecipeBookExport,
+} from "@recipe-book/shared";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement, type ReactNode } from "react";
@@ -276,5 +280,40 @@ describe("BulkIngredientEditorPage — export", () => {
     expect(downloaded().book.labels.map((l) => l.name)).toEqual(
       expect.arrayContaining(["fat", "solid"]),
     );
+  });
+});
+
+describe("BulkIngredientEditorPage — import", () => {
+  it("opens the import dialog for ingredients, and closes it again", async () => {
+    await setupAndWait();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Import ingredients" }));
+    expect(screen.getByRole("dialog", { name: "Import ingredients" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("shows imported ingredients in the table once the import is done", async () => {
+    const source = new Y.Doc();
+    seedKitchenwareFromCsv(
+      source,
+      "Unique ID,Type,Description,Default Measurement Type,Labels\n------saffron,ingredient,Saffron,weight,spice\n",
+    );
+    const file = new File(
+      [serializeRecipeBookExport(exportIngredients(source, "all"))],
+      "spice.json",
+      {
+        type: "application/json",
+      },
+    );
+    await setupAndWait();
+    await userEvent.click(screen.getByRole("button", { name: "Import ingredients" }));
+    await userEvent.upload(screen.getByLabelText("Export file"), file);
+    await userEvent.click(await screen.findByRole("button", { name: "Import" }));
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(await within(getTable()).findByText("Saffron")).toBeInTheDocument();
   });
 });

@@ -22,3 +22,8 @@ export function useBookUndo(): BookUndo {
   }
   return undo;
 }
+
+/** Like `useBookUndo`, but `null` outside a provider, for code that works with or without a book shell. */
+export function useOptionalBookUndo(): BookUndo | null {
+  return useContext(BookUndoContext);
+}

@@ -1,0 +1,80 @@
+.im-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  /* The dialog is a form with lists in it; give it room instead of shrinking to its first line. */
+  width: 60vw;
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  .im-body {
+    width: 80vw;
+  }
+}
+
+.im-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin: 0;
+}
+
+.im-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.im-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* The list of things to choose from scrolls on its own, vertically only. */
+.im-list {
+  max-height: 40vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin: 0;
+  list-style: none;
+}
+
+.im-list-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.im-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs);
+  overflow-wrap: anywhere;
+}
+
+.im-row-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.im-row-status {
+  font-style: italic;
+}
+
+.im-summary {
+  font-weight: bold;
+}
+
+.im-book {
+  text-align: left;
+  overflow-wrap: anywhere;
+}

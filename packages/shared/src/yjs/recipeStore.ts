@@ -377,6 +377,32 @@ export function copyRecipe(
   return copy;
 }
 
+/** Writes a whole recipe under its own id (used by import, which keeps ids when it can). */
+export function addRecipe(doc: Y.Doc, recipe: ReadonlyDeep<Recipe>): void {
+  getRecipeYmap(doc).set(recipe.id, recipe);
+}
+
+/**
+ * Appends `version` to an existing recipe's versions (they are append-only) and stamps
+ * `updated_at`. Returns the updated recipe, or throws if the recipe does not exist.
+ */
+export function appendRecipeVersion(
+  doc: Y.Doc,
+  recipe_id: RecipeId,
+  version: ReadonlyDeep<RecipeVersion>,
+  now: number = Date.now(),
+): ReadonlyDeep<Recipe> {
+  const existing = getRecipe(doc, recipe_id);
+  if (isInvalid(existing)) throw existing;
+  const updated: ReadonlyDeep<Recipe> = {
+    ...existing,
+    versions: [...existing.versions, { ...version, recipe_id }],
+    updated_at: now,
+  };
+  getRecipeYmap(doc).set(recipe_id, updated);
+  return updated;
+}
+
 export function deleteRecipe(doc: Y.Doc, id: RecipeId): void {
   getRecipeYmap(doc).delete(id);
 }
