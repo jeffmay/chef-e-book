@@ -29,6 +29,8 @@ export * from "./yjs/nameKeys.ts";
 export * from "./export/recipeBookExport.ts";
 export * from "./export/buildExport.ts";
 export * from "./export/exportFromDoc.ts";
+export * from "./import/importPlan.ts";
+export * from "./import/applyImport.ts";
 export * from "./names/storedName.ts";
 export * from "./yjs/origins.ts";
 export * from "./yjs/undo.ts";

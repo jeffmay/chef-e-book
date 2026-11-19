@@ -1,11 +1,13 @@
 import type { ReadonlyDeep } from "type-fest";
 import { randomId } from "./ids.ts";
-import type { IngredientId } from "./kitchenware.ts";
+import type { ContainerId, IngredientId } from "./kitchenware.ts";
+import type { Measurement } from "./measurement.ts";
 import {
   type IngredientItem,
   type Instruction,
   type RecipeIngredient,
   RecipeIngredientId,
+  type RecipeVersion,
   type Section,
   type SectionItem,
   type SectionItemId,
@@ -151,4 +153,114 @@ export function applySectionItemUpdates<S extends ReadonlyDeep<Section>>(
 
   if (updates.size === 0) return [...sections];
   return sections.map((s) => ({ ...s, contents: updateContents(s.contents) }));
+}
+
+/** How `remapVersionReferences` rewrites the ids a version points at. */
+export type ReferenceRemap = {
+  readonly ingredient: (id: IngredientId) => IngredientId;
+  readonly container: (id: ContainerId) => ContainerId;
+};
+
+function copyMeasurement(m: ReadonlyDeep<Measurement>): Measurement {
+  return {
+    value: { numerator: m.value.numerator, denominator: m.value.denominator },
+    unit: m.unit,
+  };
+}
+
+function copyNotes(item: ReadonlyDeep<{ notes?: string[] }>): { notes?: string[] } {
+  return item.notes === undefined ? {} : { notes: [...item.notes] };
+}
+
+/**
+ * A deep copy of a version with every ingredient and container id it refers to rewritten through
+ * `remap`: its ingredient list, ingredient rows (also inside containers and sub-sections), the
+ * ingredients its instructions act on, and its container items. Equipment ids and the version's
+ * own ids are left alone. When two ingredients collapse onto one, the ingredient list keeps the
+ * first (the first custom amount wins). The copy shares no structure with the input.
+ */
+export function remapVersionReferences(
+  version: ReadonlyDeep<RecipeVersion>,
+  remap: ReferenceRemap,
+): RecipeVersion {
+  function remapIngredientItem(item: ReadonlyDeep<IngredientItem>): IngredientItem {
+    return {
+      kind: "ingredient",
+      id: item.id,
+      ingredient_id: remap.ingredient(item.ingredient_id),
+      ...(item.customAmount !== undefined && { customAmount: copyMeasurement(item.customAmount) }),
+      ...copyNotes(item),
+    };
+  }
+
+  function remapItem(item: ReadonlyDeep<SectionItem>): SectionItem {
+    switch (item.kind) {
+      case "ingredient":
+        return remapIngredientItem(item);
+      case "container":
+        return {
+          kind: "container",
+          id: item.id,
+          container_id: remap.container(item.container_id),
+          descriptor: item.descriptor,
+          ...(item.ordered !== undefined && { ordered: item.ordered }),
+          contents: item.contents.map(remapIngredientItem),
+          ...copyNotes(item),
+        };
+      case "instruction":
+        return {
+          kind: "instruction",
+          id: item.id,
+          instruction: item.instruction,
+          ...(item.equipment_id !== undefined && { equipment_id: item.equipment_id }),
+          ...(item.ingredient_ids !== undefined && {
+            ingredient_ids: item.ingredient_ids.map((id) => remap.ingredient(id)),
+          }),
+          ...(item.duration_seconds !== undefined && { duration_seconds: item.duration_seconds }),
+          ...copyNotes(item),
+        };
+      case "section":
+        return remapSection(item);
+      case "text_block":
+        return { kind: "text_block", id: item.id, text: item.text, ...copyNotes(item) };
+    }
+  }
+
+  function remapSection(section: ReadonlyDeep<Section>): Section {
+    return {
+      kind: "section",
+      id: section.id,
+      ...(section.header !== undefined && { header: section.header }),
+      contents: section.contents.map(remapItem),
+      ...copyNotes(section),
+    };
+  }
+
+  const seen = new Set<IngredientId>();
+  const ingredients: RecipeIngredient[] = [];
+  for (const row of version.ingredients) {
+    const ingredient_id = remap.ingredient(row.ingredient_id);
+    if (seen.has(ingredient_id)) continue;
+    seen.add(ingredient_id);
+    ingredients.push({
+      id: row.id,
+      ingredient_id,
+      ...(row.amount !== undefined && { amount: copyMeasurement(row.amount) }),
+    });
+  }
+
+  return {
+    id: version.id,
+    recipe_id: version.recipe_id,
+    description: version.description,
+    ingredients,
+    sections: version.sections.map(remapSection),
+    ...(version.estimated_time_seconds !== undefined && {
+      estimated_time_seconds: version.estimated_time_seconds,
+    }),
+    ...(version.seconds_per_ingredient !== undefined && {
+      seconds_per_ingredient: version.seconds_per_ingredient,
+    }),
+    created_at: version.created_at,
+  };
 }

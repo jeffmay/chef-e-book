@@ -113,7 +113,7 @@ function indexById<Id extends string, T extends { readonly id: Id }>(
 }
 
 /** Every container item in a version's sections, however deeply nested. */
-function collectContainerIds(version: ReadonlyDeep<RecipeVersion>): ContainerId[] {
+export function collectContainerIds(version: ReadonlyDeep<RecipeVersion>): ContainerId[] {
   const ids: ContainerId[] = [];
   function walk(items: ReadonlyDeep<SectionItem[]>) {
     for (const item of items) {
@@ -126,7 +126,7 @@ function collectContainerIds(version: ReadonlyDeep<RecipeVersion>): ContainerId[
 }
 
 /** The ingredients a version uses: its list, its ingredient rows, and the ingredients its steps act on. */
-function collectIngredientIds(version: ReadonlyDeep<RecipeVersion>): IngredientId[] {
+export function collectIngredientIds(version: ReadonlyDeep<RecipeVersion>): IngredientId[] {
   const ids = new Set<IngredientId>();
   for (const row of version.ingredients) ids.add(row.ingredient_id);
   for (const item of collectIngredientItems(version.sections)) ids.add(item.ingredient_id);

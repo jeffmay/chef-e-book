@@ -83,6 +83,22 @@ export function getLabelNameIndex(doc: Y.Doc): NameIndex<KitchenwareLabelId> {
  * Unicode form, but **not** plurals: "Spices" and "Spice" are different labels — or `undefined`
  * if the name is free. `exclude` is the label being renamed, or the labels being merged.
  */
+/** Writes a label under its own id (used by import, which keeps ids when it can). */
+export function putLabel(doc: Y.Doc, label: ReadonlyDeep<KitchenwareLabel>): void {
+  getLabelsYmap(doc).set(label.id, toStored(label));
+}
+
+/** Replaces the kinds of an existing label, keeping its name and id. */
+export function setLabelKinds(
+  doc: Y.Doc,
+  id: KitchenwareLabelId,
+  kinds: ReadonlySet<KitchenwareKind>,
+): void {
+  const label = validateLabel(id, getLabelsYmap(doc).get(id));
+  if (isInvalid(label)) return;
+  getLabelsYmap(doc).set(id, toStored({ ...label, kinds }));
+}
+
 export function findLabelNameClash(
   doc: Y.Doc,
   name: string,

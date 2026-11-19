@@ -48,6 +48,7 @@
 }
 
 .bie-add-btn,
-.bie-export-btn {
+.bie-export-btn,
+.bie-import-btn {
   align-self: flex-start;
 }

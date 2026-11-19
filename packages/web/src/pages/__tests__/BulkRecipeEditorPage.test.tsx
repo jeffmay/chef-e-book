@@ -1,6 +1,9 @@
 import {
   createRecipe,
+  exportRecipes,
+  getRecipes,
   parseRecipeBookExport,
+  serializeRecipeBookExport,
   createRecipeFolder,
   DEFAULT_VERSION_DESCRIPTION,
   deleteRecipe,
@@ -849,5 +852,46 @@ describe("BulkRecipeEditorPage — export", () => {
     await select("Tacos");
     await userEvent.click(screen.getByRole("button", { name: "Export selected recipes" }));
     expect(screen.getByRole("checkbox", { name: "Select recipe Tacos" })).toBeChecked();
+  });
+});
+
+describe("BulkRecipeEditorPage — import", () => {
+  it("opens the import dialog for recipes, and closes it again", async () => {
+    setup();
+    await flushAsyncEffects();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Import recipes" }));
+    expect(screen.getByRole("dialog", { name: "Import recipes" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("shows an imported recipe in the list once the import is done", async () => {
+    const source = new Y.Doc();
+    createRecipe(source, { title: "Imported Pie", description: "v1" });
+    const file = new File(
+      [
+        serializeRecipeBookExport(
+          exportRecipes(
+            source,
+            getRecipes(source).map((r) => r.id),
+          ),
+        ),
+      ],
+      "pie.json",
+      { type: "application/json" },
+    );
+    setup();
+    await flushAsyncEffects();
+    await userEvent.click(screen.getByRole("button", { name: "Import recipes" }));
+    await userEvent.upload(screen.getByLabelText("Export file"), file);
+    await screen.findByLabelText("Destination folder");
+    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    await userEvent.click(screen.getByRole("button", { name: "Import" }));
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(await screen.findByText("Imported Pie")).toBeInTheDocument();
   });
 });
