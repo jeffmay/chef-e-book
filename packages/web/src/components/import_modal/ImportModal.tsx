@@ -68,6 +68,8 @@ function actionText(row: ReadonlyDeep<ImportRow>): string {
       return "New";
     case "reuse":
       return "Already in the book";
+    case "update":
+      return "Overwritten";
     case "new_version":
       return "New version";
     case "unchanged":
@@ -100,6 +102,7 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
   const [newFolderName, setNewFolderName] = useState("");
   const [folderMode, setFolderMode] = useState<FolderMode>("retain");
   const [onMatch, setOnMatch] = useState<RecipeMatchAction>("merge_version");
+  const [overwriteKitchenware, setOverwriteKitchenware] = useState(false);
   const [recipeActions, setRecipeActions] = useState<Readonly<Record<string, RecipeMatchAction>>>(
     {},
   );
@@ -116,13 +119,14 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
     (now: number): ImportOptions => ({
       folder_mode: folderMode,
       on_match: onMatch,
+      overwrite_kitchenware: overwriteKitchenware,
       recipe_actions: recipeActions,
       source_label: chosen?.label ?? "an import",
       now,
       ...(folderId !== "" && { target_folder_id: loadId(RecipeFolderId, folderId) }),
       ...(newFolderName.trim() !== "" && { new_folder_name: newFolderName.trim() }),
     }),
-    [folderMode, onMatch, recipeActions, chosen, folderId, newFolderName],
+    [folderMode, onMatch, overwriteKitchenware, recipeActions, chosen, folderId, newFolderName],
   );
   const plan = useMemo<ImportPlan | null>(
     () =>
@@ -477,6 +481,22 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
         }}
       >
         <div className="im-body">
+          {((bundle?.ingredients.length ?? 0) > 0 || (bundle?.containers.length ?? 0) > 0) && (
+            <div className="im-field">
+              <label className="im-choice">
+                <input
+                  type="checkbox"
+                  checked={overwriteKitchenware}
+                  onChange={(e) => setOverwriteKitchenware(e.target.checked)}
+                />
+                Overwrite my kitchenware with the file's versions
+              </label>
+              <small>
+                Replaces the name, labels and parent (and an ingredient's default amount) of
+                ingredients and containers the book already has. Leave it unticked to keep yours.
+              </small>
+            </div>
+          )}
           {summary !== null && (
             <>
               <p className="im-summary" role="status">

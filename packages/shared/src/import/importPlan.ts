@@ -15,6 +15,7 @@ import {
   KitchenwareLabelId,
 } from "../types/kitchenware.ts";
 import { type Recipe, RecipeId, type RecipeVersion, RecipeVersionId } from "../types/recipe.ts";
+import type { Measurement } from "../types/measurement.ts";
 import { type RecipeFolder, RecipeFolderId } from "../types/recipeGroup.ts";
 import { remapVersionReferences } from "../types/sections.ts";
 
@@ -32,6 +33,12 @@ export type ImportOptions = ReadonlyDeep<{
   on_match: RecipeMatchAction;
   /** Per-recipe overrides of `on_match`, keyed by the recipe's id in the file. */
   recipe_actions?: Record<string, RecipeMatchAction>;
+  /**
+   * Replace the name, labels, and parent (and an ingredient's default amount) of ingredients and
+   * containers the book already has with the file's versions. Off by default: otherwise the book's
+   * own kitchenware is left untouched.
+   */
+  overwrite_kitchenware?: boolean;
   /** Where the data came from; goes into the description of a version added to an existing recipe. */
   source_label: string;
   /** Epoch milliseconds. */
@@ -43,8 +50,10 @@ export type ImportEntity = "ingredient" | "container" | "label" | "folder" | "re
 export type ImportAction =
   /** A new entry will be written. */
   | "create"
-  /** The book already has it; it is left untouched (local always wins). */
+  /** The book already has it; it is left untouched (local wins unless overwriting was asked for). */
   | "reuse"
+  /** An ingredient or container the book already has will be overwritten with the file's version. */
+  | "update"
   /** A new version will be appended to a recipe the book already has. */
   | "new_version"
   /** A recipe the book already has holds this version's content; nothing to write. */
@@ -69,7 +78,11 @@ export type ImportPlan = {
   /** Existing labels that gain kinds from the file. */
   label_kind_updates: Array<{ id: KitchenwareLabelId; kinds: Set<KitchenwareKind> }>;
   ingredients_to_create: Ingredient[];
+  /** Ingredients the book already has, whole, as they will be after being overwritten. */
+  ingredients_to_update: Ingredient[];
   containers_to_create: Container[];
+  /** Containers the book already has, whole, as they will be after being overwritten. */
+  containers_to_update: Container[];
   folders_to_create: RecipeFolder[];
   recipes_to_create: Recipe[];
   versions_to_add: Array<{ recipe_id: RecipeId; version: RecipeVersion }>;
@@ -85,7 +98,9 @@ export function isEmptyImportPlan(plan: ReadonlyDeep<ImportPlan>): boolean {
     plan.labels_to_create.length === 0 &&
     plan.label_kind_updates.length === 0 &&
     plan.ingredients_to_create.length === 0 &&
+    plan.ingredients_to_update.length === 0 &&
     plan.containers_to_create.length === 0 &&
+    plan.containers_to_update.length === 0 &&
     plan.folders_to_create.length === 0 &&
     plan.recipes_to_create.length === 0 &&
     plan.versions_to_add.length === 0
@@ -98,6 +113,17 @@ export function isEmptyImportPlan(plan: ReadonlyDeep<ImportPlan>): boolean {
 
 const byNameThenId = <T extends { readonly id: string; readonly name: string }>(a: T, b: T) =>
   a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
+
+function copyMeasurement(m: ReadonlyDeep<Measurement>): Measurement {
+  return {
+    value: { numerator: m.value.numerator, denominator: m.value.denominator },
+    unit: m.unit,
+  };
+}
+
+function sameSet(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
+  return a.size === b.size && [...a].every((x) => b.has(x));
+}
 
 /** Tracks the ids in use so new entries can keep the file's id when it is free, and get a fresh one when not. */
 class IdAllocator<Id extends string> {
@@ -223,7 +249,9 @@ export function planImport(
     labels_to_create: [],
     label_kind_updates: [],
     ingredients_to_create: [],
+    ingredients_to_update: [],
     containers_to_create: [],
+    containers_to_update: [],
     folders_to_create: [],
     recipes_to_create: [],
     versions_to_add: [],
@@ -300,13 +328,36 @@ export function planImport(
       readonly labels: ReadonlySet<KitchenwareLabelId>;
       readonly parent_id?: Id | undefined;
     },
-    Made extends { readonly id: Id },
+    Existing extends {
+      readonly id: Id;
+      readonly name: string;
+      readonly labels: ReadonlySet<KitchenwareLabelId>;
+      readonly parent_id?: Id | undefined;
+    },
+    Made extends { readonly id: Id; readonly parent_id?: Id | undefined },
   >(args: {
     entity: "ingredient" | "container";
-    existing: ReadonlyArray<{ readonly id: Id; readonly name: string }>;
+    existing: readonly Existing[];
     incoming: readonly Item[];
     allocator: IdAllocator<Id>;
     make: (item: Item, fields: { id: Id; labels: Set<KitchenwareLabelId>; parent_id?: Id }) => Made;
+    /**
+     * When given, a match is overwritten with the file's version of its name, labels and parent
+     * instead of being left alone. The id never changes, so everything that points at it stays valid.
+     */
+    overwrite?:
+      | {
+          /** Differences beyond name, labels and parent (an ingredient's default amount). */
+          extraChanges?: (item: Item, existing: Existing) => string[];
+          /** The entry as it will be after the overwrite. */
+          made: (
+            item: Item,
+            existing: Existing,
+            fields: { name: string; labels: Set<KitchenwareLabelId>; parent_id?: Id },
+          ) => Made;
+          collect: (made: Made) => void;
+        }
+      | undefined;
   }) {
     const existingById = new Map(args.existing.map((e) => [e.id, e]));
     const index = buildNameIndex(
@@ -315,6 +366,79 @@ export function planImport(
     const map = new Map<string, Id>();
     const created: Made[] = [];
     const createdByKey = new Map<string, Id>();
+    const overwritten = new Set<Id>();
+    const plannedParents = new Map<Id, Id | undefined>();
+    const effectiveParent = (id: Id): Id | undefined =>
+      plannedParents.has(id) ? plannedParents.get(id) : existingById.get(id)?.parent_id;
+    const resolveParent = (item: Item): Id | undefined =>
+      item.parent_id === undefined
+        ? undefined
+        : (map.get(item.parent_id) ??
+          (existingById.has(item.parent_id) ? item.parent_id : undefined));
+    const resolveLabels = (item: Item): Set<KitchenwareLabelId> => {
+      const labels = new Set<KitchenwareLabelId>();
+      for (const labelId of item.labels) {
+        const resolved = resolveLabel(labelId);
+        if (resolved !== undefined) labels.add(resolved);
+      }
+      return labels;
+    };
+    /** Whether giving `id` this parent would make a loop, counting the overwrites planned so far. */
+    const wouldLoop = (id: Id, parent: Id): boolean => {
+      const seen = new Set<Id>();
+      for (
+        let at: Id | undefined = parent;
+        at !== undefined && !seen.has(at);
+        at = effectiveParent(at)
+      ) {
+        if (at === id) return true;
+        seen.add(at);
+      }
+      return false;
+    };
+    const planOverwrite = (item: Item, existing: Existing) => {
+      const overwrite = args.overwrite;
+      if (overwrite === undefined) return undefined;
+      const changed: string[] = [];
+
+      let name = existing.name;
+      if (item.name !== existing.name) {
+        if (findNameClash(index, ingredientNameKey(item.name), existing.id) !== undefined) {
+          warn(
+            `"${existing.name}" was not renamed to "${item.name}": another ${args.entity} in the book already has that name.`,
+          );
+        } else {
+          name = item.name;
+          changed.push("name");
+        }
+      }
+      changed.push(...(overwrite.extraChanges?.(item, existing) ?? []));
+
+      const labels = resolveLabels(item);
+      if (!sameSet(labels, existing.labels)) changed.push("labels");
+
+      let parent: Id | undefined = existing.parent_id;
+      const fileParent = resolveParent(item);
+      if (fileParent !== undefined && fileParent !== existing.parent_id) {
+        if (fileParent === existing.id || wouldLoop(existing.id, fileParent)) {
+          warn(
+            `"${existing.name}" keeps its parent: the file's parent would make a loop in the book.`,
+          );
+        } else {
+          parent = fileParent;
+          changed.push("parent");
+        }
+      }
+
+      if (changed.length === 0) return undefined;
+      const made = overwrite.made(item, existing, {
+        name,
+        labels,
+        ...(parent !== undefined && { parent_id: parent }),
+      });
+      overwrite.collect(made);
+      return { made, changed };
+    };
     const ordered = parentsFirst([...args.incoming].sort(byNameThenId), (item) =>
       warn(`"${item.name}" is in a loop of parents in the file; it is imported without a parent.`),
     );
@@ -324,11 +448,31 @@ export function planImport(
         existingById.get(item.id)?.id ?? findNameClash(index, key) ?? createdByKey.get(key);
       if (matched !== undefined) {
         map.set(item.id, matched);
+        const existing = existingById.get(matched);
+        const result =
+          existing !== undefined && !overwritten.has(matched)
+            ? planOverwrite(item, existing)
+            : undefined;
+        if (result !== undefined) {
+          overwritten.add(matched);
+          plannedParents.set(matched, result.made.parent_id);
+          plan.rows.push({
+            entity: args.entity,
+            action: "update",
+            name: item.name,
+            reason: `Overwrites the book's ${result.changed.join(", ")}.`,
+            incoming_id: item.id,
+          });
+          continue;
+        }
         plan.rows.push({
           entity: args.entity,
           action: "reuse",
           name: item.name,
-          reason: `The book already has this ${args.entity}.`,
+          reason:
+            args.overwrite !== undefined && existing !== undefined
+              ? `The book's ${args.entity} already matches.`
+              : `The book already has this ${args.entity}.`,
           incoming_id: item.id,
         });
         continue;
@@ -363,7 +507,12 @@ export function planImport(
     return { map, created, existingById };
   }
 
-  const ingredientPlan = planKitchenware<IngredientId, ReadonlyDeep<Ingredient>, Ingredient>({
+  const ingredientPlan = planKitchenware<
+    IngredientId,
+    ReadonlyDeep<Ingredient>,
+    ReadonlyDeep<Ingredient>,
+    Ingredient
+  >({
     entity: "ingredient",
     existing: target.ingredients,
     incoming: bundle.ingredients,
@@ -375,20 +524,38 @@ export function planImport(
       kind: "ingredient",
       id: fields.id,
       name: item.name,
-      default_measurement_value: {
-        value: {
-          numerator: item.default_measurement_value.value.numerator,
-          denominator: item.default_measurement_value.value.denominator,
-        },
-        unit: item.default_measurement_value.unit,
-      },
+      default_measurement_value: copyMeasurement(item.default_measurement_value),
       labels: fields.labels,
       ...(fields.parent_id !== undefined && { parent_id: fields.parent_id }),
     }),
+    overwrite:
+      options.overwrite_kitchenware === true
+        ? {
+            extraChanges: (item, existing) =>
+              JSON.stringify(copyMeasurement(item.default_measurement_value)) !==
+              JSON.stringify(existing.default_measurement_value)
+                ? ["default amount"]
+                : [],
+            made: (item, existing, fields) => ({
+              kind: "ingredient",
+              id: existing.id,
+              name: fields.name,
+              default_measurement_value: copyMeasurement(item.default_measurement_value),
+              labels: fields.labels,
+              ...(fields.parent_id !== undefined && { parent_id: fields.parent_id }),
+            }),
+            collect: (made) => plan.ingredients_to_update.push(made),
+          }
+        : undefined,
   });
   plan.ingredients_to_create = ingredientPlan.created;
 
-  const containerPlan = planKitchenware<ContainerId, ReadonlyDeep<Container>, Container>({
+  const containerPlan = planKitchenware<
+    ContainerId,
+    ReadonlyDeep<Container>,
+    ReadonlyDeep<Container>,
+    Container
+  >({
     entity: "container",
     existing: target.containers,
     incoming: bundle.containers,
@@ -403,6 +570,19 @@ export function planImport(
       labels: fields.labels,
       ...(fields.parent_id !== undefined && { parent_id: fields.parent_id }),
     }),
+    overwrite:
+      options.overwrite_kitchenware === true
+        ? {
+            made: (_item, existing, fields) => ({
+              kind: "container",
+              id: existing.id,
+              name: fields.name,
+              labels: fields.labels,
+              ...(fields.parent_id !== undefined && { parent_id: fields.parent_id }),
+            }),
+            collect: (made) => plan.containers_to_update.push(made),
+          }
+        : undefined,
   });
   plan.containers_to_create = containerPlan.created;
 
