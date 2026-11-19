@@ -24,6 +24,7 @@ import { addLabel, getLabels } from "../../yjs/labelStore.ts";
 import { createRecipeFolder, getRecipeFoldersFlat } from "../../yjs/recipeFolderStore.ts";
 import { createRecipe, getRecipe, getRecipes, saveRecipe } from "../../yjs/recipeStore.ts";
 import { createBookUndoManager } from "../../yjs/undo.ts";
+import { isEmptyImportPlan } from "../importPlan.ts";
 import {
   applyImportPlan,
   importBundle,
@@ -374,5 +375,100 @@ describe("applyImportPlan with containers and folders", () => {
     addContainer(doc, container("pre", "Pre"));
     importBundle(doc, bundle(), makeOptions());
     expect(readExportSource(doc).recipe_folders[0]?.id).toBe(DESSERTS.id);
+  });
+});
+
+describe("overwriting kitchenware on import", () => {
+  const HALF_TSP = { value: { numerator: 1, denominator: 2 }, unit: "tsp" } as const;
+  const overwrite = makeOptions({ overwrite_kitchenware: true });
+  const fileSalt = { ...ingredient("salt", "Sea Salt"), default_measurement_value: HALF_TSP };
+
+  it("replaces the book's ingredient under its own id, with a name key to match", () => {
+    addIngredient(doc, ingredient("salt", "Salt"));
+    importBundle(doc, makeBundle({ ingredients: [fileSalt] }), overwrite);
+
+    const [only] = getIngredients(doc);
+    expect(getIngredients(doc)).toHaveLength(1);
+    expect(only).toMatchObject({
+      id: fileSalt.id,
+      name: "Sea Salt",
+      default_measurement_value: HALF_TSP,
+    });
+    expect(getIngredientYmap(doc).get(fileSalt.id)).toMatchObject({ name_key: "sea salt" });
+  });
+
+  it("is one undo step, and undo puts the book's own version back", () => {
+    addIngredient(doc, ingredient("salt", "Salt"));
+    const undoManager = createBookUndoManager(doc);
+    undoManager.stopCapturing();
+    const before = snapshot(doc);
+
+    importBundle(
+      doc,
+      makeBundle({ ingredients: [fileSalt, ingredient("pepper", "Pepper")] }),
+      overwrite,
+      undoManager,
+    );
+    expect(snapshot(doc)).not.toBe(before);
+
+    undoManager.undo();
+    expect(snapshot(doc)).toBe(before);
+    undoManager.destroy();
+  });
+
+  it("writes nothing the second time the same file is imported", () => {
+    importBundle(doc, makeBundle({ ingredients: [fileSalt] }), overwrite);
+    let updates = 0;
+    doc.on("update", () => updates++);
+    const again = importBundle(doc, makeBundle({ ingredients: [fileSalt] }), overwrite);
+    expect(isEmptyImportPlan(again)).toBe(true);
+    expect(updates).toBe(0);
+  });
+
+  it("is not done when the option is off", () => {
+    addIngredient(doc, ingredient("salt", "Salt"));
+    importBundle(doc, makeBundle({ ingredients: [fileSalt] }), makeOptions());
+    expect(names(getIngredients(doc))).toEqual(["Salt"]);
+  });
+
+  it("overwrites a container too, as part of the same single undo step", () => {
+    addContainer(doc, container("bowl", "Bowl"));
+    addIngredient(doc, ingredient("salt", "Salt"));
+    const undoManager = createBookUndoManager(doc);
+    undoManager.stopCapturing();
+    const before = snapshot(doc);
+
+    importBundle(
+      doc,
+      makeBundle({ ingredients: [fileSalt], containers: [container("bowl", "Mixing Bowl")] }),
+      overwrite,
+      undoManager,
+    );
+    expect(names(readExportSource(doc).containers)).toEqual(["Mixing Bowl"]);
+    expect(names(getIngredients(doc))).toEqual(["Sea Salt"]);
+
+    undoManager.undo();
+    expect(snapshot(doc)).toBe(before);
+    undoManager.destroy();
+  });
+
+  it("is summarized as overwritten ingredients and containers", () => {
+    addContainer(doc, container("bowl", "Bowl"));
+    const plan = planImportIntoDoc(
+      doc,
+      makeBundle({ ingredients: [fileSalt], containers: [container("bowl", "Mixing Bowl")] }),
+      overwrite,
+    );
+    expect(summarizeImportPlan(plan, "preview").message).toBe(
+      "This will import: 1 ingredient added, 1 container overwritten.",
+    );
+  });
+
+  it("is summarized as overwritten ingredients", () => {
+    addIngredient(doc, ingredient("salt", "Salt"));
+    const plan = planImportIntoDoc(doc, makeBundle({ ingredients: [fileSalt] }), overwrite);
+    expect(summarizeImportPlan(plan, "preview").message).toBe(
+      "This will import: 1 ingredient overwritten.",
+    );
   });
 });

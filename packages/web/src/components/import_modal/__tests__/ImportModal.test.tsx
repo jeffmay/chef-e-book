@@ -1,5 +1,7 @@
 import {
+  addContainer,
   addIngredient,
+  ContainerId,
   createBookUndoManager,
   createRecipe,
   createRecipeFolder,
@@ -556,5 +558,146 @@ describe("ImportModal — hygiene", () => {
     renderModal("recipes");
     await flushAsyncEffects();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+});
+
+describe("ImportModal — overwriting my kitchenware", () => {
+  const LOCAL_FLOUR: Ingredient = {
+    ...FLOUR,
+    default_measurement_value: { value: { numerator: 2, denominator: 1 }, unit: "tsp" },
+  };
+  const unitOfFlour = (d: Y.Doc) =>
+    getIngredients(d).find((i) => i.id === FLOUR.id)?.default_measurement_value.unit;
+
+  async function toRecipePreview() {
+    addIngredient(doc, LOCAL_FLOUR);
+    renderModal("recipes");
+    await userEvent.upload(screen.getByLabelText("Export file"), recipesFile(makeSourceDoc()));
+    await screen.findByLabelText("Destination folder");
+    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+  }
+
+  it("offers the choice on the preview, unticked", async () => {
+    await toRecipePreview();
+    expect(
+      screen.getByRole("checkbox", { name: "Overwrite my kitchenware with the file's versions" }),
+    ).not.toBeChecked();
+  });
+
+  it("keeps the book's own ingredient when left unticked", async () => {
+    await toRecipePreview();
+    expect(screen.getByRole("status")).not.toHaveTextContent("overwritten");
+    await userEvent.click(screen.getByRole("button", { name: "Import" }));
+    expect(unitOfFlour(doc)).toBe("tsp");
+  });
+
+  it("shows what it would overwrite as soon as it is ticked", async () => {
+    await toRecipePreview();
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Overwrite my kitchenware with the file's versions" }),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("1 ingredient overwritten");
+  });
+
+  it("overwrites the book's ingredient when ticked, and Undo takes it back", async () => {
+    undoManager.stopCapturing();
+    await toRecipePreview();
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Overwrite my kitchenware with the file's versions" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Import" }));
+    expect(unitOfFlour(doc)).toBe("cup");
+    expect(screen.getByRole("status")).toHaveTextContent("1 ingredient overwritten");
+
+    act(() => undoManager.undo());
+    expect(unitOfFlour(doc)).toBe("tsp");
+  });
+
+  it("is offered on the ingredients page too", async () => {
+    addIngredient(doc, LOCAL_FLOUR);
+    renderModal("ingredients");
+    await userEvent.upload(screen.getByLabelText("Export file"), recipesFile(makeSourceDoc()));
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Overwrite my kitchenware with the file's versions",
+      }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Import" }));
+    expect(unitOfFlour(doc)).toBe("cup");
+  });
+
+  it("is not offered when the file has no ingredients", async () => {
+    const plain = new Y.Doc();
+    createRecipe(plain, { title: "Plain", description: "v1" });
+    renderModal("recipes");
+    await userEvent.upload(screen.getByLabelText("Export file"), recipesFile(plain));
+    await screen.findByLabelText("Destination folder");
+    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(
+      screen.queryByRole("checkbox", { name: "Overwrite my kitchenware with the file's versions" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("lists an overwritten ingredient as Overwritten among the other items", async () => {
+    await toRecipePreview();
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Overwrite my kitchenware with the file's versions" }),
+    );
+    await userEvent.click(screen.getByText(/Ingredients and other items/));
+    const row = within(screen.getByRole("list", { name: "Other items" }))
+      .getByText("Flour")
+      .closest("li");
+    expect(row).toHaveTextContent("Overwritten");
+  });
+
+  it("overwrites a container too, and is offered when the file has only containers", async () => {
+    const BOWL_ID = fixedId(ContainerId, "bowl");
+    const source = new Y.Doc();
+    addContainer(source, {
+      kind: "container",
+      id: BOWL_ID,
+      name: "Mixing Bowl",
+      labels: new Set(),
+    });
+    const cake = createRecipe(source, { title: "Cake", description: "v1" });
+    saveRecipe(source, cake.id, {
+      title: "Cake",
+      create_new_version: false,
+      version: {
+        id: fixedId(RecipeVersionId, "boxv1"),
+        recipe_id: cake.id,
+        description: "v1",
+        ingredients: [],
+        sections: [
+          {
+            kind: "section",
+            id: fixedId(SectionItemId, "sec"),
+            contents: [
+              {
+                kind: "container",
+                id: fixedId(SectionItemId, "c1"),
+                container_id: BOWL_ID,
+                descriptor: "",
+                contents: [],
+              },
+            ],
+          },
+        ],
+        created_at: 1,
+      },
+    });
+    addContainer(doc, { kind: "container", id: BOWL_ID, name: "Bowl", labels: new Set() });
+
+    renderModal("recipes");
+    await userEvent.upload(screen.getByLabelText("Export file"), recipesFile(source));
+    await screen.findByLabelText("Destination folder");
+    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Overwrite my kitchenware with the file's versions" }),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("1 container overwritten");
+    await userEvent.click(screen.getByRole("button", { name: "Import" }));
+
+    expect(readExportSource(doc).containers.map((c) => c.name)).toEqual(["Mixing Bowl"]);
   });
 });

@@ -667,3 +667,296 @@ describe("planImport — importing the same file twice", () => {
     );
   });
 });
+
+describe("planImport — overwriting ingredients", () => {
+  const overwrite = makeOptions({ overwrite_kitchenware: true });
+  const HALF_TSP = { value: { numerator: 1, denominator: 2 }, unit: "tsp" } as const;
+  const LOCAL = ingredient("salt", "Salt");
+  const FILE_SALT = { ...ingredient("salt", "Sea Salt"), default_measurement_value: HALF_TSP };
+
+  it("leaves the book's ingredient alone unless asked, whatever the file says", () => {
+    const plan = planImport(
+      target({ ingredients: [LOCAL] }),
+      makeBundle({ ingredients: [FILE_SALT] }),
+      makeOptions(),
+    );
+    expect(plan.ingredients_to_update).toEqual([]);
+    expect(actionsOf(plan.rows, "ingredient")).toEqual(["Sea Salt:reuse"]);
+  });
+
+  it("overwrites the name, default amount, and labels of a match by id, keeping its id", () => {
+    const dairy = label(DAIRY_ID, "dairy");
+    const file = { ...FILE_SALT, labels: new Set([DAIRY_ID]) };
+    const plan = planImport(
+      target({ ingredients: [LOCAL] }),
+      makeBundle({ ingredients: [file], labels: [dairy] }),
+      makeOptions({ overwrite_kitchenware: true }),
+    );
+    expect(plan.ingredients_to_create).toEqual([]);
+    expect(plan.ingredients_to_update).toEqual([
+      {
+        kind: "ingredient",
+        id: LOCAL.id,
+        name: "Sea Salt",
+        default_measurement_value: HALF_TSP,
+        labels: new Set([DAIRY_ID]),
+      },
+    ]);
+    expect(plan.rows.find((r) => r.entity === "ingredient")).toMatchObject({
+      action: "update",
+      reason: "Overwrites the book's name, default amount, labels.",
+    });
+  });
+
+  it("overwrites a match by name too, taking the file's spelling but the book's id", () => {
+    const local = ingredient("localtomato", "Tomato");
+    const plan = planImport(
+      target({ ingredients: [local] }),
+      makeBundle({ ingredients: [ingredient("filetomato", "Tomatoes")] }),
+      overwrite,
+    );
+    expect(plan.ingredients_to_update.map((i) => [i.id, i.name])).toEqual([[local.id, "Tomatoes"]]);
+  });
+
+  it("does nothing for an ingredient that already matches", () => {
+    const plan = planImport(
+      target({ ingredients: [LOCAL] }),
+      makeBundle({ ingredients: [LOCAL] }),
+      overwrite,
+    );
+    expect(plan.ingredients_to_update).toEqual([]);
+    expect(isEmptyImportPlan(plan)).toBe(true);
+    expect(plan.rows[0]?.reason).toBe("The book's ingredient already matches.");
+  });
+
+  it("replaces the labels with the file's, dropping the book's own and creating the file's new ones", () => {
+    const baking = label(BAKING_ID, "baking");
+    const local = { ...LOCAL, labels: new Set([BAKING_ID]) };
+    const file = { ...LOCAL, labels: new Set([DAIRY_ID]) };
+    const plan = planImport(
+      target({ ingredients: [local], labels: [baking] }),
+      makeBundle({ ingredients: [file], labels: [label(DAIRY_ID, "dairy")] }),
+      overwrite,
+    );
+    expect(plan.labels_to_create.map((l) => l.name)).toEqual(["dairy"]);
+    expect([...(plan.ingredients_to_update[0]?.labels ?? [])]).toEqual([DAIRY_ID]);
+    expect(plan.rows.find((r) => r.entity === "ingredient")?.reason).toBe(
+      "Overwrites the book's labels.",
+    );
+  });
+
+  it("maps the file's labels onto the book's labels of the same name", () => {
+    const localDairy = label(fixedId(KitchenwareLabelId, "localdairy"), "Dairy");
+    const file = { ...LOCAL, labels: new Set([DAIRY_ID]) };
+    const plan = planImport(
+      target({ ingredients: [LOCAL], labels: [localDairy] }),
+      makeBundle({ ingredients: [file], labels: [label(DAIRY_ID, "dairy")] }),
+      overwrite,
+    );
+    expect(plan.labels_to_create).toEqual([]);
+    expect([...(plan.ingredients_to_update[0]?.labels ?? [])]).toEqual([localDairy.id]);
+  });
+
+  describe("parents", () => {
+    const CHEESE = ingredient("cheese", "Cheese");
+    const SHREDDED = ingredient("shredded", "Shredded Cheese");
+
+    it("takes the file's parent when it resolves", () => {
+      const plan = planImport(
+        target({ ingredients: [CHEESE, SHREDDED] }),
+        makeBundle({ ingredients: [CHEESE, { ...SHREDDED, parent_id: CHEESE.id }] }),
+        overwrite,
+      );
+      expect(plan.ingredients_to_update).toEqual([{ ...SHREDDED, parent_id: CHEESE.id }]);
+      expect(plan.rows.find((r) => r.name === "Shredded Cheese")?.reason).toBe(
+        "Overwrites the book's parent.",
+      );
+    });
+
+    it("keeps the book's parent when the file's ingredient has none", () => {
+      const local = { ...SHREDDED, parent_id: CHEESE.id };
+      const plan = planImport(
+        target({ ingredients: [CHEESE, local] }),
+        makeBundle({ ingredients: [CHEESE, { ...SHREDDED, name: "Shredded cheese!" }] }),
+        overwrite,
+      );
+      expect(plan.ingredients_to_update[0]?.parent_id).toBe(CHEESE.id);
+    });
+
+    it("keeps the book's parent, and warns, when the file's would make a loop", () => {
+      // In the book Cheese is the child of Shredded Cheese; the file says the reverse.
+      const localCheese = { ...CHEESE, parent_id: SHREDDED.id };
+      const plan = planImport(
+        target({ ingredients: [localCheese, SHREDDED] }),
+        makeBundle({ ingredients: [CHEESE, { ...SHREDDED, parent_id: CHEESE.id }] }),
+        overwrite,
+      );
+      expect(plan.ingredients_to_update).toEqual([]);
+      expect(plan.warnings.some((w) => w.includes("would make a loop"))).toBe(true);
+    });
+  });
+
+  it("keeps the book's name, and warns, when the file's would clash with another ingredient", () => {
+    const tomato = ingredient("tomato", "Tomato");
+    const roma = ingredient("roma", "Roma");
+    const file = { ...tomato, name: "Roma", default_measurement_value: HALF_TSP };
+    const plan = planImport(
+      target({ ingredients: [tomato, roma] }),
+      makeBundle({ ingredients: [file] }),
+      overwrite,
+    );
+    expect(plan.ingredients_to_update[0]).toMatchObject({ id: tomato.id, name: "Tomato" });
+    expect(plan.ingredients_to_update[0]?.default_measurement_value).toEqual(HALF_TSP);
+    expect(plan.warnings).toEqual([expect.stringContaining('was not renamed to "Roma"')]);
+  });
+
+  it("overwrites once when two ingredients in the file match the same one", () => {
+    const local = ingredient("localtomato", "Tomato");
+    const plan = planImport(
+      target({ ingredients: [local] }),
+      makeBundle({
+        ingredients: [
+          { ...ingredient("a", "Tomato"), default_measurement_value: HALF_TSP },
+          ingredient("b", "Tomatoes"),
+        ],
+      }),
+      overwrite,
+    );
+    expect(plan.ingredients_to_update).toHaveLength(1);
+    expect(actionsOf(plan.rows, "ingredient").sort()).toEqual(["Tomato:update", "Tomatoes:reuse"]);
+  });
+
+  it("leaves the book's labels alone: they only gain kinds", () => {
+    const plan = planImport(
+      target({ labels: [label(DAIRY_ID, "dairy")] }),
+      makeBundle({ labels: [label(fixedId(KitchenwareLabelId, "x"), "Dairy")] }),
+      overwrite,
+    );
+    expect(plan.labels_to_create).toEqual([]);
+    expect(plan.label_kind_updates).toEqual([]);
+    expect(actionsOf(plan.rows, "label")).toEqual(["Dairy:reuse"]);
+  });
+
+  it("points an imported recipe at the overwritten ingredient, by the book's id", () => {
+    const local = ingredient("localflour", "Flour");
+    const fileFlour = { ...ingredient("fileflour", "Flour"), default_measurement_value: HALF_TSP };
+    const r = recipe("r", "Bread", [
+      version(
+        "r1",
+        fixedId(RecipeId, "r"),
+        [section("s", [ingredientItem("i", fileFlour.id)])],
+        [fileFlour.id],
+      ),
+    ]);
+    const plan = planImport(
+      target({ ingredients: [local] }),
+      makeBundle({ ingredients: [fileFlour], recipes: [r] }),
+      overwrite,
+    );
+    expect(JSON.stringify(plan.recipes_to_create[0])).toContain(local.id);
+    expect(JSON.stringify(plan.recipes_to_create[0])).not.toContain(fileFlour.id);
+  });
+});
+
+describe("planImport — overwriting containers", () => {
+  const overwrite = makeOptions({ overwrite_kitchenware: true });
+  const LOCAL_BOWL = container("bowl", "Bowl");
+
+  it("leaves the book's container alone unless asked", () => {
+    const plan = planImport(
+      target({ containers: [LOCAL_BOWL] }),
+      makeBundle({
+        containers: [container("bowl", "Mixing Bowl", [BAKING_ID])],
+        labels: [label(BAKING_ID, "baking")],
+      }),
+      makeOptions(),
+    );
+    expect(plan.containers_to_update).toEqual([]);
+    expect(actionsOf(plan.rows, "container")).toEqual(["Mixing Bowl:reuse"]);
+  });
+
+  it("overwrites the name and labels of a match by id, keeping its id", () => {
+    const plan = planImport(
+      target({ containers: [LOCAL_BOWL] }),
+      makeBundle({
+        containers: [container("bowl", "Mixing Bowl", [BAKING_ID])],
+        labels: [label(BAKING_ID, "baking")],
+      }),
+      overwrite,
+    );
+    expect(plan.containers_to_create).toEqual([]);
+    expect(plan.containers_to_update).toEqual([
+      { kind: "container", id: LOCAL_BOWL.id, name: "Mixing Bowl", labels: new Set([BAKING_ID]) },
+    ]);
+    expect(plan.rows.find((r) => r.entity === "container")).toMatchObject({
+      action: "update",
+      reason: "Overwrites the book's name, labels.",
+    });
+  });
+
+  it("overwrites a match by name, taking the file's spelling and the book's id", () => {
+    const plan = planImport(
+      target({ containers: [LOCAL_BOWL] }),
+      makeBundle({ containers: [container("otherbowl", "Bowls")] }),
+      overwrite,
+    );
+    expect(plan.containers_to_update.map((c) => [c.id, c.name])).toEqual([
+      [LOCAL_BOWL.id, "Bowls"],
+    ]);
+  });
+
+  it("does nothing for a container that already matches", () => {
+    const plan = planImport(
+      target({ containers: [LOCAL_BOWL] }),
+      makeBundle({ containers: [LOCAL_BOWL] }),
+      overwrite,
+    );
+    expect(isEmptyImportPlan(plan)).toBe(true);
+    expect(plan.rows[0]?.reason).toBe("The book's container already matches.");
+  });
+
+  it("takes the file's parent container when it resolves, and not when it would make a loop", () => {
+    const pot = container("pot", "Pot");
+    const lid = { ...container("lid", "Lid"), parent_id: pot.id };
+    const fileLid = lid;
+    const filePot = { ...pot, parent_id: lid.id };
+    const plan = planImport(
+      target({ containers: [pot, container("lid", "Lid")] }),
+      makeBundle({ containers: [fileLid, filePot] }),
+      overwrite,
+    );
+    // The lid goes under the pot; the pot under the lid would then be a loop.
+    expect(plan.containers_to_update.map((c) => [c.name, c.parent_id])).toEqual([["Lid", pot.id]]);
+    expect(plan.warnings.some((w) => w.includes("would make a loop"))).toBe(true);
+  });
+
+  it("keeps the book's name, and warns, when the file's would clash with another container", () => {
+    const bowl = container("bowl", "Bowl");
+    const pot = container("pot", "Pot");
+    const plan = planImport(
+      target({ containers: [bowl, pot] }),
+      makeBundle({
+        containers: [{ ...bowl, name: "Pot", labels: new Set([BAKING_ID]) }],
+        labels: [label(BAKING_ID, "baking")],
+      }),
+      overwrite,
+    );
+    expect(plan.containers_to_update[0]).toMatchObject({ id: bowl.id, name: "Bowl" });
+    expect(plan.warnings).toEqual([
+      expect.stringContaining("another container in the book already has that name"),
+    ]);
+  });
+
+  it("overwrites ingredients and containers together", () => {
+    const plan = planImport(
+      target({ ingredients: [ingredient("salt", "Salt")], containers: [LOCAL_BOWL] }),
+      makeBundle({
+        ingredients: [ingredient("salt", "Sea Salt")],
+        containers: [container("bowl", "Mixing Bowl")],
+      }),
+      overwrite,
+    );
+    expect(plan.ingredients_to_update).toHaveLength(1);
+    expect(plan.containers_to_update).toHaveLength(1);
+  });
+});

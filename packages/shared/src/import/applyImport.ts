@@ -33,7 +33,10 @@ export function applyImportPlan(doc: Y.Doc, plan: ImportPlan, undoManager?: Y.Un
     for (const label of plan.labels_to_create) putLabel(doc, label);
     for (const update of plan.label_kind_updates) setLabelKinds(doc, update.id, update.kinds);
     for (const ingredient of plan.ingredients_to_create) addIngredient(doc, ingredient);
+    // Overwrites replace the whole entry under its own id; its name key follows its name.
+    for (const ingredient of plan.ingredients_to_update) addIngredient(doc, ingredient);
     for (const container of plan.containers_to_create) addContainer(doc, container);
+    for (const container of plan.containers_to_update) addContainer(doc, container);
     for (const folder of plan.folders_to_create) putRecipeFolder(doc, folder);
     for (const recipe of plan.recipes_to_create) addRecipe(doc, recipe);
     for (const { recipe_id, version } of plan.versions_to_add) {
@@ -139,7 +142,9 @@ export function summarizeImportPlan(
   add(n("recipe", "unchanged"), (a) => `${count(a, "recipe")} already up to date`);
   add(n("recipe", "skip"), (a) => `${count(a, "recipe")} skipped`);
   add(n("ingredient", "create"), (a) => `${count(a, "ingredient")} added`);
+  add(n("ingredient", "update"), (a) => `${count(a, "ingredient")} overwritten`);
   add(n("container", "create"), (a) => `${count(a, "container")} added`);
+  add(n("container", "update"), (a) => `${count(a, "container")} overwritten`);
   add(n("folder", "create"), (a) => `${count(a, "folder")} created`);
   add(n("label", "create"), (a) => `${count(a, "label")} added`);
   add(n("ingredient", "reuse") + n("container", "reuse"), (a) => `${a} reused`);
