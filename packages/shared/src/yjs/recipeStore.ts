@@ -19,7 +19,7 @@ import {
   RecipeVersionId,
   SectionItemId,
 } from "../types/recipe.ts";
-import { RecipeFolderId } from "../types/recipeGroup.ts";
+import { RecipeFolderId } from "../types/recipeFolder.ts";
 import type { ReadonlyDeep } from "type-fest";
 import type { ValidationError } from "./validation.ts";
 import { isInvalid, isValid, validateByIdOrLog } from "./validation.ts";
@@ -43,8 +43,8 @@ const StoredRecipe = Companion(
     "source_url?": "string",
     "parent_folder_id?": RecipeFolderId.type,
     versions: "unknown[]",
-    created_at: "number",
-    updated_at: "number",
+    created_at: "number.epoch",
+    updated_at: "number.epoch",
   }),
 );
 

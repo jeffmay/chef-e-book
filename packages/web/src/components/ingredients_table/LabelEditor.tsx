@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, type MouseEvent } from "react";
+import { useId, useMemo, useRef, useEffect, type MouseEvent } from "react";
 import CreatableSelect from "react-select/creatable";
 import { components as SelectComponents, type SelectInstance } from "react-select";
 import type { GroupBase, MenuProps, MultiValue } from "react-select";
@@ -65,6 +65,7 @@ export function LabelEditor({
   commitDisabled,
   autoFocus = false,
 }: LabelEditorProps) {
+  const uid = useId();
   const selectRef = useRef<SelectInstance<LabelOption, true>>(null);
 
   useEffect(() => {
@@ -89,18 +90,19 @@ export function LabelEditor({
   }
 
   const editor = (
-    <span className="it-label-editor">
+    <span className="ingredients-table-label-editor">
       <CreatableSelect<LabelOption, true>
         isMulti
         value={selectedOptions}
         options={allOptions}
         onChange={handleChange}
+        inputId={`${uid}-labels`}
         aria-label={ariaLabel}
         placeholder={placeholder}
         menuPortalTarget={document.body}
         menuPosition="fixed"
         menuPlacement="auto"
-        classNamePrefix="le"
+        classNamePrefix="label-editor"
         ref={selectRef}
         components={{ Menu: LabelEditorMenu }}
         onKeyDown={(e) => {
@@ -109,11 +111,11 @@ export function LabelEditor({
           }
         }}
       />
-      <div className="it-label-edit-buttons">
+      <div className="ingredients-table-label-edit-buttons">
         {onCancel !== undefined && (
           <button
             type="button"
-            className="it-cancel-btn"
+            className="ingredients-table-cancel-btn"
             onClick={onCancel}
             aria-label="Cancel edit"
           >
@@ -123,7 +125,7 @@ export function LabelEditor({
         {onCommit !== undefined && (
           <button
             type="button"
-            className="it-confirm-btn"
+            className="ingredients-table-confirm-btn"
             onClick={onCommit}
             disabled={commitDisabled}
             aria-label={commitAriaLabel ?? "Confirm edit"}

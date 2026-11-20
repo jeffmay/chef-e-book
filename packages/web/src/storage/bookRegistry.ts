@@ -15,8 +15,8 @@ export const BookRegistryEntry = Companion(
   type({
     id: RecipeBookId.type,
     name: "string > 0",
-    created_at: "number",
-    last_opened_at: "number",
+    created_at: "number.epoch",
+    last_opened_at: "number.epoch",
   }),
 );
 export type BookRegistryEntry = typeof BookRegistryEntry.type.infer;

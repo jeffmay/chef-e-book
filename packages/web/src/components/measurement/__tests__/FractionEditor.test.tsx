@@ -224,3 +224,21 @@ describe("FractionEditor — extra_controls slot", () => {
     expect(screen.getByTestId("extra")).toBeInTheDocument();
   });
 });
+
+describe("FractionEditor — input ids", () => {
+  it("gives every radio an id, unique across editors", async () => {
+    render(
+      <>
+        <FractionEditor value={ONE} onCommit={vi.fn()} />
+        <FractionEditor value={THREE} onCommit={vi.fn()} />
+      </>,
+    );
+    for (const button of screen.getAllByRole("button", { name: "Edit value" })) {
+      await userEvent.click(button);
+    }
+    const ids = screen.getAllByRole("radio").map((radio) => radio.id);
+    expect(ids).toHaveLength(10);
+    expect(ids.every((id) => id !== "")).toBe(true);
+    expect(new Set(ids).size).toBe(10);
+  });
+});

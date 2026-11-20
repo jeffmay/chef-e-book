@@ -5,7 +5,7 @@ import { EnumCompanion } from "./enums.ts";
 import { IdCompanion } from "./ids.ts";
 import { ContainerId, EquipmentId, IngredientId } from "./kitchenware.ts";
 import { Measurement } from "./measurement.ts";
-import { RecipeFolderId } from "./recipeGroup.ts";
+import { RecipeFolderId } from "./recipeFolder.ts";
 
 export const RecipeId = IdCompanion("RecipeId", 12);
 export type RecipeId = typeof RecipeId.type.infer;

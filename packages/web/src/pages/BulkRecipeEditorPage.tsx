@@ -5,7 +5,7 @@ import type {
   RecipeId,
   RecipeVersion,
 } from "@recipe-book/shared";
-import { Fragment, type FormEvent, useLayoutEffect, useRef, useState } from "react";
+import { useId, Fragment, type FormEvent, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { AcceptOrCancelEditor } from "../components/accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import { ButtonMenu } from "../components/button_menu/ButtonMenu.tsx";
@@ -88,13 +88,14 @@ type NewFolderRowProps = {
 };
 
 function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFolderRowProps) {
+  const uid = useId();
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
-    <tr className="bre-row bre-row--new-folder">
-      <td className="bre-td bre-td--select" />
-      <td className="bre-td bre-td--name" data-depth={depth}>
-        <div className="bre-td-name-inner">
+    <tr className="bulk-recipe-editor-row bulk-recipe-editor-row--new-folder">
+      <td className="bulk-recipe-editor-td bulk-recipe-editor-td--select" />
+      <td className="bulk-recipe-editor-td bulk-recipe-editor-td--name" data-depth={depth}>
+        <div className="bulk-recipe-editor-td-name-inner">
           {/* Enter goes through `requestSubmit` so the form's own `onSubmit`
               runs; `requestSubmit` ignores the disabled confirm button, so
               that handler must itself reject an empty name. */}
@@ -104,10 +105,11 @@ function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFold
             onCancel={onCancel}
             onAccept={() => formRef.current?.requestSubmit()}
           >
-            <form ref={formRef} className="bre-new-folder-form" onSubmit={onSubmit}>
+            <form ref={formRef} className="bulk-recipe-editor-new-folder-form" onSubmit={onSubmit}>
               <input
                 type="text"
-                className="bre-new-folder-input"
+                id={`${uid}-name`}
+                className="bulk-recipe-editor-new-folder-input"
                 value={name}
                 onChange={(e) => onNameChange(e.target.value)}
                 aria-label="New folder name"
@@ -115,7 +117,7 @@ function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFold
               />
               <button
                 type="submit"
-                className="bre-new-folder-confirm"
+                className="bulk-recipe-editor-new-folder-confirm"
                 disabled={name.trim() === ""}
                 aria-label="Confirm new folder"
               >
@@ -123,7 +125,7 @@ function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFold
               </button>
               <button
                 type="button"
-                className="bre-new-folder-cancel"
+                className="bulk-recipe-editor-new-folder-cancel"
                 onClick={onCancel}
                 aria-label="Cancel new folder"
               >
@@ -133,9 +135,9 @@ function NewFolderRow({ depth, name, onNameChange, onSubmit, onCancel }: NewFold
           </AcceptOrCancelEditor>
         </div>
       </td>
-      <td className="bre-td bre-td--date" />
-      <td className="bre-td bre-td--date" />
-      <td className="bre-td bre-td--actions" />
+      <td className="bulk-recipe-editor-td bulk-recipe-editor-td--date" />
+      <td className="bulk-recipe-editor-td bulk-recipe-editor-td--date" />
+      <td className="bulk-recipe-editor-td bulk-recipe-editor-td--actions" />
     </tr>
   );
 }
@@ -388,12 +390,12 @@ export function BulkRecipeEditorPage() {
     creatingFolder.kind === "creating" && creatingFolder.parentId === undefined;
 
   return (
-    <main className="bre-page" aria-label="Recipes">
-      <div className="bre-header">
-        <h1 className="bre-title">Recipes</h1>
+    <main className="bulk-recipe-editor-page" aria-label="Recipes">
+      <div className="bulk-recipe-editor-header">
+        <h1 className="bulk-recipe-editor-title">Recipes</h1>
         <button
           type="button"
-          className="bre-new-btn"
+          className="bulk-recipe-editor-new-btn"
           onClick={() => setShowImport(true)}
           aria-label="Import recipes"
         >
@@ -401,7 +403,7 @@ export function BulkRecipeEditorPage() {
         </button>
         <button
           type="button"
-          className="bre-new-btn"
+          className="bulk-recipe-editor-new-btn"
           onClick={() => navigate("/recipes/new")}
           aria-label="New Recipe"
         >
@@ -412,14 +414,14 @@ export function BulkRecipeEditorPage() {
 
       {/* Bulk action bar */}
       {someSelected && (
-        <div className="bre-bulk-bar" role="region" aria-label="Recipe bulk actions">
-          <button type="button" className="bre-bulk-clear" onClick={clearSelection}>
+        <div className="bulk-recipe-editor-bulk-bar" role="region" aria-label="Recipe bulk actions">
+          <button type="button" className="bulk-recipe-editor-bulk-clear" onClick={clearSelection}>
             Clear
           </button>
-          <span className="bre-bulk-count">{selectedArray.length} selected</span>
+          <span className="bulk-recipe-editor-bulk-count">{selectedArray.length} selected</span>
           <button
             type="button"
-            className="bre-bulk-btn"
+            className="bulk-recipe-editor-bulk-btn"
             onClick={() => exportRecipesFile(selectedArray)}
             aria-label="Export selected recipes"
           >
@@ -428,7 +430,7 @@ export function BulkRecipeEditorPage() {
           <button
             ref={deleteBtnRef}
             type="button"
-            className="bre-bulk-btn"
+            className="bulk-recipe-editor-bulk-btn"
             onClick={() => setShowDeleteConfirm(true)}
             aria-label="Delete selected recipes"
           >
@@ -443,26 +445,31 @@ export function BulkRecipeEditorPage() {
                   onCancel={handleMergeCancel}
                   onAccept={() => mergeFormRef.current?.requestSubmit()}
                 >
-                  <form ref={mergeFormRef} className="bre-merge-form" onSubmit={handleMergeSubmit}>
+                  <form
+                    ref={mergeFormRef}
+                    className="bulk-recipe-editor-merge-form"
+                    onSubmit={handleMergeSubmit}
+                  >
                     <input
                       type="text"
-                      className="bre-merge-input"
+                      className="bulk-recipe-editor-merge-input"
                       value={mergeName}
                       onChange={(e) => {
                         setMergeName(e.target.value);
                         setMergeError(null);
                       }}
+                      id="bulk-recipe-editor-merge-name"
                       aria-label="Merged recipe name"
                       autoFocus
                     />
                     {mergeError !== null && (
-                      <span className="bre-merge-error" role="alert">
+                      <span className="bulk-recipe-editor-merge-error" role="alert">
                         {mergeError}
                       </span>
                     )}
                     <button
                       type="submit"
-                      className="bre-bulk-btn"
+                      className="bulk-recipe-editor-bulk-btn"
                       disabled={mergeName.trim() === ""}
                       aria-label="Confirm merge"
                     >
@@ -470,7 +477,7 @@ export function BulkRecipeEditorPage() {
                     </button>
                     <button
                       type="button"
-                      className="bre-bulk-btn"
+                      className="bulk-recipe-editor-bulk-btn"
                       onClick={handleMergeCancel}
                       aria-label="Cancel merge"
                     >
@@ -481,7 +488,7 @@ export function BulkRecipeEditorPage() {
               ) : (
                 <button
                   type="button"
-                  className="bre-bulk-btn"
+                  className="bulk-recipe-editor-bulk-btn"
                   onClick={() => setShowMergeForm(true)}
                   aria-label="Merge selected recipes"
                 >
@@ -522,15 +529,15 @@ export function BulkRecipeEditorPage() {
             return true;
           }}
         >
-          <p className="bre-delete-subtitle">This action cannot be undone.</p>
+          <p className="bulk-recipe-editor-delete-subtitle">This action cannot be undone.</p>
         </Modal>
       )}
 
       {/* Table — always rendered; empty state lives inside tbody */}
-      <table className="bre-table" aria-label="Recipe list">
+      <table className="bulk-recipe-editor-table" aria-label="Recipe list">
         <thead>
           <tr>
-            <th className="bre-th bre-th--select">
+            <th className="bulk-recipe-editor-th bulk-recipe-editor-th--select">
               <input
                 type="checkbox"
                 checked={allSelected}
@@ -538,41 +545,44 @@ export function BulkRecipeEditorPage() {
                   if (el) el.indeterminate = someRecipesSelected && !allSelected;
                 }}
                 onChange={toggleAll}
+                id="bulk-recipe-editor-select-all"
                 aria-label="Select all recipes"
               />
             </th>
-            <th className="bre-th bre-th--name">Name</th>
-            <th className="bre-th bre-th--date">Created</th>
-            <th className="bre-th bre-th--date">Updated</th>
-            <th className="bre-th bre-th--actions">{!isMobileView && "Actions"}</th>
+            <th className="bulk-recipe-editor-th bulk-recipe-editor-th--name">Name</th>
+            <th className="bulk-recipe-editor-th bulk-recipe-editor-th--date">Created</th>
+            <th className="bulk-recipe-editor-th bulk-recipe-editor-th--date">Updated</th>
+            <th className="bulk-recipe-editor-th bulk-recipe-editor-th--actions">
+              {!isMobileView && "Actions"}
+            </th>
           </tr>
         </thead>
         <tbody>
           {/* Virtual root "Recipes" folder row (depth 0) */}
-          <tr className="bre-row bre-row--folder bre-row--root">
-            <td className="bre-td bre-td--select" />
-            <td className="bre-td bre-td--name" data-depth={0}>
-              <div className="bre-td-name-inner">
+          <tr className="bulk-recipe-editor-row bulk-recipe-editor-row--folder bulk-recipe-editor-row--root">
+            <td className="bulk-recipe-editor-td bulk-recipe-editor-td--select" />
+            <td className="bulk-recipe-editor-td bulk-recipe-editor-td--name" data-depth={0}>
+              <div className="bulk-recipe-editor-td-name-inner">
                 <button
                   type="button"
-                  className="bre-expand-btn"
+                  className="bulk-recipe-editor-expand-btn"
                   onClick={() => setViewState(toggleRootCollapsed)}
                   aria-expanded={rootExpanded}
                   aria-label={`${rootExpanded ? "Collapse" : "Expand"} Recipes folder`}
                 >
-                  <span className="bre-expand-icon" aria-hidden>
+                  <span className="bulk-recipe-editor-expand-icon" aria-hidden>
                     {rootExpanded ? "▼" : "▶"}
                   </span>
                 </button>
-                <span className="bre-folder-icon" aria-hidden>
+                <span className="bulk-recipe-editor-folder-icon" aria-hidden>
                   📁
                 </span>
-                <span className="bre-name">Recipes</span>
+                <span className="bulk-recipe-editor-name">Recipes</span>
               </div>
             </td>
-            <td className="bre-td bre-td--date">—</td>
-            <td className="bre-td bre-td--date">—</td>
-            <td className="bre-td bre-td--actions">
+            <td className="bulk-recipe-editor-td bulk-recipe-editor-td--date">—</td>
+            <td className="bulk-recipe-editor-td bulk-recipe-editor-td--date">—</td>
+            <td className="bulk-recipe-editor-td bulk-recipe-editor-td--actions">
               <ButtonMenu
                 defaultButton={{
                   label: "➕ Recipe",
@@ -600,9 +610,9 @@ export function BulkRecipeEditorPage() {
           {/* Content rows — shown only when root is expanded */}
           {rootExpanded &&
             (visibleRows.length === 0 ? (
-              <tr className="bre-row bre-row--empty">
-                <td className="bre-td" colSpan={5}>
-                  <p className="bre-empty">No recipes yet. Create your first one!</p>
+              <tr className="bulk-recipe-editor-row bulk-recipe-editor-row--empty">
+                <td className="bulk-recipe-editor-td" colSpan={5}>
+                  <p className="bulk-recipe-editor-empty">No recipes yet. Create your first one!</p>
                 </td>
               </tr>
             ) : (
@@ -614,22 +624,25 @@ export function BulkRecipeEditorPage() {
                     creatingFolder.kind === "creating" && creatingFolder.parentId === folder.id;
                   return (
                     <Fragment key={`folder-${folder.id}`}>
-                      <tr className="bre-row bre-row--folder">
-                        <td className="bre-td bre-td--select" />
-                        <td className="bre-td bre-td--name" data-depth={depth}>
-                          <div className="bre-td-name-inner">
+                      <tr className="bulk-recipe-editor-row bulk-recipe-editor-row--folder">
+                        <td className="bulk-recipe-editor-td bulk-recipe-editor-td--select" />
+                        <td
+                          className="bulk-recipe-editor-td bulk-recipe-editor-td--name"
+                          data-depth={depth}
+                        >
+                          <div className="bulk-recipe-editor-td-name-inner">
                             <button
                               type="button"
-                              className="bre-expand-btn"
+                              className="bulk-recipe-editor-expand-btn"
                               onClick={() => toggleFolder(folder.id)}
                               aria-expanded={isExpanded}
                               aria-label={`${isExpanded ? "Collapse" : "Expand"} folder ${folder.name}`}
                             >
-                              <span className="bre-expand-icon" aria-hidden>
+                              <span className="bulk-recipe-editor-expand-icon" aria-hidden>
                                 {isExpanded ? "▼" : "▶"}
                               </span>
                             </button>
-                            <span className="bre-folder-icon" aria-hidden>
+                            <span className="bulk-recipe-editor-folder-icon" aria-hidden>
                               📁
                             </span>
                             {editingFolder.kind === "editing" &&
@@ -642,7 +655,7 @@ export function BulkRecipeEditorPage() {
                               >
                                 <form
                                   ref={renameFolderFormRef}
-                                  className="bre-rename-folder-form"
+                                  className="bulk-recipe-editor-rename-folder-form"
                                   onSubmit={(e) => handleRenameFolderSubmit(e, folder)}
                                   onBlur={(e) => {
                                     const related = e.relatedTarget;
@@ -656,7 +669,8 @@ export function BulkRecipeEditorPage() {
                                 >
                                   <input
                                     type="text"
-                                    className="bre-rename-folder-input"
+                                    id={`bulk-recipe-editor-rename-folder-${folder.id}`}
+                                    className="bulk-recipe-editor-rename-folder-input"
                                     value={editingFolder.name}
                                     onChange={(e) =>
                                       setEditingFolder({
@@ -670,7 +684,7 @@ export function BulkRecipeEditorPage() {
                                   />
                                   <button
                                     type="button"
-                                    className="bre-rename-folder-cancel"
+                                    className="bulk-recipe-editor-rename-folder-cancel"
                                     onClick={() => handleRenameFolderCancel()}
                                     aria-label="Cancel rename folder"
                                   >
@@ -678,7 +692,7 @@ export function BulkRecipeEditorPage() {
                                   </button>
                                   <button
                                     type="submit"
-                                    className="bre-rename-folder-confirm"
+                                    className="bulk-recipe-editor-rename-folder-confirm"
                                     disabled={editingFolder.name.trim() === ""}
                                     aria-label="Confirm rename folder"
                                   >
@@ -688,7 +702,7 @@ export function BulkRecipeEditorPage() {
                               </AcceptOrCancelEditor>
                             ) : (
                               <span
-                                className="bre-name bre-name--editable"
+                                className="bulk-recipe-editor-name bulk-recipe-editor-name--editable"
                                 tabIndex={0}
                                 title="Double-click or press Enter to rename"
                                 ref={(el) => {
@@ -708,9 +722,9 @@ export function BulkRecipeEditorPage() {
                             )}
                           </div>
                         </td>
-                        <td className="bre-td bre-td--date">—</td>
-                        <td className="bre-td bre-td--date">—</td>
-                        <td className="bre-td bre-td--actions">
+                        <td className="bulk-recipe-editor-td bulk-recipe-editor-td--date">—</td>
+                        <td className="bulk-recipe-editor-td bulk-recipe-editor-td--date">—</td>
+                        <td className="bulk-recipe-editor-td bulk-recipe-editor-td--actions">
                           <ButtonMenu
                             defaultButton={{
                               label: "➕ Recipe",
@@ -765,46 +779,50 @@ export function BulkRecipeEditorPage() {
                   return (
                     <tr
                       key={`recipe-${recipe.id}`}
-                      className={`bre-row bre-row--recipe${isSelected ? " bre-row--selected" : ""}`}
+                      className={`bulk-recipe-editor-row bulk-recipe-editor-row--recipe${isSelected ? " bulk-recipe-editor-row--selected" : ""}`}
                     >
-                      <td className="bre-td bre-td--select">
+                      <td className="bulk-recipe-editor-td bulk-recipe-editor-td--select">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleRecipeSelect(recipe.id)}
+                          id={`bulk-recipe-editor-select-${recipe.id}`}
                           aria-label={`Select recipe ${recipe.title}`}
                         />
                       </td>
-                      <td className="bre-td bre-td--name" data-depth={depth}>
-                        <div className="bre-td-name-inner">
+                      <td
+                        className="bulk-recipe-editor-td bulk-recipe-editor-td--name"
+                        data-depth={depth}
+                      >
+                        <div className="bulk-recipe-editor-td-name-inner">
                           {hasVersions ? (
                             <button
                               type="button"
-                              className="bre-expand-btn"
+                              className="bulk-recipe-editor-expand-btn"
                               onClick={() => toggleRecipeExpand(recipe.id)}
                               aria-expanded={isExpanded}
                               aria-label={`${isExpanded ? "Collapse" : "Expand"} versions of ${recipe.title}`}
                             >
-                              <span className="bre-expand-icon" aria-hidden>
+                              <span className="bulk-recipe-editor-expand-icon" aria-hidden>
                                 {isExpanded ? "▼" : "▶"}
                               </span>
                             </button>
                           ) : (
-                            <span className="bre-expand-spacer" aria-hidden />
+                            <span className="bulk-recipe-editor-expand-spacer" aria-hidden />
                           )}
-                          <span className="bre-name">{recipe.title}</span>
+                          <span className="bulk-recipe-editor-name">{recipe.title}</span>
                           {recipe.subtitle !== undefined && (
-                            <span className="bre-subtitle">{recipe.subtitle}</span>
+                            <span className="bulk-recipe-editor-subtitle">{recipe.subtitle}</span>
                           )}
                         </div>
                       </td>
-                      <td className="bre-td bre-td--date">
+                      <td className="bulk-recipe-editor-td bulk-recipe-editor-td--date">
                         {new Date(recipe.created_at).toLocaleDateString()}
                       </td>
-                      <td className="bre-td bre-td--date">
+                      <td className="bulk-recipe-editor-td bulk-recipe-editor-td--date">
                         {new Date(recipe.updated_at).toLocaleDateString()}
                       </td>
-                      <td className="bre-td bre-td--actions">
+                      <td className="bulk-recipe-editor-td bulk-recipe-editor-td--actions">
                         <ButtonMenu
                           defaultButton={defaultButton}
                           buttons={others}
@@ -820,12 +838,18 @@ export function BulkRecipeEditorPage() {
                 // version row
                 const { version, recipeId, depth } = row;
                 return (
-                  <tr key={`version-${version.id}`} className="bre-row bre-row--version">
-                    <td className="bre-td bre-td--select" />
-                    <td className="bre-td bre-td--name" data-depth={depth}>
-                      <div className="bre-td-name-inner">
-                        <span className="bre-expand-spacer" aria-hidden />
-                        <span className="bre-version-desc">
+                  <tr
+                    key={`version-${version.id}`}
+                    className="bulk-recipe-editor-row bulk-recipe-editor-row--version"
+                  >
+                    <td className="bulk-recipe-editor-td bulk-recipe-editor-td--select" />
+                    <td
+                      className="bulk-recipe-editor-td bulk-recipe-editor-td--name"
+                      data-depth={depth}
+                    >
+                      <div className="bulk-recipe-editor-td-name-inner">
+                        <span className="bulk-recipe-editor-expand-spacer" aria-hidden />
+                        <span className="bulk-recipe-editor-version-desc">
                           {version.description !== "" ? (
                             version.description
                           ) : (
@@ -834,11 +858,11 @@ export function BulkRecipeEditorPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="bre-td bre-td--date">
+                    <td className="bulk-recipe-editor-td bulk-recipe-editor-td--date">
                       {new Date(version.created_at).toLocaleDateString()}
                     </td>
-                    <td className="bre-td bre-td--date">—</td>
-                    <td className="bre-td bre-td--actions">
+                    <td className="bulk-recipe-editor-td bulk-recipe-editor-td--date">—</td>
+                    <td className="bulk-recipe-editor-td bulk-recipe-editor-td--actions">
                       <ButtonMenu
                         defaultButton={{
                           label: "▶ Start",

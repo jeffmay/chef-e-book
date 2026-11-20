@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import {
   makeFraction,
   simplify,
@@ -88,12 +88,12 @@ export function FractionDisplay({ value }: FractionDisplayProps) {
   const frac = fractionalPart(s);
 
   return (
-    <span className="fe-display" aria-label={formatFraction(s)}>
+    <span className="fraction-editor-display" aria-label={formatFraction(s)}>
       {(int !== 0 || frac.numerator === 0) && (
-        <span className="fe-integer">{int === 0 ? "0" : int}</span>
+        <span className="fraction-editor-integer">{int === 0 ? "0" : int}</span>
       )}
       {frac.numerator !== 0 && (
-        <span className="fe-fraction">
+        <span className="fraction-editor-fraction">
           <sup>{Math.abs(frac.numerator)}</sup>
           {"⁄"}
           <sub>{frac.denominator}</sub>
@@ -115,6 +115,7 @@ export type FractionEditorProps = ReadonlyDeep<{
 }>;
 
 export function FractionEditor({ value, onCommit, extraControls }: FractionEditorProps) {
+  const uid = useId();
   const [editing, setEditing] = useState(false);
   const [original, setOriginal] = useState<Fraction>(value);
   const [current, setCurrent] = useState<Fraction>(value);
@@ -142,11 +143,11 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
 
   if (!editing) {
     return (
-      <span className="fe-root fe-root--closed">
+      <span className="fraction-editor-root fraction-editor-root--closed">
         <FractionDisplay value={value} />
         <button
           type="button"
-          className="fe-toggle-btn"
+          className="fraction-editor-toggle-btn"
           onClick={openEditor}
           aria-label="Edit value"
         >
@@ -157,36 +158,47 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
   }
 
   return (
-    <span className="fe-root fe-root--open">
-      <span className="fe-header">
-        <button type="button" className="fe-toggle-btn" onClick={reset} aria-label="Cancel changes">
+    <span className="fraction-editor-root fraction-editor-root--open">
+      <span className="fraction-editor-header">
+        <button
+          type="button"
+          className="fraction-editor-toggle-btn"
+          onClick={reset}
+          aria-label="Cancel changes"
+        >
           ↩
         </button>
         <FractionDisplay value={current} />
       </span>
 
-      <span className="fe-op-modes" role="group" aria-label="Operation type">
+      <span className="fraction-editor-op-modes" role="group" aria-label="Operation type">
         {OpMode.values.map((mode) => (
-          <label key={mode} className="fe-mode-label">
+          <label key={mode} className="fraction-editor-mode-label">
             <input
               type="radio"
-              className="fe-mode-radio"
-              name="fe-op-mode"
+              className="fraction-editor-mode-radio"
+              name="fraction-editor-op-mode"
               value={mode}
               checked={opMode === mode}
               onChange={() => setOpMode(mode)}
+              id={`${uid}-mode-${OpMode.values.indexOf(mode)}`}
               aria-label={mode}
             />
-            <span className="fe-mode-symbol" aria-hidden>
+            <span className="fraction-editor-mode-symbol" aria-hidden>
               {mode}
             </span>
           </label>
         ))}
       </span>
 
-      <span className="fe-op-buttons">
+      <span className="fraction-editor-op-buttons">
         {OP_ROWS[opMode].map((op) => (
-          <button key={op.label} type="button" className="fe-op-btn" onClick={() => applyOp(op)}>
+          <button
+            key={op.label}
+            type="button"
+            className="fraction-editor-op-btn"
+            onClick={() => applyOp(op)}
+          >
             {op.label}
           </button>
         ))}
@@ -194,7 +206,12 @@ export function FractionEditor({ value, onCommit, extraControls }: FractionEdito
 
       {extraControls}
 
-      <button type="button" className="fe-ok-btn" onClick={commit} aria-label="Accept changes">
+      <button
+        type="button"
+        className="fraction-editor-ok-btn"
+        onClick={commit}
+        aria-label="Accept changes"
+      >
         ✔︎
       </button>
     </span>

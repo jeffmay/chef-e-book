@@ -2,8 +2,8 @@ import { type } from "arktype";
 import type * as Y from "yjs";
 import { Companion } from "../types/companion.ts";
 import { loadId, randomId } from "../types/ids.ts";
-import type { RecipeFolder } from "../types/recipeGroup.ts";
-import { RecipeFolderId, SortOrder } from "../types/recipeGroup.ts";
+import type { RecipeFolder } from "../types/recipeFolder.ts";
+import { RecipeFolderId, SortOrder } from "../types/recipeFolder.ts";
 import type { ValidationError } from "./validation.ts";
 import { isInvalid, isValid, validateByIdOrLog } from "./validation.ts";
 

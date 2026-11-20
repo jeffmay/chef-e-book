@@ -1,24 +1,24 @@
-.rfs-root {
+.recipe-folder-selector-root {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
 }
 
-.rfs-selector-row {
+.recipe-folder-selector-input-row {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
 }
 
-.rfs-selector {
+.recipe-folder-selector-tree {
   font-size: 0.9em;
   flex: 1;
   min-width: 12vw;
   max-width: 75vw;
 }
 
-.rfs-add-toggle {
+.recipe-folder-selector-add-toggle {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -29,24 +29,24 @@
   white-space: nowrap;
 }
 
-.rfs-add-toggle > input {
+.recipe-folder-selector-add-toggle > input {
   width: unset;
 }
 
-.rfs-path {
+.recipe-folder-selector-path {
   font-size: 0.8em;
   color: var(--color-muted);
   font-family: var(--font-body);
 }
 
-.rfs-add-row {
+.recipe-folder-selector-add-row {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
   flex-wrap: wrap;
 }
 
-.rfs-add-input {
+.recipe-folder-selector-add-input {
   font-family: var(--font-body);
   font-size: 0.9em;
   padding: 2px 6px;

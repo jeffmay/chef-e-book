@@ -1,7 +1,7 @@
 import { type Container, ContainerId, loadId } from "@recipe-book/shared";
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import "./KitchenwareParentSelector.css";
 
@@ -54,6 +54,7 @@ export function KitchenwareParentSelector({
   ariaLabel = "Parent container",
   placeholder = "— None —",
 }: KitchenwareParentSelectorProps) {
+  const uid = useId();
   const treeNodes = useMemo(() => buildContainerTree(containers).map(toTreeNode), [containers]);
 
   function handleChange(e: TreeSelectChangeEvent): void {
@@ -73,8 +74,9 @@ export function KitchenwareParentSelector({
       selectionMode="single"
       filter
       placeholder={placeholder}
-      className="kps-selector"
-      panelClassName="kps-panel"
+      className="kitchenware-parent-selector-tree"
+      panelClassName="kitchenware-parent-selector-panel"
+      inputId={`${uid}-selector`}
       ariaLabel={ariaLabel}
       appendTo="self"
     />

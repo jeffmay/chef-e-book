@@ -89,6 +89,7 @@ export function SelectBookPage({
                     <input
                       className="book-rename-input"
                       type="text"
+                      id={`book-rename-${book.id}`}
                       aria-label={`New name for ${book.name}`}
                       value={renameDraft}
                       onChange={(e) => setRenameDraft(e.target.value)}

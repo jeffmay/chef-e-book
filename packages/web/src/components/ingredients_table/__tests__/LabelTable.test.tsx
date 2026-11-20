@@ -487,7 +487,7 @@ describe("LabelTable.css — inline editor stacking", () => {
   );
 
   it("gives the open name editor a solid background and a base z-index", () => {
-    const base = /\.lt-editing\s*\{([\s\S]*?)\}/.exec(css);
+    const base = /\.label-table-editing\s*\{([\s\S]*?)\}/.exec(css);
     expect(base).not.toBeNull();
     const block = base?.[1] ?? "";
     expect(block).toMatch(/position:\s*relative/);
@@ -496,7 +496,7 @@ describe("LabelTable.css — inline editor stacking", () => {
   });
 
   it("raises the editor above its siblings while focused via :focus-within", () => {
-    const focused = /\.lt-editing:focus-within\s*\{([\s\S]*?)\}/.exec(css);
+    const focused = /\.label-table-editing:focus-within\s*\{([\s\S]*?)\}/.exec(css);
     expect(focused).not.toBeNull();
     expect(focused?.[1] ?? "").toMatch(/z-index:\s*20\b/);
   });

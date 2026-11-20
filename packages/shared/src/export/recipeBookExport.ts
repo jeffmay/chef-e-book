@@ -3,7 +3,7 @@ import { Companion } from "../types/companion.ts";
 import { Container, Ingredient, KitchenwareLabel } from "../types/kitchenware.ts";
 import { Recipe } from "../types/recipe.ts";
 import { RecipeBookId } from "../types/recipeBook.ts";
-import { RecipeFolder } from "../types/recipeGroup.ts";
+import { RecipeFolder } from "../types/recipeFolder.ts";
 
 /** Identifies a file as a recipe book export, whatever its name. */
 export const EXPORT_FORMAT = "chefe_book_export" as const;

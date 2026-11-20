@@ -6,7 +6,7 @@ import {
 } from "@recipe-book/shared";
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import "../../styles/treeSelect.css";
 import { AcceptOrCancelEditor } from "../accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import "./RecipeFolderSelector.css";
@@ -51,6 +51,7 @@ export function RecipeFolderSelector({
   ariaLabel = "Select folder",
   placeholder = "— No folder —",
 }: RecipeFolderSelectorProps) {
+  const uid = useId();
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
 
@@ -82,8 +83,8 @@ export function RecipeFolderSelector({
   }
 
   return (
-    <div className="rfs-root">
-      <div className="rfs-selector-row">
+    <div className="recipe-folder-selector-root">
+      <div className="recipe-folder-selector-input-row">
         <TreeSelect
           value={value ?? null}
           options={treeNodes}
@@ -91,13 +92,14 @@ export function RecipeFolderSelector({
           selectionMode="single"
           filter
           placeholder={placeholder}
-          className="tree-select rfs-selector"
+          className="tree-select recipe-folder-selector-tree"
           panelClassName="tree-select-panel"
+          inputId={`${uid}-selector`}
           ariaLabel={ariaLabel}
           appendTo={document.body}
         />
         <label
-          className="rfs-add-toggle"
+          className="recipe-folder-selector-add-toggle"
           title={value !== undefined ? `Add subfolder under "${selectedPath}"` : "Add root folder"}
         >
           <input
@@ -107,13 +109,14 @@ export function RecipeFolderSelector({
               if (e.target.checked) setAdding(true);
               else cancelAdd();
             }}
+            id={`${uid}-add-toggle`}
             aria-label="Create new subfolder"
           />
           New subfolder
         </label>
       </div>
       {value !== undefined && (
-        <span className="rfs-path" aria-label="Selected folder path">
+        <span className="recipe-folder-selector-path" aria-label="Selected folder path">
           {selectedPath}
         </span>
       )}
@@ -124,14 +127,17 @@ export function RecipeFolderSelector({
           onCancel={cancelAdd}
           onAccept={submitNewFolder}
         >
-          <div className="rfs-add-row">
+          <div className="recipe-folder-selector-add-row">
             <input
-              className={`rfs-add-input${nameError !== null ? " field-input--error" : ""}`}
+              className={`recipe-folder-selector-add-input${nameError !== null ? " field-input--error" : ""}`}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Subfolder name…"
+              id={`${uid}-add-name`}
               aria-label="New folder name"
-              aria-describedby={nameError !== null ? "rfs-name-error" : undefined}
+              aria-describedby={
+                nameError !== null ? "recipe-folder-selector-name-error" : undefined
+              }
               autoFocus
             />
             <button
@@ -146,7 +152,7 @@ export function RecipeFolderSelector({
               ✕
             </button>
             {nameError !== null && (
-              <span id="rfs-name-error" className="field-error" role="alert">
+              <span id="recipe-folder-selector-name-error" className="field-error" role="alert">
                 {nameError}
               </span>
             )}

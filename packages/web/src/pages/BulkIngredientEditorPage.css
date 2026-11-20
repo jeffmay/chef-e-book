@@ -1,9 +1,9 @@
-.bie-page {
+.bulk-ingredient-editor-page {
   max-width: 100vw;
 }
 
 /* Add form */
-.bie-add-form {
+.bulk-ingredient-editor-add-form {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
@@ -12,43 +12,43 @@
   margin-bottom: var(--spacing-md);
 }
 
-.bie-add-title {
+.bulk-ingredient-editor-add-title {
   font-size: 1em;
   font-family: var(--font-display);
   margin-bottom: var(--spacing-xs);
 }
 
-.bie-add-label {
+.bulk-ingredient-editor-add-label {
   font-size: 0.85em;
 }
 
 /* Grow the labels multi-select to fill the row, matching the width
    the text/select inputs already get from the shared .field-row rule. */
-.field-row > .it-label-editor {
+.field-row > .ingredients-table-label-editor {
   flex: 1 1 auto;
 }
 
-.bie-add-input,
-.bie-add-select {
+.bulk-ingredient-editor-add-input,
+.bulk-ingredient-editor-add-select {
   font-size: 1em;
 }
 
-.bie-add-actions {
+.bulk-ingredient-editor-add-actions {
   display: flex;
   gap: var(--spacing-sm);
   margin-top: var(--spacing-xs);
 }
 
 /* Actions bar */
-.bie-actions {
+.bulk-ingredient-editor-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
 }
 
-.bie-add-btn,
-.bie-export-btn,
-.bie-import-btn {
+.bulk-ingredient-editor-add-btn,
+.bulk-ingredient-editor-export-btn,
+.bulk-ingredient-editor-import-btn {
   align-self: flex-start;
 }

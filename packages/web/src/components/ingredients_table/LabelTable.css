@@ -1,9 +1,9 @@
-.lt-section {
+.label-table-section {
   margin-bottom: var(--spacing-md);
   position: relative;
 }
 
-.lt-toggle {
+.label-table-toggle {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -19,29 +19,29 @@
   text-align: left;
 }
 
-.lt-toggle:hover {
+.label-table-toggle:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-.lt-toggle-icon {
+.label-table-toggle-icon {
   font-size: 0.7em;
 }
 
-.lt-count {
+.label-table-count {
   font-size: 0.8em;
   font-weight: normal;
   color: var(--color-muted);
   margin-left: auto;
 }
 
-.lt-panel {
+.label-table-panel {
   border: var(--border-width) solid var(--color-border);
   border-top: none;
 }
 
 /* Bulk action bar */
-.lt-bulk-bar {
+.label-table-bulk-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -52,18 +52,18 @@
   font-size: 0.9em;
 }
 
-.lt-bulk-count {
+.label-table-bulk-count {
   font-weight: bold;
   white-space: nowrap;
 }
 
 /* ---- Filter mode RadioButton group ---- */
-.lt-filter-group {
+.label-table-filter-group {
   display: flex;
   align-items: stretch;
 }
 
-.lt-filter-btn {
+.label-table-filter-btn {
   display: flex;
   align-items: center;
   padding: 1px 0.5em;
@@ -76,12 +76,12 @@
   white-space: nowrap;
 }
 
-.lt-filter-btn:hover {
+.label-table-filter-btn:hover {
   background: var(--background-subtle);
 }
 
 /* Hide the radio circle visually while keeping it accessible */
-.lt-filter-btn .p_radiobutton {
+.label-table-filter-btn .p_radiobutton {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -90,7 +90,7 @@
   white-space: nowrap;
 }
 
-.lt-bulk-btn {
+.label-table-bulk-btn {
   background: none;
   border: var(--border-width) solid var(--color-border);
   padding: 1px 0.5em;
@@ -100,24 +100,24 @@
   white-space: nowrap;
 }
 
-.lt-bulk-btn:hover:not(:disabled) {
+.label-table-bulk-btn:hover:not(:disabled) {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-.lt-bulk-btn:disabled {
+.label-table-bulk-btn:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
 /* Delete confirmation dialog */
-.lt-delete-subtitle {
+.label-table-delete-subtitle {
   margin: 0 0 var(--spacing-xs);
   color: var(--color-muted);
   font-size: 0.9em;
 }
 
-.lt-delete-list {
+.label-table-delete-list {
   margin: 0 0 var(--spacing-sm);
   padding-left: 1.5em;
   max-height: 12em;
@@ -125,13 +125,13 @@
   font-size: 0.9em;
 }
 
-.lt-merge-form {
+.label-table-merge-form {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
 }
 
-.lt-merge-input {
+.label-table-merge-input {
   font-size: 0.85em;
   padding: 1px 4px;
   border: var(--border-width) solid var(--color-border);
@@ -143,13 +143,13 @@
 }
 
 /* Table */
-.lt-table {
+.label-table-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95em;
 }
 
-.lt-th {
+.label-table-th {
   border: 1px solid var(--color-border);
   padding: var(--spacing-xs) var(--spacing-sm);
   text-align: left;
@@ -159,58 +159,58 @@
   font-weight: bold;
 }
 
-.lt-th--select {
+.label-table-th--select {
   width: 2em;
   text-align: center;
 }
 
-.lt-td {
+.label-table-td {
   border: 1px solid var(--color-border);
   padding: var(--spacing-xs) var(--spacing-sm);
   vertical-align: middle;
 }
 
-.lt-td--select {
+.label-table-td--select {
   width: 2em;
   text-align: center;
   padding: 0;
 }
 
-.lt-td--select input[type="checkbox"] {
+.label-table-td--select input[type="checkbox"] {
   cursor: pointer;
   width: 1em;
   height: 1em;
 }
 
-.lt-td--kinds {
+.label-table-td--kinds {
   color: var(--color-muted);
   font-size: 0.85em;
 }
 
-.lt-row {
+.label-table-row {
   cursor: pointer;
 }
 
-.lt-row:hover > .lt-td {
+.label-table-row:hover > .label-table-td {
   background: #fafafa;
 }
 
-.lt-row--selected > .lt-td {
+.label-table-row--selected > .label-table-td {
   background: #f0f0f0;
 }
 
-.lt-row--selected:hover > .lt-td {
+.label-table-row--selected:hover > .label-table-td {
   background: #e8e8e8;
 }
 
 /* Inline name editing */
-.lt-name {
+.label-table-name {
   cursor: pointer;
   display: inline;
   min-width: 4em;
 }
 
-.lt-name:focus {
+.label-table-name:focus {
   outline: 2px solid var(--color-fg);
   outline-offset: 1px;
 }
@@ -219,7 +219,7 @@
    background so it fully hides what it covers, and raise it above sibling
    editors while focused (pure-CSS :focus-within stacking, no counter). Kept
    below the delete-overlay layer (z-index: 100). */
-.lt-editing {
+.label-table-editing {
   display: flex;
   gap: 2px;
   position: relative;
@@ -227,11 +227,11 @@
   background: var(--color-bg);
 }
 
-.lt-editing:focus-within {
+.label-table-editing:focus-within {
   z-index: 20;
 }
 
-.lt-edit-input {
+.label-table-edit-input {
   font-size: 0.9em;
   padding: 1px 4px;
   border: var(--border-width) solid var(--color-border);
@@ -242,7 +242,7 @@
   min-width: 5em;
 }
 
-.lt-edit-btn {
+.label-table-edit-btn {
   padding: 1px 0.5em;
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
@@ -251,12 +251,12 @@
   line-height: 1.4;
 }
 
-.lt-edit-btn:hover {
+.label-table-edit-btn:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-.lt-empty {
+.label-table-empty {
   padding: var(--spacing-md);
   text-align: center;
   color: var(--color-muted);

@@ -34,8 +34,8 @@ const StoredSession = Companion(
   type({
     recipe_id: "string",
     recipe_version_id: "string",
-    started_at: "number",
-    "completed_at?": "number",
+    started_at: "number.epoch",
+    "completed_at?": "number.epoch",
     status: SessionStatus.type,
     "rescale_multiplier?": "unknown",
     "rating?": "number",

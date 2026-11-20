@@ -1,11 +1,11 @@
 /* IngredientSelector — sizing only; shared theme lives in styles/treeSelect.css */
 
 /* Transparent wrapper that intercepts arrow-key events before they reach the TreeTable row */
-.is-key-interceptor {
+.ingredient-selector-key-interceptor {
   display: contents;
 }
 
-.is-selector {
+.ingredient-selector-tree {
   font-size: 0.9em;
   width: 12vw;
   min-width: 8em;

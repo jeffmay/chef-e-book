@@ -165,21 +165,26 @@ export function BulkIngredientEditorPage() {
   }
 
   return (
-    <main className="bie-page">
+    <main className="bulk-ingredient-editor-page">
       <h1 className="page-title">Ingredients</h1>
 
       {/* Add ingredient form */}
       {showAddForm && (
-        <form className="bie-add-form" onSubmit={handleAddSubmit} aria-label="Add ingredient">
-          <h2 className="bie-add-title">New Ingredient</h2>
-          <label className="bie-add-label field-row">
+        <form
+          className="bulk-ingredient-editor-add-form"
+          onSubmit={handleAddSubmit}
+          aria-label="Add ingredient"
+        >
+          <h2 className="bulk-ingredient-editor-add-title">New Ingredient</h2>
+          <label className="bulk-ingredient-editor-add-label field-row">
             <span className="field-row-label">Name</span>
             <input
-              className="bie-add-input"
+              className="bulk-ingredient-editor-add-input"
               type="text"
               value={addForm.name}
               onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
               required
+              id="bulk-ingredient-editor-add-name"
               aria-label="New ingredient name"
               aria-invalid={addNameError !== undefined}
               autoFocus
@@ -190,14 +195,14 @@ export function BulkIngredientEditorPage() {
               {addNameError}
             </p>
           )}
-          <label className="bie-add-label field-row">
+          <label className="bulk-ingredient-editor-add-label field-row">
             <span className="field-row-label">Default measurement</span>
             <MeasurementEditor
               value={addForm.measurement_value}
               onCommit={(value) => setAddForm((f) => ({ ...f, measurement_value: value }))}
             />
           </label>
-          <label className="bie-add-label field-row">
+          <label className="bulk-ingredient-editor-add-label field-row">
             <span className="field-row-label">Labels</span>
             <LabelEditor
               selectedLabelNames={addForm.labels}
@@ -207,12 +212,13 @@ export function BulkIngredientEditorPage() {
               onChange={(names) => setAddForm((f) => ({ ...f, labels: names }))}
             />
           </label>
-          <label className="bie-add-label field-row">
+          <label className="bulk-ingredient-editor-add-label field-row">
             <span className="field-row-label">Parent ingredient</span>
             <select
-              className="bie-add-select"
+              className="bulk-ingredient-editor-add-select"
               value={addForm.parent_id}
               onChange={(e) => setAddForm((f) => ({ ...f, parent_id: e.target.value }))}
+              id="bulk-ingredient-editor-add-parent"
               aria-label="New ingredient parent"
             >
               <option value="">— None —</option>
@@ -223,7 +229,7 @@ export function BulkIngredientEditorPage() {
               ))}
             </select>
           </label>
-          <div className="bie-add-actions">
+          <div className="bulk-ingredient-editor-add-actions">
             <button
               type="submit"
               disabled={addForm.name.trim() === "" || addNameError !== undefined}
@@ -244,23 +250,23 @@ export function BulkIngredientEditorPage() {
       )}
 
       {/* Actions bar */}
-      <div className="bie-actions">
+      <div className="bulk-ingredient-editor-actions">
         <button
-          className="bie-add-btn"
+          className="bulk-ingredient-editor-add-btn"
           onClick={() => setShowAddForm((v) => !v)}
           aria-label="Add new ingredient"
         >
           + New ingredient
         </button>
         <button
-          className="bie-export-btn"
+          className="bulk-ingredient-editor-export-btn"
           onClick={() => exportIngredientsFile("all")}
           aria-label="Export all ingredients"
         >
           Export all
         </button>
         <button
-          className="bie-import-btn"
+          className="bulk-ingredient-editor-import-btn"
           onClick={() => setShowImport(true)}
           aria-label="Import ingredients"
         >

@@ -7,7 +7,7 @@ export * from "./types/kitchenware.ts";
 export * from "./types/recipe.ts";
 export * from "./types/sections.ts";
 export * from "./types/session.ts";
-export * from "./types/recipeGroup.ts";
+export * from "./types/recipeFolder.ts";
 export * from "./types/recipeBook.ts";
 export * from "./names/nameKey.ts";
 export * from "./names/nameIndex.ts";

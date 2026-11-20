@@ -2,12 +2,12 @@
    a floating centered "skipped" tag. Restore puts the item back into the
    version; Dismiss (✕) removes the row from view. */
 
-.re-item--skipped {
+.recipe-editor-item--skipped {
   position: relative;
   background: var(--background-danger);
 }
 
-.re-item-skipped-label {
+.recipe-editor-item-skipped-label {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -19,12 +19,12 @@
   z-index: 1;
 }
 
-.re-item-restore,
-.re-item-dismiss {
+.recipe-editor-item-restore,
+.recipe-editor-item-dismiss {
   white-space: nowrap;
 }
 
-.re-item-restore {
+.recipe-editor-item-restore {
   background: var(--color-fg);
   color: var(--color-bg);
 }

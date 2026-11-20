@@ -258,22 +258,24 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
         onClose={close}
         buttons={{ cancel: { text: "Cancel", dangerous: false, onClick: close } }}
       >
-        <div className="im-body">
-          <fieldset className="im-fieldset">
+        <div className="import-modal-body">
+          <fieldset className="import-modal-fieldset">
             <legend>Where from?</legend>
-            <label className="im-choice">
+            <label className="import-modal-choice">
               <input
                 type="radio"
                 name="import-source"
+                id="import-source-file"
                 checked={sourceKind === "file"}
                 onChange={() => setSourceKind("file")}
               />
               From an export file
             </label>
-            <label className="im-choice">
+            <label className="import-modal-choice">
               <input
                 type="radio"
                 name="import-source"
+                id="import-source-book"
                 checked={sourceKind === "book"}
                 onChange={() => setSourceKind("book")}
               />
@@ -282,7 +284,7 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
           </fieldset>
 
           {sourceKind === "file" ? (
-            <div className="im-field">
+            <div className="import-modal-field">
               <label htmlFor="import-file">Export file</label>
               <input
                 id="import-file"
@@ -295,12 +297,12 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
           ) : books.length === 0 ? (
             <p>There are no other books on this device.</p>
           ) : (
-            <ul className="im-list" aria-label="Books on this device">
+            <ul className="import-modal-list" aria-label="Books on this device">
               {books.map((book) => (
                 <li key={book.id}>
                   <button
                     type="button"
-                    className="im-book"
+                    className="import-modal-book"
                     disabled={loading}
                     aria-label={`Choose book ${book.name}`}
                     onClick={() => void handleBook(book)}
@@ -339,12 +341,12 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
           cancel: { text: "Cancel", dangerous: false, onClick: close },
         }}
       >
-        <div className="im-body">
+        <div className="import-modal-body">
           <p>
             Choose what to bring from <strong>{chosen?.label}</strong>
             {scope === "recipes" ? ". The ingredients each recipe needs come with it." : "."}
           </p>
-          <div className="im-list-actions">
+          <div className="import-modal-list-actions">
             <button type="button" onClick={() => setPicked(new Set(items.map((i) => i.id)))}>
               Select all
             </button>
@@ -356,12 +358,16 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
           {items.length === 0 ? (
             <p>This book has no {scope === "recipes" ? "recipes" : "ingredients"}.</p>
           ) : (
-            <ul className="im-list" aria-label={scope === "recipes" ? "Recipes" : "Ingredients"}>
+            <ul
+              className="import-modal-list"
+              aria-label={scope === "recipes" ? "Recipes" : "Ingredients"}
+            >
               {items.map((item) => (
-                <li key={item.id} className="im-choice">
-                  <label className="im-choice">
+                <li key={item.id} className="import-modal-choice">
+                  <label className="import-modal-choice">
                     <input
                       type="checkbox"
+                      id={`import-pick-${item.id}`}
                       checked={picked.has(item.id)}
                       aria-label={`Import ${item.label}`}
                       onChange={() => togglePicked(item.id)}
@@ -394,8 +400,8 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
           cancel: { text: "Cancel", dangerous: false, onClick: close },
         }}
       >
-        <div className="im-body">
-          <div className="im-field">
+        <div className="import-modal-body">
+          <div className="import-modal-field">
             <label htmlFor="import-folder">Destination folder</label>
             <select
               id="import-folder"
@@ -410,7 +416,7 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
               ))}
             </select>
           </div>
-          <div className="im-field">
+          <div className="import-modal-field">
             <label htmlFor="import-new-folder">New folder inside it (optional)</label>
             <input
               id="import-new-folder"
@@ -420,21 +426,23 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
             />
           </div>
           {hasFolders && (
-            <fieldset className="im-fieldset">
+            <fieldset className="import-modal-fieldset">
               <legend>Folders</legend>
-              <label className="im-choice">
+              <label className="import-modal-choice">
                 <input
                   type="radio"
                   name="import-folder-mode"
+                  id="import-folder-mode-retain"
                   checked={folderMode === "retain"}
                   onChange={() => setFolderMode("retain")}
                 />
                 Keep the file's folder structure
               </label>
-              <label className="im-choice">
+              <label className="import-modal-choice">
                 <input
                   type="radio"
                   name="import-folder-mode"
+                  id="import-folder-mode-flatten"
                   checked={folderMode === "flatten"}
                   onChange={() => setFolderMode("flatten")}
                 />
@@ -442,7 +450,7 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
               </label>
             </fieldset>
           )}
-          <div className="im-field">
+          <div className="import-modal-field">
             <label htmlFor="import-on-match">If a recipe is already in the book</label>
             <select
               id="import-on-match"
@@ -487,12 +495,13 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
           cancel: { text: "Cancel", dangerous: false, onClick: close },
         }}
       >
-        <div className="im-body">
+        <div className="import-modal-body">
           {((bundle?.ingredients.length ?? 0) > 0 || (bundle?.containers.length ?? 0) > 0) && (
-            <div className="im-field">
-              <label className="im-choice">
+            <div className="import-modal-field">
+              <label className="import-modal-choice">
                 <input
                   type="checkbox"
+                  id="import-overwrite-kitchenware"
                   checked={overwriteKitchenware}
                   onChange={(e) => setOverwriteKitchenware(e.target.checked)}
                 />
@@ -506,7 +515,7 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
           )}
           {summary !== null && (
             <>
-              <p className="im-summary" role="status">
+              <p className="import-modal-summary" role="status">
                 {summary.message}
               </p>
               {summary.warnings.map((warning) => (
@@ -517,12 +526,13 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
             </>
           )}
           {recipeRows.length > 0 && (
-            <ul className="im-list" aria-label="Recipes">
+            <ul className="import-modal-list" aria-label="Recipes">
               {recipeRows.map((row) => (
-                <li key={row.incoming_id} className="im-row">
-                  <span className="im-row-name">{row.name}</span>
+                <li key={row.incoming_id} className="import-modal-row">
+                  <span className="import-modal-row-name">{row.name}</span>
                   {row.recipe_match !== undefined ? (
                     <select
+                      id={`import-recipe-action-${row.incoming_id}`}
                       aria-label={`What to do with ${row.name}`}
                       value={recipeActions[row.incoming_id] ?? onMatch}
                       onChange={(e) =>
@@ -539,7 +549,7 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
                       ))}
                     </select>
                   ) : (
-                    <span className="im-row-status">{actionText(row)}</span>
+                    <span className="import-modal-row-status">{actionText(row)}</span>
                   )}
                 </li>
               ))}
@@ -548,13 +558,13 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
           {otherRows.length > 0 && (
             <details>
               <summary>Ingredients and other items ({otherRows.length})</summary>
-              <ul className="im-list" aria-label="Other items">
+              <ul className="import-modal-list" aria-label="Other items">
                 {otherRows.map((row, i) => (
-                  <li key={`${row.entity}-${row.incoming_id}-${i}`} className="im-row">
-                    <span className="im-row-name">
+                  <li key={`${row.entity}-${row.incoming_id}-${i}`} className="import-modal-row">
+                    <span className="import-modal-row-name">
                       {row.name} <small>({row.entity})</small>
                     </span>
-                    <span className="im-row-status">{actionText(row)}</span>
+                    <span className="import-modal-row-status">{actionText(row)}</span>
                   </li>
                 ))}
               </ul>
@@ -574,10 +584,10 @@ export function ImportModal({ scope, onClose }: ImportModalProps) {
       onEnterClickId="close"
       buttons={{ close: { text: "Close", dangerous: false, onClick: close } }}
     >
-      <div className="im-body">
+      <div className="import-modal-body">
         {result !== null && (
           <>
-            <p className="im-summary" role="status">
+            <p className="import-modal-summary" role="status">
               {result.message}
             </p>
             {result.warnings.map((warning) => (

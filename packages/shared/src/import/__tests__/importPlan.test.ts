@@ -19,7 +19,7 @@ import { ingredientNameKey } from "../../names/nameKey.ts";
 import { fixedId } from "../../types/ids.ts";
 import { EquipmentId, IngredientId, KitchenwareLabelId } from "../../types/kitchenware.ts";
 import { RecipeId } from "../../types/recipe.ts";
-import { RecipeFolderId } from "../../types/recipeGroup.ts";
+import { RecipeFolderId } from "../../types/recipeFolder.ts";
 import { type ImportRow, isEmptyImportPlan, planImport } from "../importPlan.ts";
 import { makeBundle, makeOptions, NOW } from "./importFixtures.ts";
 

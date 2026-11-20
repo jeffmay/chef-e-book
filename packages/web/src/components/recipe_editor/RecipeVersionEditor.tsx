@@ -24,7 +24,7 @@ import {
 } from "@recipe-book/shared";
 import isEqual from "lodash/isEqual";
 import type { TreeNode } from "primereact/treenode";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useId, useEffect, useMemo, useRef, useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import { useIngredientStore } from "../../hooks/useIngredientStore.ts";
 import { useLabelStore } from "../../hooks/useLabelStore.ts";
@@ -236,10 +236,10 @@ type SkippedRowActionsProps = SkippedRowProps &
 function SkippedRowActions({ itemName, onRestore, onDismiss }: SkippedRowActionsProps) {
   return (
     <>
-      <span className="re-item-skipped-label">skipped</span>
+      <span className="recipe-editor-item-skipped-label">skipped</span>
       <button
         type="button"
-        className="re-item-restore"
+        className="recipe-editor-item-restore"
         onClick={onRestore}
         aria-label={`Restore ${itemName}`}
       >
@@ -247,7 +247,7 @@ function SkippedRowActions({ itemName, onRestore, onDismiss }: SkippedRowActions
       </button>
       <button
         type="button"
-        className="re-item-dismiss"
+        className="recipe-editor-item-dismiss"
         onClick={onDismiss}
         aria-label={`Dismiss ${itemName}`}
       >
@@ -317,7 +317,7 @@ function IngredientItemRow({
 
   return (
     <div
-      className={`re-item re-item--ingredients${skipped === true ? " re-item--skipped" : ""}`}
+      className={`recipe-editor-item recipe-editor-item--ingredients${skipped === true ? " recipe-editor-item--skipped" : ""}`}
       role="group"
       aria-label={`Ingredient: ${ingredientName}`}
     >
@@ -347,9 +347,11 @@ function IngredientItemRow({
       ) : (
         <>
           <EditButton label={`Edit ingredient: ${ingredientName}`} onClick={openEditor} />
-          <span className="re-item-label">{ingredientName}</span>
+          <span className="recipe-editor-item-label">{ingredientName}</span>
           {amount !== undefined && (
-            <span className="re-item-amount">{formatAmount(amount.value, amount.unit)}</span>
+            <span className="recipe-editor-item-amount">
+              {formatAmount(amount.value, amount.unit)}
+            </span>
           )}
         </>
       )}
@@ -398,7 +400,11 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
   }
 
   return (
-    <div className="re-item re-item--new-ingredient" role="group" aria-label="New ingredient">
+    <div
+      className="recipe-editor-item recipe-editor-item--new-ingredient"
+      role="group"
+      aria-label="New ingredient"
+    >
       {/* Named "Add"/"Cancel" rather than "✔︎"/"↩" — this row adds an item
           instead of committing edits to one — but it answers Enter and Escape
           like every other editor. */}
@@ -420,10 +426,10 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
         {selectedIngredientAmount && (
           <MeasurementEditor value={selectedIngredientAmount} onCommit={setAmount} />
         )}
-        <div className="re-new-ingredient-actions">
+        <div className="recipe-editor-new-ingredient-actions">
           <button
             type="button"
-            className="re-new-ingredient-add"
+            className="recipe-editor-new-ingredient-add"
             onClick={handleAdd}
             disabled={ingredient_id === undefined}
             aria-label={
@@ -436,7 +442,7 @@ function NewIngredientRow({ allIngredients, allLabels, onAdd, onCancel }: NewIng
           </button>
           <button
             type="button"
-            className="re-new-ingredient-cancel"
+            className="recipe-editor-new-ingredient-cancel"
             onClick={onCancel}
             aria-label="Cancel adding ingredient"
           >
@@ -475,6 +481,7 @@ function ContainerItemRow({
   onRestoreItem,
   onDismissItem,
 }: ContainerItemRowProps) {
+  const uid = useId();
   const [showingNewIngredient, setShowingNewIngredient] = useState(false);
   // A row added in this editing session opens straight into its editor. Keyed
   // off `isNew` rather than off the item being blank, so a row that was
@@ -551,7 +558,7 @@ function ContainerItemRow({
 
   return (
     <div
-      className={`re-item re-item--container${discardRemovesItem ? " re-item--new" : ""}`}
+      className={`recipe-editor-item recipe-editor-item--container${discardRemovesItem ? " recipe-editor-item--new" : ""}`}
       role="group"
       aria-label={`Container: ${containerName} — ${item.descriptor}`}
     >
@@ -565,11 +572,12 @@ function ContainerItemRow({
         >
           {/* No aria-labels: the wrapping <label>s are the accessible names, so
               they cannot drift from the visible text. */}
-          <div className="re-container-fields">
-            <label className="re-container-field">
-              <span className="re-container-field-label">Type</span>
+          <div className="recipe-editor-container-fields">
+            <label className="recipe-editor-container-field">
+              <span className="recipe-editor-container-field-label">Type</span>
               <select
-                className="re-container-select"
+                id={`${uid}-container`}
+                className="recipe-editor-container-select"
                 value={draft.container_id}
                 onChange={(e) =>
                   setDraft({ ...draft, container_id: loadId(ContainerId, e.target.value) })
@@ -583,11 +591,12 @@ function ContainerItemRow({
               </select>
             </label>
             {showNameInput ? (
-              <label className="re-container-field">
-                <span className="re-container-field-label">Name</span>
+              <label className="recipe-editor-container-field">
+                <span className="recipe-editor-container-field-label">Name</span>
                 <input
                   ref={nameInputRef}
-                  className="re-container-descriptor"
+                  id={`${uid}-descriptor`}
+                  className="recipe-editor-container-descriptor"
                   value={draft.descriptor}
                   onChange={(e) => setDraft({ ...draft, descriptor: e.target.value })}
                 />
@@ -595,7 +604,7 @@ function ContainerItemRow({
             ) : (
               <button
                 type="button"
-                className="re-container-add-name-btn"
+                className="recipe-editor-container-add-name-btn"
                 onClick={handleAddName}
                 aria-label="Add container name"
               >
@@ -604,12 +613,13 @@ function ContainerItemRow({
             )}
             <EditActions />
           </div>
-          <div className="re-container-ordered-row">
-            <label className="re-container-ordered">
+          <div className="recipe-editor-container-ordered-row">
+            <label className="recipe-editor-container-ordered">
               <input
                 type="checkbox"
                 checked={draft.ordered ?? false}
                 onChange={(e) => setDraft({ ...draft, ordered: e.target.checked })}
+                id={`${uid}-ordered`}
                 aria-label="Ordered list"
               />
               ordered
@@ -621,12 +631,12 @@ function ContainerItemRow({
           </div>
         </AcceptOrCancelEditor>
       ) : (
-        <div className="re-item-header">
+        <div className="recipe-editor-item-header">
           <EditButton label={`Edit container: ${containerName}`} onClick={openEditor} />
-          <span className="re-container-summary">
-            <strong className="re-container-summary-name">{containerName}</strong>
+          <span className="recipe-editor-container-summary">
+            <strong className="recipe-editor-container-summary-name">{containerName}</strong>
             {containerDetails !== "" && (
-              <span className="re-container-summary-details"> {containerDetails}</span>
+              <span className="recipe-editor-container-summary-details"> {containerDetails}</span>
             )}
           </span>
         </div>
@@ -634,7 +644,7 @@ function ContainerItemRow({
       {/* After the header (so it follows the header's "✎" for a keyboard) but
           before the nested ingredient rows, which have their own actions. */}
       <RemoveButton label={`Remove container ${containerName}`} onClick={onRemove} />
-      <div className="re-container-contents">
+      <div className="recipe-editor-container-contents">
         {item.contents.map((content, i) => (
           <IngredientItemRow
             key={content.id}
@@ -666,7 +676,7 @@ function ContainerItemRow({
         ) : (
           <button
             type="button"
-            className="re-container-add-ingredient-btn"
+            className="recipe-editor-container-add-ingredient-btn"
             onClick={() => setShowingNewIngredient(true)}
             aria-label={`Add ingredient to ${containerName}`}
           >
@@ -700,6 +710,7 @@ function InstructionRow({
   onRestore,
   onDismiss,
 }: InstructionRowProps) {
+  const uid = useId();
   // A row added in this editing session opens straight into its editor. Keyed
   // off `isNew` rather than off the item being blank, so a row that was
   // accepted while still blank collapses to its summary like any other.
@@ -770,9 +781,9 @@ function InstructionRow({
   }
 
   const rowClassName = [
-    "re-item re-item--instruction",
-    skipped === true ? " re-item--skipped" : "",
-    discardRemovesItem ? " re-item--new" : "",
+    "recipe-editor-item recipe-editor-item--instruction",
+    skipped === true ? " recipe-editor-item--skipped" : "",
+    discardRemovesItem ? " recipe-editor-item--new" : "",
   ].join("");
 
   if (!editing) {
@@ -783,10 +794,12 @@ function InstructionRow({
         aria-label={`Instruction: ${item.instruction || "new"}`}
       >
         <EditButton label={`Edit instruction: ${instructionName}`} onClick={openEditor} />
-        <span className="re-instruction-summary">
-          <strong className="re-instruction-summary-name">{instructionSummaryName(item)}</strong>
+        <span className="recipe-editor-instruction-summary">
+          <strong className="recipe-editor-instruction-summary-name">
+            {instructionSummaryName(item)}
+          </strong>
           {instructionDetails !== "" && (
-            <span className="re-instruction-summary-details"> {instructionDetails}</span>
+            <span className="recipe-editor-instruction-summary-details"> {instructionDetails}</span>
           )}
         </span>
         {/* After the summary it removes, matching the container row: the
@@ -813,23 +826,25 @@ function InstructionRow({
         onAccept={handleAccept}
         autoFocus
       >
-        <div className="re-item-header">
+        <div className="recipe-editor-item-header">
           {/* No aria-label: the wrapping <label> is the accessible name, so it
             cannot drift from the visible text. */}
-          <label className="re-instruction-action-label">
+          <label className="recipe-editor-instruction-action-label">
             Action
             <input
-              className="re-instruction-text"
+              id={`${uid}-instruction`}
+              className="recipe-editor-instruction-text"
               value={draft.instruction}
               onChange={(e) => setDraft({ ...draft, instruction: e.target.value })}
             />
           </label>
         </div>
 
-        <label className="re-instruction-equipment-label">
+        <label className="recipe-editor-instruction-equipment-label">
           Equipment
           <select
-            className="re-instruction-equipment"
+            id={`${uid}-equipment`}
+            className="recipe-editor-instruction-equipment"
             value={draft.equipment_id ?? ""}
             onChange={(e) => {
               if (e.target.value) {
@@ -850,8 +865,8 @@ function InstructionRow({
           </select>
         </label>
 
-        <div className="re-instruction-duration">
-          <label className="re-instruction-duration-label">
+        <div className="recipe-editor-instruction-duration">
+          <label className="recipe-editor-instruction-duration-label">
             Duration:
             {draft.duration_seconds !== undefined ? (
               <DurationEditor
@@ -861,7 +876,7 @@ function InstructionRow({
             ) : (
               <button
                 type="button"
-                className="re-instruction-add-duration"
+                className="recipe-editor-instruction-add-duration"
                 onClick={() => setDraft({ ...draft, duration_seconds: 300 })}
               >
                 + Add duration
@@ -871,7 +886,7 @@ function InstructionRow({
           {draft.duration_seconds !== undefined && (
             <button
               type="button"
-              className="re-instruction-remove-duration"
+              className="recipe-editor-instruction-remove-duration"
               onClick={() => {
                 const { duration_seconds: _, ...rest } = draft;
                 setDraft(rest);
@@ -883,8 +898,8 @@ function InstructionRow({
           )}
         </div>
 
-        <div className="re-instruction-ingredients">
-          <span className="re-instruction-ing-label">Ingredients:</span>
+        <div className="recipe-editor-instruction-ingredients">
+          <span className="recipe-editor-instruction-ing-label">Ingredients:</span>
           <InstructionIngredientSelector
             nodes={instructionIngredientNodes}
             selectedIds={draft.ingredient_ids ?? []}
@@ -912,6 +927,7 @@ type TextBlockRowProps = RecipeSectionItemRowProps<TextBlock> & NewRowProps;
  * accepted.
  */
 function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowProps) {
+  const uid = useId();
   // A row added in this editing session opens straight into its editor. Keyed
   // off `isNew` rather than off the text being empty, so a block that was
   // accepted while still empty collapses to its summary like any other.
@@ -961,7 +977,7 @@ function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowP
 
   return (
     <div
-      className={`re-item re-item--text-block${discardRemovesItem ? " re-item--new" : ""}`}
+      className={`recipe-editor-item recipe-editor-item--text-block${discardRemovesItem ? " recipe-editor-item--new" : ""}`}
       role="group"
       aria-label="Text block"
     >
@@ -976,9 +992,10 @@ function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowP
           {/* Enter inserts a newline here rather than accepting the row — the
               AcceptOrCancelEditor leaves a <textarea> its own Enter key. */}
           <textarea
-            className="re-text-block-input"
+            className="recipe-editor-text-block-input"
             value={draft.text}
             onChange={(e) => setDraft({ ...draft, text: e.target.value })}
+            id={`${uid}-text`}
             aria-label="Text block content"
             rows={3}
           />
@@ -988,7 +1005,7 @@ function TextBlockRow({ item, isNew = false, onChange, onRemove }: TextBlockRowP
       ) : (
         <>
           <EditButton label="Edit text block" onClick={openEditor} />
-          <p className="re-text-block-summary">{item.text || "Untitled text block"}</p>
+          <p className="recipe-editor-text-block-summary">{item.text || "Untitled text block"}</p>
           <RemoveButton label="Remove text block" onClick={onRemove} />
         </>
       )}
@@ -1021,6 +1038,7 @@ function SectionEditor({
   onRestoreItem,
   onDismissItem,
 }: SectionEditorProps) {
+  const uid = useId();
   const [showingNewIngredient, setShowingNewIngredient] = useState(false);
   // The header collapses to its text (or to a "+ Add Section Header" button
   // when unset) and opens into an inline editor. Header edits write through
@@ -1092,10 +1110,10 @@ function SectionEditor({
   return (
     <div
       role="group"
-      className={`re-section re-section--depth-${depth}`}
+      className={`recipe-editor-section recipe-editor-section--depth-${depth}`}
       aria-label={`Section: ${section.header ?? "unnamed"}`}
     >
-      <div className="re-section-header-row">
+      <div className="recipe-editor-section-header-row">
         {editingHeader ? (
           <AcceptOrCancelEditor
             cancelLabel="Cancel changes to section header"
@@ -1104,11 +1122,12 @@ function SectionEditor({
             onAccept={() => setEditingHeader(false)}
             autoFocus
           >
-            <Heading className="re-section-heading">
+            <Heading className="recipe-editor-section-heading">
               <input
-                className="re-section-header-input"
+                className="recipe-editor-section-header-input"
                 value={section.header ?? ""}
                 onChange={(e) => setHeader(e.target.value)}
+                id={`${uid}-header`}
                 aria-label="Section header"
               />
             </Heading>
@@ -1120,12 +1139,12 @@ function SectionEditor({
               label={`Edit section header: ${section.header}`}
               onClick={openHeaderEditor}
             />
-            <Heading className="re-section-heading">{section.header}</Heading>
+            <Heading className="recipe-editor-section-heading">{section.header}</Heading>
           </>
         ) : (
           <button
             type="button"
-            className="re-add-section-header-btn"
+            className="recipe-editor-add-section-header-btn"
             onClick={openHeaderEditor}
             aria-label="Add section header"
           >
@@ -1135,7 +1154,7 @@ function SectionEditor({
         <RemoveButton label="Remove section" onClick={onRemove} />
       </div>
 
-      <div className="re-section-contents">
+      <div className="recipe-editor-section-contents">
         {section.contents.map((item, i) => {
           if (item.kind === "ingredient") {
             return (
@@ -1227,8 +1246,8 @@ function SectionEditor({
         )}
       </div>
 
-      <div className="re-section-add-row">
-        <span className="re-section-add-label">Add:</span>
+      <div className="recipe-editor-section-add-row">
+        <span className="recipe-editor-section-add-label">Add:</span>
         <button
           type="button"
           onClick={() => addItem("ingredient")}
@@ -1283,24 +1302,26 @@ function RecipeIngredientsDisplay({ sections, allIngredients }: RecipeIngredient
   );
 
   return (
-    <section className="re-section-block" aria-label="Ingredients">
-      <h2 className="re-section-title">Ingredients</h2>
+    <section className="recipe-editor-section-block" aria-label="Ingredients">
+      <h2 className="recipe-editor-section-title">Ingredients</h2>
       {totals.length === 0 ? (
-        <p className="re-ing-empty">Add ingredients to sections to see them listed here.</p>
+        <p className="recipe-editor-ing-empty">
+          Add ingredients to sections to see them listed here.
+        </p>
       ) : (
-        <div className="re-ing-list">
+        <div className="recipe-editor-ing-list">
           {totals.map((total) => (
             <div
               key={total.ingredient_id}
-              className="re-ing-row"
+              className="recipe-editor-ing-row"
               aria-label={`Ingredient: ${total.name}`}
             >
-              <span className="re-ing-name">{total.name}</span>
-              <span className="re-ing-amounts">
+              <span className="recipe-editor-ing-name">{total.name}</span>
+              <span className="recipe-editor-ing-amounts">
                 {total.amounts.length > 0 ? (
                   total.amounts.map(({ unit, value }) => formatAmount(value, unit)).join(", ")
                 ) : (
-                  <em className="re-ing-no-amount">no amount</em>
+                  <em className="recipe-editor-ing-no-amount">no amount</em>
                 )}
               </span>
             </div>
@@ -1364,8 +1385,8 @@ export function RecipeVersionEditor({
       <RecipeIngredientsDisplay sections={displaySections} allIngredients={ingredients} />
 
       {/* Instruction sections */}
-      <section className="re-section-block" aria-label="Instructions">
-        <h2 className="re-section-title">Instructions</h2>
+      <section className="recipe-editor-section-block" aria-label="Instructions">
+        <h2 className="recipe-editor-section-title">Instructions</h2>
         {sections.map((sec, i) => (
           <SectionEditor
             key={sec.id}
@@ -1383,7 +1404,7 @@ export function RecipeVersionEditor({
         ))}
         <button
           type="button"
-          className="re-add-section-btn"
+          className="recipe-editor-add-section-btn"
           onClick={() => {
             const newSection: Section = {
               kind: "section",

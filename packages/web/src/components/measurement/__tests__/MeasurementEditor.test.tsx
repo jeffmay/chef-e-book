@@ -240,7 +240,7 @@ describe("MeasurementEditor.css — open panel background", () => {
   );
 
   it("gives the open panel a solid background so it hides content it overlaps", () => {
-    const open = /\.me-root--open\s*\{([\s\S]*?)\}/.exec(css);
+    const open = /\.measurement-editor-root--open\s*\{([\s\S]*?)\}/.exec(css);
     expect(open).not.toBeNull();
     expect(open?.[1] ?? "").toMatch(/background:\s*var\(--color-bg\)/);
   });
@@ -262,5 +262,24 @@ describe("MeasurementEditor — keyboard", () => {
 
     expect(onCommit).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Edit measurement" })).toBeInTheDocument();
+  });
+});
+
+describe("MeasurementEditor — input ids", () => {
+  it("gives every radio and select an id, unique across editors", async () => {
+    render(
+      <>
+        <MeasurementEditor value={ONE_CUP} onCommit={vi.fn()} />
+        <MeasurementEditor value={ONE_OZ} onCommit={vi.fn()} />
+      </>,
+    );
+    for (const button of screen.getAllByRole("button", { name: "Edit measurement" })) {
+      await userEvent.click(button);
+    }
+    const fields = [...screen.getAllByRole("radio"), ...screen.getAllByRole("combobox")];
+    expect(fields).toHaveLength(14);
+    const ids = fields.map((field) => field.id);
+    expect(ids.every((id) => id !== "")).toBe(true);
+    expect(new Set(ids).size).toBe(14);
   });
 });
