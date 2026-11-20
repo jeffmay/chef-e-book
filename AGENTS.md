@@ -520,7 +520,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 ### Top Nav Bar
 
 - "☰" hamburger menu to navigate between pages
-- "Switch Books" menu item (in the "☰" dropdown, under Recipes and Ingredients): leaves the open book for the book picker; the device's books are listed beneath it as indented items (the open one marked "✔︎"), and choosing one opens it directly (see Books on This Device). Where the device can hover (`@media (hover: hover)`: a mouse, or the Wacom EMR pen) the books fly out to the right of the item, top-aligned with it, on hover or keyboard focus, and the item shows a "▸" to say so; where it cannot (touch), the list stays open beneath it, so no book is reachable only by hovering
+- "Switch Books" menu item (in the "☰" dropdown, under Recipes and Ingredients): leaves the open book for the book picker; the device's books are listed beneath it as indented items (the open one marked "✔︎"), and choosing one opens it directly (see Books on This Device). Where the device can hover (`@media (hover: hover)`: a mouse, or the Wacom EMR pen) the books fly out to the right of the item, top-aligned with it, on hover or keyboard focus, and the item shows a "▸" to say so; where it cannot (touch, or mobile view), the list stays open beneath it with a vertical grey bar down its left edge to indent the rows, so no book is reachable only by hovering
 - "↩ Undo" button: undoes the last edit to the open book (see Undo); when there is nothing to undo it reads "✕ Undo" and is disabled, with a grey (dithered) background and the text kept full black
 
 ## Design System

@@ -76,19 +76,22 @@
   display: none;
 }
 
-/* Many books scroll inside the list rather than running off the page. */
+/* Books under "Switch Books". A vertical grey bar (the list's own background, dithered on the
+   tablet) runs down the left of the rows, so they read as indented children of the item above.
+   Many books scroll inside the list rather than running off the page. */
 .nav-menu-submenu {
   list-style: none;
   border-top: 1px solid var(--color-border);
+  padding-left: var(--spacing-lg);
+  background: var(--color-checked);
   max-height: 60vw;
   overflow-y: auto;
 }
 
-/* Books under "Switch Books". Separators go on top of every row but the first, so the
-   `.nav-menu-item:last-child` rule (each button is its `li`'s only child) cannot remove them. */
+/* Separators go on top of every row but the first, so the `.nav-menu-item:last-child` rule
+   (each button is its `li`'s only child) cannot remove them. */
 .nav-menu-subitem {
   border: none;
-  padding-left: calc(var(--spacing-md) + var(--spacing-lg));
   background: var(--color-bg);
 }
 
@@ -118,6 +121,8 @@
     min-width: 100%;
     width: max-content;
     max-width: 50vw;
+    /* Its own box, not a branch under the item, so no grey bar. */
+    padding-left: 0;
     background: var(--color-bg);
     border: var(--border-width) solid var(--color-border);
     z-index: 21;
@@ -126,9 +131,5 @@
   .nav-menu-group:hover > .nav-menu-submenu,
   .nav-menu-group:focus-within > .nav-menu-submenu {
     display: block;
-  }
-
-  .nav-menu-subitem {
-    padding-left: var(--spacing-md);
   }
 }
