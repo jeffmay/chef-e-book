@@ -1,11 +1,11 @@
-.kps-selector {
+.kitchenware-parent-selector-tree {
   font-family: var(--font-body);
   font-size: 0.9em;
   width: 100%;
   max-width: 40vw;
 }
 
-.kps-panel {
+.kitchenware-parent-selector-panel {
   font-family: var(--font-body);
   font-size: 0.9em;
 }

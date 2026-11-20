@@ -1,15 +1,15 @@
-.msf-wrapper {
+.multi-select-filter-wrapper {
   position: relative;
   width: 100%;
 }
 
-.msf-input-row {
+.multi-select-filter-input-row {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
 }
 
-.msf-input {
+.multi-select-filter-input {
   font-size: 0.85em;
   width: 100%;
   min-width: 0;
@@ -21,19 +21,19 @@
   cursor: pointer;
 }
 
-.msf-input:focus {
+.multi-select-filter-input:focus {
   outline: 2px solid var(--color-fg);
   outline-offset: -1px;
   cursor: text;
 }
 
-.msf-badge {
+.multi-select-filter-badge {
   font-size: 0.75em;
   color: var(--color-muted);
   white-space: nowrap;
 }
 
-.msf-clear-btn {
+.multi-select-filter-clear-btn {
   font-size: 0.75em;
   background: none;
   border: none;
@@ -44,11 +44,11 @@
   flex-shrink: 0;
 }
 
-.msf-clear-btn:hover {
+.multi-select-filter-clear-btn:hover {
   color: var(--color-fg);
 }
 
-.msf-dropdown {
+.multi-select-filter-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
@@ -62,7 +62,7 @@
   box-shadow: 2px 2px 0 var(--color-border);
 }
 
-.msf-search {
+.multi-select-filter-search {
   display: block;
   width: 100%;
   border: none;
@@ -76,18 +76,18 @@
   flex-shrink: 0;
 }
 
-.msf-search:focus {
+.multi-select-filter-search:focus {
   outline: none;
   background: var(--background-subtle);
 }
 
-.msf-dropdown-body {
+.multi-select-filter-dropdown-body {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
 }
 
-.msf-option {
+.multi-select-filter-option {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -98,26 +98,26 @@
   user-select: none;
 }
 
-.msf-option:hover {
+.multi-select-filter-option:hover {
   background: #f0f0f0;
 }
 
 /* Checkboxes inherit a global `input { width: 100% }` rule — keep them
    intrinsically sized so the option label sits next to the box. */
-.msf-option input[type="checkbox"] {
+.multi-select-filter-option input[type="checkbox"] {
   width: auto;
   flex-shrink: 0;
   margin: 0;
 }
 
-.msf-no-options {
+.multi-select-filter-no-options {
   padding: var(--spacing-xs) var(--spacing-sm);
   color: var(--color-muted);
   font-style: italic;
   font-size: 0.85em;
 }
 
-.msf-actions {
+.multi-select-filter-actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-xs);
@@ -126,7 +126,7 @@
   flex-shrink: 0;
 }
 
-.msf-actions button {
+.multi-select-filter-actions button {
   font-size: 0.85em;
   padding: 1px 6px;
   cursor: pointer;
@@ -136,7 +136,7 @@
   font-family: var(--font-body);
 }
 
-.msf-actions button:hover {
+.multi-select-filter-actions button:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }

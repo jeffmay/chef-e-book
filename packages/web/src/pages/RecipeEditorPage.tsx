@@ -74,18 +74,20 @@ function VersionHistoryTable({ versions, onStart, onEdit }: VersionHistoryTableP
 
   return (
     <details
-      className="re-version-history"
+      className="recipe-editor-version-history"
       open={open}
       onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
     >
-      <summary className="re-version-history-summary">Version history ({versions.length})</summary>
-      <div className="re-version-history-body">
-        <table className="re-version-table">
+      <summary className="recipe-editor-version-history-summary">
+        Version history ({versions.length})
+      </summary>
+      <div className="recipe-editor-version-history-body">
+        <table className="recipe-editor-version-table">
           <thead>
             <tr>
-              <th className="re-version-date">Date</th>
+              <th className="recipe-editor-version-date">Date</th>
               <th>Description</th>
-              <th className="re-version-actions">Actions</th>
+              <th className="recipe-editor-version-actions">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -150,23 +152,25 @@ function CopyRecipeDialog({ recipe, flatFolders, onCopy, onCancel }: CopyRecipeD
         return true;
       }}
     >
-      <label className="re-field-label field-row">
+      <label className="recipe-editor-field-label field-row">
         <span className="field-row-label">New title</span>
         <input
-          className="re-field-input"
+          className="recipe-editor-field-input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          id="recipe-editor-copy-title"
           aria-label="New recipe title"
         />
       </label>
-      <label className="re-field-label field-row">
+      <label className="recipe-editor-field-label field-row">
         <span className="field-row-label">Parent folder</span>
         <select
-          className="re-field-select"
+          className="recipe-editor-field-select"
           value={folderId ?? ""}
           onChange={(e) =>
             setFolderId(e.target.value ? loadId(RecipeFolderId, e.target.value) : undefined)
           }
+          id="recipe-editor-copy-folder"
           aria-label="Parent folder for copy"
         >
           <option value="">— None —</option>
@@ -387,22 +391,22 @@ export function RecipeEditor({
   const canSave = titleError === null && descriptionError === null && missingAmountCount === 0;
 
   return (
-    <main className="re-editor" aria-label="Recipe editor">
-      <div className="re-editor-header">
+    <main className="recipe-editor" aria-label="Recipe editor">
+      <div className="recipe-editor-header">
         <button
           type="button"
-          className="re-back-btn"
+          className="recipe-editor-back-btn"
           onClick={onCancel}
           aria-label="Back to recipe list"
         >
           ⬅︎
         </button>
-        <h1 className="re-editor-title">
+        <h1 className="recipe-editor-title">
           {form.title ? form.title : recipe ? "Edit" : "New Recipe"}
         </h1>
         {recipe && (
           <ButtonMenu
-            className="re-header-actions"
+            className="recipe-editor-header-actions"
             {...(displayedVersion !== undefined && {
               defaultButton: {
                 label: "▶ Start",
@@ -417,10 +421,10 @@ export function RecipeEditor({
       </div>
 
       {/* Recipe info */}
-      <section className="re-section-block" aria-label="Recipe info">
-        <h2 className="re-section-title">Recipe Info</h2>
+      <section className="recipe-editor-section-block" aria-label="Recipe info">
+        <h2 className="recipe-editor-section-title">Recipe Info</h2>
 
-        <label className="re-field-label field-row">
+        <label className="recipe-editor-field-label field-row">
           <span className="field-row-label">
             Title
             <span className="field-required" aria-hidden="true">
@@ -429,37 +433,39 @@ export function RecipeEditor({
           </span>
           <input
             id="recipe-title"
-            className={`re-field-input${titleError !== null ? " field-input--error" : ""}`}
+            className={`recipe-editor-field-input${titleError !== null ? " field-input--error" : ""}`}
             value={form.title}
             onChange={(e) => patch("title", e.target.value)}
             aria-label="Recipe title"
-            aria-describedby={titleError !== null ? "re-title-error" : undefined}
+            aria-describedby={titleError !== null ? "recipe-editor-title-error" : undefined}
             required
           />
           {titleError !== null && (
-            <span id="re-title-error" className="field-error" role="alert">
+            <span id="recipe-editor-title-error" className="field-error" role="alert">
               {titleError}
             </span>
           )}
         </label>
 
-        <label className="re-field-label field-row">
+        <label className="recipe-editor-field-label field-row">
           <span className="field-row-label">Subtitle</span>
           <input
-            className="re-field-input"
+            className="recipe-editor-field-input"
             value={form.subtitle}
             onChange={(e) => patch("subtitle", e.target.value)}
+            id="recipe-editor-subtitle"
             aria-label="Recipe subtitle"
           />
         </label>
 
-        <label className="re-field-label field-row">
+        <label className="recipe-editor-field-label field-row">
           <span className="field-row-label">Source URL</span>
           <input
-            className="re-field-input"
+            className="recipe-editor-field-input"
             type="url"
             value={form.source_url}
             onChange={(e) => patch("source_url", e.target.value)}
+            id="recipe-editor-source-url"
             aria-label="Source URL"
           />
         </label>
@@ -468,7 +474,7 @@ export function RecipeEditor({
             widget (TreeSelect + a "New subfolder" checkbox). Wrapping it in a
             <label> makes pointer clicks forward to the label's control, which
             toggles the TreeSelect overlay open-then-closed so it never opens. */}
-        <div className="re-field-label field-row">
+        <div className="recipe-editor-field-label field-row">
           <span className="field-row-label">Folder</span>
           <RecipeFolderSelector
             value={form.parent_folder_id}
@@ -497,14 +503,15 @@ export function RecipeEditor({
       )}
 
       {/* Save actions */}
-      <section className="re-actions">
-        <div className="re-version-options">
+      <section className="recipe-editor-actions">
+        <div className="recipe-editor-version-options">
           {recipe !== null && (
-            <label className="re-new-version-label">
+            <label className="recipe-editor-new-version-label">
               <input
                 type="checkbox"
                 checked={form.create_new_version}
                 onChange={(e) => handleToggleNewVersion(e.target.checked)}
+                id="recipe-editor-create-new-version"
                 aria-label="Create a new version from changes"
               />
               Create new version
@@ -512,8 +519,8 @@ export function RecipeEditor({
           )}
           {showVersionDescription && (
             <label
-              className="re-version-description-label field-row"
-              htmlFor="re-version-description-input"
+              className="recipe-editor-version-description-label field-row"
+              htmlFor="recipe-editor-version-description-input"
             >
               <span className="field-row-label">
                 Version description
@@ -522,17 +529,19 @@ export function RecipeEditor({
                 </span>
               </span>
               <input
-                id="re-version-description-input"
+                id="recipe-editor-version-description-input"
                 ref={descriptionInputRef}
                 className={descriptionError !== null ? "field-input--error" : ""}
                 value={form.version_description}
                 onChange={(e) => patch("version_description", e.target.value)}
                 aria-label="Version description"
-                aria-describedby={descriptionError !== null ? "re-description-error" : undefined}
+                aria-describedby={
+                  descriptionError !== null ? "recipe-editor-description-error" : undefined
+                }
                 required
               />
               {descriptionError !== null && (
-                <span id="re-description-error" className="field-error" role="alert">
+                <span id="recipe-editor-description-error" className="field-error" role="alert">
                   {descriptionError}
                 </span>
               )}
@@ -545,13 +554,13 @@ export function RecipeEditor({
             amount. Set all amounts or remove the ingredient.
           </p>
         )}
-        <div className="re-save-actions" aria-label="Save actions">
-          <button type="button" className="re-cancel-btn" onClick={onCancel}>
+        <div className="recipe-editor-save-actions" aria-label="Save actions">
+          <button type="button" className="recipe-editor-cancel-btn" onClick={onCancel}>
             Cancel
           </button>
           <button
             type="button"
-            className="re-save-btn"
+            className="recipe-editor-save-btn"
             onClick={handleSave}
             disabled={!canSave}
             aria-label="Save recipe"

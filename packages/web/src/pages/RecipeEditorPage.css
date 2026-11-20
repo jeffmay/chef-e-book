@@ -2,13 +2,13 @@
    RecipeEditorPage — shared layout primitives
    ============================================================ */
 
-.re-section-block {
+.recipe-editor-section-block {
   border: var(--border-width) solid var(--color-border);
   padding: var(--spacing-md);
   margin-bottom: var(--spacing-md);
 }
 
-.re-section-title {
+.recipe-editor-section-title {
   font-family: var(--font-display);
   font-size: clamp(1em, 2.5vw, 1.4em);
   border-bottom: var(--border-width) solid var(--color-border);
@@ -16,11 +16,11 @@
   margin-bottom: var(--spacing-sm);
 }
 
-.re-field-label {
+.recipe-editor-field-label {
   margin-bottom: var(--spacing-sm);
 }
 
-.re-field-input {
+.recipe-editor-field-input {
   font-family: var(--font-body);
   padding: var(--spacing-xs) var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
@@ -28,7 +28,7 @@
   color: var(--color-fg);
 }
 
-.re-field-select {
+.recipe-editor-field-select {
   font-family: var(--font-body);
   font-size: 0.95em;
   padding: var(--spacing-xs) var(--spacing-sm);
@@ -40,7 +40,7 @@
 
 /* Grow the folder selector to fill the row, matching the width the
    text/select inputs already get from the shared .field-row rule. */
-.field-row > .rfs-root {
+.field-row > .recipe-folder-selector-root {
   flex: 1 1 auto;
 }
 
@@ -48,12 +48,12 @@
    Recipe Editor
    ============================================================ */
 
-.re-editor {
+.recipe-editor {
   padding: var(--spacing-md);
   max-width: 100vw;
 }
 
-.re-editor-header {
+.recipe-editor-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -63,13 +63,13 @@
   padding-bottom: var(--spacing-sm);
 }
 
-.re-editor-title {
+.recipe-editor-title {
   font-family: var(--font-display);
   font-size: clamp(1.1em, 2.5vw, 1.6em);
   flex: 1;
 }
 
-.re-back-btn {
+.recipe-editor-back-btn {
   font-size: 0.9em;
   flex: 0 0 auto;
 }
@@ -77,13 +77,13 @@
 /* Header split button (Start + Copy recipe); keep it from stretching so the
    title takes the remaining row width and the group stays compact when the
    header wraps on smaller windows. */
-.re-header-actions {
+.recipe-editor-header-actions {
   flex: 0 0 auto;
   font-size: 0.85em;
 }
 
 /* Match the previous prominent "Start" treatment: solid-black default button. */
-.re-header-actions .button-menu-default {
+.recipe-editor-header-actions .button-menu-default {
   background: var(--color-fg);
   color: var(--color-bg);
 }
@@ -92,19 +92,19 @@
    Computed Ingredients Display (read-only)
    ============================================================ */
 
-.re-ing-empty {
+.recipe-editor-ing-empty {
   color: var(--color-muted);
   font-style: italic;
   font-size: 0.9em;
 }
 
-.re-ing-list {
+.recipe-editor-ing-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
 }
 
-.re-ing-row {
+.recipe-editor-ing-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -113,17 +113,17 @@
   border: var(--border-width) solid var(--color-border);
 }
 
-.re-ing-name {
+.recipe-editor-ing-name {
   font-weight: bold;
   min-width: 8em;
 }
 
-.re-ing-amounts {
+.recipe-editor-ing-amounts {
   flex: 1;
   font-size: 0.9em;
 }
 
-.re-ing-no-amount {
+.recipe-editor-ing-no-amount {
   color: var(--color-muted);
 }
 
@@ -131,22 +131,22 @@
    Section Editor (recursive)
    ============================================================ */
 
-.re-section {
+.recipe-editor-section {
   border: var(--border-width) solid var(--color-border);
   padding: var(--spacing-sm);
   margin-bottom: var(--spacing-sm);
 }
 
-.re-section--depth-2,
-.re-section--depth-3,
-.re-section--depth-4,
-.re-section--depth-5 {
+.recipe-editor-section--depth-2,
+.recipe-editor-section--depth-3,
+.recipe-editor-section--depth-4,
+.recipe-editor-section--depth-5 {
   border-style: dashed;
   margin-left: 2vw;
 }
 
 /* Also anchors the section's floating "✕" and reserves the corner it sits in. */
-.re-section-header-row {
+.recipe-editor-section-header-row {
   position: relative;
   display: flex;
   flex-wrap: wrap;
@@ -157,12 +157,12 @@
   min-height: calc(var(--row-action-size) + 2 * var(--spacing-xs));
 }
 
-.re-section-heading {
+.recipe-editor-section-heading {
   flex: 1;
   font-family: var(--font-display);
 }
 
-.re-section-header-input {
+.recipe-editor-section-header-input {
   font-family: var(--font-display);
   font-size: 1em;
   padding: 2px var(--spacing-xs);
@@ -173,17 +173,17 @@
 }
 
 /* Opens the section header editor; sits left with the row actions at right. */
-.re-add-section-header-btn {
+.recipe-editor-add-section-header-btn {
   margin-right: auto;
 }
 
-.re-section-contents {
+.recipe-editor-section-contents {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
 }
 
-.re-section-add-row {
+.recipe-editor-section-add-row {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs);
@@ -191,17 +191,17 @@
   align-items: center;
 }
 
-.re-section-add-label {
+.recipe-editor-section-add-label {
   font-size: 0.8em;
   color: var(--color-muted);
 }
 
-.re-section-add-row button {
+.recipe-editor-section-add-row button {
   font-size: 0.8em;
   padding: 1px var(--spacing-xs);
 }
 
-.re-add-section-btn {
+.recipe-editor-add-section-btn {
   margin-top: var(--spacing-sm);
 }
 
@@ -215,7 +215,7 @@
    square plus the offset above and below it — so a row shorter than the button
    (an empty header, an open ingredient editor) grows to fit rather than letting
    the button spill over the row below. */
-.re-item {
+.recipe-editor-item {
   position: relative;
   display: flex;
   flex-wrap: wrap;
@@ -229,23 +229,23 @@
 
 /* A row added in this editing session and not yet accepted: dashed until its
    "✔︎" commits it, matching the dashed new-ingredient draft row. */
-.re-item--new {
+.recipe-editor-item--new {
   border-style: dashed;
 }
 
-.re-item-label {
+.recipe-editor-item-label {
   font-weight: bold;
   cursor: default;
   user-select: none;
 }
 
 /* Per-row ingredient amount shown next to the ingredient name. */
-.re-item-amount {
+.recipe-editor-item-amount {
   font-family: var(--font-body);
   font-size: 0.9em;
 }
 
-.re-item-header {
+.recipe-editor-item-header {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs);
@@ -254,26 +254,26 @@
 }
 
 /* New ingredient draft row */
-.re-item--new-ingredient {
+.recipe-editor-item--new-ingredient {
   border-style: dashed;
   background: var(--color-bg);
 }
 
-.re-new-ingredient-actions {
+.recipe-editor-new-ingredient-actions {
   display: flex;
   gap: var(--spacing-xs);
 }
 
-.re-new-ingredient-add,
-.re-new-ingredient-cancel {
+.recipe-editor-new-ingredient-add,
+.recipe-editor-new-ingredient-cancel {
   font-size: 0.85em;
   padding: 2px var(--spacing-xs);
 }
 
 /* Container item */
 
-.re-container-select,
-.re-container-descriptor {
+.recipe-editor-container-select,
+.recipe-editor-container-descriptor {
   font-family: var(--font-body);
   font-size: 0.9em;
   padding: 2px var(--spacing-xs);
@@ -282,14 +282,14 @@
   color: var(--color-fg);
 }
 
-.re-container-descriptor {
+.recipe-editor-container-descriptor {
   flex: 1;
   max-width: 25vw;
 }
 
 /* The type and name fields sit on one row with the ↩/✔︎ actions; they stack
    in mobile view (breakpoint kept in sync with MOBILE_VIEW_MAX_WIDTH). */
-.re-container-fields {
+.recipe-editor-container-fields {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -298,38 +298,38 @@
   width: 100%;
 }
 
-.re-container-field {
+.recipe-editor-container-field {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
   font-size: 0.85em;
 }
 
-.re-container-field-label {
+.recipe-editor-container-field-label {
   white-space: nowrap;
 }
 
-.re-container-add-name-btn {
+.recipe-editor-container-add-name-btn {
   font-size: 0.85em;
   padding: 2px var(--spacing-xs);
 }
 
 @media (max-width: 600px) {
-  .re-container-fields {
+  .recipe-editor-container-fields {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .re-container-descriptor {
+  .recipe-editor-container-descriptor {
     max-width: none;
   }
 
-  .re-container-add-name-btn {
+  .recipe-editor-container-add-name-btn {
     align-self: flex-start;
   }
 }
 
-.re-container-ordered-row {
+.recipe-editor-container-ordered-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -337,7 +337,7 @@
   width: 100%;
 }
 
-.re-container-ordered {
+.recipe-editor-container-ordered {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -347,16 +347,16 @@
 /* Collapsed container header: the container type in bold followed by its name
    and flags; reopen the editor from the row's "✎". Its nested ingredient rows
    stay visible below either way. */
-.re-container-summary {
+.recipe-editor-container-summary {
   flex: 1;
 }
 
-.re-container-summary-name,
-.re-instruction-summary-name {
+.recipe-editor-container-summary-name,
+.recipe-editor-instruction-summary-name {
   font-weight: bold;
 }
 
-.re-container-contents {
+.recipe-editor-container-contents {
   width: 100%;
   padding-left: 2vw;
   border-left: var(--border-width) solid var(--color-border);
@@ -366,7 +366,7 @@
   gap: var(--spacing-xs);
 }
 
-.re-container-add-ingredient-btn {
+.recipe-editor-container-add-ingredient-btn {
   font-size: 0.85em;
   padding: 2px var(--spacing-xs);
   margin-top: var(--spacing-xs);
@@ -375,7 +375,7 @@
 
 /* Instruction item */
 
-.re-instruction-action-label {
+.recipe-editor-instruction-action-label {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -383,7 +383,7 @@
   font-weight: bold;
 }
 
-.re-instruction-text {
+.recipe-editor-instruction-text {
   font-family: var(--font-body);
   font-size: 0.9em;
   padding: 2px var(--spacing-xs);
@@ -394,7 +394,7 @@
   min-width: 0;
 }
 
-.re-instruction-equipment-label {
+.recipe-editor-instruction-equipment-label {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -402,7 +402,7 @@
   font-size: 0.85em;
 }
 
-.re-instruction-equipment {
+.recipe-editor-instruction-equipment {
   font-family: var(--font-body);
   font-size: 0.85em;
   padding: 2px var(--spacing-xs);
@@ -412,11 +412,11 @@
 }
 
 /* Collapsed instruction: a single summary line; reopen the editor from "✎". */
-.re-instruction-summary {
+.recipe-editor-instruction-summary {
   flex: 1;
 }
 
-.re-instruction-duration {
+.recipe-editor-instruction-duration {
   width: 100%;
   display: flex;
   align-items: center;
@@ -424,18 +424,18 @@
   font-size: 0.85em;
 }
 
-.re-instruction-duration-label {
+.recipe-editor-instruction-duration-label {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
 }
 
-.re-instruction-add-duration,
-.re-instruction-remove-duration {
+.recipe-editor-instruction-add-duration,
+.recipe-editor-instruction-remove-duration {
   font-size: 0.8em;
 }
 
-.re-instruction-ingredients {
+.recipe-editor-instruction-ingredients {
   width: 100%;
   display: flex;
   flex-wrap: wrap;
@@ -444,13 +444,13 @@
   font-size: 0.85em;
 }
 
-.re-instruction-ing-label {
+.recipe-editor-instruction-ing-label {
   color: var(--color-muted);
   margin-right: var(--spacing-xs);
 }
 
 /* Text block item */
-.re-text-block-input {
+.recipe-editor-text-block-input {
   font-family: var(--font-body);
   font-size: 0.9em;
   padding: var(--spacing-xs);
@@ -462,7 +462,7 @@
 }
 
 /* Collapsed text block: its own text; reopen the editor from "✎". */
-.re-text-block-summary {
+.recipe-editor-text-block-summary {
   flex: 1;
   white-space: pre-wrap;
 }
@@ -471,45 +471,45 @@
    Version History
    ============================================================ */
 
-.re-version-history {
+.recipe-editor-version-history {
   border: var(--border-width) solid var(--color-border);
   margin-bottom: var(--spacing-md);
 }
 
-.re-version-history-summary {
+.recipe-editor-version-history-summary {
   padding: var(--spacing-xs) var(--spacing-sm);
   cursor: pointer;
   font-family: var(--font-display);
   font-size: 0.9em;
 }
 
-.re-version-history-body {
+.recipe-editor-version-history-body {
   padding: var(--spacing-sm);
 }
 
-.re-version-table {
+.recipe-editor-version-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.85em;
 }
 
-.re-version-table th,
-.re-version-table td {
+.recipe-editor-version-table th,
+.recipe-editor-version-table td {
   border: var(--border-width) solid var(--color-border);
   padding: var(--spacing-xs) var(--spacing-sm);
   text-align: left;
 }
 
-.re-version-table th {
+.recipe-editor-version-table th {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-th.re-version-date {
+th.recipe-editor-version-date {
   width: 7em;
 }
 
-th.re-version-actions {
+th.recipe-editor-version-actions {
   width: 7em;
 }
 
@@ -517,38 +517,38 @@ th.re-version-actions {
    Save actions
    ============================================================ */
 
-.re-actions > div {
+.recipe-editor-actions > div {
   margin: var(--spacing-sm) 0;
 }
 
-.re-version-options {
+.recipe-editor-version-options {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
   align-items: flex-start;
 }
 
-.re-version-description-label {
+.recipe-editor-version-description-label {
   flex: 1;
 }
 
-.re-new-version-label {
+.recipe-editor-new-version-label {
   display: inline-flex;
   align-items: center;
 }
 
-.re-new-version-label > input {
+.recipe-editor-new-version-label > input {
   /* Override the global input { width: 100% } for a checkbox */
   width: unset;
   margin-right: var(--spacing-xs);
 }
 
-.re-save-actions {
+.recipe-editor-save-actions {
   display: flex;
   justify-content: end;
   gap: var(--spacing-sm);
 }
 
-.re-save-btn {
+.recipe-editor-save-btn {
   padding: var(--spacing-xs);
 }

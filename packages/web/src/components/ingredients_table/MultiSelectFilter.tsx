@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useId, useState, useRef, useEffect } from "react";
 import "./MultiSelectFilter.css";
 
 export type MultiSelectFilterProps = {
@@ -14,6 +14,7 @@ export function MultiSelectFilter({
   allOptions,
   ariaLabel,
 }: MultiSelectFilterProps) {
+  const uid = useId();
   const [open, setOpen] = useState(false);
   const [snapshot, setSnapshot] = useState<string[]>([]);
   const [search, setSearch] = useState("");
@@ -67,16 +68,17 @@ export function MultiSelectFilter({
     value.length === 0 ? "" : value.length === 1 ? value[0]! : `${value.length} selected`;
 
   return (
-    <div ref={containerRef} className="msf-wrapper">
-      <div className="msf-input-row">
+    <div ref={containerRef} className="multi-select-filter-wrapper">
+      <div className="multi-select-filter-input-row">
         <input
           type="text"
-          className="msf-input"
+          className="multi-select-filter-input"
           value={summary}
           readOnly
           onClick={openDropdown}
           onFocus={openDropdown}
           placeholder="Filter…"
+          id={`${uid}-filter`}
           aria-label={ariaLabel}
           aria-haspopup="listbox"
           aria-expanded={open}
@@ -84,7 +86,7 @@ export function MultiSelectFilter({
         {value.length > 0 && (
           <button
             type="button"
-            className="msf-clear-btn"
+            className="multi-select-filter-clear-btn"
             onClick={(e) => {
               e.stopPropagation();
               onChange([]);
@@ -97,31 +99,35 @@ export function MultiSelectFilter({
       </div>
 
       {open && (
-        <div className="msf-dropdown" role="listbox" aria-multiselectable>
-          <div className="msf-dropdown-body">
+        <div className="multi-select-filter-dropdown" role="listbox" aria-multiselectable>
+          <div className="multi-select-filter-dropdown-body">
             <input
               ref={searchRef}
               type="text"
-              className="msf-search"
+              className="multi-select-filter-search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search options…"
+              id={`${uid}-search`}
               aria-label={`Search ${ariaLabel} options`}
             />
-            {visibleOptions.length === 0 && <div className="msf-no-options">No options</div>}
+            {visibleOptions.length === 0 && (
+              <div className="multi-select-filter-no-options">No options</div>
+            )}
             {visibleOptions.map((opt) => (
-              <label key={opt} className="msf-option">
+              <label key={opt} className="multi-select-filter-option">
                 <input
                   type="checkbox"
                   checked={value.includes(opt)}
                   onChange={() => toggleOption(opt)}
+                  id={`${uid}-option-${visibleOptions.indexOf(opt)}`}
                   aria-label={opt}
                 />
                 {opt}
               </label>
             ))}
           </div>
-          <div className="msf-actions">
+          <div className="multi-select-filter-actions">
             <button type="button" onClick={handleRevert} aria-label="Revert filter">
               ↩
             </button>

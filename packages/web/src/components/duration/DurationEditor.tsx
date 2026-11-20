@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import parse from "parse-duration";
 import { AcceptOrCancelEditor } from "../accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
@@ -24,6 +24,7 @@ export type DurationEditorProps = ReadonlyDeep<{
 }>;
 
 export function DurationEditor({ value, onCommit }: DurationEditorProps) {
+  const uid = useId();
   const [editing, setEditing] = useState(false);
   const [original, setOriginal] = useState(value);
   const [current, setCurrent] = useState(value);
@@ -85,11 +86,11 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
 
   if (!editing) {
     return (
-      <span className="de-root de-root--closed">
-        <span className="de-display">{humanizeSeconds(value)}</span>
+      <span className="duration-editor-root duration-editor-root--closed">
+        <span className="duration-editor-display">{humanizeSeconds(value)}</span>
         <button
           type="button"
-          className="de-toggle-btn"
+          className="duration-editor-toggle-btn"
           onClick={openEditor}
           aria-label="Edit duration"
         >
@@ -111,30 +112,31 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
         if (!inputError) commit();
       }}
     >
-      <span className="de-root de-root--open">
-        <span className="de-header">
+      <span className="duration-editor-root duration-editor-root--open">
+        <span className="duration-editor-header">
           <button
             type="button"
-            className="de-toggle-btn"
+            className="duration-editor-toggle-btn"
             onClick={revert}
             aria-label="Cancel changes"
           >
             ↩
           </button>
           <input
-            className={`de-input${inputError ? " de-input--error" : ""}`}
+            className={`duration-editor-input${inputError ? " duration-editor-input--error" : ""}`}
             type="text"
             value={inputText}
             onChange={(e) => handleInputChange(e.target.value)}
+            id={`${uid}-duration`}
             aria-label="Duration"
             aria-invalid={inputError}
           />
         </span>
 
-        <span className="de-unit-toggle" role="group" aria-label="Duration unit">
+        <span className="duration-editor-unit-toggle" role="group" aria-label="Duration unit">
           <button
             type="button"
-            className={`de-unit-btn${unit === "min" ? " de-unit-btn--active" : ""}`}
+            className={`duration-editor-unit-btn${unit === "min" ? " duration-editor-unit-btn--active" : ""}`}
             onClick={() => setUnit("min")}
             aria-pressed={unit === "min"}
           >
@@ -142,7 +144,7 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
           </button>
           <button
             type="button"
-            className={`de-unit-btn${unit === "sec" ? " de-unit-btn--active" : ""}`}
+            className={`duration-editor-unit-btn${unit === "sec" ? " duration-editor-unit-btn--active" : ""}`}
             onClick={() => setUnit("sec")}
             aria-pressed={unit === "sec"}
           >
@@ -150,7 +152,7 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
           </button>
         </span>
 
-        <span className="de-adjust-buttons">
+        <span className="duration-editor-adjust-buttons">
           {deltas.map((delta) => {
             const seconds = unit === "min" ? delta * 60 : delta;
             const label = delta > 0 ? `+${delta}` : String(delta);
@@ -158,7 +160,7 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
               <button
                 key={delta}
                 type="button"
-                className="de-adjust-btn"
+                className="duration-editor-adjust-btn"
                 onClick={() => adjust(seconds)}
                 aria-label={`${label} ${unit}`}
               >
@@ -168,7 +170,12 @@ export function DurationEditor({ value, onCommit }: DurationEditorProps) {
           })}
         </span>
 
-        <button type="button" className="de-ok-btn" onClick={commit} aria-label="Accept changes">
+        <button
+          type="button"
+          className="duration-editor-ok-btn"
+          onClick={commit}
+          aria-label="Accept changes"
+        >
           ✔︎
         </button>
       </span>

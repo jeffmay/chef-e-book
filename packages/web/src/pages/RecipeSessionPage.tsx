@@ -32,7 +32,7 @@ import {
   resolveSecondsPerIngredient,
 } from "@recipe-book/shared";
 import { Accordion, AccordionTab } from "primereact/accordion";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import type { ReadonlyDeep } from "type-fest";
 import { DurationEditor } from "../components/duration/DurationEditor.tsx";
@@ -114,24 +114,30 @@ function CheckableRow({
   onCheckedChange,
   onSkippedChange,
 }: CheckableRowProps) {
+  const uid = useId();
   const skipped = state.skipped === true;
   return (
-    <div className={`rs-item${skipped ? " rs-item--skipped" : ""}`} role="group" aria-label={label}>
-      <label className="rs-item-check">
+    <div
+      className={`recipe-session-item${skipped ? " recipe-session-item--skipped" : ""}`}
+      role="group"
+      aria-label={label}
+    >
+      <label className="recipe-session-item-check">
         <input
           type="checkbox"
           checked={state.checked}
           disabled={skipped}
           onChange={(e) => onCheckedChange(e.target.checked)}
+          id={`${uid}-done`}
           aria-label={`Mark ${label} done`}
         />
-        <span className="rs-item-label">{label}</span>
+        <span className="recipe-session-item-label">{label}</span>
       </label>
-      {detail !== undefined && <span className="rs-item-detail">{detail}</span>}
-      {skipped && <span className="rs-item-skipped-tag">skipped</span>}
+      {detail !== undefined && <span className="recipe-session-item-detail">{detail}</span>}
+      {skipped && <span className="recipe-session-item-skipped-tag">skipped</span>}
       <button
         type="button"
-        className="rs-skip-btn"
+        className="recipe-session-skip-btn"
         disabled={state.checked}
         onClick={() => onSkippedChange(!skipped)}
         aria-label={skipped ? `Unskip ${label}` : `Skip ${label}`}
@@ -183,9 +189,9 @@ function SessionContainerGroup({
     COMMON_CONTAINERS.find((c) => c.id === item.container_id)?.name ?? item.container_id;
   const title = item.descriptor !== "" ? `${containerName} — ${item.descriptor}` : containerName;
   return (
-    <div className="rs-container" role="group" aria-label={`Container: ${title}`}>
-      <p className="rs-container-title">{title}</p>
-      <div className="rs-container-contents">
+    <div className="recipe-session-container" role="group" aria-label={`Container: ${title}`}>
+      <p className="recipe-session-container-title">{title}</p>
+      <div className="recipe-session-container-contents">
         {item.contents.map((content) => (
           <SessionIngredientRow key={content.id} item={content} {...rest} />
         ))}
@@ -215,9 +221,13 @@ function SessionInstructionRow({
 function SessionSection({ section, depth, ...rest }: SessionSectionProps) {
   const Heading = headingForDepth(depth);
   return (
-    <div className="rs-section" role="group" aria-label={`Section: ${section.header ?? "unnamed"}`}>
+    <div
+      className="recipe-session-section"
+      role="group"
+      aria-label={`Section: ${section.header ?? "unnamed"}`}
+    >
       {section.header !== undefined && (
-        <Heading className="rs-section-header">{section.header}</Heading>
+        <Heading className="recipe-session-section-header">{section.header}</Heading>
       )}
       {section.contents.map((item: SectionItem) => {
         if (item.kind === "ingredient") {
@@ -238,7 +248,7 @@ function SessionSection({ section, depth, ...rest }: SessionSectionProps) {
         }
         if (item.kind === "text_block") {
           return (
-            <p key={item.id} className="rs-text-block">
+            <p key={item.id} className="recipe-session-text-block">
               {item.text}
             </p>
           );
@@ -281,27 +291,27 @@ function SessionRunView({ session, recipe, version }: SessionRunViewProps) {
   const remainingSeconds = Math.max(0, Math.round(totalSeconds * (1 - fraction)));
 
   return (
-    <main className="rs-page" aria-label="Recipe session">
-      <div className="rs-header">
-        <h1 className="rs-title">{recipe.title}</h1>
-        <p className="rs-version-desc">{version.description}</p>
+    <main className="recipe-session-page" aria-label="Recipe session">
+      <div className="recipe-session-header">
+        <h1 className="recipe-session-title">{recipe.title}</h1>
+        <p className="recipe-session-version-desc">{version.description}</p>
       </div>
 
       <div
-        className="rs-progress"
+        className="recipe-session-progress"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent}
         aria-label="Session progress"
       >
-        <div className="rs-progress-fill" style={{ width: `${percent}%` }} />
+        <div className="recipe-session-progress-fill" style={{ width: `${percent}%` }} />
       </div>
-      <p className="rs-progress-text">
+      <p className="recipe-session-progress-text">
         {percent}% complete — about {humanizeSeconds(remainingSeconds)} left
       </p>
 
-      <div className="rs-items">
+      <div className="recipe-session-items">
         {version.sections.map((section) => (
           <SessionSection
             key={section.id}
@@ -314,10 +324,10 @@ function SessionRunView({ session, recipe, version }: SessionRunViewProps) {
         ))}
       </div>
 
-      <div className="rs-complete-row">
+      <div className="recipe-session-complete-row">
         <button
           type="button"
-          className="rs-complete-btn"
+          className="recipe-session-complete-btn"
           onClick={() => complete(session.id, [...weights.keys()])}
           aria-label="Complete session"
         >
@@ -501,15 +511,17 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
   }
 
   return (
-    <main className="rs-page rs-page--summary" aria-label="Session summary">
-      <div className="rs-header">
-        <h1 className="rs-title">{recipe.title}</h1>
-        <p className="rs-version-desc">{version.description}</p>
+    <main className="recipe-session-page recipe-session-page--summary" aria-label="Session summary">
+      <div className="recipe-session-header">
+        <h1 className="recipe-session-title">{recipe.title}</h1>
+        <p className="recipe-session-version-desc">{version.description}</p>
       </div>
 
-      <section className="rs-summary-block" aria-label="Session result">
-        <h2 className="rs-summary-heading">Session complete</h2>
-        <p className="rs-summary-total-time">Total time: {humanizeSeconds(actualSeconds)}</p>
+      <section className="recipe-session-summary-block" aria-label="Session result">
+        <h2 className="recipe-session-summary-heading">Session complete</h2>
+        <p className="recipe-session-summary-total-time">
+          Total time: {humanizeSeconds(actualSeconds)}
+        </p>
       </section>
 
       {/* Full version editor — skipped items are decorated in place and are
@@ -523,20 +535,23 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
         onDismissItem={dismissItem}
       />
 
-      <section className="rs-summary-block" aria-label="Time estimates">
-        <h2 className="rs-summary-heading">Time estimates</h2>
+      <section className="recipe-session-summary-block" aria-label="Time estimates">
+        <h2 className="recipe-session-summary-heading">Time estimates</h2>
 
-        <div className="rs-field-label rs-time-per-ingredient">
-          <span className="rs-time-per-ingredient-label">Time per ingredient</span>
-          <span className="rs-field-separator" aria-hidden="true" />
+        <div className="recipe-session-field-label recipe-session-time-per-ingredient">
+          <span className="recipe-session-time-per-ingredient-label">Time per ingredient</span>
+          <span className="recipe-session-field-separator" aria-hidden="true" />
           <DurationEditor value={secondsPerIngredient} onCommit={setSecondsPerIngredient} />
         </div>
 
-        <label className="rs-field-label" htmlFor="rs-estimated-time-slider">
+        <label
+          className="recipe-session-field-label"
+          htmlFor="recipe-session-estimated-time-slider"
+        >
           Estimated total time: {humanizeSeconds(effectiveEstimatedSeconds)}
           <input
-            id="rs-estimated-time-slider"
-            className="rs-estimated-slider"
+            id="recipe-session-estimated-time-slider"
+            className="recipe-session-estimated-slider"
             type="range"
             min={minSeconds}
             max={maxSeconds}
@@ -546,24 +561,27 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
             aria-label="Estimated total time"
           />
         </label>
-        <p className="rs-summary-hint">Minimum: {humanizeSeconds(minSeconds)}</p>
+        <p className="recipe-session-summary-hint">Minimum: {humanizeSeconds(minSeconds)}</p>
       </section>
 
-      <section className="rs-summary-block" aria-label="Save session results">
-        <h2 className="rs-summary-heading">Save as</h2>
+      <section className="recipe-session-summary-block" aria-label="Save session results">
+        <h2 className="recipe-session-summary-heading">Save as</h2>
 
         {/* PrimeReact CSSTransition is disabled (transitionOptions.disabled) —
             e-ink screens never animate. */}
-        <Accordion className="rs-save-accordion" transitionOptions={{ timeout: 0, disabled: true }}>
+        <Accordion
+          className="recipe-session-save-accordion"
+          transitionOptions={{ timeout: 0, disabled: true }}
+        >
           <AccordionTab header="Create a new version">
-            <label className="rs-field-label" htmlFor="rs-version-summary">
+            <label className="recipe-session-field-label" htmlFor="recipe-session-version-summary">
               Version summary
               <span className="field-required" aria-hidden="true">
                 *
               </span>
               <input
-                id="rs-version-summary"
-                className={`rs-field-input${versionSummaryError !== null ? " field-input--error" : ""}`}
+                id="recipe-session-version-summary"
+                className={`recipe-session-field-input${versionSummaryError !== null ? " field-input--error" : ""}`}
                 value={versionSummary}
                 onChange={(e) => setVersionSummary(e.target.value)}
                 aria-label="Version summary"
@@ -577,7 +595,7 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
             </label>
             <button
               type="button"
-              className="rs-summary-btn"
+              className="recipe-session-summary-btn"
               onClick={() => requestSave("version")}
               disabled={versionSummaryError !== null}
             >
@@ -586,14 +604,14 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
           </AccordionTab>
 
           <AccordionTab header="Create a new recipe">
-            <label className="rs-field-label" htmlFor="rs-new-recipe-name">
+            <label className="recipe-session-field-label" htmlFor="recipe-session-new-recipe-name">
               New recipe name
               <span className="field-required" aria-hidden="true">
                 *
               </span>
               <input
-                id="rs-new-recipe-name"
-                className={`rs-field-input${newRecipeNameError !== null ? " field-input--error" : ""}`}
+                id="recipe-session-new-recipe-name"
+                className={`recipe-session-field-input${newRecipeNameError !== null ? " field-input--error" : ""}`}
                 value={newRecipeName}
                 onChange={(e) => setNewRecipeName(e.target.value)}
                 aria-label="New recipe name"
@@ -607,7 +625,7 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
             </label>
             <button
               type="button"
-              className="rs-summary-btn"
+              className="recipe-session-summary-btn"
               onClick={() => requestSave("recipe")}
               disabled={newRecipeNameError !== null}
             >
@@ -615,9 +633,15 @@ function SessionSummaryView({ session, recipe, version }: SessionSummaryViewProp
             </button>
           </AccordionTab>
 
-          <AccordionTab header="Discard recipe version" className="rs-discard-tab">
-            <p className="rs-discard-warning">⚠ You will lose all changes to the recipe</p>
-            <button type="button" className="rs-summary-btn" onClick={() => navigate("/recipes")}>
+          <AccordionTab header="Discard recipe version" className="recipe-session-discard-tab">
+            <p className="recipe-session-discard-warning">
+              ⚠ You will lose all changes to the recipe
+            </p>
+            <button
+              type="button"
+              className="recipe-session-summary-btn"
+              onClick={() => navigate("/recipes")}
+            >
               Continue
             </button>
           </AccordionTab>
@@ -658,8 +682,8 @@ export function RecipeSessionPage({ sessionId }: RecipeSessionPageProps) {
   // an error until the stores have had a chance to load.
   if (session === undefined || recipe === null || version === undefined) {
     return (
-      <main className="rs-page" aria-label="Recipe session">
-        <p className="rs-not-found">Session not found.</p>
+      <main className="recipe-session-page" aria-label="Recipe session">
+        <p className="recipe-session-not-found">Session not found.</p>
       </main>
     );
   }

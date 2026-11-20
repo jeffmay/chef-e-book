@@ -1,12 +1,12 @@
 /* DurationEditor — closed (inline display) */
-.de-root--closed {
+.duration-editor-root--closed {
   display: inline-flex;
   align-items: baseline;
   gap: var(--spacing-xs);
 }
 
 /* DurationEditor — open (column layout) */
-.de-root--open {
+.duration-editor-root--open {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
@@ -16,14 +16,14 @@
 }
 
 /* Header row: < button + text input */
-.de-header {
+.duration-editor-header {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
 }
 
 /* Text input for parsing duration strings */
-.de-input {
+.duration-editor-input {
   font-size: 1em;
   font-family: var(--font-body);
   padding: 2px var(--spacing-xs);
@@ -34,24 +34,24 @@
   min-width: 8em;
 }
 
-.de-input--error {
+.duration-editor-input--error {
   border-color: var(--color-error, #c00);
   outline-color: var(--color-error, #c00);
 }
 
 /* Humanized display in closed state */
-.de-display {
+.duration-editor-display {
   font-size: 1em;
   color: var(--color-fg);
 }
 
 /* Unit toggle buttons (min / sec) */
-.de-unit-toggle {
+.duration-editor-unit-toggle {
   display: flex;
   gap: var(--spacing-xs);
 }
 
-.de-unit-btn {
+.duration-editor-unit-btn {
   font-size: 0.85em;
   padding: 2px var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
@@ -61,20 +61,20 @@
   font-family: var(--font-body);
 }
 
-.de-unit-btn--active {
+.duration-editor-unit-btn--active {
   background: var(--color-accent, var(--color-fg));
   color: var(--color-bg);
   border-color: var(--color-accent, var(--color-fg));
 }
 
 /* Adjustment buttons (-5, -1, +1, +5 / -15, -5, +5, +15) */
-.de-adjust-buttons {
+.duration-editor-adjust-buttons {
   display: flex;
   gap: var(--spacing-xs);
   flex-wrap: wrap;
 }
 
-.de-adjust-btn {
+.duration-editor-adjust-btn {
   font-size: 0.85em;
   padding: 2px var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
@@ -86,12 +86,12 @@
   text-align: center;
 }
 
-.de-adjust-btn:hover {
+.duration-editor-adjust-btn:hover {
   background: var(--color-hover, var(--color-border));
 }
 
 /* Toggle (±) button — shared style with FractionEditor */
-.de-toggle-btn {
+.duration-editor-toggle-btn {
   font-size: 0.85em;
   padding: 1px var(--spacing-xs);
   border: var(--border-width) solid var(--color-border);
@@ -102,7 +102,7 @@
 }
 
 /* OK button */
-.de-ok-btn {
+.duration-editor-ok-btn {
   font-size: 0.9em;
   padding: var(--spacing-xs) var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
@@ -113,6 +113,6 @@
   align-self: flex-end;
 }
 
-.de-ok-btn:hover {
+.duration-editor-ok-btn:hover {
   background: var(--color-hover, var(--color-border));
 }

@@ -3,7 +3,7 @@ import { fixedId } from "../../types/ids.ts";
 import { ContainerId, IngredientId } from "../../types/kitchenware.ts";
 import { RecipeId } from "../../types/recipe.ts";
 import { RecipeBookId } from "../../types/recipeBook.ts";
-import { RecipeFolderId } from "../../types/recipeGroup.ts";
+import { RecipeFolderId } from "../../types/recipeFolder.ts";
 import { buildIngredientExport, buildRecipeExport, type ExportSource } from "../buildExport.ts";
 import {
   RecipeBookExport,

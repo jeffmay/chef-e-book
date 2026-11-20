@@ -3,12 +3,12 @@
    ============================================================ */
 
 @media (max-width: 1000px) {
-  .it-edit-buttons {
+  .ingredients-table-edit-buttons {
     flex-direction: column;
   }
 }
 
-.it-wrapper {
+.ingredients-table-wrapper {
   --primary-color: var(--color-fg);
   --primary-color-text: var(--color-bg);
   --surface-0: var(--color-bg);
@@ -23,7 +23,7 @@
 }
 
 /* ---- Toolbar ---- */
-.it-toolbar {
+.ingredients-table-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5em;
@@ -31,8 +31,8 @@
   align-items: center;
 }
 
-.it-select-all-btn,
-.it-clear-sel-btn {
+.ingredients-table-select-all-btn,
+.ingredients-table-clear-sel-btn {
   font-family: var(--font-body);
   font-size: 0.9em;
   padding: 0.25em 0.6em;
@@ -42,26 +42,26 @@
   color: var(--color-fg);
 }
 
-.it-select-all-btn:hover,
-.it-clear-sel-btn:hover {
+.ingredients-table-select-all-btn:hover,
+.ingredients-table-clear-sel-btn:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
 /* ---- Table structure ---- */
-.it-table {
+.ingredients-table-table {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-body);
   font-size: 0.95em;
 }
 
-.it-wrapper .p-treetable {
+.ingredients-table-wrapper .p-treetable {
   font-family: var(--font-body);
 }
 
 /* Header cells */
-.it-wrapper .p-treetable .p-treetable-thead > tr > th {
+.ingredients-table-wrapper .p-treetable .p-treetable-thead > tr > th {
   border: 1px solid var(--color-border);
   background: var(--color-fg);
   color: var(--color-bg);
@@ -73,21 +73,21 @@
 }
 
 /* Sortable column header */
-.it-wrapper .p-treetable .p-sortable-column {
+.ingredients-table-wrapper .p-treetable .p-sortable-column {
   cursor: pointer;
 }
 
-.it-wrapper .p-treetable .p-sortable-column:hover {
+.ingredients-table-wrapper .p-treetable .p-sortable-column:hover {
   background: var(--color-accent) !important;
   color: var(--color-bg) !important;
 }
 
-.it-wrapper .p-treetable .p-sortable_column.p-highlight {
+.ingredients-table-wrapper .p-treetable .p-sortable_column.p-highlight {
   background: var(--color-fg) !important;
   color: var(--color-bg) !important;
 }
 
-.it-wrapper .p-treetable .p-sortable-column .p-sortable_column_icon {
+.ingredients-table-wrapper .p-treetable .p-sortable-column .p-sortable_column_icon {
   color: var(--color-bg);
   font-size: 0.75em;
   opacity: 0.8;
@@ -95,7 +95,7 @@
 }
 
 /* Body cells */
-.it-wrapper .p-treetable .p-treetable-tbody > tr > td {
+.ingredients-table-wrapper .p-treetable .p-treetable-tbody > tr > td {
   border: 1px solid var(--color-border);
   padding: var(--spacing-xs);
   font-family: var(--font-body);
@@ -103,18 +103,18 @@
 }
 
 /* Row hover */
-.it-wrapper .p-treetable .p-treetable-tbody > tr:hover > td {
+.ingredients-table-wrapper .p-treetable .p-treetable-tbody > tr:hover > td {
   background: var(--background-subtle);
 }
 
 /* Selected rows */
-.it-wrapper .p-treetable .p-treetable-tbody > tr.p-highlight > td {
+.ingredients-table-wrapper .p-treetable .p-treetable-tbody > tr.p-highlight > td {
   background: #f0f0f0 !important;
   color: var(--color-fg) !important;
 }
 
 /* Empty message */
-.it-wrapper .p-treetable .p-treetable-emptymessage > td {
+.ingredients-table-wrapper .p-treetable .p-treetable-emptymessage > td {
   text-align: center;
   color: var(--color-muted);
   font-style: italic;
@@ -122,17 +122,17 @@
   border: 1px solid var(--color-border);
 }
 
-.it-wrapper .p-treetable .p-checkbox .p-checkbox-box.p-highlight {
+.ingredients-table-wrapper .p-treetable .p-checkbox .p-checkbox-box.p-highlight {
   background: var(--color-fg);
   border-color: var(--color-fg);
 }
 
-.it-wrapper .p-treetable .p-checkbox .p-checkbox-box .p-checkbox-icon {
+.ingredients-table-wrapper .p-treetable .p-checkbox .p-checkbox-box .p-checkbox-icon {
   font-size: 0.7em;
 }
 
 /* ---- Row toggler (expand/collapse) ---- */
-.it-wrapper .p-treetable .p-treetable-toggler {
+.ingredients-table-wrapper .p-treetable .p-treetable-toggler {
   height: auto;
   width: auto;
   background: none;
@@ -146,12 +146,12 @@
   flex-shrink: 0;
 }
 
-.it-wrapper .p-treetable .p-treetable-toggler:hover {
+.ingredients-table-wrapper .p-treetable .p-treetable-toggler:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-.it-wrapper .p-treetable .p-treetable-toggler:focus {
+.ingredients-table-wrapper .p-treetable .p-treetable-toggler:focus {
   outline: 2px solid var(--color-fg);
   outline-offset: 1px;
   box-shadow: none;
@@ -160,7 +160,7 @@
 /* ---- In-table column filter row ----
    PrimeReact renders a second <tr> of <th> cells below the header titles.
    They inherit the dark header style, so reset them to a light filter row. */
-.it-wrapper .p-treetable .p-treetable-thead > tr > th.p-filter-column {
+.ingredients-table-wrapper .p-treetable .p-treetable-thead > tr > th.p-filter-column {
   background: var(--color-bg);
   color: var(--color-fg);
   padding: 0;
@@ -168,7 +168,7 @@
 }
 
 /* Name column text filter — fills its cell */
-.it-col-filter {
+.ingredients-table-col-filter {
   box-sizing: border-box;
   width: 100%;
   border: none;
@@ -179,20 +179,20 @@
   color: var(--color-fg);
 }
 
-.it-col-filter:focus {
+.ingredients-table-col-filter:focus {
   outline: 2px solid var(--color-fg);
   outline-offset: -2px;
 }
 
 /* MultiSelectFilter columns fill the cell without a doubled border */
-.it-filter-th .msf-input {
+.ingredients-table-filter-th .multi-select-filter-input {
   border: none;
   border-radius: 0;
   padding: var(--spacing-xs);
 }
 
 /* Let the MultiSelectFilter dropdown escape the table's scroll wrapper */
-.it-wrapper .p-treetable > .p-treetable-wrapper {
+.ingredients-table-wrapper .p-treetable > .p-treetable-wrapper {
   overflow: visible;
 }
 
@@ -203,7 +203,7 @@
 
 /* Drop the toggler's per-level horizontal indentation; the depth lines convey
    nesting instead. */
-.it-wrapper .p-treetable .p-treetable-toggler {
+.ingredients-table-wrapper .p-treetable .p-treetable-toggler {
   margin-left: 0 !important;
 }
 
@@ -211,13 +211,13 @@
    checkbox/toggler) and make the cell the positioning context for the
    absolutely-placed depth lines. Applied to every first body cell so the
    checkbox column stays aligned regardless of nesting depth. */
-.it-wrapper .p-treetable .p-treetable-tbody > tr > td:first-child {
+.ingredients-table-wrapper .p-treetable .p-treetable-tbody > tr > td:first-child {
   position: relative;
   padding-left: calc(14px + var(--spacing-xs));
 }
 
 /* Name cell wraps the depth-lines block and the editable/editing content. */
-.it-name-cell {
+.ingredients-table-name-cell {
   display: inline;
 }
 
@@ -225,7 +225,7 @@
    4 × 2px + 3 × 2px gaps = 14px). Absolutely anchored to the name cell's full
    height (top/bottom: 0) so the lines fill the row no matter how much the text
    wraps, and sit to the left of the checkbox (left: 0). */
-.it-depth {
+.ingredients-table-depth {
   position: absolute;
   left: 0;
   top: 0;
@@ -238,26 +238,26 @@
   overflow: hidden;
 }
 
-.it-depth-line {
+.ingredients-table-depth-line {
   flex: 0 0 2px;
   width: 2px;
   background: var(--color-fg);
 }
 
 /* ---- Editable cells ---- */
-.it-editable {
+.ingredients-table-editable {
   margin-left: 0.5em;
   cursor: pointer;
   display: inline-block;
   min-width: 4em;
 }
 
-.it-editable:focus {
+.ingredients-table-editable:focus {
   outline: 2px solid var(--color-fg);
   outline-offset: 1px;
 }
 
-.it-editing {
+.ingredients-table-editing {
   display: inline-flex;
   gap: 2px;
 }
@@ -270,21 +270,32 @@
    it always reads on top. Pure-CSS stacking: only the focused editor is lifted,
    so no z-index counter is needed. Kept below the filter/portal layers
    (z-index: 100+) so dropdowns still appear above an open editor. */
-.it-wrapper .p-treetable-tbody .it-editing,
-.it-wrapper .p-treetable-tbody .me-root--open,
-.it-wrapper .p-treetable-tbody .it-label-editor {
+.ingredients-table-wrapper .p-treetable-tbody .ingredients-table-editing,
+.ingredients-table-wrapper .p-treetable-tbody .measurement-editor-root--open,
+.ingredients-table-wrapper .p-treetable-tbody .ingredients-table-label-editor {
   position: relative;
   z-index: 1;
   background: var(--color-bg);
 }
 
-.it-wrapper .p-treetable-tbody .it-editing:focus-within,
-.it-wrapper .p-treetable-tbody .me-root--open:focus-within,
-.it-wrapper .p-treetable-tbody .it-label-editor:focus-within {
+.ingredients-table-wrapper .p-treetable-tbody .ingredients-table-editing:focus-within,
+.ingredients-table-wrapper .p-treetable-tbody .measurement-editor-root--open:focus-within,
+.ingredients-table-wrapper .p-treetable-tbody .ingredients-table-label-editor:focus-within {
   z-index: 20;
 }
 
-.it-edit-input {
+/* The cell hosting an open measurement editor is solid white as well, so the
+   panel never sits on the row's hover or selection tint. !important because
+   the selected-row rule above is !important too. */
+.ingredients-table-wrapper
+  .p-treetable
+  .p-treetable-tbody
+  > tr
+  > td:has(.measurement-editor-root--open) {
+  background: var(--color-bg) !important;
+}
+
+.ingredients-table-edit-input {
   font-size: 0.9em;
   border: var(--border-width) solid var(--color-border);
   font-family: var(--font-body);
@@ -295,14 +306,14 @@
 }
 
 /* container for edit and revert buttons can swap vertical to horizontal layout based on width */
-.it-edit-buttons,
-.it-label-edit-buttons {
+.ingredients-table-edit-buttons,
+.ingredients-table-label-edit-buttons {
   display: inline-flex;
   gap: 2px;
 }
 
-.it-confirm-btn,
-.it-cancel-btn {
+.ingredients-table-confirm-btn,
+.ingredients-table-cancel-btn {
   padding: 2px 0.5em;
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
@@ -312,19 +323,19 @@
   flex-shrink: 0;
 }
 
-.it-confirm-btn:hover:not(:disabled),
-.it-cancel-btn:hover {
+.ingredients-table-confirm-btn:hover:not(:disabled),
+.ingredients-table-cancel-btn:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-.it-confirm-btn:disabled {
+.ingredients-table-confirm-btn:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
 /* ---- Bulk action bar ---- */
-.it-bulk-bar {
+.ingredients-table-bulk-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -338,26 +349,26 @@
 
 /* Count + Clear grouped into one block; Clear floats to the right when the
    block spans the full width (mobile view — the bulk bar stacks). */
-.it-bulk-header {
+.ingredients-table-bulk-header {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
 }
 
-.it-bulk-count {
+.ingredients-table-bulk-count {
   font-weight: bold;
   white-space: nowrap;
 }
 
 /* Visible label captioning each bulk editor. */
-.it-bulk-label {
+.ingredients-table-bulk-label {
   font-weight: bold;
   white-space: nowrap;
 }
 
 /* Label + count + fold toggle on one row; the toggle floats to the right when
    the row spans the full width (mobile view — the bulk bar stacks). */
-.it-bulk-fold-head {
+.ingredients-table-bulk-fold-head {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -365,7 +376,7 @@
 
 /* Fold/expand toggle for the bulk add/remove label editors — the solid
    triangle sits in its own button beside the label. */
-.it-bulk-fold-toggle {
+.ingredients-table-bulk-fold-toggle {
   display: flex;
   align-items: center;
   margin-left: auto;
@@ -377,13 +388,13 @@
   color: var(--color-fg);
 }
 
-.it-bulk-fold-toggle:hover {
+.ingredients-table-bulk-fold-toggle:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
 /* Count of pending labels, shown beside the label while folded up. */
-.it-bulk-fold-count {
+.ingredients-table-bulk-fold-count {
   font-weight: bold;
   border: var(--border-width) solid currentColor;
   border-radius: 999px;
@@ -392,13 +403,13 @@
   line-height: 1.4;
 }
 
-.it-bulk-fold-icon {
+.ingredients-table-bulk-fold-icon {
   font-size: 0.7em;
   line-height: 1;
 }
 
-.it-bulk-export,
-.it-bulk-clear {
+.ingredients-table-bulk-export,
+.ingredients-table-bulk-clear {
   background: none;
   border: var(--border-width) solid var(--color-border);
   padding: 1px 6px;
@@ -408,12 +419,12 @@
   color: var(--color-fg);
 }
 
-.it-bulk-export:hover {
+.ingredients-table-bulk-export:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-.it-bulk-clear {
+.ingredients-table-bulk-clear {
   margin-left: auto;
   background: none;
   border: var(--border-width) solid var(--color-border);
@@ -424,32 +435,32 @@
   color: var(--color-fg);
 }
 
-.it-bulk-clear:hover {
+.ingredients-table-bulk-clear:hover {
   background: var(--color-fg);
   color: var(--color-bg);
 }
 
-.it-bulk-action {
+.ingredients-table-bulk-action {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
 }
 
 /* ---- LabelEditor (react-select CreatableSelect) ---- */
-.it-label-editor {
+.ingredients-table-label-editor {
   display: flex;
   align-items: center;
   gap: 2px;
   width: 100%;
 }
 
-.it-label-editor > :first-child {
+.ingredients-table-label-editor > :first-child {
   flex: 1;
   min-width: 10vw;
 }
 
 /* ---- Misc ---- */
-.it-muted {
+.ingredients-table-muted {
   color: var(--color-muted);
 }
 
@@ -460,44 +471,44 @@
    "Depth lines" section above.) */
 @media (max-width: 600px) {
   /* Let header titles wrap instead of forcing wide columns. */
-  .it-wrapper .p-treetable .p-treetable-thead > tr > th {
+  .ingredients-table-wrapper .p-treetable .p-treetable-thead > tr > th {
     white-space: normal;
     overflow-wrap: break-word;
     word-break: break-word;
   }
 
   /* Stack the accept/cancel buttons below the input for inline edits… */
-  .it-editing,
-  .it-label-editor {
+  .ingredients-table-editing,
+  .ingredients-table-label-editor {
     flex-direction: column;
     align-items: stretch;
   }
 
   /* …but keep the two inline-edit buttons themselves side by side below the
      field (overriding the ≤1000px column rule above). */
-  .it-edit-buttons {
+  .ingredients-table-edit-buttons {
     flex-direction: row;
   }
 
   /* Vertically stack the bulk edit fields (and their buttons). */
-  .it-bulk-bar,
-  .it-bulk-action {
+  .ingredients-table-bulk-bar,
+  .ingredients-table-bulk-action {
     flex-direction: column;
     align-items: stretch;
   }
 
   /* …but keep the "Set default measurement" and "Set parent" editors laid out
-     horizontally. Same specificity as `.it-bulk-action` above, so the later
+     horizontally. Same specificity as `.ingredients-table-bulk-action` above, so the later
      source order wins. Measurement wraps once its editor opens; the parent's
-     selector + ↩/✔ buttons stay inline (higher-specificity `.it-editing`
+     selector + ↩/✔ buttons stay inline (higher-specificity `.ingredients-table-editing`
      override below). */
-  .it-bulk-action--inline {
+  .ingredients-table-bulk-action--inline {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
   }
 
-  .it-bulk-action--inline .it-editing {
+  .ingredients-table-bulk-action--inline .ingredients-table-editing {
     flex-direction: row;
     align-items: center;
   }
@@ -506,11 +517,11 @@
 /* ---- Narrow view (< 450px) ----
    Below 450px there is no room for the inline Default Value and Parent
    columns, so hide them (header, filter row, and body cells — every cell
-   carries the column's `it-col--*` class). Those values are edited via the
+   carries the column's `ingredients-table-col--*` class). Those values are edited via the
    bulk-action bar instead; the Name and Labels columns stay inline-editable. */
 @media (max-width: 449.98px) {
-  .it-wrapper .it-col--measurement,
-  .it-wrapper .it-col--parent {
+  .ingredients-table-wrapper .ingredients-table-col--measurement,
+  .ingredients-table-wrapper .ingredients-table-col--parent {
     display: none;
   }
 }

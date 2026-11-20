@@ -1,27 +1,27 @@
-.ke-editor {
+.kitchenware-editor-editor {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
 }
 
-.ke-field {
+.kitchenware-editor-field {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.ke-field-label {
+.kitchenware-editor-field-label {
   font-size: 0.8em;
   color: var(--color-muted);
   font-family: var(--font-body);
 }
 
-.ke-field-value {
+.kitchenware-editor-field-value {
   font-family: var(--font-body);
   font-size: 0.95em;
 }
 
-.ke-field-value--muted {
+.kitchenware-editor-field-value--muted {
   color: var(--color-muted);
   font-style: italic;
 }

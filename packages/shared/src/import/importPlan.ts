@@ -16,7 +16,7 @@ import {
 } from "../types/kitchenware.ts";
 import { type Recipe, RecipeId, type RecipeVersion, RecipeVersionId } from "../types/recipe.ts";
 import type { Measurement } from "../types/measurement.ts";
-import { type RecipeFolder, RecipeFolderId } from "../types/recipeGroup.ts";
+import { type RecipeFolder, RecipeFolderId } from "../types/recipeFolder.ts";
 import { remapVersionReferences } from "../types/sections.ts";
 
 export type RecipeMatchAction = "merge_version" | "keep_both" | "skip";

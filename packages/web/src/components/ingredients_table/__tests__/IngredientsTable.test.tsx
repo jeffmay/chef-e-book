@@ -196,8 +196,8 @@ describe("IngredientsTable — depth lines", () => {
   function depthLineCount(name: string): number {
     const cell = screen
       .getByRole("button", { name: `Edit name for ${name}` })
-      .closest(".it-name-cell");
-    return cell?.querySelectorAll(".it-depth-line").length ?? -1;
+      .closest(".ingredients-table-name-cell");
+    return cell?.querySelectorAll(".ingredients-table-depth-line").length ?? -1;
   }
 
   it("renders no depth lines for root ingredients", async () => {
@@ -224,21 +224,23 @@ describe("IngredientsTable — narrow-view column hiding", () => {
   // bulk bar instead). Media queries can't be exercised in jsdom, so assert the
   // marker classes the CSS targets are present on every cell of those columns,
   // and absent from the Name/Labels columns.
-  it("tags the Default Value column cells with it-col--measurement", async () => {
+  it("tags the Default Value column cells with ingredients-table-col--measurement", async () => {
     setup();
     await screen.findByText("Flour");
-    expect(screen.getByText("Default Value").closest("th")).toHaveClass("it-col--measurement");
+    expect(screen.getByText("Default Value").closest("th")).toHaveClass(
+      "ingredients-table-col--measurement",
+    );
     expect(
       screen.getByRole("button", { name: "Edit default measurement for Flour" }).closest("td"),
-    ).toHaveClass("it-col--measurement");
+    ).toHaveClass("ingredients-table-col--measurement");
   });
 
-  it("tags the Parent column cells with it-col--parent", async () => {
+  it("tags the Parent column cells with ingredients-table-col--parent", async () => {
     setup();
     await screen.findByText("Flour");
-    expect(screen.getByText("Parent").closest("th")).toHaveClass("it-col--parent");
+    expect(screen.getByText("Parent").closest("th")).toHaveClass("ingredients-table-col--parent");
     expect(screen.getByRole("button", { name: "Edit parent for Flour" }).closest("td")).toHaveClass(
-      "it-col--parent",
+      "ingredients-table-col--parent",
     );
   });
 
@@ -247,10 +249,10 @@ describe("IngredientsTable — narrow-view column hiding", () => {
     await screen.findByText("Flour");
     const nameCell = screen.getByRole("button", { name: "Edit name for Flour" }).closest("td");
     const labelsCell = screen.getByRole("button", { name: "Edit labels for Flour" }).closest("td");
-    expect(nameCell).not.toHaveClass("it-col--measurement");
-    expect(nameCell).not.toHaveClass("it-col--parent");
-    expect(labelsCell).not.toHaveClass("it-col--measurement");
-    expect(labelsCell).not.toHaveClass("it-col--parent");
+    expect(nameCell).not.toHaveClass("ingredients-table-col--measurement");
+    expect(nameCell).not.toHaveClass("ingredients-table-col--parent");
+    expect(labelsCell).not.toHaveClass("ingredients-table-col--measurement");
+    expect(labelsCell).not.toHaveClass("ingredients-table-col--parent");
   });
 });
 
@@ -264,8 +266,8 @@ describe("IngredientsTable.css — narrow-view column hiding", () => {
     const media = /@media\s*\(max-width:\s*449(?:\.\d+)?px\)\s*\{([\s\S]*?)\}\s*\}/.exec(css);
     expect(media).not.toBeNull();
     const block = media?.[1] ?? "";
-    expect(block).toMatch(/\.it-col--measurement/);
-    expect(block).toMatch(/\.it-col--parent/);
+    expect(block).toMatch(/\.ingredients-table-col--measurement/);
+    expect(block).toMatch(/\.ingredients-table-col--parent/);
     expect(block).toMatch(/display:\s*none/);
   });
 });
@@ -278,7 +280,7 @@ describe("IngredientsTable.css — overlapping cell editor stacking", () => {
 
   it("gives every in-cell editor a solid background and a base z-index", () => {
     const base =
-      /\.it-wrapper \.p-treetable-tbody \.it-editing,\s*\.it-wrapper \.p-treetable-tbody \.me-root--open,\s*\.it-wrapper \.p-treetable-tbody \.it-label-editor\s*\{([\s\S]*?)\}/.exec(
+      /\.ingredients-table-wrapper \.p-treetable-tbody \.ingredients-table-editing,\s*\.ingredients-table-wrapper \.p-treetable-tbody \.measurement-editor-root--open,\s*\.ingredients-table-wrapper \.p-treetable-tbody \.ingredients-table-label-editor\s*\{([\s\S]*?)\}/.exec(
         css,
       );
     expect(base).not.toBeNull();
@@ -290,7 +292,7 @@ describe("IngredientsTable.css — overlapping cell editor stacking", () => {
 
   it("raises the currently-focused editor above the others via :focus-within", () => {
     const focused =
-      /\.it-wrapper \.p-treetable-tbody \.it-editing:focus-within,\s*\.it-wrapper \.p-treetable-tbody \.me-root--open:focus-within,\s*\.it-wrapper \.p-treetable-tbody \.it-label-editor:focus-within\s*\{([\s\S]*?)\}/.exec(
+      /\.ingredients-table-wrapper \.p-treetable-tbody \.ingredients-table-editing:focus-within,\s*\.ingredients-table-wrapper \.p-treetable-tbody \.measurement-editor-root--open:focus-within,\s*\.ingredients-table-wrapper \.p-treetable-tbody \.ingredients-table-label-editor:focus-within\s*\{([\s\S]*?)\}/.exec(
         css,
       );
     expect(focused).not.toBeNull();
@@ -306,11 +308,15 @@ describe("LabelEditor.css — selected-labels/buttons layout precedence", () => 
 
   it("lays out the value view and ↩/✔ buttons as a row ≤1000px without !important", () => {
     expect(css).toMatch(
-      /\.it-label-editor \.le__value-container,\s*\.it-label-editor \.it-label-edit-buttons\s*\{\s*flex-direction:\s*row;\s*\}/,
+      /\.ingredients-table-label-editor \.label-editor__value-container,\s*\.ingredients-table-label-editor \.ingredients-table-label-edit-buttons\s*\{\s*flex-direction:\s*row;\s*\}/,
     );
     // The old `column !important` force must be gone (it would block the <400px override).
-    expect(css).not.toMatch(/le__value-container\s*\{\s*flex-direction:\s*column\s*!important/);
-    expect(css).not.toMatch(/it-label-edit-buttons\s*\{\s*flex-direction:\s*column\s*!important/);
+    expect(css).not.toMatch(
+      /label-editor__value-container\s*\{\s*flex-direction:\s*column\s*!important/,
+    );
+    expect(css).not.toMatch(
+      /ingredients-table-label-edit-buttons\s*\{\s*flex-direction:\s*column\s*!important/,
+    );
   });
 
   it("stacks them below 400px via a higher-specificity rule (no !important)", () => {
@@ -318,8 +324,10 @@ describe("LabelEditor.css — selected-labels/buttons layout precedence", () => 
     expect(narrow).not.toBeNull();
     const block = narrow?.[1] ?? "";
     // Doubled class = one specificity step above the ≤1000px rule.
-    expect(block).toMatch(/\.le__value-container\.le__value-container/);
-    expect(block).toMatch(/\.it-label-edit-buttons\.it-label-edit-buttons/);
+    expect(block).toMatch(/\.label-editor__value-container\.label-editor__value-container/);
+    expect(block).toMatch(
+      /\.ingredients-table-label-edit-buttons\.ingredients-table-label-edit-buttons/,
+    );
     expect(block).toMatch(/flex-direction:\s*column/);
     expect(block).not.toMatch(/!important/);
   });
@@ -614,11 +622,13 @@ describe("IngredientsTable — bulk actions", () => {
     await selectFlour();
     const bulkBar = screen.getByRole("region", { name: "Bulk actions" });
     expect(
-      within(bulkBar).getByText("Set default measurement").closest(".it-bulk-action"),
-    ).toHaveClass("it-bulk-action--inline");
-    expect(within(bulkBar).getByText("Set parent").closest(".it-bulk-action")).toHaveClass(
-      "it-bulk-action--inline",
-    );
+      within(bulkBar)
+        .getByText("Set default measurement")
+        .closest(".ingredients-table-bulk-action"),
+    ).toHaveClass("ingredients-table-bulk-action--inline");
+    expect(
+      within(bulkBar).getByText("Set parent").closest(".ingredients-table-bulk-action"),
+    ).toHaveClass("ingredients-table-bulk-action--inline");
   });
 
   it("folds the add/remove label editors until their ⌄ toggle is pressed", async () => {

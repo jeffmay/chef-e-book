@@ -19,7 +19,7 @@ import {
   type SectionItem,
   SectionItemId,
 } from "../../types/recipe.ts";
-import { RecipeFolderId, type RecipeFolder } from "../../types/recipeGroup.ts";
+import { RecipeFolderId, type RecipeFolder } from "../../types/recipeFolder.ts";
 import type { ExportSource } from "../buildExport.ts";
 
 export const CUP = { value: { numerator: 1, denominator: 1 }, unit: "cup" } as const;

@@ -1,12 +1,12 @@
 /* InstructionIngredientSelector — sizing only; shared theme lives in styles/treeSelect.css */
 
-.iis-key-interceptor {
+.instruction-ingredient-selector-key-interceptor {
   display: inline-flex;
   flex: 1;
   min-width: 14vw;
 }
 
-.iis-selector {
+.instruction-ingredient-selector-tree {
   font-size: 0.85em;
   flex: 1;
   min-width: 14vw;

@@ -26,16 +26,20 @@ test.describe("Ingredient Editor", () => {
     expect(labelsHeaderIndex).toBeGreaterThanOrEqual(0);
 
     const labelsCell = page
-      .locator(`tbody tr:first-child td:nth-child(${labelsHeaderIndex + 1}) span.it-editable`)
+      .locator(
+        `tbody tr:first-child td:nth-child(${labelsHeaderIndex + 1}) span.ingredients-table-editable`,
+      )
       .first();
     await expect(labelsCell).toBeVisible();
     await labelsCell.click();
     await page.waitForTimeout(500);
 
-    const labelEditor = page.locator(".le__control, .it-label-editor").first();
+    const labelEditor = page
+      .locator(".label-editor__control, .ingredients-table-label-editor")
+      .first();
     await expect(labelEditor).toBeVisible();
 
-    const dropdownMenu = page.locator(".le__menu").first();
+    const dropdownMenu = page.locator(".label-editor__menu").first();
     await expect(dropdownMenu).toBeVisible();
 
     await page.keyboard.press("ArrowDown");
@@ -52,7 +56,7 @@ test.describe("Ingredient Editor", () => {
 
     expect(isDropdownNavigated).toBe(true);
 
-    const dropdownStillOpen = await page.locator(".le__menu").first().isVisible();
+    const dropdownStillOpen = await page.locator(".label-editor__menu").first().isVisible();
     expect(dropdownStillOpen).toBe(true);
 
     await page.keyboard.press("Escape");
@@ -67,13 +71,15 @@ test.describe("Ingredient Editor", () => {
     expect(labelsHeaderIndex).toBeGreaterThanOrEqual(0);
 
     const labelsCell = page
-      .locator(`tbody tr:first-child td:nth-child(${labelsHeaderIndex + 1}) span.it-editable`)
+      .locator(
+        `tbody tr:first-child td:nth-child(${labelsHeaderIndex + 1}) span.ingredients-table-editable`,
+      )
       .first();
     await labelsCell.click();
     await page.waitForTimeout(500);
 
     // Dropdown must be open before we can test navigation
-    await expect(page.locator(".le__menu").first()).toBeVisible();
+    await expect(page.locator(".label-editor__menu").first()).toBeVisible();
 
     await page.keyboard.press("ArrowDown");
     await page.waitForTimeout(300);
@@ -82,13 +88,13 @@ test.describe("Ingredient Editor", () => {
     const focusEscaped = await page.evaluate(() => {
       const focused = document.activeElement;
       if (!focused) return true;
-      const inLabelEditor = focused.closest(".le__control") !== null;
+      const inLabelEditor = focused.closest(".label-editor__control") !== null;
       return !inLabelEditor;
     });
     expect(focusEscaped).toBe(false);
 
     // Dropdown must still be open
-    await expect(page.locator(".le__menu").first()).toBeVisible();
+    await expect(page.locator(".label-editor__menu").first()).toBeVisible();
     await page.keyboard.press("Escape");
     await page.waitForTimeout(300);
   });
@@ -103,16 +109,18 @@ test.describe("Ingredient Editor", () => {
     expect(parentHeaderIndex).toBeGreaterThanOrEqual(0);
 
     const parentCell = page
-      .locator(`tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.it-editable`)
+      .locator(
+        `tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.ingredients-table-editable`,
+      )
       .first();
     await parentCell.click();
     await page.waitForTimeout(500);
 
-    const panel = page.locator(".is-panel").first();
+    const panel = page.locator(".ingredient-selector-panel").first();
     await expect(panel).toBeVisible();
 
     // Focus on the filter input inside the panel
-    const filterInput = page.locator(".is-panel input[type='text']").first();
+    const filterInput = page.locator(".ingredient-selector-panel input[type='text']").first();
     await filterInput.click();
 
     await page.keyboard.press("ArrowDown");
@@ -125,8 +133,8 @@ test.describe("Ingredient Editor", () => {
     const focusEscaped = await page.evaluate(() => {
       const focused = document.activeElement;
       if (!focused) return true;
-      const inPanel = focused.closest(".is-panel") !== null;
-      const inSelector = focused.closest(".is-selector") !== null;
+      const inPanel = focused.closest(".ingredient-selector-panel") !== null;
+      const inSelector = focused.closest(".ingredient-selector-tree") !== null;
       return !inPanel && !inSelector;
     });
     expect(focusEscaped).toBe(false);
@@ -144,19 +152,24 @@ test.describe("Ingredient Editor", () => {
     expect(valueHeaderIndex).toBeGreaterThanOrEqual(0);
 
     const valueCell = page
-      .locator(`tbody tr:first-child td:nth-child(${valueHeaderIndex + 1}) span.it-editable`)
+      .locator(
+        `tbody tr:first-child td:nth-child(${valueHeaderIndex + 1}) span.ingredients-table-editable`,
+      )
       .first();
     await expect(valueCell).toBeVisible();
     await valueCell.click();
     await page.waitForTimeout(500);
 
-    const editor = page.locator(".me-root--open, .fe-header").first();
+    const editor = page.locator(".measurement-editor-root--open, .fraction-editor-header").first();
     await expect(editor).toBeVisible();
 
     await page.keyboard.press("Escape");
     await page.waitForTimeout(300);
 
-    const editorStillVisible = await page.locator(".me-root--open").first().isVisible();
+    const editorStillVisible = await page
+      .locator(".measurement-editor-root--open")
+      .first()
+      .isVisible();
     expect(editorStillVisible).toBe(false);
   });
 
@@ -168,18 +181,20 @@ test.describe("Ingredient Editor", () => {
     expect(parentHeaderIndex).toBeGreaterThanOrEqual(0);
 
     const parentCell = page
-      .locator(`tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.it-editable`)
+      .locator(
+        `tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.ingredients-table-editable`,
+      )
       .first();
     await expect(parentCell).toBeVisible();
     await parentCell.click();
     await page.waitForTimeout(500);
 
-    const panel = page.locator(".is-panel").first();
+    const panel = page.locator(".ingredient-selector-panel").first();
     await expect(panel).toBeVisible();
 
     // Verify the panel is NOT inside the table — it renders as a body-level portal
     const isPortal = await page.evaluate(() => {
-      const panel = document.querySelector(".is-panel");
+      const panel = document.querySelector(".ingredient-selector-panel");
       if (!panel) return false;
       let el: Element | null = panel.parentElement;
       while (el) {
@@ -201,13 +216,15 @@ test.describe("Ingredient Editor", () => {
     });
 
     const parentCell = page
-      .locator(`tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.it-editable`)
+      .locator(
+        `tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.ingredients-table-editable`,
+      )
       .first();
     await parentCell.click();
     await page.waitForTimeout(500);
 
     const panelInViewport = await page.evaluate(() => {
-      const panel = document.querySelector(".is-panel");
+      const panel = document.querySelector(".ingredient-selector-panel");
       if (!panel) return false;
       const rect = panel.getBoundingClientRect();
       // Allow a small tolerance below the fold for the panel bottom edge
@@ -226,43 +243,47 @@ test.describe("Ingredient Editor", () => {
     });
 
     const parentCell = page
-      .locator(`tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.it-editable`)
+      .locator(
+        `tbody tr:first-child td:nth-child(${parentHeaderIndex + 1}) span.ingredients-table-editable`,
+      )
       .first();
     await parentCell.click();
     await page.waitForTimeout(500);
 
-    const filterInput = page.locator(".is-panel input[type='text']").first();
+    const filterInput = page.locator(".ingredient-selector-panel input[type='text']").first();
     await expect(filterInput).toBeVisible();
     await filterInput.fill("Butter");
     await page.waitForTimeout(300);
 
     await expect(filterInput).toHaveValue("Butter");
     // Panel stays open while typing
-    await expect(page.locator(".is-panel").first()).toBeVisible();
+    await expect(page.locator(".ingredient-selector-panel").first()).toBeVisible();
 
     await page.keyboard.press("Escape");
     await page.waitForTimeout(300);
   });
 
   test("MultiSelectFilter shows accept/revert buttons in viewport", async ({ page }) => {
-    const filterInputs = page.locator(".it-filter-th .msf-wrapper .msf-input, th input.msf-input");
+    const filterInputs = page.locator(
+      ".ingredients-table-filter-th .multi-select-filter-wrapper .multi-select-filter-input, th input.multi-select-filter-input",
+    );
     await expect(filterInputs.first()).toBeVisible();
 
     const labelsFilter = filterInputs.nth(0);
     await labelsFilter.click();
     await page.waitForTimeout(500);
 
-    const dropdown = page.locator(".msf-dropdown").first();
+    const dropdown = page.locator(".multi-select-filter-dropdown").first();
     await expect(dropdown).toBeVisible();
 
-    const acceptBtn = page.locator(".msf-actions button:first-child").first();
-    const revertBtn = page.locator(".msf-actions button:last-child").first();
+    const acceptBtn = page.locator(".multi-select-filter-actions button:first-child").first();
+    const revertBtn = page.locator(".multi-select-filter-actions button:last-child").first();
 
     await expect(acceptBtn).toBeVisible();
     await expect(revertBtn).toBeVisible();
 
     const buttonsInViewport = await page.evaluate(() => {
-      const actions = document.querySelector(".msf-actions");
+      const actions = document.querySelector(".multi-select-filter-actions");
       if (!actions) return false;
       const rect = actions.getBoundingClientRect();
       return rect.top > 0 && rect.bottom <= window.innerHeight;

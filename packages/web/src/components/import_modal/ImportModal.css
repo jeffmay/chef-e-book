@@ -1,4 +1,4 @@
-.im-body {
+.import-modal-body {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
@@ -8,12 +8,12 @@
 }
 
 @media (max-width: 600px) {
-  .im-body {
+  .import-modal-body {
     width: 80vw;
   }
 }
 
-.im-fieldset {
+.import-modal-fieldset {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
@@ -22,20 +22,20 @@
   margin: 0;
 }
 
-.im-field {
+.import-modal-field {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
 }
 
-.im-choice {
+.import-modal-choice {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
 }
 
 /* The list of things to choose from scrolls on its own, vertically only. */
-.im-list {
+.import-modal-list {
   max-height: 40vh;
   overflow-y: auto;
   overflow-x: hidden;
@@ -48,12 +48,12 @@
   list-style: none;
 }
 
-.im-list-actions {
+.import-modal-list-actions {
   display: flex;
   gap: var(--spacing-sm);
 }
 
-.im-row {
+.import-modal-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -61,20 +61,20 @@
   overflow-wrap: anywhere;
 }
 
-.im-row-name {
+.import-modal-row-name {
   flex: 1;
   min-width: 0;
 }
 
-.im-row-status {
+.import-modal-row-status {
   font-style: italic;
 }
 
-.im-summary {
+.import-modal-summary {
   font-weight: bold;
 }
 
-.im-book {
+.import-modal-book {
   text-align: left;
   overflow-wrap: anywhere;
 }

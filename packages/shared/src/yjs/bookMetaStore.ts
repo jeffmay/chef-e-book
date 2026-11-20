@@ -31,8 +31,8 @@ export const BookMeta = Companion(
   type({
     id: RecipeBookId.type,
     name: "string > 0",
-    created_at: "number",
-    "updated_at?": "number",
+    created_at: "number.epoch",
+    "updated_at?": "number.epoch",
     schema_version: "number.integer >= 1",
     "seeded_defaults?": "boolean",
     "name_key_version?": "number.integer >= 1",

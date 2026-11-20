@@ -6,12 +6,12 @@
   --tree-spacing-factor: calc(var(--spacing-sm) + 1em);
 }
 
-.bre-page {
+.bulk-recipe-editor-page {
   padding: var(--spacing-md);
   max-width: 100%;
 }
 
-.bre-header {
+.bulk-recipe-editor-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -21,17 +21,17 @@
   padding-bottom: var(--spacing-sm);
 }
 
-.bre-title {
+.bulk-recipe-editor-title {
   font-family: var(--font-display);
   font-size: clamp(1.1em, 2.5vw, 1.6em);
   flex: 1;
 }
 
-.bre-new-btn {
+.bulk-recipe-editor-new-btn {
   font-size: 0.95em;
 }
 
-.bre-empty {
+.bulk-recipe-editor-empty {
   color: var(--color-muted);
   font-style: italic;
   margin-top: var(--spacing-md);
@@ -41,7 +41,7 @@
    Bulk action bar
    ============================================================ */
 
-.bre-bulk-bar {
+.bulk-recipe-editor-bulk-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -52,16 +52,16 @@
   background: var(--color-bg);
 }
 
-.bre-bulk-clear {
+.bulk-recipe-editor-bulk-clear {
   font-size: 0.85em;
 }
 
-.bre-bulk-count {
+.bulk-recipe-editor-bulk-count {
   font-size: 0.9em;
   color: var(--color-muted);
 }
 
-.bre-bulk-btn {
+.bulk-recipe-editor-bulk-btn {
   font-size: 0.85em;
   padding: 2px var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
@@ -70,13 +70,13 @@
   cursor: pointer;
 }
 
-.bre-merge-form {
+.bulk-recipe-editor-merge-form {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
 }
 
-.bre-merge-input {
+.bulk-recipe-editor-merge-input {
   font-family: var(--font-body);
   font-size: 0.9em;
   padding: 2px var(--spacing-xs);
@@ -86,7 +86,7 @@
   min-width: 20vw;
 }
 
-.bre-merge-error {
+.bulk-recipe-editor-merge-error {
   font-size: 0.85em;
   color: var(--color-fg);
   border: var(--border-width) solid var(--color-fg);
@@ -97,7 +97,7 @@
    Delete confirmation dialog
    ============================================================ */
 
-.bre-delete-subtitle {
+.bulk-recipe-editor-delete-subtitle {
   font-size: 0.9em;
   color: var(--color-muted);
 }
@@ -106,12 +106,12 @@
    Tree table
    ============================================================ */
 
-.bre-table {
+.bulk-recipe-editor-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.bre-th {
+.bulk-recipe-editor-th {
   border: var(--border-width) solid var(--color-border);
   padding: var(--spacing-xs) var(--spacing-sm);
   text-align: left;
@@ -121,70 +121,70 @@
   white-space: nowrap;
 }
 
-.bre-th--select {
+.bulk-recipe-editor-th--select {
   width: 2em;
   text-align: center;
 }
 
-.bre-th--date {
+.bulk-recipe-editor-th--date {
   width: 10vw;
   min-width: 6em;
 }
 
-.bre-th--actions {
+.bulk-recipe-editor-th--actions {
   width: 0;
   text-align: center;
 }
 
-.bre-td {
+.bulk-recipe-editor-td {
   border: var(--border-width) solid var(--color-border);
   padding: var(--spacing-xs) var(--spacing-sm);
   vertical-align: middle;
 }
 
-.bre-td--select {
+.bulk-recipe-editor-td--select {
   text-align: center;
   width: 2em;
 }
 
-.bre-td--date {
+.bulk-recipe-editor-td--date {
   font-size: 0.85em;
   color: var(--color-muted);
   white-space: nowrap;
 }
 
-.bre-td--actions {
+.bulk-recipe-editor-td--actions {
   text-align: center;
   font-size: 0.85em;
 }
 
 /* Depth-based name cell indentation — <td> handles padding only */
-.bre-td--name {
+.bulk-recipe-editor-td--name {
   padding-left: var(--spacing-sm);
 }
 
-.bre-td--name[data-depth="1"] {
+.bulk-recipe-editor-td--name[data-depth="1"] {
   padding-left: var(--tree-spacing-factor);
 }
 
-.bre-td--name[data-depth="2"] {
+.bulk-recipe-editor-td--name[data-depth="2"] {
   padding-left: calc(2 * var(--tree-spacing-factor));
 }
 
-.bre-td--name[data-depth="3"] {
+.bulk-recipe-editor-td--name[data-depth="3"] {
   padding-left: calc(3 * var(--tree-spacing-factor));
 }
 
-.bre-td--name[data-depth="4"] {
+.bulk-recipe-editor-td--name[data-depth="4"] {
   padding-left: calc(4 * var(--tree-spacing-factor));
 }
 
-.bre-td--name[data-depth="5"] {
+.bulk-recipe-editor-td--name[data-depth="5"] {
   padding-left: calc(5 * var(--tree-spacing-factor));
 }
 
 /* Flex layout lives in a <div> wrapper to avoid display:flex on <td> */
-.bre-td-name-inner {
+.bulk-recipe-editor-td-name-inner {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -194,34 +194,34 @@
    Row types
    ============================================================ */
 
-.bre-row--folder {
+.bulk-recipe-editor-row--folder {
   background: var(--color-bg);
 }
 
-.bre-row--folder .bre-td {
+.bulk-recipe-editor-row--folder .bulk-recipe-editor-td {
   font-style: italic;
   color: var(--color-muted);
 }
 
-.bre-row--folder .bre-name {
+.bulk-recipe-editor-row--folder .bulk-recipe-editor-name {
   font-style: normal;
   font-family: var(--font-display);
   color: var(--color-fg);
 }
 
-.bre-row--recipe {
+.bulk-recipe-editor-row--recipe {
   background: var(--color-bg);
 }
 
-.bre-row--selected {
+.bulk-recipe-editor-row--selected {
   background: color-mix(in srgb, var(--color-checked) 10%, var(--color-bg));
 }
 
-.bre-expand-spacer:has(+ .bre-version-desc) {
+.bulk-recipe-editor-expand-spacer:has(+ .bulk-recipe-editor-version-desc) {
   min-width: 0;
 }
 
-.bre-row--version .bre-td {
+.bulk-recipe-editor-row--version .bulk-recipe-editor-td {
   background: color-mix(in srgb, var(--color-fg) 3%, var(--color-bg));
   color: var(--color-muted);
 }
@@ -230,7 +230,7 @@
    Name cell internals
    ============================================================ */
 
-.bre-expand-btn {
+.bulk-recipe-editor-expand-btn {
   border: none;
   background: none;
   cursor: pointer;
@@ -242,26 +242,26 @@
   min-width: 1.2em;
 }
 
-.bre-expand-spacer {
+.bulk-recipe-editor-expand-spacer {
   display: inline-block;
   min-width: 1.2em;
 }
 
-.bre-folder-icon {
+.bulk-recipe-editor-folder-icon {
   font-size: 0.9em;
 }
 
-.bre-name {
+.bulk-recipe-editor-name {
   font-weight: 500;
 }
 
-.bre-subtitle {
+.bulk-recipe-editor-subtitle {
   font-size: 0.85em;
   color: var(--color-muted);
   margin-left: var(--spacing-xs);
 }
 
-.bre-version-desc {
+.bulk-recipe-editor-version-desc {
   font-style: italic;
 }
 
@@ -269,9 +269,9 @@
    Table action buttons (Edit, New ▾) — shared base style
    ============================================================ */
 
-.bre-edit-btn,
-.bre-start-btn,
-.bre-new-menu-btn {
+.bulk-recipe-editor-edit-btn,
+.bulk-recipe-editor-start-btn,
+.bulk-recipe-editor-new-menu-btn {
   padding: 2px var(--spacing-sm);
   border: var(--border-width) solid var(--color-border);
   background: var(--color-bg);
@@ -280,7 +280,7 @@
   white-space: nowrap;
 }
 
-.bre-start-btn {
+.bulk-recipe-editor-start-btn {
   margin-left: var(--spacing-sm);
   background: var(--color-fg);
   color: var(--color-bg);
@@ -291,18 +291,18 @@
    ============================================================ */
 
 /* Full-page transparent overlay behind the dropdown — closes menu on outside click */
-.bre-new-menu-overlay {
+.bulk-recipe-editor-new-menu-overlay {
   position: fixed;
   inset: 0;
   z-index: 5;
 }
 
-.bre-new-menu-wrap {
+.bulk-recipe-editor-new-menu-wrap {
   position: relative;
   display: inline-block;
 }
 
-.bre-new-menu-dropdown {
+.bulk-recipe-editor-new-menu-dropdown {
   position: absolute;
   right: 0;
   top: 100%;
@@ -314,7 +314,7 @@
   min-width: 8em;
 }
 
-.bre-new-menu-item {
+.bulk-recipe-editor-new-menu-item {
   font-family: var(--font-body);
   font-size: 0.85em;
   text-align: left;
@@ -326,7 +326,7 @@
   white-space: nowrap;
 }
 
-.bre-new-menu-item:hover {
+.bulk-recipe-editor-new-menu-item:hover {
   background: color-mix(in srgb, var(--color-fg) 8%, var(--color-bg));
 }
 
@@ -334,25 +334,25 @@
    Inline new-folder row / inline rename-folder form
    ============================================================ */
 
-.bre-name--editable {
+.bulk-recipe-editor-name--editable {
   cursor: text;
 }
 
-.bre-name--editable:focus-visible {
+.bulk-recipe-editor-name--editable:focus-visible {
   outline: var(--border-width) solid var(--color-fg);
   outline-offset: 2px;
 }
 
-.bre-new-folder-form,
-.bre-rename-folder-form {
+.bulk-recipe-editor-new-folder-form,
+.bulk-recipe-editor-rename-folder-form {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
   flex: 1;
 }
 
-.bre-new-folder-input,
-.bre-rename-folder-input {
+.bulk-recipe-editor-new-folder-input,
+.bulk-recipe-editor-rename-folder-input {
   font-family: var(--font-body);
   font-size: 0.9em;
   padding: 2px var(--spacing-xs);
@@ -363,10 +363,10 @@
   flex: 1;
 }
 
-.bre-new-folder-confirm,
-.bre-new-folder-cancel,
-.bre-rename-folder-confirm,
-.bre-rename-folder-cancel {
+.bulk-recipe-editor-new-folder-confirm,
+.bulk-recipe-editor-new-folder-cancel,
+.bulk-recipe-editor-rename-folder-confirm,
+.bulk-recipe-editor-rename-folder-cancel {
   font-size: 0.85em;
   padding: 2px var(--spacing-xs);
   border: var(--border-width) solid var(--color-border);
@@ -382,8 +382,8 @@
    ============================================================ */
 
 @media (max-width: 600px) {
-  .bre-th--date,
-  .bre-td--date {
+  .bulk-recipe-editor-th--date,
+  .bulk-recipe-editor-td--date {
     display: none;
   }
 }

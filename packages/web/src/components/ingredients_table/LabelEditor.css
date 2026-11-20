@@ -1,96 +1,100 @@
-.le__control {
+.label-editor__control {
   min-height: unset !important;
-  border-color: var(--color-border) !important;
+  border-color: var(--color-fg) !important;
   background: var(--color-bg) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   cursor: text;
 }
 
-.le__control:hover {
+/* react-select paints a blue ring on focus; the e-ink palette keeps the border black. */
+.label-editor__control:hover,
+.label-editor__control--is-focused {
   border-color: var(--color-fg) !important;
+  box-shadow: none !important;
 }
 
-.le__value-container {
+.label-editor__value-container {
   padding: 1px 2px !important;
   gap: 2px !important;
 }
 
-.le__multi-value {
+.label-editor__multi-value {
   color: var(--color-fg);
   border: 1px solid var(--color-border);
   background-color: var(--color-bg) !important;
   margin: 1px !important;
 }
 
-.le__multi-value__label {
+.label-editor__multi-value__label {
   font-size: 0.85em !important;
   padding: 1px 3px !important;
 }
 
-.le__multi-value__remove {
+.label-editor__multi-value__remove {
   color: var(--color-fg) !important;
   border-left: 1px dashed var(--color-border);
   padding: 0 3px !important;
 }
 
-.le__multi-value__remove > svg {
+.label-editor__multi-value__remove > svg {
   fill: var(--color-fg) !important;
 }
 
-.le__multi-value__remove:hover {
+.label-editor__multi-value__remove:hover {
   background-color: var(--color-fg) !important;
   color: var(--color-bg) !important;
 }
 
-.le__input {
+.label-editor__input {
   color: var(--color-fg) !important;
   font-family: var(--font-body) !important;
 }
 
-.le__placeholder {
+.label-editor__placeholder {
   font-size: 0.9em !important;
   color: var(--color-muted) !important;
 }
 
-.le__menu {
+.label-editor__menu {
   font-size: 0.9em !important;
   border-radius: 0 !important;
-  border: var(--border-width) solid var(--color-border) !important;
+  border: var(--border-width) solid var(--color-fg) !important;
   background: var(--color-bg) !important;
 }
 
-.le__option {
+.label-editor__option {
   color: var(--color-fg) !important;
   padding: 4px 8px !important;
 }
 
-.le__option--is-focused {
+.label-editor__option--is-focused {
   background: #ebebeb !important;
+  color: var(--color-fg) !important;
 }
 
-.le__option--is-focused:active,
-.le__option:active {
+.label-editor__option--is-focused:active,
+.label-editor__option:active {
   background: #c4c4c4 !important;
 }
 
-.le__option--is-selected {
+.label-editor__option--is-selected {
   background: var(--color-fg) !important;
   color: var(--color-bg) !important;
 }
 
-.le__clear-indicator {
+.label-editor__clear-indicator {
   padding: 4px !important;
 }
 
 @media (max-width: 1000px) {
-  .le__indicators {
+  .label-editor__indicators {
     width: 1.2em;
     flex-direction: column !important;
     align-self: center !important;
   }
 
-  .le__indicator-separator {
+  .label-editor__indicator-separator {
     --webkit-align-self: center !important;
     align-self: center !important;
     margin: 0 !important;
@@ -100,12 +104,12 @@
 
   /* From 1000px down to 400px, keep the selected-labels view and the ↩/✔
      buttons laid out horizontally (as they are above 1000px). Qualifying with
-     the `.it-label-editor` ancestor lifts these to specificity (0,2,0) — above
+     the `.ingredients-table-label-editor` ancestor lifts these to specificity (0,2,0) — above
      react-select's own single-class (0,1,0) styles — so no `!important` is
      needed here, which is what lets the narrower <400px rule below override
      them with just one more step of specificity. */
-  .it-label-editor .le__value-container,
-  .it-label-editor .it-label-edit-buttons {
+  .ingredients-table-label-editor .label-editor__value-container,
+  .ingredients-table-label-editor .ingredients-table-label-edit-buttons {
     flex-direction: row;
   }
 }
@@ -114,8 +118,47 @@
    The doubled class raises specificity to (0,3,0), one step above the ≤1000px
    rule (0,2,0), so it wins without `!important`. */
 @media (max-width: 400px) {
-  .it-label-editor .le__value-container.le__value-container,
-  .it-label-editor .it-label-edit-buttons.it-label-edit-buttons {
+  .ingredients-table-label-editor .label-editor__value-container.label-editor__value-container,
+  .ingredients-table-label-editor
+    .ingredients-table-label-edit-buttons.ingredients-table-label-edit-buttons {
     flex-direction: column;
+  }
+}
+
+/* Mobile view (≤ 600px; kept in sync with MOBILE_VIEW_MAX_WIDTH in useMobileView.ts).
+   The editor is stacked (field, then ↩/✔︎), so there is little width to spare:
+   shrink the clear (✕) and dropdown (⌄) indicators, and right-align the ↩/✔︎
+   pair under the field. */
+@media (max-width: 600px) {
+  .ingredients-table-label-editor .label-editor__indicators {
+    width: auto;
+  }
+
+  .label-editor__clear-indicator,
+  .label-editor__dropdown-indicator {
+    padding: 1px !important;
+  }
+
+  .label-editor__clear-indicator > svg,
+  .label-editor__dropdown-indicator > svg {
+    width: 0.9em;
+    height: 0.9em;
+    color: var(--color-fg) !important;
+  }
+
+  .label-editor__indicator-separator {
+    background-color: var(--color-fg) !important;
+  }
+
+  .ingredients-table-label-editor .ingredients-table-label-edit-buttons {
+    align-self: flex-end;
+  }
+
+  /* The ↩/✔︎ row sits between the field and the menu, which is portaled and
+     opens right under the field. Push the menu down by one button row so it
+     opens below the buttons instead of beneath them. (When react-select flips
+     the menu above the field it ignores margin-top, so nothing is lost.) */
+  .label-editor__menu {
+    margin-top: calc(var(--row-action-size) + var(--spacing-xs)) !important;
   }
 }

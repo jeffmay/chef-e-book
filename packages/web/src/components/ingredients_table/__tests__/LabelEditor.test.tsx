@@ -33,6 +33,12 @@ beforeEach(() => {
 });
 
 describe("LabelEditor — rendering", () => {
+  it("prefixes react-select's classes with label-editor so LabelEditor.css applies", () => {
+    setup({ selectedLabelNames: ["solid"] });
+    expect(document.querySelector(".label-editor__control")).not.toBeNull();
+    expect(document.querySelector(".label-editor__multi-value")).not.toBeNull();
+  });
+
   it("renders Confirm and Cancel buttons", () => {
     setup();
     expect(screen.getByRole("button", { name: "Confirm edit" })).toBeInTheDocument();

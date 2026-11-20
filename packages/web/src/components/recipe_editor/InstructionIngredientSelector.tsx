@@ -1,7 +1,7 @@
 import type { IngredientId } from "@recipe-book/shared";
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
-import { useMemo, type KeyboardEvent } from "react";
+import { useId, useMemo, type KeyboardEvent } from "react";
 import type { ReadonlyDeep } from "type-fest";
 import "../../styles/treeSelect.css";
 import {
@@ -30,6 +30,7 @@ export function InstructionIngredientSelector({
   onChange,
   ariaLabel = "Instruction ingredients",
 }: InstructionIngredientSelectorProps) {
+  const uid = useId();
   const keyToIngredientId = useMemo(() => collectKeyToIngredientId(nodes), [nodes]);
   const selectionKeys = useMemo(
     () => ingredientIdsToSelection(nodes, selectedIds),
@@ -47,7 +48,7 @@ export function InstructionIngredientSelector({
   }
 
   return (
-    <span className="iis-key-interceptor" onKeyDown={handleKeyDown}>
+    <span className="instruction-ingredient-selector-key-interceptor" onKeyDown={handleKeyDown}>
       <TreeSelect
         value={selectionKeys}
         options={nodes as TreeNode[] /* safe: the nodes are never mutated by the library */}
@@ -58,8 +59,9 @@ export function InstructionIngredientSelector({
         filter
         placeholder="— Select ingredients —"
         emptyMessage="Add ingredients to a section or container first"
-        className="tree-select iis-selector"
+        className="tree-select instruction-ingredient-selector-tree"
         panelClassName="tree-select-panel"
+        inputId={`${uid}-selector`}
         ariaLabel={ariaLabel}
         appendTo={document.body}
       />

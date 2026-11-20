@@ -107,9 +107,9 @@ function toTreeNode(row: IngredientRow): TreeNode {
 // column so the checkbox stays aligned across rows.
 function DepthLines({ depth }: ReadonlyDeep<{ depth: number }>) {
   return (
-    <span className="it-depth" aria-hidden="true">
+    <span className="ingredients-table-depth" aria-hidden="true">
       {Array.from({ length: depth }, (_, i) => (
-        <span key={i} className="it-depth-line" />
+        <span key={i} className="ingredients-table-depth-line" />
       ))}
     </span>
   );
@@ -418,9 +418,9 @@ export function IngredientsTable({
     const pending = pendingEdits.get(pkey(row.id, "name"));
     if (pending !== undefined) {
       const error = pending.trim() === "" ? undefined : nameError?.(row.id, pending.trim());
-      const errorId = `it-name-error-${row.id}`;
+      const errorId = `ingredients-table-name-error-${row.id}`;
       return (
-        <span className="it-name-cell">
+        <span className="ingredients-table-name-cell">
           <DepthLines depth={depth} />
           <AcceptOrCancelEditor
             cancelLabel="Cancel edit"
@@ -428,21 +428,22 @@ export function IngredientsTable({
             onCancel={() => onCancelEdit(row.id, "name")}
             onAccept={() => onCommitEdit(row.id, "name")}
           >
-            <span className="it-editing" data-editing>
+            <span className="ingredients-table-editing" data-editing>
               <input
                 type="text"
                 value={pending}
-                className={`it-edit-input${error === undefined ? "" : " field-input--error"}`}
+                className={`ingredients-table-edit-input${error === undefined ? "" : " field-input--error"}`}
                 autoFocus
+                id={`ingredients-table-edit-name-${row.id}`}
                 aria-label={`Edit name for ${row.name}`}
                 aria-invalid={error !== undefined}
                 aria-describedby={error === undefined ? undefined : errorId}
                 onChange={(e) => onUpdateEdit(row.id, "name", e.target.value)}
               />
-              <div className="it-edit-buttons">
+              <div className="ingredients-table-edit-buttons">
                 <button
                   type="button"
-                  className="it-cancel-btn"
+                  className="ingredients-table-cancel-btn"
                   onClick={() => onCancelEdit(row.id, "name")}
                   aria-label="Cancel edit"
                 >
@@ -450,7 +451,7 @@ export function IngredientsTable({
                 </button>
                 <button
                   type="button"
-                  className="it-confirm-btn"
+                  className="ingredients-table-confirm-btn"
                   onClick={() => onCommitEdit(row.id, "name")}
                   aria-label="Confirm edit"
                 >
@@ -468,10 +469,10 @@ export function IngredientsTable({
       );
     }
     return (
-      <span className="it-name-cell">
+      <span className="ingredients-table-name-cell">
         <DepthLines depth={depth} />
         <span
-          className="it-editable"
+          className="ingredients-table-editable"
           data-editable
           role="button"
           tabIndex={0}
@@ -517,7 +518,7 @@ export function IngredientsTable({
           {row.name}
         </span>
         {duplicateIds?.has(row.id) === true && (
-          <span className="field-error it-duplicate">duplicate name</span>
+          <span className="field-error ingredients-table-duplicate">duplicate name</span>
         )}
       </span>
     );
@@ -540,7 +541,7 @@ export function IngredientsTable({
     }
     return (
       <span
-        className="it-editable"
+        className="ingredients-table-editable"
         data-editable
         role="button"
         tabIndex={0}
@@ -574,7 +575,7 @@ export function IngredientsTable({
     }
     return (
       <span
-        className="it-editable"
+        className="ingredients-table-editable"
         data-editable
         role="button"
         tabIndex={0}
@@ -584,7 +585,7 @@ export function IngredientsTable({
           if (e.key === "Enter" || e.key === " ") onBeginEdit(row.id, "labels", display);
         }}
       >
-        {display || <span className="it-muted">—</span>}
+        {display || <span className="ingredients-table-muted">—</span>}
       </span>
     );
   }
@@ -602,7 +603,7 @@ export function IngredientsTable({
           onCancel={() => onCancelEdit(row.id, "parent_name")}
           onAccept={() => onCommitEdit(row.id, "parent_name")}
         >
-          <span className="it-editing" data-editing>
+          <span className="ingredients-table-editing" data-editing>
             <IngredientSelector
               value={pendingId}
               options={ingredients.filter((i) => i.id !== row.id)}
@@ -611,10 +612,10 @@ export function IngredientsTable({
               ariaLabel={`Edit parent for ${row.name}`}
               placeholder="— None —"
             />
-            <div className="it-edit-buttons">
+            <div className="ingredients-table-edit-buttons">
               <button
                 type="button"
-                className="it-cancel-btn"
+                className="ingredients-table-cancel-btn"
                 onClick={() => onCancelEdit(row.id, "parent_name")}
                 aria-label="Cancel edit"
               >
@@ -622,7 +623,7 @@ export function IngredientsTable({
               </button>
               <button
                 type="button"
-                className="it-confirm-btn"
+                className="ingredients-table-confirm-btn"
                 onClick={() => onCommitEdit(row.id, "parent_name")}
                 aria-label="Confirm edit"
               >
@@ -635,7 +636,7 @@ export function IngredientsTable({
     }
     return (
       <span
-        className="it-editable"
+        className="ingredients-table-editable"
         data-editable
         role="button"
         tabIndex={0}
@@ -696,15 +697,19 @@ export function IngredientsTable({
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="it-wrapper" role="region" aria-label="Ingredient list">
-      <div className="it-toolbar">
-        <button type="button" className="it-select-all-btn" onClick={selectAllVisible}>
+    <div className="ingredients-table-wrapper" role="region" aria-label="Ingredient list">
+      <div className="ingredients-table-toolbar">
+        <button
+          type="button"
+          className="ingredients-table-select-all-btn"
+          onClick={selectAllVisible}
+        >
           Select all
         </button>
         {selectedIds.length > 0 && (
           <button
             type="button"
-            className="it-clear-sel-btn"
+            className="ingredients-table-clear-sel-btn"
             onClick={() => setSelectionKeys({})}
             aria-label="Clear selection"
           >
@@ -713,38 +718,42 @@ export function IngredientsTable({
         )}
       </div>
       {selectedIds.length > 0 && (
-        <div className="it-bulk-bar" role="region" aria-label="Bulk actions">
-          <div className="it-bulk-header">
-            <span className="it-bulk-count">{selectedIds.length} selected</span>
+        <div className="ingredients-table-bulk-bar" role="region" aria-label="Bulk actions">
+          <div className="ingredients-table-bulk-header">
+            <span className="ingredients-table-bulk-count">{selectedIds.length} selected</span>
             {onExport !== undefined && (
               <button
                 type="button"
-                className="it-bulk-export"
+                className="ingredients-table-bulk-export"
                 aria-label="Export selected ingredients"
                 onClick={() => onExport(selectedIds)}
               >
                 Export
               </button>
             )}
-            <button type="button" className="it-bulk-clear" onClick={() => setSelectionKeys({})}>
+            <button
+              type="button"
+              className="ingredients-table-bulk-clear"
+              onClick={() => setSelectionKeys({})}
+            >
               Clear
             </button>
           </div>
 
-          <span className="it-bulk-action">
-            <span className="it-bulk-fold-head">
-              <span className="it-bulk-label">Labels to add</span>
+          <span className="ingredients-table-bulk-action">
+            <span className="ingredients-table-bulk-fold-head">
+              <span className="ingredients-table-bulk-label">Labels to add</span>
               {bulkAddLabels.length > 0 && (
-                <span className="it-bulk-fold-count">{bulkAddLabels.length}</span>
+                <span className="ingredients-table-bulk-fold-count">{bulkAddLabels.length}</span>
               )}
               <button
                 type="button"
-                className="it-bulk-fold-toggle"
+                className="ingredients-table-bulk-fold-toggle"
                 aria-expanded={bulkAddExpanded}
                 aria-label={`${bulkAddExpanded ? "Hide" : "Show"} labels to add`}
                 onClick={() => setBulkAddExpanded((v) => !v)}
               >
-                <span className="it-bulk-fold-icon" aria-hidden="true">
+                <span className="ingredients-table-bulk-fold-icon" aria-hidden="true">
                   {bulkAddExpanded ? "▲" : "▼"}
                 </span>
               </button>
@@ -765,20 +774,20 @@ export function IngredientsTable({
             )}
           </span>
 
-          <span className="it-bulk-action">
-            <span className="it-bulk-fold-head">
-              <span className="it-bulk-label">Labels to remove</span>
+          <span className="ingredients-table-bulk-action">
+            <span className="ingredients-table-bulk-fold-head">
+              <span className="ingredients-table-bulk-label">Labels to remove</span>
               {bulkRemoveLabels.length > 0 && (
-                <span className="it-bulk-fold-count">{bulkRemoveLabels.length}</span>
+                <span className="ingredients-table-bulk-fold-count">{bulkRemoveLabels.length}</span>
               )}
               <button
                 type="button"
-                className="it-bulk-fold-toggle"
+                className="ingredients-table-bulk-fold-toggle"
                 aria-expanded={bulkRemoveExpanded}
                 aria-label={`${bulkRemoveExpanded ? "Hide" : "Show"} labels to remove`}
                 onClick={() => setBulkRemoveExpanded((v) => !v)}
               >
-                <span className="it-bulk-fold-icon" aria-hidden="true">
+                <span className="ingredients-table-bulk-fold-icon" aria-hidden="true">
                   {bulkRemoveExpanded ? "▲" : "▼"}
                 </span>
               </button>
@@ -799,8 +808,8 @@ export function IngredientsTable({
             )}
           </span>
 
-          <span className="it-bulk-action it-bulk-action--inline">
-            <span className="it-bulk-label">Set default measurement</span>
+          <span className="ingredients-table-bulk-action ingredients-table-bulk-action--inline">
+            <span className="ingredients-table-bulk-label">Set default measurement</span>
             <MeasurementEditor
               value={bulkMeasurement ?? DEFAULT_BULK_MEASUREMENT}
               onCommit={(value) => {
@@ -811,15 +820,15 @@ export function IngredientsTable({
             />
           </span>
 
-          <span className="it-bulk-action it-bulk-action--inline">
-            <span className="it-bulk-label">Set parent</span>
+          <span className="ingredients-table-bulk-action ingredients-table-bulk-action--inline">
+            <span className="ingredients-table-bulk-label">Set parent</span>
             <AcceptOrCancelEditor
               cancelLabel="Cancel parent change"
               acceptLabel="Accept parent change"
               onCancel={() => setBulkParentId("")}
               onAccept={applyBulkParent}
             >
-              <span className="it-editing" data-editing>
+              <span className="ingredients-table-editing" data-editing>
                 <IngredientSelector
                   value={bulkParentId !== "" ? loadId(IngredientId, bulkParentId) : undefined}
                   options={ingredients}
@@ -828,10 +837,10 @@ export function IngredientsTable({
                   ariaLabel="Bulk parent"
                   placeholder="— None —"
                 />
-                <div className="it-edit-buttons">
+                <div className="ingredients-table-edit-buttons">
                   <button
                     type="button"
-                    className="it-cancel-btn"
+                    className="ingredients-table-cancel-btn"
                     onClick={() => setBulkParentId("")}
                     aria-label="Cancel parent change"
                   >
@@ -839,7 +848,7 @@ export function IngredientsTable({
                   </button>
                   <button
                     type="button"
-                    className="it-confirm-btn"
+                    className="ingredients-table-confirm-btn"
                     onClick={applyBulkParent}
                     aria-label="Accept parent change"
                   >
@@ -867,7 +876,7 @@ export function IngredientsTable({
         filters={treeFilters}
         filterMode="lenient"
         onFilter={noopFilter}
-        tableClassName="it-table"
+        tableClassName="ingredients-table-table"
         emptyMessage="No ingredients match the current filter."
       >
         <Column
@@ -878,14 +887,15 @@ export function IngredientsTable({
           body={nameBody}
           filter
           filterMatchMode="contains"
-          filterHeaderClassName="it-filter-th"
+          filterHeaderClassName="ingredients-table-filter-th"
           filterElement={
             <input
               type="text"
-              className="it-col-filter"
+              className="ingredients-table-col-filter"
               value={nameFilter}
               onChange={(e) => setNameFilter(e.target.value)}
               placeholder="Filter by name…"
+              id="ingredients-table-filter-name"
               aria-label="Filter by name"
             />
           }
@@ -895,12 +905,12 @@ export function IngredientsTable({
           header="Default Value"
           sortable
           body={measurementBody}
-          headerClassName="it-col--measurement"
-          bodyClassName="it-col--measurement"
+          headerClassName="ingredients-table-col--measurement"
+          bodyClassName="ingredients-table-col--measurement"
           filter
           filterMatchMode="custom"
           filterFunction={typeFilterFunction}
-          filterHeaderClassName="it-filter-th it-col--measurement"
+          filterHeaderClassName="ingredients-table-filter-th ingredients-table-col--measurement"
           filterElement={
             <MultiSelectFilter
               value={typeFilter}
@@ -917,7 +927,7 @@ export function IngredientsTable({
           filter
           filterMatchMode="custom"
           filterFunction={labelsFilterFunction}
-          filterHeaderClassName="it-filter-th"
+          filterHeaderClassName="ingredients-table-filter-th"
           filterElement={
             <MultiSelectFilter
               value={labelFilter}
@@ -932,9 +942,9 @@ export function IngredientsTable({
           header="Parent"
           sortable
           body={parentBody}
-          headerClassName="it-col--parent"
-          bodyClassName="it-col--parent"
-          filterHeaderClassName="it-col--parent"
+          headerClassName="ingredients-table-col--parent"
+          bodyClassName="ingredients-table-col--parent"
+          filterHeaderClassName="ingredients-table-col--parent"
         />
       </TreeTable>
     </div>

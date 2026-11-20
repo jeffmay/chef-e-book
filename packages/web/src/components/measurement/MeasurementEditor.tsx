@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useId, useState, useRef, useEffect } from "react";
 import {
   simplify,
   convertVolume,
@@ -106,6 +106,7 @@ export function MeasurementEditor({
   onCancel,
   initiallyOpen = false,
 }: MeasurementEditorProps) {
+  const uid = useId();
   const [editing, setEditing] = useState(initiallyOpen);
   const [original, setOriginal] = useState<Fraction>(value.value);
   const [current, setCurrent] = useState<Fraction>(value.value);
@@ -159,12 +160,12 @@ export function MeasurementEditor({
 
   if (!editing) {
     return (
-      <span className="me-root me-root--closed">
+      <span className="measurement-editor-root measurement-editor-root--closed">
         <FractionDisplay value={value.value} />
-        <span className="me-unit">{UNIT_LABELS[value.unit]}</span>
+        <span className="measurement-editor-unit">{UNIT_LABELS[value.unit]}</span>
         <button
           type="button"
-          className="fe-toggle-btn"
+          className="fraction-editor-toggle-btn"
           onClick={openEditor}
           aria-label="Edit measurement"
         >
@@ -181,37 +182,42 @@ export function MeasurementEditor({
       onCancel={revertAndClose}
       onAccept={commit}
     >
-      <span ref={rootRef} tabIndex={-1} className="me-root me-root--open">
-        <span className="fe-header">
+      <span
+        ref={rootRef}
+        tabIndex={-1}
+        className="measurement-editor-root measurement-editor-root--open"
+      >
+        <span className="fraction-editor-header">
           <FractionDisplay value={current} />
-          <span className="me-unit">{UNIT_LABELS[unit]}</span>
+          <span className="measurement-editor-unit">{UNIT_LABELS[unit]}</span>
         </span>
 
-        <span className="fe-op-modes" role="group" aria-label="Operation type">
+        <span className="fraction-editor-op-modes" role="group" aria-label="Operation type">
           {OpMode.values.map((mode) => (
-            <label key={mode} className="fe-mode-label">
+            <label key={mode} className="fraction-editor-mode-label">
               <input
                 type="radio"
-                className="fe-mode-radio"
-                name="me-op-mode"
+                className="fraction-editor-mode-radio"
+                name="measurement-editor-op-mode"
                 value={mode}
                 checked={opMode === mode}
                 onChange={() => setOpMode(mode)}
+                id={`${uid}-mode-${OpMode.values.indexOf(mode)}`}
                 aria-label={mode}
               />
-              <span className="fe-mode-symbol" aria-hidden>
+              <span className="fraction-editor-mode-symbol" aria-hidden>
                 {mode}
               </span>
             </label>
           ))}
         </span>
 
-        <span className="fe-op-buttons">
+        <span className="fraction-editor-op-buttons">
           {OP_ROWS[opMode].map((op) => (
             <button
               key={op.label}
               type="button"
-              className="fe-op-btn"
+              className="fraction-editor-op-btn"
               onClick={() => applyOpButton(op.label)}
             >
               {op.label}
@@ -220,13 +226,14 @@ export function MeasurementEditor({
         </span>
 
         {/* Type + unit selectors inserted between op buttons and OK */}
-        <span className="me-controls">
-          <label className="me-control-label">
+        <span className="measurement-editor-controls">
+          <label className="measurement-editor-control-label">
             Type
             <select
-              className="me-select"
+              className="measurement-editor-select"
               value={mtype}
               onChange={(e) => handleTypeChange(e.target.value as MeasurementType)}
+              id={`${uid}-type`}
               aria-label="Measurement type"
             >
               <option value="volume">Volume</option>
@@ -235,12 +242,13 @@ export function MeasurementEditor({
             </select>
           </label>
 
-          <label className="me-control-label">
+          <label className="measurement-editor-control-label">
             Unit
             <select
-              className="me-select"
+              className="measurement-editor-select"
               value={unit}
               onChange={(e) => handleUnitChange(e.target.value as MeasurementUnit)}
+              id={`${uid}-unit`}
               aria-label="Measurement unit"
             >
               {mtype === "volume" && (
@@ -290,16 +298,21 @@ export function MeasurementEditor({
           </label>
         </span>
 
-        <span className="me-bottom-row">
+        <span className="measurement-editor-bottom-row">
           <button
             type="button"
-            className="fe-toggle-btn"
+            className="fraction-editor-toggle-btn"
             onClick={revertAndClose}
             aria-label="Cancel changes"
           >
             ↩
           </button>
-          <button type="button" className="fe-ok-btn" onClick={commit} aria-label="Accept changes">
+          <button
+            type="button"
+            className="fraction-editor-ok-btn"
+            onClick={commit}
+            aria-label="Accept changes"
+          >
             ✔︎
           </button>
         </span>

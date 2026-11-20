@@ -18,7 +18,7 @@ import {
   Recipe as RecipeSchema,
 } from "../types/recipe.ts";
 import type { RecipeBookId } from "../types/recipeBook.ts";
-import { type RecipeFolder, type RecipeFolderId } from "../types/recipeGroup.ts";
+import { type RecipeFolder, type RecipeFolderId } from "../types/recipeFolder.ts";
 import { collectIngredientItems, collectInstructions } from "../types/sections.ts";
 import { isInvalid, validate } from "../yjs/validation.ts";
 import {

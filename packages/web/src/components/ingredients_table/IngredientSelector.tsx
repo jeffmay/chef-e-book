@@ -1,7 +1,7 @@
 import { IngredientId, loadId, type Ingredient, type KitchenwareLabel } from "@recipe-book/shared";
 import type { TreeNode } from "primereact/treenode";
 import { TreeSelect, type TreeSelectChangeEvent } from "primereact/treeselect";
-import { useMemo, type KeyboardEvent } from "react";
+import { useId, useMemo, type KeyboardEvent } from "react";
 import "../../styles/treeSelect.css";
 import { buildIngredientTree, type IngredientRow } from "./buildIngredientTree.ts";
 import type { ReadonlyDeep } from "type-fest";
@@ -33,6 +33,7 @@ export function IngredientSelector({
   ariaLabel,
   placeholder = "— None —",
 }: IngredientSelectorProps) {
+  const uid = useId();
   const treeNodes = useMemo(
     () => buildIngredientTree(options, labels).map(rowToNode),
     [options, labels],
@@ -54,7 +55,7 @@ export function IngredientSelector({
   }
 
   return (
-    <span className="is-key-interceptor" onKeyDown={handleKeyDown}>
+    <span className="ingredient-selector-key-interceptor" onKeyDown={handleKeyDown}>
       <TreeSelect
         value={value ?? null}
         options={treeNodes}
@@ -62,8 +63,9 @@ export function IngredientSelector({
         selectionMode="single"
         filter
         placeholder={placeholder}
-        className="tree-select is-selector"
+        className="tree-select ingredient-selector-tree"
         panelClassName="tree-select-panel"
+        inputId={`${uid}-selector`}
         ariaLabel={ariaLabel}
         appendTo={document.body}
       />

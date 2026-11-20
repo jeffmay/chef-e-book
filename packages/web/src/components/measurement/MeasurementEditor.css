@@ -1,5 +1,5 @@
 /* MeasurementEditor — closed (inline) */
-.me-root--closed {
+.measurement-editor-root--closed {
   display: inline-flex;
   align-items: baseline;
   gap: var(--spacing-xs);
@@ -8,7 +8,7 @@
 /* MeasurementEditor — open (block, same structure as FractionEditor).
    Solid background so the panel fully hides any cell/row content it overlaps
    when opened inside a table. */
-.me-root--open {
+.measurement-editor-root--open {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
@@ -19,20 +19,20 @@
 }
 
 /* Unit label shown next to the fraction */
-.me-unit {
+.measurement-editor-unit {
   font-size: 0.9em;
   color: var(--color-muted);
 }
 
 /* Type + unit selector row */
-.me-controls {
+.measurement-editor-controls {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs);
   align-items: flex-end;
 }
 
-.me-control-label {
+.measurement-editor-control-label {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -40,14 +40,14 @@
   color: var(--color-muted);
 }
 
-.me-bottom-row {
+.measurement-editor-bottom-row {
   display: flex;
   gap: var(--spacing-xs);
   align-items: center;
   align-self: end;
 }
 
-.me-select {
+.measurement-editor-select {
   font-size: 0.95em;
   padding: 2px var(--spacing-xs);
   border: var(--border-width) solid var(--color-border);

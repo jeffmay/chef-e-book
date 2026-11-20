@@ -1,12 +1,12 @@
 /* FractionEditor — closed (inline) */
-.fe-root--closed {
+.fraction-editor-root--closed {
   display: inline-flex;
   align-items: baseline;
   gap: var(--spacing-xs);
 }
 
 /* FractionEditor — open (block) */
-.fe-root--open {
+.fraction-editor-root--open {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
@@ -16,44 +16,44 @@
 }
 
 /* ± / < toggle button */
-.fe-toggle-btn {
+.fraction-editor-toggle-btn {
   font-size: 1em;
   padding: 2px var(--spacing-md);
   border: var(--border-width) solid var(--color-border);
 }
 
 /* Header row: < button + fraction display */
-.fe-header {
+.fraction-editor-header {
   display: flex;
   align-items: baseline;
   gap: var(--spacing-xs);
 }
 
 /* Fraction display */
-.fe-display {
+.fraction-editor-display {
   font-size: 1.1em;
   font-family: var(--font-body);
   white-space: nowrap;
 }
 
-.fe-integer {
+.fraction-editor-integer {
   margin-right: 0.1em;
 }
 
-.fe-fraction sup,
-.fe-fraction sub {
+.fraction-editor-fraction sup,
+.fraction-editor-fraction sub {
   font-size: 0.7em;
   line-height: 1;
 }
 
 /* Operation mode radios */
-.fe-op-modes {
+.fraction-editor-op-modes {
   display: flex;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
 }
 
-.fe-mode-label {
+.fraction-editor-mode-label {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -61,30 +61,30 @@
   user-select: none;
 }
 
-.fe-mode-radio {
+.fraction-editor-mode-radio {
   width: auto;
   cursor: pointer;
 }
 
-.fe-mode-symbol {
+.fraction-editor-mode-symbol {
   font-size: 1.1em;
 }
 
 /* Operation buttons */
-.fe-op-buttons {
+.fraction-editor-op-buttons {
   display: flex;
   gap: var(--spacing-xs);
   flex-wrap: wrap;
 }
 
-.fe-op-btn {
+.fraction-editor-op-btn {
   font-size: 0.95em;
   padding: 2px var(--spacing-sm);
   min-width: 3em;
 }
 
 /* OK button */
-.fe-ok-btn {
+.fraction-editor-ok-btn {
   padding: 2px var(--spacing-md);
   font-weight: bold;
   align-self: flex-start;

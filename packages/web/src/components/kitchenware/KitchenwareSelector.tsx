@@ -1,5 +1,5 @@
 import { type Container, type ContainerId, type KitchenwareLabelId } from "@recipe-book/shared";
-import { useState } from "react";
+import { useId, useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import { Modal } from "../modal/Modal.tsx";
 import { KitchenwareEditor } from "./KitchenwareEditor.tsx";
@@ -41,6 +41,7 @@ export function KitchenwareSelector({
   ariaLabel = "Container",
   placeholder = "Select or create a container…",
 }: KitchenwareSelectorProps) {
+  const uid = useId();
   const [newContainer, setNewContainer] = useState<ReadonlyDeep<NewContainerState> | null>(null);
 
   const options: SelectOption[] = containers.map((c) => ({ value: c.id, label: c.name }));
@@ -70,9 +71,10 @@ export function KitchenwareSelector({
         onChange={(opt) => onChange(opt?.value)}
         onCreateOption={handleCreate}
         isClearable
+        inputId={`${uid}-selector`}
         aria-label={ariaLabel}
         placeholder={placeholder}
-        classNamePrefix="ks"
+        classNamePrefix="kitchenware-selector"
         formatCreateLabel={(input) => `Create "${input}"`}
       />
 

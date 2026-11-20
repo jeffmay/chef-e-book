@@ -219,3 +219,21 @@ describe("DurationEditor — keyboard", () => {
     expect(screen.getByRole("textbox", { name: "Duration" })).toBeInTheDocument();
   });
 });
+
+describe("DurationEditor — input ids", () => {
+  it("gives the duration input an id that is unique per editor", async () => {
+    render(
+      <>
+        <DurationEditor value={FIVE_MIN} onCommit={vi.fn()} />
+        <DurationEditor value={ONE_HOUR} onCommit={vi.fn()} />
+      </>,
+    );
+    for (const button of screen.getAllByRole("button", { name: "Edit duration" })) {
+      await userEvent.click(button);
+    }
+    const ids = screen.getAllByRole("textbox", { name: "Duration" }).map((input) => input.id);
+    expect(ids).toHaveLength(2);
+    expect(ids.every((id) => id !== "")).toBe(true);
+    expect(new Set(ids).size).toBe(2);
+  });
+});

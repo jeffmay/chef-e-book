@@ -824,14 +824,16 @@ describe("newly added rows", () => {
     setup(sectionWith([]));
     await userEvent.click(screen.getByRole("button", { name: addButton }));
 
-    expect(screen.getByRole("group", { name: rowName })).toHaveClass("re-item--new");
+    expect(screen.getByRole("group", { name: rowName })).toHaveClass("recipe-editor-item--new");
   });
 
   it("renders a dashed border on a new container", async () => {
     setup(sectionWith([]));
     await userEvent.click(screen.getByRole("button", { name: "Add container to section" }));
 
-    expect(screen.getByRole("group", { name: /Container: Bowl/ })).toHaveClass("re-item--new");
+    expect(screen.getByRole("group", { name: /Container: Bowl/ })).toHaveClass(
+      "recipe-editor-item--new",
+    );
   });
 
   it("drops the dashed border once the row is accepted", async () => {
@@ -841,7 +843,7 @@ describe("newly added rows", () => {
     await userEvent.click(screen.getByRole("button", { name: "Accept changes to instruction" }));
 
     expect(screen.getByRole("group", { name: "Instruction: Fold" })).not.toHaveClass(
-      "re-item--new",
+      "recipe-editor-item--new",
     );
   });
 
@@ -849,7 +851,9 @@ describe("newly added rows", () => {
     setup(sectionWith([MIX_INSTRUCTION]));
     await flushAsyncEffects();
 
-    expect(screen.getByRole("group", { name: "Instruction: Mix" })).not.toHaveClass("re-item--new");
+    expect(screen.getByRole("group", { name: "Instruction: Mix" })).not.toHaveClass(
+      "recipe-editor-item--new",
+    );
   });
 });
 
