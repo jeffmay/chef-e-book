@@ -3,7 +3,7 @@ import type { ReadonlyDeep } from "type-fest";
 import type { RecipeBookId } from "@recipe-book/shared";
 import { AcceptOrCancelEditor } from "../components/accept_or_cancel_editor/AcceptOrCancelEditor.tsx";
 import { EditActions } from "../components/edit_actions/EditActions.tsx";
-import { Modal } from "../components/modal/Modal.tsx";
+import { DeleteBookModal } from "../components/delete_book_modal/DeleteBookModal.tsx";
 import { EditButton } from "../components/row_actions/EditButton.tsx";
 import { RemoveButton } from "../components/row_actions/RemoveButton.tsx";
 import type { BookRegistryEntry } from "../storage/bookRegistry.ts";
@@ -16,6 +16,8 @@ type SelectBookPageProps = ReadonlyDeep<{
   onCreate: (name: string) => void;
   onRename: (id: RecipeBookId, name: string) => void | Promise<void>;
   onDelete: (id: RecipeBookId) => void | Promise<void>;
+  /** Why something done before the picker showed (deleting the open book) failed, if it did. */
+  error?: string | null;
 }>;
 
 export function SelectBookPage({
@@ -24,6 +26,7 @@ export function SelectBookPage({
   onCreate,
   onRename,
   onDelete,
+  error = null,
 }: SelectBookPageProps) {
   const [name, setName] = useState("");
   const [renamingId, setRenamingId] = useState<RecipeBookId | null>(null);
@@ -64,9 +67,9 @@ export function SelectBookPage({
     <main className="select-user-page">
       <h1 className="page-title">{name || "Recipe Book"}</h1>
 
-      {actionError !== null && (
+      {(actionError ?? error) !== null && (
         <p className="field-error" role="alert">
-          {actionError}
+          {actionError ?? error}
         </p>
       )}
 
@@ -144,31 +147,15 @@ export function SelectBookPage({
       </form>
 
       {deleting !== null && (
-        <Modal
-          title={`Delete "${deleting.name}"?`}
-          onClose={() => {
+        <DeleteBookModal
+          bookName={deleting.name}
+          onCancel={() => setDeleting(null)}
+          onConfirm={() => {
+            const book = deleting;
             setDeleting(null);
-            return true;
+            void run(`delete "${book.name}"`, () => onDelete(book.id));
           }}
-          onEnterClickId="cancel"
-          buttons={{
-            cancel: { text: "Cancel", dangerous: false, onClick: () => setDeleting(null) },
-            delete: {
-              text: "Delete book",
-              dangerous: true,
-              onClick: () => {
-                const book = deleting;
-                setDeleting(null);
-                void run(`delete "${book.name}"`, () => onDelete(book.id));
-              },
-            },
-          }}
-        >
-          <p>
-            This removes the book, with all of its recipes and ingredients, from this device. It
-            cannot be undone.
-          </p>
-        </Modal>
+        />
       )}
     </main>
   );

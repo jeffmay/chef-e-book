@@ -57,6 +57,15 @@ describe("NavMenu", () => {
     );
   });
 
+  it("Book Settings link points to /settings", async () => {
+    renderMenu();
+    await userEvent.click(screen.getByLabelText("Navigation menu"));
+    expect(screen.getByRole("link", { name: "Book Settings" })).toHaveAttribute(
+      "href",
+      "/settings",
+    );
+  });
+
   it("closes the menu when focus moves to an element outside the menu", async () => {
     renderMenu(<button>Outside</button>);
     const trigger = screen.getByLabelText("Navigation menu");
