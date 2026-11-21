@@ -22,6 +22,7 @@ function renderPage(
     onCreate?: (name: string) => void;
     onRename?: (id: RecipeBookId, name: string) => void;
     onDelete?: (id: RecipeBookId) => void;
+    error?: string | null;
   } = {},
 ) {
   const handlers = {
@@ -30,7 +31,7 @@ function renderPage(
     onRename: props.onRename ?? vi.fn(),
     onDelete: props.onDelete ?? vi.fn(),
   };
-  render(<SelectBookPage books={props.books ?? []} {...handlers} />);
+  render(<SelectBookPage books={props.books ?? []} error={props.error ?? null} {...handlers} />);
   return handlers;
 }
 
@@ -233,5 +234,19 @@ describe("SelectBookPage — when a rename or delete fails", () => {
     await userEvent.click(screen.getByRole("button", { name: "Rename book Alice" }));
     await userEvent.type(screen.getByLabelText("New name for Alice"), "y{Enter}");
     await vi.waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+  });
+});
+
+describe("SelectBookPage — an error from before the picker showed", () => {
+  it("shows the error it is given", () => {
+    renderPage({ books: [ALICE], error: "Could not delete the book: still open in another tab" });
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Could not delete the book: still open in another tab",
+    );
+  });
+
+  it("shows no alert when there is no error", () => {
+    renderPage({ books: [ALICE] });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

@@ -10,6 +10,7 @@
 - [x] User selection (first-load page, localStorage persistence, per-user Yjs doc via y-indexeddb)
 - [x] Top nav bar: hamburger NavMenu, Undo button, UserMenu with profile settings link
 - [x] ProfileSettingsPage (rename user, persists to localStorage)
+- [x] Book settings page (`/settings`): rename the open book, delete it from this device behind a confirmation modal, then return to the book picker
 - [x] Yjs ingredient CRUD store (`shared`) — init from defaults, add/remove labels, set type/parent, rename, set labels
 - [x] `useIngredientStore` hook + DocContext (React)
 - [x] Ingredients Page — PrimeReact TreeTable tree view (expandable parent→child), in-table per-column filter row (text name filter with auto-expand; multi-select checkbox dropdown for type/labels), sortable columns, inline editable cells (click to edit, Enter/Escape hotkeys, ✔︎/✗ confirm/cancel), PrimeReact checkbox selection with bulk action bar (add/remove labels, change type, change parent), `+ New ingredient` form

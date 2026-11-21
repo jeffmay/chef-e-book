@@ -62,6 +62,9 @@ export function NavMenu({ books, activeBookId, onSwitchBook, onOpenBook }: NavMe
         <Link className="nav-menu-item" to="/ingredients" onClick={close}>
           Ingredients
         </Link>
+        <Link className="nav-menu-item" to="/settings" onClick={close}>
+          Book Settings
+        </Link>
         {/* The books fly out to the right of "Switch Books" on hover or keyboard focus. Where
             there is no hover (touch), the list stays open beneath it instead. */}
         <div className="nav-menu-group">

@@ -20,6 +20,7 @@ vi.mock("y-indexeddb", () => ({
 
 const { default: Root } = await import("../root.tsx");
 const { default: Dashboard } = await import("../routes/dashboard.tsx");
+const { default: Settings } = await import("../routes/settings.tsx");
 const { useIngredientStore } = await import("../hooks/useIngredientStore.ts");
 // const { default: Profile } = await import("../routes/profile.ts");
 
@@ -56,6 +57,10 @@ function makeStub(initialEntries = ["/dashboard"]) {
         {
           path: "add",
           Component: AddIngredientPage,
+        },
+        {
+          path: "settings",
+          Component: Settings,
         },
         {
           path: "ingredients",
@@ -346,6 +351,96 @@ describe("Root — book already stored", () => {
 
       expect(screen.queryByRole("button", { name: "Open book Bob" })).not.toBeInTheDocument();
       expect(storedRegistry().books).toEqual([]);
+    });
+  });
+
+  describe("book settings", () => {
+    it("opens from the nav menu and shows the open book's name", async () => {
+      render(makeStub());
+      await userEvent.click(screen.getByLabelText("Navigation menu"));
+      await userEvent.click(screen.getByRole("link", { name: "Book Settings" }));
+      expect(screen.getByRole("heading", { name: "Book Settings" })).toBeInTheDocument();
+      expect(screen.getByLabelText(/Book name/)).toHaveValue("Bob");
+    });
+
+    it("renames the open book, in the header and the registry, keeping its id", async () => {
+      render(makeStub(["/settings"]));
+      await flushAsyncEffects();
+      const input = screen.getByLabelText(/Book name/);
+      await userEvent.clear(input);
+      await userEvent.type(input, "Robert{Enter}");
+      await flushAsyncEffects();
+
+      expect(screen.getByRole("heading", { name: "Robert", level: 1 })).toBeInTheDocument();
+      expect(storedRegistry().books).toEqual([
+        expect.objectContaining({ id: bookId, name: "Robert" }),
+      ]);
+    });
+
+    it("does not delete until the confirmation is accepted", async () => {
+      render(makeStub(["/settings"]));
+      await flushAsyncEffects();
+      await userEvent.click(screen.getByRole("button", { name: "Delete this book" }));
+      await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(screen.getByRole("heading", { name: "Book Settings" })).toBeInTheDocument();
+      expect(storedRegistry().books).toHaveLength(1);
+    });
+
+    it("deletes the open book and returns to the book picker", async () => {
+      render(makeStub(["/settings"]));
+      await flushAsyncEffects();
+      await userEvent.click(screen.getByRole("button", { name: "Delete this book" }));
+      await userEvent.click(screen.getByRole("button", { name: "Delete book" }));
+      await flushAsyncEffects();
+
+      expect(screen.getByRole("button", { name: "Create book" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Open book Bob" })).not.toBeInTheDocument();
+      expect(storedRegistry().books).toEqual([]);
+      expect(storedRegistry().active_book_id).toBeUndefined();
+    });
+
+    it("keeps the other books when deleting the open one", async () => {
+      localStorage.setItem(
+        BOOK_REGISTRY_KEY,
+        JSON.stringify({
+          books: [
+            { id: bookId, name: "Bob", created_at: 1, last_opened_at: 2 },
+            { id: otherBookId, name: "Carol", created_at: 1, last_opened_at: 1 },
+          ],
+          active_book_id: bookId,
+        }),
+      );
+      render(makeStub(["/settings"]));
+      await flushAsyncEffects();
+      await userEvent.click(screen.getByRole("button", { name: "Delete this book" }));
+      await userEvent.click(screen.getByRole("button", { name: "Delete book" }));
+      await flushAsyncEffects();
+
+      expect(screen.getByRole("button", { name: "Open book Carol" })).toBeInTheDocument();
+      expect(storedRegistry().books.map((b) => b.id)).toEqual([otherBookId]);
+    });
+
+    it("does not leave the next book opened on the deleted book's settings page", async () => {
+      localStorage.setItem(
+        BOOK_REGISTRY_KEY,
+        JSON.stringify({
+          books: [
+            { id: bookId, name: "Bob", created_at: 1, last_opened_at: 2 },
+            { id: otherBookId, name: "Carol", created_at: 1, last_opened_at: 1 },
+          ],
+          active_book_id: bookId,
+        }),
+      );
+      render(makeStub(["/settings"]));
+      await flushAsyncEffects();
+      await userEvent.click(screen.getByRole("button", { name: "Delete this book" }));
+      await userEvent.click(screen.getByRole("button", { name: "Delete book" }));
+      await flushAsyncEffects();
+      await userEvent.click(screen.getByRole("button", { name: "Open book Carol" }));
+      await flushAsyncEffects();
+
+      expect(screen.queryByRole("heading", { name: "Book Settings" })).not.toBeInTheDocument();
     });
   });
 

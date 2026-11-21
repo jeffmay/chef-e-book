@@ -1,5 +1,5 @@
-import { type ReactNode, useCallback, useMemo } from "react";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useNavigate } from "react-router";
 import type { ReadonlyDeep } from "type-fest";
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.css";
@@ -22,7 +22,11 @@ import { setBookName, type RecipeBookId } from "@recipe-book/shared";
 
 export type RootContext = ReadonlyDeep<{
   bookId: RecipeBookId;
+  /** The open book's display name. */
+  bookName: string;
   onRename: (name: string) => void;
+  /** Deletes the open book from this device and returns to the book picker. */
+  onDelete: () => void;
 }>;
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -55,6 +59,8 @@ type AuthenticatedShellProps = ReadonlyDeep<{
   onOpenBook: (id: RecipeBookId) => void;
   /** The book's own document renamed it (here, on another device, or by an undo). */
   onBookNameChange: (id: RecipeBookId, name: string) => void;
+  /** Deletes the open book from this device, returning to the book picker. */
+  onDeleteBook: (id: RecipeBookId) => void;
 }>;
 
 function AuthenticatedShell({
@@ -63,6 +69,7 @@ function AuthenticatedShell({
   onSwitchBook,
   onOpenBook,
   onBookNameChange,
+  onDeleteBook,
 }: AuthenticatedShellProps) {
   const bookDoc = useBookDoc(book.id);
   // Seeding and re-keying record a flag in book_meta, so they wait for it to exist.
@@ -78,9 +85,11 @@ function AuthenticatedShell({
   // follows through `useSyncBookName`.
   const { doc } = bookDoc;
   const onRename = useCallback((name: string) => setBookName(doc, name), [doc]);
+  const bookId = book.id;
+  const onDelete = useCallback(() => onDeleteBook(bookId), [onDeleteBook, bookId]);
   const outletContext = useMemo(
-    () => ({ bookId: book.id, onRename }) satisfies RootContext,
-    [book.id, onRename],
+    () => ({ bookId, bookName: book.name, onRename, onDelete }) satisfies RootContext,
+    [bookId, book.name, onRename, onDelete],
   );
 
   return (
@@ -118,13 +127,46 @@ function AuthenticatedShell({
 export default function Root() {
   const { books, activeBook, createBook, openBook, closeBook, renameBook, deleteBook } =
     useBookRegistry();
+  const navigate = useNavigate();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  // The open book's database is held open by this tab, so its data cannot be deleted until the
+  // book has closed. The id waits here until the picker is showing, then the effect deletes it.
+  const pendingDeleteId = useRef<RecipeBookId | null>(null);
+
+  useEffect(() => {
+    const id = pendingDeleteId.current;
+    if (id === null || activeBook !== null) return;
+    pendingDeleteId.current = null;
+    deleteBook(id).catch((e: unknown) => {
+      // The book stays listed, so the delete can be tried again from the picker.
+      setDeleteError(`Could not delete the book: ${e instanceof Error ? e.message : String(e)}`);
+    });
+  }, [activeBook, deleteBook]);
+
+  const deleteOpenBook = useCallback(
+    (id: RecipeBookId) => {
+      setDeleteError(null);
+      pendingDeleteId.current = id;
+      closeBook();
+      // Leave the deleted book's settings URL, so the next book opened does not land on it.
+      void navigate("/");
+    },
+    [closeBook, navigate],
+  );
 
   if (activeBook === null) {
     return (
       <SelectBookPage
         books={books}
-        onOpen={openBook}
-        onCreate={createBook}
+        error={deleteError}
+        onOpen={(id) => {
+          setDeleteError(null);
+          openBook(id);
+        }}
+        onCreate={(name) => {
+          setDeleteError(null);
+          createBook(name);
+        }}
         onRename={async (id, name) => {
           // The book's own document leads; the registry caches its name.
           await writeBookName(id, name);
@@ -143,6 +185,7 @@ export default function Root() {
       onSwitchBook={closeBook}
       onOpenBook={openBook}
       onBookNameChange={renameBook}
+      onDeleteBook={deleteOpenBook}
     />
   );
 }

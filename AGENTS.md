@@ -108,6 +108,7 @@ recipe-book/
 │   │           ├── recipes.$recipe_id.tsx                 # /recipes/:recipe_id
 │   │           ├── recipes.$recipe_id.v.$version_id.tsx   # /recipes/:recipe_id/v/:version_id
 │   │           ├── sessions.$session_id.tsx               # /sessions/:session_id
+│           ├── settings.tsx                           # /settings (book settings)
 │   │           └── profile.tsx                            # /profile
 │   └── server/        # Node.js sync server (Yjs document store per user)
 ├── AGENTS.md
@@ -140,7 +141,10 @@ Which books exist on this device, and which one is open, is device-local state k
 - `useBookRegistry()` (`hooks/useBookRegistry.ts`) returns `books` (most recently opened first), `activeBook` (`null` shows the picker), and `createBook`, `openBook`, `closeBook`, `renameBook`, `deleteBook`. It reads once on the first render and writes every change through. An earlier build's single `ecookdeck_book` key is adopted as the open book and then removed.
 - **The document's name leads; the registry's name is a cache** so the picker and header can show it before the document loads. `useSyncBookName` copies `book_meta.name` into the cache when the document syncs and whenever it changes. The open book is renamed with `setBookName(doc, …)` (`RootContext.onRename`); a book that is not open with `writeBookName(id, name)`. Renaming never changes a book's id. Renaming also stamps `book_meta.updated_at`. `deleteBookDatabases` starts its deletes together, so a legacy database blocked by another tab can reject the call after the book's own database is already gone (the legacy ones only hold data already merged into the book).
 - `loadBookDoc(bookId)` (`storage/bookDatabases.ts`) opens another book's document without making it the open one, and its `dispose()` waits for pending writes. Never use it for the book open in this tab — use the live document. `deleteBookDatabases(id)` removes a book's document and the legacy databases (it rejects if another tab holds one open); `deleteBook` deletes the data **first** and only then forgets the book, so a failed delete leaves it listed to retry, and the picker shows why a rename or delete failed. Deleting is only offered from the picker, where no book is open.
-- `SelectBookPage` is the picker (list, "✎" rename, "✕" delete behind a confirmation `Modal` whose Enter key cancels, and a "Create book" form). The nav menu's "Switch Books" item returns to it, and the books listed under that item open directly.
+- `SelectBookPage` is the picker (list, "✎" rename, "✕" delete behind a `DeleteBookModal`, and a "Create book" form). The nav menu's "Switch Books" item returns to it, and the books listed under that item open directly. Its optional `error` prop shows why deleting the open book failed.
+- **Book settings** (`/settings`, `BookSettingsPage`, reached from the nav menu's "Book Settings" link) edits the open book: a name field closed with ↩/✔︎ (✔︎ calls `RootContext.onRename`; a blank name shows the shared `.field-error`; the field follows the book's current name until the user types) and a "Delete this book" button that opens `DeleteBookModal`. `RootContext` carries `bookId`, `bookName`, `onRename` and `onDelete`.
+- **`DeleteBookModal`** (`components/delete_book_modal/`) is the one deletion confirmation, shared by the picker and the settings page. It says the delete cannot be undone on this device and is not applied automatically to other devices or a sync server; Enter cancels.
+- **Deleting the open book** (`Root.deleteOpenBook`): the open book's IndexedDB database is held open by this tab, so the delete cannot run while the book is mounted. `deleteOpenBook` records the id in a ref, calls `closeBook()` (which shows the picker and unmounts the shell, closing the database) and navigates to `/`; an effect then runs `deleteBook(id)` once `activeBook` is `null`. A failure is shown on the picker through `error`, with the book still listed to retry.
 - Tabs do not listen for `storage` events, so two tabs can disagree about the open book until reload.
 
 ### Undo (`useBookUndoManager`)
@@ -525,6 +529,7 @@ Recursive tree structure for organizing recipes. Stored flat in `"recipe_folders
 
 - "☰" hamburger menu to navigate between pages
 - "Switch Books" menu item (in the "☰" dropdown, under Recipes and Ingredients): leaves the open book for the book picker; the device's books are listed beneath it as indented items (the open one marked "✔︎"), and choosing one opens it directly (see Books on This Device). Where the device can hover (`@media (hover: hover)`: a mouse, or the Wacom EMR pen) the books fly out to the right of the item, top-aligned with it, on hover or keyboard focus, and the item shows a "▸" to say so; where it cannot (touch, or mobile view), the list stays open beneath it with a vertical grey bar down its left edge to indent the rows, so no book is reachable only by hovering
+- "Book Settings" menu item (between Ingredients and Switch Books): opens `/settings` (see Books on This Device)
 - "↩ Undo" button: undoes the last edit to the open book (see Undo); when there is nothing to undo it reads "✕ Undo" and is disabled, with a grey (dithered) background and the text kept full black
 
 ## Design System
